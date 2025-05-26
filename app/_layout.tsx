@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
@@ -6,11 +7,13 @@ import { Provider as PaperProvider } from 'react-native-paper';
 import { theme } from '@/lib/theme';
 import { useFonts } from 'expo-font';
 import { Inter_400Regular, Inter_500Medium, Inter_700Bold } from '@expo-google-fonts/inter';
-import { SplashScreen } from 'expo-splash-screen';
+import * as SplashScreen from 'expo-splash-screen';
 import { initLocale } from '@/lib/i18n';
 
-// Prevent the splash screen from auto-hiding
-SplashScreen.preventAutoHideAsync();
+// Prevent the splash screen from auto-hiding only on native platforms
+if (Platform.OS !== 'web') {
+  SplashScreen.preventAutoHideAsync();
+}
 
 export default function RootLayout() {
   const [appIsReady, setAppIsReady] = useState(false);
@@ -45,8 +48,8 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    if ((fontsLoaded || fontError) && appIsReady) {
-      // Hide the splash screen once fonts are loaded and app is ready
+    if ((fontsLoaded || fontError) && appIsReady && Platform.OS !== 'web') {
+      // Hide the splash screen once fonts are loaded and app is ready (only on native)
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded, fontError, appIsReady]);
