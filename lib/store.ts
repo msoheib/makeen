@@ -1,0 +1,132 @@
+import { create } from 'zustand';
+import { User, Property, MaintenanceRequest, Invoice, Voucher } from './types';
+
+// Define the state store structure
+interface AppState {
+  // Auth state
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  setUser: (user: User | null) => void;
+  setAuthenticated: (isAuthenticated: boolean) => void;
+  setLoading: (isLoading: boolean) => void;
+  
+  // Properties state
+  properties: Property[];
+  selectedProperty: Property | null;
+  setProperties: (properties: Property[]) => void;
+  setSelectedProperty: (property: Property | null) => void;
+  addProperty: (property: Property) => void;
+  updateProperty: (id: string, property: Partial<Property>) => void;
+  deleteProperty: (id: string) => void;
+  
+  // Maintenance state
+  maintenanceRequests: MaintenanceRequest[];
+  selectedRequest: MaintenanceRequest | null;
+  setMaintenanceRequests: (requests: MaintenanceRequest[]) => void;
+  setSelectedRequest: (request: MaintenanceRequest | null) => void;
+  addMaintenanceRequest: (request: MaintenanceRequest) => void;
+  updateMaintenanceRequest: (id: string, request: Partial<MaintenanceRequest>) => void;
+  deleteMaintenanceRequest: (id: string) => void;
+  
+  // Financial state
+  invoices: Invoice[];
+  vouchers: Voucher[];
+  setInvoices: (invoices: Invoice[]) => void;
+  setVouchers: (vouchers: Voucher[]) => void;
+  addInvoice: (invoice: Invoice) => void;
+  updateInvoice: (id: string, invoice: Partial<Invoice>) => void;
+  deleteInvoice: (id: string) => void;
+  addVoucher: (voucher: Voucher) => void;
+  updateVoucher: (id: string, voucher: Partial<Voucher>) => void;
+  deleteVoucher: (id: string) => void;
+  
+  // UI state
+  locale: string;
+  theme: 'light' | 'dark';
+  setLocale: (locale: string) => void;
+  setTheme: (theme: 'light' | 'dark') => void;
+}
+
+// Create the store
+export const useAppStore = create<AppState>((set) => ({
+  // Auth state
+  user: null,
+  isAuthenticated: false,
+  isLoading: true,
+  setUser: (user) => set({ user }),
+  setAuthenticated: (isAuthenticated) => set({ isAuthenticated }),
+  setLoading: (isLoading) => set({ isLoading }),
+  
+  // Properties state
+  properties: [],
+  selectedProperty: null,
+  setProperties: (properties) => set({ properties }),
+  setSelectedProperty: (selectedProperty) => set({ selectedProperty }),
+  addProperty: (property) => 
+    set((state) => ({ properties: [...state.properties, property] })),
+  updateProperty: (id, updatedProperty) => 
+    set((state) => ({
+      properties: state.properties.map((property) => 
+        property.id === id ? { ...property, ...updatedProperty } : property
+      ),
+    })),
+  deleteProperty: (id) => 
+    set((state) => ({
+      properties: state.properties.filter((property) => property.id !== id),
+    })),
+  
+  // Maintenance state
+  maintenanceRequests: [],
+  selectedRequest: null,
+  setMaintenanceRequests: (maintenanceRequests) => set({ maintenanceRequests }),
+  setSelectedRequest: (selectedRequest) => set({ selectedRequest }),
+  addMaintenanceRequest: (request) => 
+    set((state) => ({ maintenanceRequests: [...state.maintenanceRequests, request] })),
+  updateMaintenanceRequest: (id, updatedRequest) => 
+    set((state) => ({
+      maintenanceRequests: state.maintenanceRequests.map((request) => 
+        request.id === id ? { ...request, ...updatedRequest } : request
+      ),
+    })),
+  deleteMaintenanceRequest: (id) => 
+    set((state) => ({
+      maintenanceRequests: state.maintenanceRequests.filter((request) => request.id !== id),
+    })),
+  
+  // Financial state
+  invoices: [],
+  vouchers: [],
+  setInvoices: (invoices) => set({ invoices }),
+  setVouchers: (vouchers) => set({ vouchers }),
+  addInvoice: (invoice) => 
+    set((state) => ({ invoices: [...state.invoices, invoice] })),
+  updateInvoice: (id, updatedInvoice) => 
+    set((state) => ({
+      invoices: state.invoices.map((invoice) => 
+        invoice.id === id ? { ...invoice, ...updatedInvoice } : invoice
+      ),
+    })),
+  deleteInvoice: (id) => 
+    set((state) => ({
+      invoices: state.invoices.filter((invoice) => invoice.id !== id),
+    })),
+  addVoucher: (voucher) => 
+    set((state) => ({ vouchers: [...state.vouchers, voucher] })),
+  updateVoucher: (id, updatedVoucher) => 
+    set((state) => ({
+      vouchers: state.vouchers.map((voucher) => 
+        voucher.id === id ? { ...voucher, ...updatedVoucher } : voucher
+      ),
+    })),
+  deleteVoucher: (id) => 
+    set((state) => ({
+      vouchers: state.vouchers.filter((voucher) => voucher.id !== id),
+    })),
+  
+  // UI state
+  locale: 'en',
+  theme: 'light',
+  setLocale: (locale) => set({ locale }),
+  setTheme: (theme) => set({ theme }),
+}));
