@@ -1,0 +1,143 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Mobile App Feature Organization
+I. Bottom Navigation Bar (4-5 Key Areas)
+This provides quick access to the most common sections:
+Dashboard
+Overview of key metrics (e.g., vacancies, pending payments, new messages).
+Quick access to common actions (e.g., Add New Property, Add New Tenant).
+Recent activity feed.
+Properties
+My Properties List (View, search, filter properties)
+Property Details (Drill-down for each property)
+View/Edit Details
+Associated Documents
+Unit Management
+Add New Property (Wizard/Form)
+Rental Management
+Rent a Property
+Foreign Tenant Contracts
+Sales Management
+List Cash Property
+List Installment Property
+Reservations
+Property Reservation List
+People
+Owners & Property Managers (List, Add, View/Edit Details)
+Tenants (List, Add, View/Edit Details)
+Buyers (List, Add, View/Edit Details)
+Foreign Tenants (List, Add, View/Edit Details, if distinct)
+Other Contacts (Clients, Suppliers - List, Add, View/Edit Details)
+Finance
+Vouchers
+Create/View Receipt Voucher
+Create/View Payment Voucher
+Create/View Entry Voucher
+Financial Notifications
+Create/View Credit Notification
+Create/View Debit Notification
+Invoices
+VAT Invoices
+Cheque Management
+Processing Cheques
+Key Reports Snapshot (e.g., Income Summary, Expense Summary)
+Menu (Access to all other features and settings)
+(This tab opens a new screen with a list of further options, detailed below)
+II. "Menu" Screen (Accessed from Bottom Navigation)
+This screen provides a comprehensive list of all other functionalities:
+Communications
+SMS Messaging
+App Notifications Log
+Maintenance & Operations
+Work Orders / Maintenance
+Add Maintenance Report/Work Order
+List Work Order Reports
+Letters
+Add a Letter
+List Letters
+Issues Management
+Add Issue
+List Issues
+Issues Report
+Document Archive
+Telephone Book
+Full Reports Center
+Summary & General Reports
+ملخص التقارير (Summary of Reports)
+تقرير الفواتير (Invoices Report)
+Account Statements
+General Statement of Account
+Detailed Owner Account Statement
+Property Account Statement
+General Ledger Statements
+Receipts Report
+Expense Reports
+Office Expenses Report - Property
+Maintenance Expenses Report
+Maintenance Tickets Report
+Revenue & Financials
+Revenue Report
+Income List
+Statement of Financial Position
+Trial Balance
+GL Statements
+Daily Statements
+Cash Flows Statement
+Cost Centers Report
+Depreciation Report (Fixed Assets)
+Tenant & Property Status
+Payments Dates & Lated Tenants
+Vacancies and Offers Report
+Property Report
+Tenants Balance Report
+Owner-Specific Reports
+Tenants Statement of Owner/Property
+Owner Financial Report
+Owner Full Report
+Owner Classes Report
+Utility Reports
+Electrical Meter Report
+Accounting Admin
+Accounts Directory
+Cost Centers (Management)
+Fixed Assets Management
+View Fixed Assets
+Depreciation of Fixed Assets
+Financial Year Closing
+Monthly Close
+Deleting Canceled Contracts and Vouchers
+User Management (Typically for Admin roles)
+Add User
+List Users
+User Transaction Report
+Application Settings
+General & Platform
+Website Settings (if applicable to mobile)
+Report and Voucher Settings
+Template Customization
+Terms of Lease Contracts
+Terms of Property Management Contract
+Terms of Cash Sales Contracts
+Terms of Installment Sale Contracts
+Terms of Construction Contracts
+Design & Print Layouts (Consider if these are managed via mobile or web)
+Voucher Print Design
+Card Printing (Officer, Leased)
+Service Orders Design
+Cheques Design
+Promissory Notes Design
+Letters (Template)
+Data & Classifications
+Owner Classification
+Manage Locations (Countries, Cities, Neighborhoods)
+My Account
+View/Edit Profile
+Change Password
+Language Preferences
+Help & Support
+User Manual
+About App
+Contact Support

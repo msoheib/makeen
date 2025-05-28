@@ -2,7 +2,7 @@ import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { List, Surface, Text, useTheme } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { spacing, shadows } from '@/lib/theme';
+import { theme, spacing, shadows } from '@/lib/theme';
 import { 
   Settings, 
   User, 
@@ -21,7 +21,7 @@ import { useAppStore } from '@/lib/store';
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const theme = useTheme();
+  const paperTheme = useTheme();
   const setUser = useAppStore(state => state.setUser);
   const setAuthenticated = useAppStore(state => state.setAuthenticated);
 
