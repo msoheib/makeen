@@ -6,13 +6,9 @@ import {
   Home,
   Building2,
   Tool,
-  Receipt,
-  FileText,
-  Settings,
-  Users,
   DollarSign,
-  MessageSquare,
-  Bell
+  Users,
+  Settings
 } from 'lucide-react-native';
 
 export default function TabLayout() {
