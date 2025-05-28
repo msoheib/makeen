@@ -5,11 +5,7 @@ import { useRouter } from 'expo-router';
 import { theme, spacing, shadows } from '@/lib/theme';
 import { LineChart } from 'react-native-chart-kit';
 import { Dimensions } from 'react-native';
-// import { Wallet, Building2, PlusCircle, ArrowRight, Clock, Tool, DollarSign, AlertCircle, User } from 'lucide-react-native'; // Commented out
 import { useAppStore } from '@/lib/store';
-// import PropertyCard from '@/components/PropertyCard'; // Commented out
-// import MaintenanceRequestCard from '@/components/MaintenanceRequestCard'; // Commented out
-// import VoucherCard from '@/components/VoucherCard'; // Commented out
 import { Property, MaintenanceRequest, Voucher } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
 
@@ -25,46 +21,6 @@ export default function DashboardScreen() {
   const [collectionRate, setCollectionRate] = useState(0);
   const [occupancyRate, setOccupancyRate] = useState(0);
   
-  // Sample chart data (would fetch from API in a real app)
-  const chartData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-    datasets: [
-      {
-        data: [20500, 45000, 28000, 80000, 99000, 43000],
-        color: () => theme.colors.primary,
-        strokeWidth: 2
-      }
-    ],
-  };
-
-  // Recent activity data (sample)
-  const recentActivity = [
-    {
-      id: '1',
-      action: 'New tenant registered',
-      timestamp: '2 hours ago',
-      user: 'John Doe',
-    },
-    {
-      id: '2',
-      action: 'Maintenance request completed',
-      timestamp: '5 hours ago',
-      user: 'Maintenance Team',
-    },
-    {
-      id: '3',
-      action: 'Payment received',
-      timestamp: 'Yesterday',
-      user: 'Sarah Johnson',
-    },
-    {
-      id: '4',
-      action: 'Property inspection scheduled',
-      timestamp: '2 days ago',
-      user: 'Admin',
-    },
-  ];
-
   useEffect(() => {
     async function fetchDashboardData() {
       setLoading(true);
@@ -94,17 +50,47 @@ export default function DashboardScreen() {
           .limit(3);
           
         if (vouchersError) throw vouchersError;
+
+        // Calculate metrics
+        const { data: metricsData, error: metricsError } = await supabase
+          .from('vouchers')
+          .select('amount, status')
+          .eq('voucher_type', 'receipt');
+
+        if (metricsError) throw metricsError;
+
+        if (metricsData) {
+          const collected = metricsData
+            .filter(v => v.status === 'posted')
+            .reduce((sum, v) => sum + v.amount, 0);
+          
+          const pending = metricsData
+            .filter(v => v.status === 'draft')
+            .reduce((sum, v) => sum + v.amount, 0);
+
+          setRentCollected(collected);
+          setPendingPayments(pending);
+          setCollectionRate(Math.round((collected / (collected + pending)) * 100) || 0);
+        }
+
+        // Calculate occupancy rate
+        const { data: propertyStats, error: statsError } = await supabase
+          .from('properties')
+          .select('status');
+
+        if (statsError) throw statsError;
+
+        if (propertyStats) {
+          const total = propertyStats.length;
+          const rented = propertyStats.filter(p => p.status === 'rented').length;
+          setOccupancyRate(Math.round((rented / total) * 100) || 0);
+        }
         
         // Set the data
-        if (propertiesData) setProperties(propertiesData as Property[]);
-        if (maintenanceData) setMaintenanceRequests(maintenanceData as MaintenanceRequest[]);
-        if (vouchersData) setVouchers(vouchersData as Voucher[]);
+        if (propertiesData) setProperties(propertiesData);
+        if (maintenanceData) setMaintenanceRequests(maintenanceData);
+        if (vouchersData) setVouchers(vouchersData);
         
-        // Calculate metrics (sample data for demo)
-        setRentCollected(85000);
-        setPendingPayments(15000);
-        setCollectionRate(85);
-        setOccupancyRate(78);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       } finally {
@@ -115,115 +101,6 @@ export default function DashboardScreen() {
     fetchDashboardData();
   }, []);
 
-  // For demo purposes, use mock data if Supabase data not available
-  useEffect(() => {
-    if (properties.length === 0) {
-      setProperties([
-        {
-          id: '1',
-          title: 'Modern Apartment',
-          description: 'Spacious 2-bedroom apartment with great amenities',
-          property_type: 'apartment',
-          status: 'available',
-          address: '123 Main St',
-          city: 'New York',
-          country: 'USA',
-          neighborhood: 'Downtown',
-          area_sqm: 120,
-          bedrooms: 2,
-          bathrooms: 2,
-          price: 2500,
-          payment_method: 'cash',
-          owner_id: '1',
-          created_at: '2023-01-15T12:00:00Z',
-          updated_at: '2023-01-15T12:00:00Z',
-          images: ['https://images.pexels.com/photos/1396132/pexels-photo-1396132.jpeg'],
-        },
-        {
-          id: '2',
-          title: 'Luxury Villa',
-          description: 'Luxurious 4-bedroom villa with pool and garden',
-          property_type: 'villa',
-          status: 'rented',
-          address: '456 Ocean Dr',
-          city: 'Miami',
-          country: 'USA',
-          neighborhood: 'South Beach',
-          area_sqm: 350,
-          bedrooms: 4,
-          bathrooms: 3,
-          price: 5000,
-          payment_method: 'installment',
-          owner_id: '2',
-          created_at: '2023-02-20T10:00:00Z',
-          updated_at: '2023-02-20T10:00:00Z',
-          images: ['https://images.pexels.com/photos/53610/large-home-residential-house-architecture-53610.jpeg'],
-        },
-      ]);
-    }
-    
-    if (maintenanceRequests.length === 0) {
-      setMaintenanceRequests([
-        {
-          id: '1',
-          property_id: '1',
-          tenant_id: '1',
-          title: 'Leaking Faucet',
-          description: 'The kitchen faucet is leaking and needs repair as soon as possible.',
-          status: 'pending',
-          priority: 'medium',
-          created_at: '2023-06-15T09:30:00Z',
-          updated_at: '2023-06-15T09:30:00Z',
-          images: ['https://images.pexels.com/photos/5490903/pexels-photo-5490903.jpeg'],
-        },
-        {
-          id: '2',
-          property_id: '2',
-          tenant_id: '2',
-          title: 'AC Not Working',
-          description: 'The air conditioning unit in the master bedroom is not working properly.',
-          status: 'in_progress',
-          priority: 'high',
-          created_at: '2023-06-14T14:20:00Z',
-          updated_at: '2023-06-15T10:15:00Z',
-          images: ['https://images.pexels.com/photos/5490903/pexels-photo-5490903.jpeg'],
-        },
-      ]);
-    }
-    
-    if (vouchers.length === 0) {
-      setVouchers([
-        {
-          id: '1',
-          voucher_type: 'receipt',
-          voucher_number: 'RV-001',
-          amount: 2500,
-          currency: 'USD',
-          status: 'posted',
-          description: 'Monthly rent payment for Unit 101',
-          property_id: '1',
-          tenant_id: '1',
-          created_by: '1',
-          created_at: '2023-06-15T09:30:00Z',
-          updated_at: '2023-06-15T09:30:00Z',
-        },
-        {
-          id: '2',
-          voucher_type: 'payment',
-          voucher_number: 'PV-001',
-          amount: 500,
-          currency: 'USD',
-          status: 'draft',
-          description: 'Maintenance expense for Unit 202',
-          property_id: '2',
-          created_by: '1',
-          created_at: '2023-06-14T14:20:00Z',
-          updated_at: '2023-06-14T14:20:00Z',
-        },
-      ]);
-    }
-  }, [properties, maintenanceRequests, vouchers]);
-  
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -253,78 +130,28 @@ export default function DashboardScreen() {
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View style={styles.metricsContainer}>
           <Surface style={[styles.metricCard, shadows.medium, { backgroundColor: theme.colors.primaryContainer }]}>
-            {/* <View style={styles.metricIconContainer}>
-              <Wallet size={24} color={theme.colors.primary} />
-            </View> */}
             <Text style={styles.metricLabel}>Rent Collected</Text>
             <Text style={styles.metricValue}>${rentCollected.toLocaleString()}</Text>
-            <Text style={styles.metricTrend}>+5% from last month</Text>
           </Surface>
           
           <Surface style={[styles.metricCard, shadows.medium, { backgroundColor: theme.colors.errorContainer }]}>
-            {/* <View style={styles.metricIconContainer}>
-              <AlertCircle size={24} color={theme.colors.error} />
-            </View> */}
             <Text style={styles.metricLabel}>Pending Payments</Text>
             <Text style={styles.metricValue}>${pendingPayments.toLocaleString()}</Text>
-            <Text style={styles.metricTrend}>-2% from last month</Text>
           </Surface>
           
           <Surface style={[styles.metricCard, shadows.medium, { backgroundColor: theme.colors.tertiaryContainer }]}>
-            {/* <View style={styles.metricIconContainer}>
-              <DollarSign size={24} color={theme.colors.tertiary} />
-            </View> */}
             <Text style={styles.metricLabel}>Collection Rate</Text>
             <Text style={styles.metricValue}>{collectionRate}%</Text>
             <ProgressBar progress={collectionRate/100} color={theme.colors.tertiary} style={styles.progressBar} />
           </Surface>
           
           <Surface style={[styles.metricCard, shadows.medium, { backgroundColor: theme.colors.secondaryContainer }]}>
-            {/* <View style={styles.metricIconContainer}>
-              <Building2 size={24} color={theme.colors.secondary} />
-            </View> */}
             <Text style={styles.metricLabel}>Occupancy Rate</Text>
             <Text style={styles.metricValue}>{occupancyRate}%</Text>
             <ProgressBar progress={occupancyRate/100} color={theme.colors.secondary} style={styles.progressBar} />
           </Surface>
         </View>
       </ScrollView>
-      
-      {/* Revenue Chart */}
-      <Surface style={[styles.chartCard, shadows.medium]}>
-        <Text style={styles.chartTitle}>Monthly Revenue</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <LineChart
-            data={chartData}
-            width={Dimensions.get('window').width > 500 ? 
-              Dimensions.get('window').width - 40 : 
-              Dimensions.get('window').width * 1.2}
-            height={220}
-            yAxisLabel="$"
-            chartConfig={{
-              backgroundColor: theme.colors.surface,
-              backgroundGradientFrom: theme.colors.surface,
-              backgroundGradientTo: theme.colors.surface,
-              decimalPlaces: 0,
-              color: () => theme.colors.primary,
-              labelColor: () => theme.colors.onSurfaceVariant,
-              style: {
-                borderRadius: 16,
-              },
-              propsForDots: {
-                r: '6',
-                strokeWidth: '2',
-                stroke: theme.colors.primary,
-              },
-            }}
-            bezier
-            style={{
-              marginVertical: 8,
-              borderRadius: 16,
-            }}
-          />
-        </ScrollView>
-      </Surface>
       
       {/* Quick Actions */}
       <Text style={styles.sectionTitle}>Quick Actions</Text>
@@ -383,13 +210,12 @@ export default function DashboardScreen() {
       
       {properties.length > 0 ? (
         <View style={styles.propertiesContainer}>
-          {/* {properties.map(property => (
+          {properties.map(property => (
             <PropertyCard key={property.id} property={property} />
-          ))} */}
+          ))}
         </View>
       ) : (
         <Surface style={[styles.emptyStateContainer, shadows.small]}>
-          {/* <Building2 size={48} color={theme.colors.onSurfaceVariant} /> */}
           <Text style={styles.emptyStateText}>No properties found</Text>
           <Button
             mode="contained"
@@ -418,13 +244,12 @@ export default function DashboardScreen() {
       
       {maintenanceRequests.length > 0 ? (
         <View style={styles.maintenanceContainer}>
-          {/* {maintenanceRequests.map(request => (
+          {maintenanceRequests.map(request => (
             <MaintenanceRequestCard key={request.id} request={request} />
-          ))} */}
+          ))}
         </View>
       ) : (
         <Surface style={[styles.emptyStateContainer, shadows.small]}>
-          {/* <Tool size={48} color={theme.colors.onSurfaceVariant} /> */}
           <Text style={styles.emptyStateText}>No maintenance requests</Text>
           <Button
             mode="contained"
@@ -435,51 +260,6 @@ export default function DashboardScreen() {
           </Button>
         </Surface>
       )}
-      
-      {/* Vouchers Section - Assuming it exists, if not, this won't apply */}
-      {/* If you have a similar vouchers mapping, comment it out:
-      {vouchers.length > 0 ? (
-        <View style={styles.vouchersContainer}> // Or similar style name
-          {vouchers.map(voucher => (
-            <VoucherCard key={voucher.id} voucher={voucher} />
-          ))}
-        </View>
-      ) : (
-        <Surface style={[styles.emptyStateContainer, shadows.small]}>
-          <DollarSign size={48} color={theme.colors.onSurfaceVariant} />
-          <Text style={styles.emptyStateText}>No vouchers found</Text>
-          <Button
-            mode="contained"
-            onPress={() => router.push('/finance/vouchers/add')}
-            icon="plus-circle-outline"
-          >
-            Add Voucher
-          </Button>
-        </Surface>
-      )}
-      */}
-      
-      {/* Recent Activity */}
-      <Text style={styles.sectionTitle}>Recent Activity</Text>
-      <Surface style={[styles.activityCard, shadows.small]}>
-        {recentActivity.map((activity, index) => (
-          <React.Fragment key={activity.id}>
-            <View style={styles.activityItem}>
-              {/* <View style={styles.activityIconContainer}>
-                <Clock size={16} color={theme.colors.onSurfaceVariant} />
-              </View> */}
-              <View style={styles.activityContent}>
-                <Text style={styles.activityText}>{activity.action}</Text>
-                <View style={styles.activityMeta}>
-                  <Text style={styles.activityUser}>{activity.user}</Text>
-                  <Text style={styles.activityTime}>{activity.timestamp}</Text>
-                </View>
-              </View>
-            </View>
-            {index < recentActivity.length - 1 && <Divider style={styles.activityDivider} />}
-          </React.Fragment>
-        ))}
-      </Surface>
     </ScrollView>
   );
 }
