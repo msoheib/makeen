@@ -5,11 +5,11 @@ import { useRouter } from 'expo-router';
 import { theme, spacing, shadows } from '@/lib/theme';
 import { LineChart } from 'react-native-chart-kit';
 import { Dimensions } from 'react-native';
-import { Wallet, Building2, PlusCircle, ArrowRight, Clock, Tool, DollarSign, AlertCircle, User } from 'lucide-react-native';
+// import { Wallet, Building2, PlusCircle, ArrowRight, Clock, Tool, DollarSign, AlertCircle, User } from 'lucide-react-native'; // Commented out
 import { useAppStore } from '@/lib/store';
-import PropertyCard from '@/components/PropertyCard';
-import MaintenanceRequestCard from '@/components/MaintenanceRequestCard';
-import VoucherCard from '@/components/VoucherCard';
+// import PropertyCard from '@/components/PropertyCard'; // Commented out
+// import MaintenanceRequestCard from '@/components/MaintenanceRequestCard'; // Commented out
+// import VoucherCard from '@/components/VoucherCard'; // Commented out
 import { Property, MaintenanceRequest, Voucher } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
 
@@ -253,36 +253,36 @@ export default function DashboardScreen() {
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View style={styles.metricsContainer}>
           <Surface style={[styles.metricCard, shadows.medium, { backgroundColor: theme.colors.primaryContainer }]}>
-            <View style={styles.metricIconContainer}>
+            {/* <View style={styles.metricIconContainer}>
               <Wallet size={24} color={theme.colors.primary} />
-            </View>
+            </View> */}
             <Text style={styles.metricLabel}>Rent Collected</Text>
             <Text style={styles.metricValue}>${rentCollected.toLocaleString()}</Text>
             <Text style={styles.metricTrend}>+5% from last month</Text>
           </Surface>
           
           <Surface style={[styles.metricCard, shadows.medium, { backgroundColor: theme.colors.errorContainer }]}>
-            <View style={styles.metricIconContainer}>
+            {/* <View style={styles.metricIconContainer}>
               <AlertCircle size={24} color={theme.colors.error} />
-            </View>
+            </View> */}
             <Text style={styles.metricLabel}>Pending Payments</Text>
             <Text style={styles.metricValue}>${pendingPayments.toLocaleString()}</Text>
             <Text style={styles.metricTrend}>-2% from last month</Text>
           </Surface>
           
           <Surface style={[styles.metricCard, shadows.medium, { backgroundColor: theme.colors.tertiaryContainer }]}>
-            <View style={styles.metricIconContainer}>
+            {/* <View style={styles.metricIconContainer}>
               <DollarSign size={24} color={theme.colors.tertiary} />
-            </View>
+            </View> */}
             <Text style={styles.metricLabel}>Collection Rate</Text>
             <Text style={styles.metricValue}>{collectionRate}%</Text>
             <ProgressBar progress={collectionRate/100} color={theme.colors.tertiary} style={styles.progressBar} />
           </Surface>
           
           <Surface style={[styles.metricCard, shadows.medium, { backgroundColor: theme.colors.secondaryContainer }]}>
-            <View style={styles.metricIconContainer}>
+            {/* <View style={styles.metricIconContainer}>
               <Building2 size={24} color={theme.colors.secondary} />
-            </View>
+            </View> */}
             <Text style={styles.metricLabel}>Occupancy Rate</Text>
             <Text style={styles.metricValue}>{occupancyRate}%</Text>
             <ProgressBar progress={occupancyRate/100} color={theme.colors.secondary} style={styles.progressBar} />
@@ -331,9 +331,7 @@ export default function DashboardScreen() {
       <View style={styles.quickActionsContainer}>
         <Button
           mode="outlined"
-          icon={({ size, color }) => (
-            <Building2 size={size} color={color} />
-          )}
+          icon="office-building-outline"
           style={styles.actionButton}
           onPress={() => router.push('/properties/add')}
         >
@@ -342,9 +340,7 @@ export default function DashboardScreen() {
         
         <Button
           mode="outlined"
-          icon={({ size, color }) => (
-            <User size={size} color={color} />
-          )}
+          icon="account-plus-outline"
           style={styles.actionButton}
           onPress={() => router.push('/tenants/add')}
         >
@@ -353,9 +349,7 @@ export default function DashboardScreen() {
         
         <Button
           mode="outlined"
-          icon={({ size, color }) => (
-            <Tool size={size} color={color} />
-          )}
+          icon="tools"
           style={styles.actionButton}
           onPress={() => router.push('/maintenance/add')}
         >
@@ -364,9 +358,7 @@ export default function DashboardScreen() {
         
         <Button
           mode="outlined"
-          icon={({ size, color }) => (
-            <DollarSign size={size} color={color} />
-          )}
+          icon="cash-plus"
           style={styles.actionButton}
           onPress={() => router.push('/finance/vouchers/add')}
         >
@@ -383,9 +375,7 @@ export default function DashboardScreen() {
           style={styles.viewAllButton}
           labelStyle={styles.viewAllLabel}
           contentStyle={{ flexDirection: 'row-reverse' }}
-          icon={({ size, color }) => (
-            <ArrowRight size={size} color={color} />
-          )}
+          icon="arrow-right"
         >
           View All
         </Button>
@@ -393,20 +383,18 @@ export default function DashboardScreen() {
       
       {properties.length > 0 ? (
         <View style={styles.propertiesContainer}>
-          {properties.map(property => (
+          {/* {properties.map(property => (
             <PropertyCard key={property.id} property={property} />
-          ))}
+          ))} */}
         </View>
       ) : (
         <Surface style={[styles.emptyStateContainer, shadows.small]}>
-          <Building2 size={48} color={theme.colors.onSurfaceVariant} />
+          {/* <Building2 size={48} color={theme.colors.onSurfaceVariant} /> */}
           <Text style={styles.emptyStateText}>No properties found</Text>
           <Button
             mode="contained"
             onPress={() => router.push('/properties/add')}
-            icon={({ size, color }) => (
-              <PlusCircle size={size} color={color} />
-            )}
+            icon="plus-circle-outline"
           >
             Add Property
           </Button>
@@ -422,9 +410,7 @@ export default function DashboardScreen() {
           style={styles.viewAllButton}
           labelStyle={styles.viewAllLabel}
           contentStyle={{ flexDirection: 'row-reverse' }}
-          icon={({ size, color }) => (
-            <ArrowRight size={size} color={color} />
-          )}
+          icon="arrow-right"
         >
           View All
         </Button>
@@ -432,25 +418,46 @@ export default function DashboardScreen() {
       
       {maintenanceRequests.length > 0 ? (
         <View style={styles.maintenanceContainer}>
-          {maintenanceRequests.map(request => (
+          {/* {maintenanceRequests.map(request => (
             <MaintenanceRequestCard key={request.id} request={request} />
-          ))}
+          ))} */}
         </View>
       ) : (
         <Surface style={[styles.emptyStateContainer, shadows.small]}>
-          <Tool size={48} color={theme.colors.onSurfaceVariant} />
+          {/* <Tool size={48} color={theme.colors.onSurfaceVariant} /> */}
           <Text style={styles.emptyStateText}>No maintenance requests</Text>
           <Button
             mode="contained"
             onPress={() => router.push('/maintenance/add')}
-            icon={({ size, color }) => (
-              <PlusCircle size={size} color={color} />
-            )}
+            icon="plus-circle-outline"
           >
             Create Request
           </Button>
         </Surface>
       )}
+      
+      {/* Vouchers Section - Assuming it exists, if not, this won't apply */}
+      {/* If you have a similar vouchers mapping, comment it out:
+      {vouchers.length > 0 ? (
+        <View style={styles.vouchersContainer}> // Or similar style name
+          {vouchers.map(voucher => (
+            <VoucherCard key={voucher.id} voucher={voucher} />
+          ))}
+        </View>
+      ) : (
+        <Surface style={[styles.emptyStateContainer, shadows.small]}>
+          <DollarSign size={48} color={theme.colors.onSurfaceVariant} />
+          <Text style={styles.emptyStateText}>No vouchers found</Text>
+          <Button
+            mode="contained"
+            onPress={() => router.push('/finance/vouchers/add')}
+            icon="plus-circle-outline"
+          >
+            Add Voucher
+          </Button>
+        </Surface>
+      )}
+      */}
       
       {/* Recent Activity */}
       <Text style={styles.sectionTitle}>Recent Activity</Text>
@@ -458,9 +465,9 @@ export default function DashboardScreen() {
         {recentActivity.map((activity, index) => (
           <React.Fragment key={activity.id}>
             <View style={styles.activityItem}>
-              <View style={styles.activityIconContainer}>
+              {/* <View style={styles.activityIconContainer}>
                 <Clock size={16} color={theme.colors.onSurfaceVariant} />
-              </View>
+              </View> */}
               <View style={styles.activityContent}>
                 <Text style={styles.activityText}>{activity.action}</Text>
                 <View style={styles.activityMeta}>

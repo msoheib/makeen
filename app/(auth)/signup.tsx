@@ -38,9 +38,11 @@ export default function SignUpScreen() {
     setLoading(true);
     setError(null);
     
+    console.log('Attempting signup with:', { email, firstName, lastName }); // Log input data
+    
     try {
       // Create user in Supabase Auth
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error: authError } = await supabase.auth.signUp({ // Renamed error to authError
         email,
         password,
         options: {
@@ -51,11 +53,15 @@ export default function SignUpScreen() {
         }
       });
       
-      if (error) {
-        throw error;
+      console.log('Supabase auth.signUp response:', { data, authError }); // Log Supabase auth response
+      
+      if (authError) { // Changed from error to authError
+        console.error('Supabase auth.signUp error:', authError);
+        throw authError; // Changed from error to authError
       }
       
       if (data.user) {
+        console.log('User created, attempting to create profile for user ID:', data.user.id);
         // Create user profile
         const { error: profileError } = await supabase
           .from('profiles')
@@ -68,15 +74,25 @@ export default function SignUpScreen() {
               role: 'tenant', // Default role for new sign-ups
             }
           ]);
+        
+        console.log('Supabase profiles.insert response:', { profileError }); // Log profile insert response
           
         if (profileError) {
+          console.error('Supabase profiles.insert error:', profileError);
           throw profileError;
         }
         
+        console.log('Signup and profile creation successful. Navigating to sign in.');
         // Navigate back to sign in
         router.replace('/(auth)');
+      } else {
+        // This case might occur if email confirmation is pending and data.user is null
+        // or if there's an issue but no explicit error was thrown by supabase.auth.signUp
+        console.warn('Supabase auth.signUp did not return a user object, but no error was thrown. Email confirmation might be pending or another issue occurred.');
+        setError('Signup initiated. Please check your email to confirm your account, or try again if no email is received.');
       }
     } catch (error: any) {
+      console.error('Error in handleSignUp:', error); // Log the caught error
       setError(error.message || 'Failed to sign up. Please try again.');
     } finally {
       setLoading(false);
@@ -122,9 +138,7 @@ export default function SignUpScreen() {
                 onChangeText={setFirstName}
                 mode="outlined"
                 style={styles.input}
-                left={<TextInput.Icon icon={({ size, color }) => (
-                  <User size={size} color={color} />
-                )} />}
+                left={<TextInput.Icon icon="account-outline" />}
               />
             </View>
             
@@ -135,9 +149,7 @@ export default function SignUpScreen() {
                 onChangeText={setLastName}
                 mode="outlined"
                 style={styles.input}
-                left={<TextInput.Icon icon={({ size, color }) => (
-                  <User size={size} color={color} />
-                )} />}
+                left={<TextInput.Icon icon="account-outline" />}
               />
             </View>
           </View>
@@ -151,9 +163,7 @@ export default function SignUpScreen() {
               keyboardType="email-address"
               autoCapitalize="none"
               style={styles.input}
-              left={<TextInput.Icon icon={({ size, color }) => (
-                <Mail size={size} color={color} />
-              )} />}
+              left={<TextInput.Icon icon="email-outline" />}
             />
           </View>
           
@@ -165,14 +175,11 @@ export default function SignUpScreen() {
               mode="outlined"
               secureTextEntry={secureTextEntry}
               style={styles.input}
-              left={<TextInput.Icon icon={({ size, color }) => (
-                <Lock size={size} color={color} />
-              )} />}
-              right={<TextInput.Icon icon={({ size, color }) => (
-                secureTextEntry ? 
-                  <Eye size={size} color={color} /> : 
-                  <EyeOff size={size} color={color} />
-              )} onPress={() => setSecureTextEntry(!secureTextEntry)} />}
+              left={<TextInput.Icon icon="lock-outline" />}
+              right={<TextInput.Icon 
+                icon={secureTextEntry ? "eye-outline" : "eye-off-outline"}
+                onPress={() => setSecureTextEntry(!secureTextEntry)} 
+              />}
             />
           </View>
           
@@ -184,14 +191,11 @@ export default function SignUpScreen() {
               mode="outlined"
               secureTextEntry={confirmSecureTextEntry}
               style={styles.input}
-              left={<TextInput.Icon icon={({ size, color }) => (
-                <Lock size={size} color={color} />
-              )} />}
-              right={<TextInput.Icon icon={({ size, color }) => (
-                confirmSecureTextEntry ? 
-                  <Eye size={size} color={color} /> : 
-                  <EyeOff size={size} color={color} />
-              )} onPress={() => setConfirmSecureTextEntry(!confirmSecureTextEntry)} />}
+              left={<TextInput.Icon icon="lock-outline" />}
+              right={<TextInput.Icon 
+                icon={confirmSecureTextEntry ? "eye-outline" : "eye-off-outline"}
+                onPress={() => setConfirmSecureTextEntry(!confirmSecureTextEntry)} 
+              />}
             />
           </View>
           

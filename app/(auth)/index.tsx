@@ -28,36 +28,57 @@ export default function SignInScreen() {
     setLoading(true);
     setError(null);
     
+    console.log('Attempting sign-in for email:', email);
+    
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
-      if (error) {
-        throw error;
+      console.log('Supabase auth.signInWithPassword response:', { data, signInError });
+      
+      if (signInError) {
+        console.error('Supabase auth.signInWithPassword error:', signInError);
+        throw signInError;
       }
       
       if (data.user) {
+        console.log('Sign-in successful for user ID:', data.user.id, 'Attempting to fetch profile.');
         // Fetch user profile details
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', data.user.id)
           .single();
+        
+        console.log('Supabase profiles.select response:', { profileData, profileError });
           
         if (profileError) {
+          console.error('Supabase profiles.select error (likely cause of JSON object/406 error):', profileError);
           throw profileError;
         }
         
+        if (!profileData) {
+          console.error('Profile data is null or undefined even after a successful select without error. This should not happen if profileError is null.');
+          throw new Error('User profile not found after sign-in, but no specific database error was returned.');
+        }
+        
+        console.log('Profile fetched successfully:', profileData);
         // Set user in global state
         setUser(profileData);
         setAuthenticated(true);
         
         // Navigate to the main app
         router.replace('/(tabs)');
+      } else {
+        // This case should ideally not be reached if signInError is null, 
+        // as data.user should be present on successful sign-in.
+        console.warn('Supabase auth.signInWithPassword did not return a user object, but no explicit error was thrown.');
+        setError('Sign-in failed: No user data returned.');
       }
     } catch (error: any) {
+      console.error('Error in handleSignIn:', error);
       setError(error.message || 'Failed to sign in. Please try again.');
     } finally {
       setLoading(false);
@@ -100,9 +121,7 @@ export default function SignInScreen() {
               keyboardType="email-address"
               autoCapitalize="none"
               style={styles.input}
-              left={<TextInput.Icon icon={({ size, color }) => (
-                <Mail size={size} color={color} />
-              )} />}
+              left={<TextInput.Icon icon="email-outline" />}
             />
           </View>
           
@@ -114,14 +133,11 @@ export default function SignInScreen() {
               mode="outlined"
               secureTextEntry={secureTextEntry}
               style={styles.input}
-              left={<TextInput.Icon icon={({ size, color }) => (
-                <Lock size={size} color={color} />
-              )} />}
-              right={<TextInput.Icon icon={({ size, color }) => (
-                secureTextEntry ? 
-                  <Eye size={size} color={color} /> : 
-                  <EyeOff size={size} color={color} />
-              )} onPress={() => setSecureTextEntry(!secureTextEntry)} />}
+              left={<TextInput.Icon icon="lock-outline" />}
+              right={<TextInput.Icon 
+                icon={secureTextEntry ? "eye-outline" : "eye-off-outline"}
+                onPress={() => setSecureTextEntry(!secureTextEntry)} 
+              />}
             />
           </View>
           
