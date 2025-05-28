@@ -1,13 +1,23 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { Home, Building, Tool, Receipt, FileText, Settings } from 'lucide-react-native';
 import { useTheme } from 'react-native-paper';
 import { Platform } from 'react-native';
+import { 
+  Home,
+  Building2,
+  Tool,
+  Receipt,
+  FileText,
+  Settings,
+  Users,
+  DollarSign,
+  MessageSquare,
+  Bell
+} from 'lucide-react-native';
 
 export default function TabLayout() {
   const theme = useTheme();
 
-  // Common tab screen options
   const screenOptions = {
     headerShown: false,
     tabBarActiveTintColor: theme.colors.primary,
@@ -42,7 +52,7 @@ export default function TabLayout() {
         options={{
           title: 'Properties',
           tabBarIcon: ({ color, size }) => (
-            <Building size={size} color={color} />
+            <Building2 size={size} color={color} />
           ),
         }}
       />
@@ -60,16 +70,16 @@ export default function TabLayout() {
         options={{
           title: 'Finance',
           tabBarIcon: ({ color, size }) => (
-            <Receipt size={size} color={color} />
+            <DollarSign size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="reports"
+        name="tenants"
         options={{
-          title: 'Reports',
+          title: 'Tenants',
           tabBarIcon: ({ color, size }) => (
-            <FileText size={size} color={color} />
+            <Users size={size} color={color} />
           ),
         }}
       />
