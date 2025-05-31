@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
-import { Text, TextInput, Button, Divider } from 'react-native-paper';
+import { Text, TextInput, Button, Divider, SegmentedButtons } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
 import { Lock, Mail, Eye, EyeOff, User, ChevronLeft } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
+import { UserRole } from '@/lib/types';
 
 export default function SignUpScreen() {
   const router = useRouter();
@@ -13,6 +14,7 @@ export default function SignUpScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [role, setRole] = useState<UserRole>('tenant');
   const [secureTextEntry, setSecureTextEntry] = useState(true);
   const [confirmSecureTextEntry, setConfirmSecureTextEntry] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -38,31 +40,24 @@ export default function SignUpScreen() {
     setLoading(true);
     setError(null);
     
-    console.log('Attempting signup with:', { email, firstName, lastName }); // Log input data
-    
     try {
       // Create user in Supabase Auth
-      const { data, error: authError } = await supabase.auth.signUp({ // Renamed error to authError
+      const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             first_name: firstName,
             last_name: lastName,
+            role: role // Include selected role
           }
         }
       });
       
-      console.log('Supabase auth.signUp response:', { data, authError }); // Log Supabase auth response
-      
-      if (authError) { // Changed from error to authError
-        console.error('Supabase auth.signUp error:', authError);
-        throw authError; // Changed from error to authError
-      }
+      if (authError) throw authError;
       
       if (data.user) {
-        console.log('User created, attempting to create profile for user ID:', data.user.id);
-        // Create user profile
+        // Create user profile with selected role
         const { error: profileError } = await supabase
           .from('profiles')
           .insert([
@@ -71,28 +66,19 @@ export default function SignUpScreen() {
               first_name: firstName,
               last_name: lastName,
               email: email,
-              role: 'tenant', // Default role for new sign-ups
+              role: role, // Set the selected role
             }
           ]);
-        
-        console.log('Supabase profiles.insert response:', { profileError }); // Log profile insert response
           
-        if (profileError) {
-          console.error('Supabase profiles.insert error:', profileError);
-          throw profileError;
-        }
+        if (profileError) throw profileError;
         
-        console.log('Signup and profile creation successful. Navigating to sign in.');
         // Navigate back to sign in
         router.replace('/(auth)');
       } else {
-        // This case might occur if email confirmation is pending and data.user is null
-        // or if there's an issue but no explicit error was thrown by supabase.auth.signUp
-        console.warn('Supabase auth.signUp did not return a user object, but no error was thrown. Email confirmation might be pending or another issue occurred.');
-        setError('Signup initiated. Please check your email to confirm your account, or try again if no email is received.');
+        setError('Signup initiated. Please check your email to confirm your account.');
       }
     } catch (error: any) {
-      console.error('Error in handleSignUp:', error); // Log the caught error
+      console.error('Error in handleSignUp:', error);
       setError(error.message || 'Failed to sign up. Please try again.');
     } finally {
       setLoading(false);
@@ -130,6 +116,21 @@ export default function SignUpScreen() {
         )}
         
         <View style={styles.formContainer}>
+          {/* Role Selection */}
+          <View style={styles.roleContainer}>
+            <Text style={styles.roleLabel}>I am a:</Text>
+            <SegmentedButtons
+              value={role}
+              onValueChange={value => setRole(value as UserRole)}
+              buttons={[
+                { value: 'tenant', label: 'Tenant' },
+                { value: 'owner', label: 'Property Owner' },
+                { value: 'manager', label: 'Manager' }
+              ]}
+              style={styles.roleButtons}
+            />
+          </View>
+          
           <View style={styles.nameRow}>
             <View style={[styles.inputContainer, styles.halfInput]}>
               <TextInput
@@ -254,6 +255,18 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: theme.colors.onSurfaceVariant,
+  },
+  roleContainer: {
+    marginBottom: spacing.m,
+  },
+  roleLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: spacing.s,
+    color: theme.colors.onSurface,
+  },
+  roleButtons: {
+    marginBottom: spacing.m,
   },
   errorContainer: {
     backgroundColor: theme.colors.errorContainer,
