@@ -5,11 +5,18 @@ import { Platform } from 'react-native';
 import { 
   Home,
   Building2,
-  Tool,
   DollarSign,
   Users,
   Settings
 } from 'lucide-react-native';
+
+console.log('--- Lucide Icon Imports ---');
+console.log('Home icon:', Home);
+console.log('Building2 icon:', Building2);
+console.log('DollarSign icon:', DollarSign);
+console.log('Users icon:', Users);
+console.log('Settings icon:', Settings);
+console.log('--- End Lucide Icon Imports ---');
 
 export default function TabLayout() {
   const theme = useTheme();
@@ -57,7 +64,7 @@ export default function TabLayout() {
         options={{
           title: 'Maintenance',
           tabBarIcon: ({ color, size }) => (
-            <Tool size={size} color={color} />
+            <Settings size={size} color={color} />
           ),
         }}
       />

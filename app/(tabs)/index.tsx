@@ -8,6 +8,7 @@ import { Dimensions } from 'react-native';
 import { useAppStore } from '@/lib/store';
 import { Property, MaintenanceRequest, Voucher } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
+import { UserCircle2 } from 'lucide-react-native';
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -118,10 +119,18 @@ export default function DashboardScreen() {
           <Text style={styles.userName}>{user?.first_name || 'User'}</Text>
         </View>
         <View style={styles.profileContainer}>
-          <Image
-            source={{ uri: user?.avatar_url || 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg' }}
-            style={styles.profileImage}
-          />
+          {user?.avatar_url ? (
+            <Image
+              source={{ uri: user.avatar_url }}
+              style={styles.profileImage}
+            />
+          ) : (
+            <UserCircle2
+              size={48}
+              color={theme.colors.onSurfaceVariant}
+              strokeWidth={1.5}
+            />
+          )}
         </View>
       </View>
       
