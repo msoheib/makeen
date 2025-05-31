@@ -24,7 +24,11 @@ export default function FinanceScreen() {
       if (activeTab === 'vouchers') {
         const { data, error } = await supabase
           .from('vouchers')
-          .select('*')
+          .select(`
+            *,
+            property:properties(title),
+            tenant:profiles(first_name, last_name)
+          `)
           .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -32,7 +36,11 @@ export default function FinanceScreen() {
       } else {
         const { data, error } = await supabase
           .from('invoices')
-          .select('*')
+          .select(`
+            *,
+            property:properties(title),
+            tenant:profiles(first_name, last_name)
+          `)
           .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -44,6 +52,16 @@ export default function FinanceScreen() {
       setLoading(false);
     }
   };
+
+  const filteredData = activeTab === 'vouchers' 
+    ? vouchers.filter(v => 
+        v.voucher_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        v.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : invoices.filter(i => 
+        i.invoice_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        i.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
 
   return (
     <View style={styles.container}>
@@ -77,8 +95,8 @@ export default function FinanceScreen() {
             <Text>Loading {activeTab}...</Text>
           </Surface>
         ) : activeTab === 'vouchers' ? (
-          vouchers.length > 0 ? (
-            vouchers.map(voucher => (
+          filteredData.length > 0 ? (
+            filteredData.map(voucher => (
               <VoucherCard 
                 key={voucher.id} 
                 voucher={voucher}
@@ -91,8 +109,8 @@ export default function FinanceScreen() {
             </Surface>
           )
         ) : (
-          invoices.length > 0 ? (
-            invoices.map(invoice => (
+          filteredData.length > 0 ? (
+            filteredData.map(invoice => (
               <Surface key={invoice.id} style={[styles.invoiceCard, shadows.small]}>
                 <List.Item
                   title={invoice.invoice_number}
