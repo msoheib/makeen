@@ -8,7 +8,11 @@ import {
   Tool,
   DollarSign,
   FileText,
-  Settings
+  Settings,
+  Users,
+  Bell,
+  MessageSquare,
+  ClipboardList
 } from 'lucide-react-native';
 import { useAppStore } from '@/lib/store';
 
@@ -34,7 +38,7 @@ export default function TabLayout() {
     },
   };
 
-  // Show different tabs based on user role
+  // Tenant navigation
   if (user?.role === 'tenant') {
     return (
       <Tabs screenOptions={screenOptions}>
@@ -87,7 +91,69 @@ export default function TabLayout() {
     );
   }
 
-  // Default tabs for managers and owners
+  // Property owner navigation
+  if (user?.role === 'owner') {
+    return (
+      <Tabs screenOptions={screenOptions}>
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'Dashboard',
+            tabBarIcon: ({ size, color }) => (
+              <Home size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="properties"
+          options={{
+            title: 'Properties',
+            tabBarIcon: ({ size, color }) => (
+              <Building2 size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="tenants"
+          options={{
+            title: 'Tenants',
+            tabBarIcon: ({ size, color }) => (
+              <Users size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="maintenance"
+          options={{
+            title: 'Maintenance',
+            tabBarIcon: ({ size, color }) => (
+              <Bell size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="finance"
+          options={{
+            title: 'Finance',
+            tabBarIcon: ({ size, color }) => (
+              <DollarSign size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="settings"
+          options={{
+            title: 'Settings',
+            tabBarIcon: ({ size, color }) => (
+              <Settings size={size} color={color} />
+            ),
+          }}
+        />
+      </Tabs>
+    );
+  }
+
+  // Manager navigation (default)
   return (
     <Tabs screenOptions={screenOptions}>
       <Tabs.Screen
@@ -109,6 +175,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="tenants"
+        options={{
+          title: 'Tenants',
+          tabBarIcon: ({ size, color }) => (
+            <Users size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="maintenance"
         options={{
           title: 'Maintenance',
@@ -123,6 +198,15 @@ export default function TabLayout() {
           title: 'Finance',
           tabBarIcon: ({ size, color }) => (
             <DollarSign size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="reports"
+        options={{
+          title: 'Reports',
+          tabBarIcon: ({ size, color }) => (
+            <ClipboardList size={size} color={color} />
           ),
         }}
       />
