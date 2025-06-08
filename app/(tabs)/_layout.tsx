@@ -5,9 +5,7 @@ import { Platform } from 'react-native';
 import { 
   Home,
   Building2,
-  Tool,
   DollarSign,
-  FileText,
   Settings,
   Users,
   Bell,
@@ -56,7 +54,7 @@ export default function TabLayout() {
           options={{
             title: 'Maintenance',
             tabBarIcon: ({ size, color }) => (
-              <Tool size={size} color={color} />
+              <Settings size={size} color={color} />
             ),
           }}
         />
@@ -74,7 +72,7 @@ export default function TabLayout() {
           options={{
             title: 'Documents',
             tabBarIcon: ({ size, color }) => (
-              <FileText size={size} color={color} />
+              <Building2 size={size} color={color} />
             ),
           }}
         />
@@ -188,7 +186,7 @@ export default function TabLayout() {
         options={{
           title: 'Maintenance',
           tabBarIcon: ({ size, color }) => (
-            <Tool size={size} color={color} />
+            <Settings size={size} color={color} />
           ),
         }}
       />

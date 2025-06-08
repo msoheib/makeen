@@ -49,33 +49,58 @@ export default function DashboardScreen() {
   };
 
   const fetchTenantData = async () => {
-    // Fetch tenant's rented properties
-    const { data: propertiesData } = await supabase
-      .from('properties')
-      .select('*')
-      .eq('status', 'rented')
-      .eq('tenant_id', user?.id)
-      .limit(3);
+    try {
+      // Step 1: Fetch active contracts for the tenant to get property IDs
+      const { data: contracts, error: contractsError } = await supabase
+        .from('contracts')
+        .select('property_id')
+        .eq('tenant_id', user.id)
+        .eq('status', 'active');
 
-    // Fetch tenant's maintenance requests
-    const { data: maintenanceData } = await supabase
-      .from('maintenance_requests')
-      .select('*')
-      .eq('tenant_id', user?.id)
-      .order('created_at', { ascending: false })
-      .limit(3);
+      if (contractsError) {
+        throw new Error(`Error fetching tenant contracts: ${contractsError.message}`);
+      }
+      
+      if (contracts && contracts.length > 0) {
+        const propertyIds = contracts.map(c => c.property_id);
+        
+        // Step 2: Fetch properties using the retrieved IDs
+        const { data: propertiesData, error: propertiesError } = await supabase
+          .from('properties')
+          .select('*')
+          .in('id', propertyIds)
+          .limit(3);
+          
+        if (propertiesError) {
+          throw new Error(`Error fetching tenant properties: ${propertiesError.message}`);
+        }
+        if (propertiesData) setProperties(propertiesData);
+      } else {
+        // No active contracts, so no properties to show
+        setProperties([]);
+      }
 
-    // Fetch tenant's payment history
-    const { data: vouchersData } = await supabase
-      .from('vouchers')
-      .select('*')
-      .eq('tenant_id', user?.id)
-      .order('created_at', { ascending: false })
-      .limit(3);
+      // Fetch maintenance requests for the tenant
+      const { data: maintenanceData, error: maintenanceError } = await supabase
+        .from('maintenance_requests')
+        .select('*')
+        .eq('tenant_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(3);
 
-    if (propertiesData) setProperties(propertiesData);
-    if (maintenanceData) setMaintenanceRequests(maintenanceData);
-    if (vouchersData) setVouchers(vouchersData);
+      // Fetch tenant's payment history
+      const { data: vouchersData } = await supabase
+        .from('vouchers')
+        .select('*')
+        .eq('tenant_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      if (maintenanceData) setMaintenanceRequests(maintenanceData);
+      if (vouchersData) setVouchers(vouchersData);
+    } catch (error) {
+      console.error('Error fetching tenant data:', error);
+    }
   };
 
   const fetchOwnerData = async () => {
@@ -197,7 +222,7 @@ export default function DashboardScreen() {
           <>
             <Button
               mode="outlined"
-              icon={() => <Tool size={20} color={theme.colors.primary} />}
+              icon={() => <Building2 size={20} color={theme.colors.primary} />}
               style={styles.actionButton}
               onPress={() => router.push('/maintenance/add')}
             >
@@ -205,7 +230,7 @@ export default function DashboardScreen() {
             </Button>
             <Button
               mode="outlined"
-              icon={() => <DollarSign size={20} color={theme.colors.primary} />}
+              icon={() => <Building2 size={20} color={theme.colors.primary} />}
               style={styles.actionButton}
               onPress={() => router.push('/payments')}
             >
@@ -213,7 +238,7 @@ export default function DashboardScreen() {
             </Button>
             <Button
               mode="outlined"
-              icon={() => <FileText size={20} color={theme.colors.primary} />}
+              icon={() => <Building2 size={20} color={theme.colors.primary} />}
               style={styles.actionButton}
               onPress={() => router.push('/documents')}
             >
@@ -235,17 +260,17 @@ export default function DashboardScreen() {
             </Button>
             <Button
               mode="outlined"
-              icon={() => <Bell size={20} color={theme.colors.primary} />}
+              icon={() => <Building2 size={20} color={theme.colors.primary} />}
               style={styles.actionButton}
-              onPress={() => router.push('/maintenance')}
+              onPress={() => router.push('/notifications')}
             >
-              View Issues
+              Notifications
             </Button>
             <Button
               mode="outlined"
-              icon={() => <DollarSign size={20} color={theme.colors.primary} />}
+              icon={() => <Building2 size={20} color={theme.colors.primary} />}
               style={styles.actionButton}
-              onPress={() => router.push('/finance')}
+              onPress={() => router.push('/finance/reports')}
             >
               Financials
             </Button>
@@ -265,7 +290,7 @@ export default function DashboardScreen() {
             </Button>
             <Button
               mode="outlined"
-              icon={() => <Users size={20} color={theme.colors.primary} />}
+              icon={() => <Building2 size={20} color={theme.colors.primary} />}
               style={styles.actionButton}
               onPress={() => router.push('/tenants/add')}
             >
@@ -273,7 +298,7 @@ export default function DashboardScreen() {
             </Button>
             <Button
               mode="outlined"
-              icon={() => <Tool size={20} color={theme.colors.primary} />}
+              icon={() => <Building2 size={20} color={theme.colors.primary} />}
               style={styles.actionButton}
               onPress={() => router.push('/maintenance/add')}
             >
@@ -281,7 +306,7 @@ export default function DashboardScreen() {
             </Button>
             <Button
               mode="outlined"
-              icon={() => <DollarSign size={20} color={theme.colors.primary} />}
+              icon={() => <Building2 size={20} color={theme.colors.primary} />}
               style={styles.actionButton}
               onPress={() => router.push('/finance/vouchers/add')}
             >
