@@ -16,6 +16,7 @@ interface ModernHeaderProps {
   userAvatar?: string;
   userName?: string;
   showLogo?: boolean;
+  variant?: 'light' | 'dark';
 }
 
 export default function ModernHeader({
@@ -29,14 +30,20 @@ export default function ModernHeader({
   onMenuPress,
   userAvatar,
   userName,
-  showLogo = false
+  showLogo = false,
+  variant = 'dark'
 }: ModernHeaderProps) {
+  const isDark = variant === 'dark';
+  const textColor = isDark ? '#FFFFFF' : theme.colors.onSurface;
+  const iconColor = isDark ? '#FFFFFF' : theme.colors.onSurfaceVariant;
+  const backgroundColor = isDark ? '#1E293B' : theme.colors.background;
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor }]}>
       <View style={styles.topRow}>
         {showMenu && (
           <IconButton
-            icon={() => <Menu size={24} color={theme.colors.onSurface} />}
+            icon={() => <Menu size={24} color={iconColor} />}
             onPress={onMenuPress}
             style={styles.menuButton}
           />
@@ -48,21 +55,21 @@ export default function ModernHeader({
               <View style={[styles.logoSquare, { backgroundColor: theme.colors.primary }]} />
               <View style={[styles.logoSquare, { backgroundColor: theme.colors.secondary }]} />
             </View>
-            <Text style={styles.logoText}>LandlordStudio</Text>
+            <Text style={[styles.logoText, { color: textColor }]}>LandlordStudio</Text>
           </View>
         )}
         
         <View style={styles.rightSection}>
           {showSearch && (
             <IconButton
-              icon={() => <Search size={24} color={theme.colors.onSurfaceVariant} />}
+              icon={() => <Search size={24} color={iconColor} />}
               onPress={onSearchPress}
               style={styles.iconButton}
             />
           )}
           {showNotifications && (
             <IconButton
-              icon={() => <Bell size={24} color={theme.colors.onSurfaceVariant} />}
+              icon={() => <Bell size={24} color={iconColor} />}
               onPress={onNotificationPress}
               style={styles.iconButton}
             />
@@ -80,15 +87,17 @@ export default function ModernHeader({
         <View style={styles.titleSection}>
           {title && (
             <View>
-              <Text style={styles.title}>{title}</Text>
+              <Text style={[styles.title, { color: textColor }]}>{title}</Text>
               {subtitle && (
-                <Text style={styles.subtitle}>{subtitle}</Text>
+                <Text style={[styles.subtitle, { color: isDark ? '#94A3B8' : theme.colors.onSurfaceVariant }]}>
+                  {subtitle}
+                </Text>
               )}
             </View>
           )}
           {userName && (
             <View>
-              <Text style={styles.greeting}>Hello {userName},</Text>
+              <Text style={[styles.greeting, { color: textColor }]}>Hello {userName},</Text>
             </View>
           )}
         </View>
@@ -99,7 +108,6 @@ export default function ModernHeader({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: theme.colors.background,
     paddingTop: Platform.OS === 'ios' ? spacing.xl : spacing.m,
     paddingHorizontal: spacing.m,
     paddingBottom: spacing.m,
@@ -133,7 +141,6 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 18,
     fontWeight: '600',
-    color: theme.colors.onSurface,
   },
   rightSection: {
     flexDirection: 'row',
@@ -145,17 +152,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: theme.colors.onSurface,
   },
   subtitle: {
     fontSize: 16,
-    color: theme.colors.onSurfaceVariant,
     marginTop: 4,
   },
   greeting: {
     fontSize: 32,
     fontWeight: '700',
-    color: theme.colors.onSurface,
   },
   iconButton: {
     margin: 0,

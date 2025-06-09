@@ -93,6 +93,7 @@ export default function PropertiesScreen() {
         title="Organisation"
         subtitle="Manage your properties"
         showLogo={true}
+        variant="dark"
         onNotificationPress={() => router.push('/notifications')}
         onMenuPress={() => router.push('/menu')}
       />

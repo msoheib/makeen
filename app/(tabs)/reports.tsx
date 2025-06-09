@@ -218,6 +218,7 @@ export default function ReportsScreen() {
         title="Reports"
         subtitle="Analytics and insights"
         showLogo={true}
+        variant="dark"
         onNotificationPress={() => router.push('/notifications')}
         onMenuPress={() => router.push('/menu')}
       />

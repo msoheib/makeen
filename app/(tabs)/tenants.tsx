@@ -108,6 +108,7 @@ export default function TenantsScreen() {
         title="Tenants"
         subtitle="Manage your tenants"
         showLogo={true}
+        variant="dark"
         onNotificationPress={() => router.push('/notifications')}
         onMenuPress={() => router.push('/menu')}
       />

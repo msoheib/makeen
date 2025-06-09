@@ -60,6 +60,7 @@ export default function DashboardScreen() {
       <ModernHeader
         userName={user?.first_name || 'John'}
         showLogo={true}
+        variant="dark"
         onNotificationPress={() => router.push('/notifications')}
         onMenuPress={() => router.push('/menu')}
       />

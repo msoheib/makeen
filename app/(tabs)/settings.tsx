@@ -33,6 +33,7 @@ export default function MoreScreen() {
         title="More"
         subtitle="Settings and tools"
         showLogo={true}
+        variant="dark"
         onNotificationPress={() => router.push('/notifications')}
         onMenuPress={() => router.push('/menu')}
       />
