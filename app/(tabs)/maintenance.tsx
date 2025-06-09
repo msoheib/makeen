@@ -1,21 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList } from 'react-native';
-import { Text, FAB, Appbar, Surface, Searchbar } from 'react-native-paper';
+import { Text, Searchbar, SegmentedButtons } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { theme, spacing, shadows } from '@/lib/theme';
+import { theme, spacing } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { MaintenanceRequest } from '@/lib/types';
+import { Tool, Plus, AlertTriangle, CheckCircle, Clock, XCircle } from 'lucide-react-native';
+import ModernHeader from '@/components/ModernHeader';
+import ModernCard from '@/components/ModernCard';
+import StatCard from '@/components/StatCard';
 import MaintenanceRequestCard from '@/components/MaintenanceRequestCard';
 
 export default function MaintenanceScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [requests, setRequests] = useState<MaintenanceRequest[]>([]);
+  const [filteredRequests, setFilteredRequests] = useState<MaintenanceRequest[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState('all');
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0,
+    inProgress: 0,
+    completed: 0,
+  });
 
   useEffect(() => {
     fetchMaintenanceRequests();
   }, []);
+
+  useEffect(() => {
+    filterRequests();
+  }, [requests, searchQuery, activeFilter]);
 
   const fetchMaintenanceRequests = async () => {
     try {
@@ -23,13 +39,28 @@ export default function MaintenanceScreen() {
         .from('maintenance_requests')
         .select(`
           *,
-          property:properties(title),
+          property:properties(title, address, city),
           tenant:profiles(first_name, last_name)
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      if (data) setRequests(data);
+      
+      if (data) {
+        setRequests(data);
+        
+        // Calculate stats
+        const pending = data.filter(r => r.status === 'pending').length;
+        const inProgress = data.filter(r => r.status === 'in_progress').length;
+        const completed = data.filter(r => r.status === 'completed').length;
+        
+        setStats({
+          total: data.length,
+          pending,
+          inProgress,
+          completed,
+        });
+      }
     } catch (error) {
       console.error('Error fetching maintenance requests:', error);
     } finally {
@@ -37,24 +68,105 @@ export default function MaintenanceScreen() {
     }
   };
 
-  const filteredRequests = requests.filter(request => 
-    request.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    request.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filterRequests = () => {
+    let filtered = [...requests];
+    
+    // Filter by status
+    if (activeFilter !== 'all') {
+      filtered = filtered.filter(request => request.status === activeFilter);
+    }
+    
+    // Filter by search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(request => 
+        request.title.toLowerCase().includes(query) ||
+        request.description.toLowerCase().includes(query) ||
+        request.property?.title?.toLowerCase().includes(query) ||
+        `${request.tenant?.first_name} ${request.tenant?.last_name}`.toLowerCase().includes(query)
+      );
+    }
+    
+    setFilteredRequests(filtered);
+  };
 
   return (
     <View style={styles.container}>
-      <Appbar.Header>
-        <Appbar.Content title="Maintenance" />
-      </Appbar.Header>
-
-      <Searchbar
-        placeholder="Search requests..."
-        onChangeText={setSearchQuery}
-        value={searchQuery}
-        style={styles.searchbar}
+      <ModernHeader
+        title="Maintenance"
+        subtitle="Manage maintenance requests"
+        onNotificationPress={() => router.push('/notifications')}
+        onSearchPress={() => router.push('/search')}
       />
 
+      {/* Stats Overview */}
+      <View style={styles.statsSection}>
+        <FlatList
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          data={[
+            {
+              title: 'Total Requests',
+              value: stats.total.toString(),
+              color: theme.colors.primary,
+              icon: <Tool size={20} color={theme.colors.primary} />,
+            },
+            {
+              title: 'Pending',
+              value: stats.pending.toString(),
+              color: theme.colors.warning,
+              icon: <Clock size={20} color={theme.colors.warning} />,
+            },
+            {
+              title: 'In Progress',
+              value: stats.inProgress.toString(),
+              color: theme.colors.secondary,
+              icon: <AlertTriangle size={20} color={theme.colors.secondary} />,
+            },
+            {
+              title: 'Completed',
+              value: stats.completed.toString(),
+              color: theme.colors.success,
+              icon: <CheckCircle size={20} color={theme.colors.success} />,
+            },
+          ]}
+          renderItem={({ item }) => (
+            <StatCard
+              title={item.title}
+              value={item.value}
+              color={item.color}
+              icon={item.icon}
+            />
+          )}
+          keyExtractor={(item) => item.title}
+          contentContainerStyle={styles.statsContainer}
+        />
+      </View>
+
+      {/* Search and Filters */}
+      <View style={styles.filtersSection}>
+        <Searchbar
+          placeholder="Search maintenance requests..."
+          onChangeText={setSearchQuery}
+          value={searchQuery}
+          style={styles.searchbar}
+          iconColor={theme.colors.onSurfaceVariant}
+        />
+        
+        <SegmentedButtons
+          value={activeFilter}
+          onValueChange={setActiveFilter}
+          buttons={[
+            { value: 'all', label: 'All' },
+            { value: 'pending', label: 'Pending' },
+            { value: 'in_progress', label: 'In Progress' },
+            { value: 'completed', label: 'Completed' },
+          ]}
+          style={styles.segmentedButtons}
+        />
+      </View>
+
+      {/* Requests List */}
       <FlatList
         data={filteredRequests}
         renderItem={({ item }) => (
@@ -65,20 +177,31 @@ export default function MaintenanceScreen() {
         )}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
         ListEmptyComponent={
-          <Surface style={[styles.emptyState, shadows.medium]}>
-            <Text style={styles.emptyStateText}>
-              {loading ? 'Loading requests...' : 'No maintenance requests found'}
+          <ModernCard style={styles.emptyState}>
+            <Plus size={48} color={theme.colors.onSurfaceVariant} />
+            <Text style={styles.emptyStateTitle}>No maintenance requests found</Text>
+            <Text style={styles.emptyStateSubtitle}>
+              {searchQuery || activeFilter !== 'all' 
+                ? 'Try adjusting your search or filters' 
+                : 'Submit your first maintenance request to get started'}
             </Text>
-          </Surface>
+          </ModernCard>
         }
       />
 
-      <FAB
-        icon="plus"
-        style={styles.fab}
-        onPress={() => router.push('/maintenance/add')}
-      />
+      {/* Add Button */}
+      <View style={styles.fabContainer}>
+        <ModernCard style={styles.fab}>
+          <Text
+            style={styles.fabText}
+            onPress={() => router.push('/maintenance/add')}
+          >
+            <Plus size={24} color="white" />
+          </Text>
+        </ModernCard>
+      </View>
     </View>
   );
 }
@@ -88,28 +211,61 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
+  statsSection: {
+    marginBottom: spacing.m,
+  },
+  statsContainer: {
+    paddingHorizontal: spacing.m,
+  },
+  filtersSection: {
+    paddingHorizontal: spacing.m,
+    marginBottom: spacing.m,
+  },
   searchbar: {
-    margin: spacing.m,
-    elevation: 0,
+    marginBottom: spacing.m,
+    backgroundColor: theme.colors.surface,
+  },
+  segmentedButtons: {
+    backgroundColor: theme.colors.surface,
   },
   listContent: {
-    padding: spacing.m,
+    paddingHorizontal: spacing.m,
+    paddingBottom: spacing.xxxl,
   },
   emptyState: {
-    padding: spacing.xl,
-    margin: spacing.m,
     alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 12,
+    padding: spacing.xl,
+    marginTop: spacing.xl,
   },
-  emptyStateText: {
+  emptyStateTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginTop: spacing.m,
+    marginBottom: spacing.s,
+  },
+  emptyStateSubtitle: {
+    fontSize: 14,
     color: theme.colors.onSurfaceVariant,
+    textAlign: 'center',
+  },
+  fabContainer: {
+    position: 'absolute',
+    bottom: spacing.m,
+    right: spacing.m,
   },
   fab: {
-    position: 'absolute',
-    margin: spacing.m,
-    right: 0,
-    bottom: 0,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: theme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 0,
+  },
+  fabText: {
+    color: 'white',
+    fontSize: 24,
+    fontWeight: '600',
   },
 });

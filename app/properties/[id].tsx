@@ -1,0 +1,403 @@
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, Image } from 'react-native';
+import { Text, Button, IconButton, Chip } from 'react-native-paper';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { theme, spacing } from '@/lib/theme';
+import { supabase } from '@/lib/supabase';
+import { Property } from '@/lib/types';
+import { 
+  ArrowLeft, 
+  Edit, 
+  Share, 
+  MapPin, 
+  Home, 
+  Bath, 
+  Bed, 
+  Square,
+  DollarSign,
+  Calendar,
+  User,
+  Phone,
+  Mail
+} from 'lucide-react-native';
+import ModernHeader from '@/components/ModernHeader';
+import ModernCard from '@/components/ModernCard';
+import StatCard from '@/components/StatCard';
+
+export default function PropertyDetailsScreen() {
+  const router = useRouter();
+  const { id } = useLocalSearchParams();
+  const [loading, setLoading] = useState(true);
+  const [property, setProperty] = useState<Property | null>(null);
+
+  useEffect(() => {
+    if (id) {
+      fetchProperty();
+    }
+  }, [id]);
+
+  const fetchProperty = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .select(`
+          *,
+          owner:profiles!properties_owner_id_fkey(first_name, last_name, email, phone_number)
+        `)
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      if (data) setProperty(data);
+    } catch (error) {
+      console.error('Error fetching property:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'available':
+        return theme.colors.success;
+      case 'rented':
+        return theme.colors.primary;
+      case 'maintenance':
+        return theme.colors.warning;
+      case 'reserved':
+        return theme.colors.secondary;
+      default:
+        return theme.colors.onSurfaceVariant;
+    }
+  };
+
+  if (loading || !property) {
+    return (
+      <View style={styles.container}>
+        <ModernHeader
+          title="Property Details"
+          showLogo={false}
+          onNotificationPress={() => router.push('/notifications')}
+          onMenuPress={() => router.back()}
+        />
+        <View style={styles.loadingContainer}>
+          <Text>Loading property details...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <IconButton
+          icon={() => <ArrowLeft size={24} color={theme.colors.onSurface} />}
+          onPress={() => router.back()}
+          style={styles.backButton}
+        />
+        <View style={styles.headerActions}>
+          <IconButton
+            icon={() => <Share size={24} color={theme.colors.onSurface} />}
+            onPress={() => console.log('Share property')}
+          />
+          <IconButton
+            icon={() => <Edit size={24} color={theme.colors.onSurface} />}
+            onPress={() => router.push(`/properties/edit/${property.id}`)}
+          />
+        </View>
+      </View>
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Property Images */}
+        {property.images && property.images.length > 0 && (
+          <View style={styles.imageContainer}>
+            <Image
+              source={{ uri: property.images[0] }}
+              style={styles.mainImage}
+              resizeMode="cover"
+            />
+            <View style={styles.statusBadge}>
+              <Chip
+                mode="flat"
+                style={[
+                  styles.statusChip,
+                  { backgroundColor: `${getStatusColor(property.status)}20` },
+                ]}
+                textStyle={{ color: getStatusColor(property.status), fontWeight: '600' }}
+              >
+                {property.status.charAt(0).toUpperCase() + property.status.slice(1)}
+              </Chip>
+            </View>
+          </View>
+        )}
+
+        {/* Property Info */}
+        <ModernCard style={styles.infoCard}>
+          <Text style={styles.propertyTitle}>{property.title}</Text>
+          
+          <View style={styles.locationRow}>
+            <MapPin size={16} color={theme.colors.onSurfaceVariant} />
+            <Text style={styles.locationText}>
+              {property.address}, {property.city}, {property.country}
+            </Text>
+          </View>
+
+          <View style={styles.priceRow}>
+            <Text style={styles.price}>
+              ${property.price.toLocaleString()}
+            </Text>
+            <Chip
+              mode="outlined"
+              style={styles.paymentChip}
+              textStyle={styles.paymentText}
+            >
+              {property.payment_method === 'cash' ? 'Cash Sale' : 'Installment'}
+            </Chip>
+          </View>
+
+          {property.description && (
+            <Text style={styles.description}>{property.description}</Text>
+          )}
+        </ModernCard>
+
+        {/* Property Stats */}
+        <View style={styles.statsSection}>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.statsContainer}
+          >
+            <StatCard
+              title="Area"
+              value={`${property.area_sqm} sqm`}
+              color={theme.colors.primary}
+              icon={<Square size={20} color={theme.colors.primary} />}
+            />
+            {property.bedrooms !== undefined && (
+              <StatCard
+                title="Bedrooms"
+                value={property.bedrooms.toString()}
+                color={theme.colors.secondary}
+                icon={<Bed size={20} color={theme.colors.secondary} />}
+              />
+            )}
+            {property.bathrooms !== undefined && (
+              <StatCard
+                title="Bathrooms"
+                value={property.bathrooms.toString()}
+                color={theme.colors.tertiary}
+                icon={<Bath size={20} color={theme.colors.tertiary} />}
+              />
+            )}
+            <StatCard
+              title="Type"
+              value={property.property_type.charAt(0).toUpperCase() + property.property_type.slice(1)}
+              color={theme.colors.success}
+              icon={<Home size={20} color={theme.colors.success} />}
+            />
+          </ScrollView>
+        </View>
+
+        {/* Owner Information */}
+        {property.owner && (
+          <ModernCard style={styles.ownerCard}>
+            <Text style={styles.sectionTitle}>Owner Information</Text>
+            <View style={styles.ownerInfo}>
+              <View style={styles.ownerDetails}>
+                <View style={styles.ownerRow}>
+                  <User size={16} color={theme.colors.onSurfaceVariant} />
+                  <Text style={styles.ownerText}>
+                    {property.owner.first_name} {property.owner.last_name}
+                  </Text>
+                </View>
+                <View style={styles.ownerRow}>
+                  <Mail size={16} color={theme.colors.onSurfaceVariant} />
+                  <Text style={styles.ownerText}>{property.owner.email}</Text>
+                </View>
+                {property.owner.phone_number && (
+                  <View style={styles.ownerRow}>
+                    <Phone size={16} color={theme.colors.onSurfaceVariant} />
+                    <Text style={styles.ownerText}>{property.owner.phone_number}</Text>
+                  </View>
+                )}
+              </View>
+              <Button
+                mode="outlined"
+                onPress={() => router.push(`/people/${property.owner_id}`)}
+                style={styles.contactButton}
+              >
+                Contact
+              </Button>
+            </View>
+          </ModernCard>
+        )}
+
+        {/* Quick Actions */}
+        <ModernCard style={styles.actionsCard}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <View style={styles.actionButtons}>
+            <Button
+              mode="contained"
+              onPress={() => router.push(`/maintenance/add?property=${property.id}`)}
+              style={[styles.actionButton, { backgroundColor: theme.colors.warning }]}
+              icon={() => <Home size={20} color="white" />}
+            >
+              Maintenance
+            </Button>
+            <Button
+              mode="contained"
+              onPress={() => router.push(`/finance/vouchers/add?property=${property.id}`)}
+              style={[styles.actionButton, { backgroundColor: theme.colors.success }]}
+              icon={() => <DollarSign size={20} color="white" />}
+            >
+              Add Payment
+            </Button>
+            <Button
+              mode="contained"
+              onPress={() => router.push(`/contracts/add?property=${property.id}`)}
+              style={[styles.actionButton, { backgroundColor: theme.colors.secondary }]}
+              icon={() => <Calendar size={20} color="white" />}
+            >
+              New Contract
+            </Button>
+          </View>
+        </ModernCard>
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.m,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.s,
+  },
+  backButton: {
+    margin: 0,
+  },
+  headerActions: {
+    flexDirection: 'row',
+  },
+  content: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageContainer: {
+    position: 'relative',
+    height: 250,
+    marginBottom: spacing.m,
+  },
+  mainImage: {
+    width: '100%',
+    height: '100%',
+  },
+  statusBadge: {
+    position: 'absolute',
+    top: spacing.m,
+    right: spacing.m,
+  },
+  statusChip: {
+    height: 32,
+  },
+  infoCard: {
+    marginHorizontal: spacing.m,
+    marginBottom: spacing.m,
+  },
+  propertyTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: theme.colors.onSurface,
+    marginBottom: spacing.s,
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.m,
+  },
+  locationText: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    marginLeft: 6,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.m,
+  },
+  price: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: theme.colors.primary,
+  },
+  paymentChip: {
+    borderColor: theme.colors.outline,
+  },
+  paymentText: {
+    color: theme.colors.onSurfaceVariant,
+  },
+  description: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    lineHeight: 20,
+  },
+  statsSection: {
+    marginBottom: spacing.m,
+  },
+  statsContainer: {
+    paddingHorizontal: spacing.m,
+  },
+  ownerCard: {
+    marginHorizontal: spacing.m,
+    marginBottom: spacing.m,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginBottom: spacing.m,
+  },
+  ownerInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  ownerDetails: {
+    flex: 1,
+  },
+  ownerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.s,
+  },
+  ownerText: {
+    fontSize: 14,
+    color: theme.colors.onSurface,
+    marginLeft: 8,
+  },
+  contactButton: {
+    borderColor: theme.colors.primary,
+  },
+  actionsCard: {
+    marginHorizontal: spacing.m,
+    marginBottom: spacing.xxxl,
+  },
+  actionButtons: {
+    gap: spacing.m,
+  },
+  actionButton: {
+    paddingVertical: 4,
+  },
+});
