@@ -1,25 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Image, Platform } from 'react-native';
-import { Text, Card, Button, IconButton, ActivityIndicator, Surface, Divider, ProgressBar } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, Platform } from 'react-native';
+import { Text, Button } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { theme, spacing, shadows } from '@/lib/theme';
-import { LineChart } from 'react-native-chart-kit';
+import { theme, spacing } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
 import { Property, MaintenanceRequest, Voucher } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
-import { UserCircle2, Building2, DollarSign, Tool, FileText, Bell, Users } from 'lucide-react-native';
+import { 
+  Building2, 
+  DollarSign, 
+  Tool, 
+  Users, 
+  TrendingUp,
+  Calendar,
+  AlertCircle,
+  CheckCircle
+} from 'lucide-react-native';
+import ModernHeader from '@/components/ModernHeader';
+import StatCard from '@/components/StatCard';
+import ModernCard from '@/components/ModernCard';
 
 export default function DashboardScreen() {
   const router = useRouter();
   const user = useAppStore(state => state.user);
   const [loading, setLoading] = useState(true);
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequest[]>([]);
-  const [vouchers, setVouchers] = useState<Voucher[]>([]);
-  const [rentCollected, setRentCollected] = useState(0);
-  const [pendingPayments, setPendingPayments] = useState(0);
-  const [collectionRate, setCollectionRate] = useState(0);
-  const [occupancyRate, setOccupancyRate] = useState(0);
+  const [stats, setStats] = useState({
+    totalProperties: 0,
+    occupiedProperties: 0,
+    totalRevenue: 0,
+    pendingMaintenance: 0,
+    monthlyGrowth: '+12.5%',
+    occupancyRate: 85,
+  });
 
   useEffect(() => {
     fetchDashboardData();
@@ -30,16 +42,47 @@ export default function DashboardScreen() {
     
     setLoading(true);
     try {
-      switch (user.role) {
-        case 'tenant':
-          await fetchTenantData();
-          break;
-        case 'owner':
-          await fetchOwnerData();
-          break;
-        case 'manager':
-          await fetchManagerData();
-          break;
+      // Fetch properties
+      const { data: properties } = await supabase
+        .from('properties')
+        .select('*');
+
+      // Fetch maintenance requests
+      const { data: maintenance } = await supabase
+        .from('maintenance_requests')
+        .select('*')
+        .eq('status', 'pending');
+
+      // Fetch revenue data
+      const { data: vouchers } = await supabase
+        .from('vouchers')
+        .select('amount')
+        .eq('voucher_type', 'receipt')
+        .eq('status', 'posted');
+
+      if (properties) {
+        const occupied = properties.filter(p => p.status === 'rented').length;
+        setStats(prev => ({
+          ...prev,
+          totalProperties: properties.length,
+          occupiedProperties: occupied,
+          occupancyRate: Math.round((occupied / properties.length) * 100) || 0,
+        }));
+      }
+
+      if (maintenance) {
+        setStats(prev => ({
+          ...prev,
+          pendingMaintenance: maintenance.length,
+        }));
+      }
+
+      if (vouchers) {
+        const total = vouchers.reduce((sum, v) => sum + v.amount, 0);
+        setStats(prev => ({
+          ...prev,
+          totalRevenue: total,
+        }));
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -48,437 +91,157 @@ export default function DashboardScreen() {
     }
   };
 
-  const fetchTenantData = async () => {
-    try {
-      // Step 1: Fetch active contracts for the tenant to get property IDs
-      const { data: contracts, error: contractsError } = await supabase
-        .from('contracts')
-        .select('property_id')
-        .eq('tenant_id', user.id)
-        .eq('status', 'active');
-
-      if (contractsError) {
-        throw new Error(`Error fetching tenant contracts: ${contractsError.message}`);
-      }
-      
-      if (contracts && contracts.length > 0) {
-        const propertyIds = contracts.map(c => c.property_id);
-        
-        // Step 2: Fetch properties using the retrieved IDs
-        const { data: propertiesData, error: propertiesError } = await supabase
-          .from('properties')
-          .select('*')
-          .in('id', propertyIds)
-          .limit(3);
-          
-        if (propertiesError) {
-          throw new Error(`Error fetching tenant properties: ${propertiesError.message}`);
-        }
-        if (propertiesData) setProperties(propertiesData);
-      } else {
-        // No active contracts, so no properties to show
-        setProperties([]);
-      }
-
-      // Fetch maintenance requests for the tenant
-      const { data: maintenanceData, error: maintenanceError } = await supabase
-        .from('maintenance_requests')
-        .select('*')
-        .eq('tenant_id', user?.id)
-        .order('created_at', { ascending: false })
-        .limit(3);
-
-      // Fetch tenant's payment history
-      const { data: vouchersData } = await supabase
-        .from('vouchers')
-        .select('*')
-        .eq('tenant_id', user?.id)
-        .order('created_at', { ascending: false })
-        .limit(3);
-
-      if (maintenanceData) setMaintenanceRequests(maintenanceData);
-      if (vouchersData) setVouchers(vouchersData);
-    } catch (error) {
-      console.error('Error fetching tenant data:', error);
-    }
-  };
-
-  const fetchOwnerData = async () => {
-    // Fetch owner's properties
-    const { data: propertiesData } = await supabase
-      .from('properties')
-      .select('*')
-      .eq('owner_id', user?.id)
-      .limit(3);
-
-    // Fetch maintenance requests for owner's properties
-    const { data: maintenanceData } = await supabase
-      .from('maintenance_requests')
-      .select('*')
-      .in('property_id', propertiesData?.map(p => p.id) || [])
-      .order('created_at', { ascending: false })
-      .limit(3);
-
-    // Calculate owner's revenue
-    const { data: vouchersData } = await supabase
-      .from('vouchers')
-      .select('*')
-      .in('property_id', propertiesData?.map(p => p.id) || [])
-      .order('created_at', { ascending: false });
-
-    if (propertiesData) {
-      setProperties(propertiesData);
-      const rented = propertiesData.filter(p => p.status === 'rented').length;
-      setOccupancyRate(Math.round((rented / propertiesData.length) * 100));
-    }
-
-    if (maintenanceData) setMaintenanceRequests(maintenanceData);
-    if (vouchersData) {
-      setVouchers(vouchersData);
-      const collected = vouchersData
-        .filter(v => v.status === 'posted')
-        .reduce((sum, v) => sum + v.amount, 0);
-      const pending = vouchersData
-        .filter(v => v.status === 'draft')
-        .reduce((sum, v) => sum + v.amount, 0);
-      setRentCollected(collected);
-      setPendingPayments(pending);
-      setCollectionRate(Math.round((collected / (collected + pending)) * 100) || 0);
-    }
-  };
-
-  const fetchManagerData = async () => {
-    // Fetch properties
-    const { data: propertiesData, error: propertiesError } = await supabase
-      .from('properties')
-      .select('*')
-      .limit(3);
-      
-    if (propertiesError) throw propertiesError;
-    
-    // Fetch maintenance requests
-    const { data: maintenanceData, error: maintenanceError } = await supabase
-      .from('maintenance_requests')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(3);
-      
-    if (maintenanceError) throw maintenanceError;
-    
-    // Fetch vouchers
-    const { data: vouchersData, error: vouchersError } = await supabase
-      .from('vouchers')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(3);
-      
-    if (vouchersError) throw vouchersError;
-
-    // Calculate metrics
-    const { data: metricsData, error: metricsError } = await supabase
-      .from('vouchers')
-      .select('amount, status')
-      .eq('voucher_type', 'receipt');
-
-    if (metricsError) throw metricsError;
-
-    if (metricsData) {
-      const collected = metricsData
-        .filter(v => v.status === 'posted')
-        .reduce((sum, v) => sum + v.amount, 0);
-      
-      const pending = metricsData
-        .filter(v => v.status === 'draft')
-        .reduce((sum, v) => sum + v.amount, 0);
-
-      setRentCollected(collected);
-      setPendingPayments(pending);
-      setCollectionRate(Math.round((collected / (collected + pending)) * 100) || 0);
-    }
-
-    // Calculate occupancy rate
-    const { data: propertyStats, error: statsError } = await supabase
-      .from('properties')
-      .select('status');
-
-    if (statsError) throw statsError;
-
-    if (propertyStats) {
-      const total = propertyStats.length;
-      const rented = propertyStats.filter(p => p.status === 'rented').length;
-      setOccupancyRate(Math.round((rented / total) * 100) || 0);
-    }
-    
-    // Set the data
-    if (propertiesData) setProperties(propertiesData);
-    if (maintenanceData) setMaintenanceRequests(maintenanceData);
-    if (vouchersData) setVouchers(vouchersData);
-  };
-
-  const renderQuickActions = () => {
-    switch (user?.role) {
-      case 'tenant':
-        return (
-          <>
-            <Button
-              mode="outlined"
-              icon={() => <Building2 size={20} color={theme.colors.primary} />}
-              style={styles.actionButton}
-              onPress={() => router.push('/maintenance/add')}
-            >
-              Report Issue
-            </Button>
-            <Button
-              mode="outlined"
-              icon={() => <Building2 size={20} color={theme.colors.primary} />}
-              style={styles.actionButton}
-              onPress={() => router.push('/payments')}
-            >
-              Make Payment
-            </Button>
-            <Button
-              mode="outlined"
-              icon={() => <Building2 size={20} color={theme.colors.primary} />}
-              style={styles.actionButton}
-              onPress={() => router.push('/documents')}
-            >
-              Documents
-            </Button>
-          </>
-        );
-
-      case 'owner':
-        return (
-          <>
-            <Button
-              mode="outlined"
-              icon={() => <Building2 size={20} color={theme.colors.primary} />}
-              style={styles.actionButton}
-              onPress={() => router.push('/properties/add')}
-            >
-              Add Property
-            </Button>
-            <Button
-              mode="outlined"
-              icon={() => <Building2 size={20} color={theme.colors.primary} />}
-              style={styles.actionButton}
-              onPress={() => router.push('/notifications')}
-            >
-              Notifications
-            </Button>
-            <Button
-              mode="outlined"
-              icon={() => <Building2 size={20} color={theme.colors.primary} />}
-              style={styles.actionButton}
-              onPress={() => router.push('/finance/reports')}
-            >
-              Financials
-            </Button>
-          </>
-        );
-
-      default:
-        return (
-          <>
-            <Button
-              mode="outlined"
-              icon={() => <Building2 size={20} color={theme.colors.primary} />}
-              style={styles.actionButton}
-              onPress={() => router.push('/properties/add')}
-            >
-              Add Property
-            </Button>
-            <Button
-              mode="outlined"
-              icon={() => <Building2 size={20} color={theme.colors.primary} />}
-              style={styles.actionButton}
-              onPress={() => router.push('/tenants/add')}
-            >
-              Add Tenant
-            </Button>
-            <Button
-              mode="outlined"
-              icon={() => <Building2 size={20} color={theme.colors.primary} />}
-              style={styles.actionButton}
-              onPress={() => router.push('/maintenance/add')}
-            >
-              Maintenance
-            </Button>
-            <Button
-              mode="outlined"
-              icon={() => <Building2 size={20} color={theme.colors.primary} />}
-              style={styles.actionButton}
-              onPress={() => router.push('/finance/vouchers/add')}
-            >
-              Add Voucher
-            </Button>
-          </>
-        );
-    }
-  };
-
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={styles.loadingText}>Loading dashboard...</Text>
-      </View>
-    );
-  }
+  const quickActions = [
+    {
+      title: 'Add Property',
+      icon: <Building2 size={24} color={theme.colors.primary} />,
+      onPress: () => router.push('/properties/add'),
+      color: theme.colors.primary,
+    },
+    {
+      title: 'New Tenant',
+      icon: <Users size={24} color={theme.colors.secondary} />,
+      onPress: () => router.push('/tenants/add'),
+      color: theme.colors.secondary,
+    },
+    {
+      title: 'Maintenance',
+      icon: <Tool size={24} color={theme.colors.warning} />,
+      onPress: () => router.push('/maintenance/add'),
+      color: theme.colors.warning,
+    },
+    {
+      title: 'Add Voucher',
+      icon: <DollarSign size={24} color={theme.colors.success} />,
+      onPress: () => router.push('/finance/vouchers/add'),
+      color: theme.colors.success,
+    },
+  ];
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Welcome back,</Text>
-          <Text style={styles.userName}>{user?.first_name || 'User'}</Text>
-        </View>
-        <View style={styles.profileContainer}>
-          {user?.avatar_url ? (
-            <Image
-              source={{ uri: user.avatar_url }}
-              style={styles.profileImage}
-            />
-          ) : (
-            <UserCircle2
-              size={48}
-              color={theme.colors.onSurfaceVariant}
-              strokeWidth={1.5}
-            />
-          )}
-        </View>
-      </View>
+    <View style={styles.container}>
+      <ModernHeader
+        userName={user?.first_name || 'User'}
+        userAvatar="https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg"
+        onNotificationPress={() => router.push('/notifications')}
+        onSearchPress={() => router.push('/search')}
+      />
 
-      {/* Financial Overview - Show different metrics based on role */}
-      <Text style={styles.sectionTitle}>Overview</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View style={styles.metricsContainer}>
-          {user?.role !== 'tenant' && (
-            <>
-              <Surface style={[styles.metricCard, shadows.medium, { backgroundColor: theme.colors.primaryContainer }]}>
-                <Text style={styles.metricLabel}>Rent Collected</Text>
-                <Text style={styles.metricValue}>${rentCollected.toLocaleString()}</Text>
-              </Surface>
-              
-              <Surface style={[styles.metricCard, shadows.medium, { backgroundColor: theme.colors.errorContainer }]}>
-                <Text style={styles.metricLabel}>Pending Payments</Text>
-                <Text style={styles.metricValue}>${pendingPayments.toLocaleString()}</Text>
-              </Surface>
-              
-              <Surface style={[styles.metricCard, shadows.medium, { backgroundColor: theme.colors.tertiaryContainer }]}>
-                <Text style={styles.metricLabel}>Collection Rate</Text>
-                <Text style={styles.metricValue}>{collectionRate}%</Text>
-                <ProgressBar progress={collectionRate/100} color={theme.colors.tertiary} style={styles.progressBar} />
-              </Surface>
-              
-              <Surface style={[styles.metricCard, shadows.medium, { backgroundColor: theme.colors.secondaryContainer }]}>
-                <Text style={styles.metricLabel}>Occupancy Rate</Text>
-                <Text style={styles.metricValue}>{occupancyRate}%</Text>
-                <ProgressBar progress={occupancyRate/100} color={theme.colors.secondary} style={styles.progressBar} />
-              </Surface>
-            </>
-          )}
+      <ScrollView 
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Stats Overview */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Overview</Text>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.statsContainer}
+          >
+            <StatCard
+              title="Total Revenue"
+              value={`$${stats.totalRevenue.toLocaleString()}`}
+              subtitle="This month"
+              color={theme.colors.success}
+              icon={<TrendingUp size={20} color={theme.colors.success} />}
+              trend={{ value: stats.monthlyGrowth, isPositive: true }}
+            />
+            <StatCard
+              title="Properties"
+              value={stats.totalProperties.toString()}
+              subtitle={`${stats.occupiedProperties} occupied`}
+              color={theme.colors.primary}
+              icon={<Building2 size={20} color={theme.colors.primary} />}
+            />
+            <StatCard
+              title="Occupancy Rate"
+              value={`${stats.occupancyRate}%`}
+              subtitle="Current rate"
+              color={theme.colors.secondary}
+              icon={<CheckCircle size={20} color={theme.colors.secondary} />}
+            />
+            <StatCard
+              title="Pending Issues"
+              value={stats.pendingMaintenance.toString()}
+              subtitle="Maintenance requests"
+              color={theme.colors.warning}
+              icon={<AlertCircle size={20} color={theme.colors.warning} />}
+            />
+          </ScrollView>
+        </View>
+
+        {/* Quick Actions */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <View style={styles.actionsGrid}>
+            {quickActions.map((action, index) => (
+              <ModernCard key={index} style={styles.actionCard}>
+                <Button
+                  mode="text"
+                  onPress={action.onPress}
+                  contentStyle={styles.actionContent}
+                  labelStyle={[styles.actionLabel, { color: action.color }]}
+                  icon={() => action.icon}
+                >
+                  {action.title}
+                </Button>
+              </ModernCard>
+            ))}
+          </View>
+        </View>
+
+        {/* Recent Activity */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Recent Activity</Text>
+            <Button
+              mode="text"
+              onPress={() => router.push('/activity')}
+              labelStyle={styles.viewAllLabel}
+            >
+              View All
+            </Button>
+          </View>
           
-          {user?.role === 'tenant' && (
-            <>
-              <Surface style={[styles.metricCard, shadows.medium, { backgroundColor: theme.colors.primaryContainer }]}>
-                <Text style={styles.metricLabel}>Next Payment</Text>
-                <Text style={styles.metricValue}>$1,200</Text>
-                <Text style={styles.metricSubtext}>Due in 15 days</Text>
-              </Surface>
-              
-              <Surface style={[styles.metricCard, shadows.medium, { backgroundColor: theme.colors.secondaryContainer }]}>
-                <Text style={styles.metricLabel}>Open Issues</Text>
-                <Text style={styles.metricValue}>{maintenanceRequests.length}</Text>
-              </Surface>
-              
-              <Surface style={[styles.metricCard, shadows.medium, { backgroundColor: theme.colors.tertiaryContainer }]}>
-                <Text style={styles.metricLabel}>Documents</Text>
-                <Text style={styles.metricValue}>5</Text>
-                <Text style={styles.metricSubtext}>2 need attention</Text>
-              </Surface>
-            </>
-          )}
+          <ModernCard>
+            <View style={styles.activityItem}>
+              <View style={[styles.activityIcon, { backgroundColor: theme.colors.successContainer }]}>
+                <DollarSign size={16} color={theme.colors.success} />
+              </View>
+              <View style={styles.activityContent}>
+                <Text style={styles.activityTitle}>Payment Received</Text>
+                <Text style={styles.activitySubtitle}>Apartment 2A - $1,200</Text>
+              </View>
+              <Text style={styles.activityTime}>2h ago</Text>
+            </View>
+            
+            <View style={styles.activityItem}>
+              <View style={[styles.activityIcon, { backgroundColor: theme.colors.warningContainer }]}>
+                <Tool size={16} color={theme.colors.warning} />
+              </View>
+              <View style={styles.activityContent}>
+                <Text style={styles.activityTitle}>Maintenance Request</Text>
+                <Text style={styles.activitySubtitle}>Villa 5B - Plumbing issue</Text>
+              </View>
+              <Text style={styles.activityTime}>4h ago</Text>
+            </View>
+            
+            <View style={styles.activityItem}>
+              <View style={[styles.activityIcon, { backgroundColor: theme.colors.primaryContainer }]}>
+                <Users size={16} color={theme.colors.primary} />
+              </View>
+              <View style={styles.activityContent}>
+                <Text style={styles.activityTitle}>New Tenant</Text>
+                <Text style={styles.activitySubtitle}>John Smith - Office 3C</Text>
+              </View>
+              <Text style={styles.activityTime}>1d ago</Text>
+            </View>
+          </ModernCard>
         </View>
       </ScrollView>
-      
-      {/* Quick Actions */}
-      <Text style={styles.sectionTitle}>Quick Actions</Text>
-      <View style={styles.quickActionsContainer}>
-        {renderQuickActions()}
-      </View>
-      
-      {/* Role-specific sections */}
-      {user?.role === 'tenant' ? (
-        <>
-          <View style={styles.listHeaderContainer}>
-            <Text style={styles.sectionTitle}>My Rentals</Text>
-          </View>
-          {/* Show tenant's rented properties */}
-          
-          <View style={styles.listHeaderContainer}>
-            <Text style={styles.sectionTitle}>Maintenance Requests</Text>
-          </View>
-          {/* Show tenant's maintenance requests */}
-          
-          <View style={styles.listHeaderContainer}>
-            <Text style={styles.sectionTitle}>Payment History</Text>
-          </View>
-          {/* Show tenant's payment history */}
-        </>
-      ) : user?.role === 'owner' ? (
-        <>
-          <View style={styles.listHeaderContainer}>
-            <Text style={styles.sectionTitle}>My Properties</Text>
-            <Button
-              mode="text"
-              onPress={() => router.push('/properties')}
-              style={styles.viewAllButton}
-              labelStyle={styles.viewAllLabel}
-              contentStyle={{ flexDirection: 'row-reverse' }}
-              icon="arrow-right"
-            >
-              View All
-            </Button>
-          </View>
-          {/* Show owner's properties */}
-          
-          <View style={styles.listHeaderContainer}>
-            <Text style={styles.sectionTitle}>Recent Issues</Text>
-            <Button
-              mode="text"
-              onPress={() => router.push('/maintenance')}
-              style={styles.viewAllButton}
-              labelStyle={styles.viewAllLabel}
-              contentStyle={{ flexDirection: 'row-reverse' }}
-              icon="arrow-right"
-            >
-              View All
-            </Button>
-          </View>
-          {/* Show maintenance issues for owner's properties */}
-          
-          <View style={styles.listHeaderContainer}>
-            <Text style={styles.sectionTitle}>Financial Summary</Text>
-            <Button
-              mode="text"
-              onPress={() => router.push('/finance')}
-              style={styles.viewAllButton}
-              labelStyle={styles.viewAllLabel}
-              contentStyle={{ flexDirection: 'row-reverse' }}
-              icon="arrow-right"
-            >
-              View All
-            </Button>
-          </View>
-          {/* Show financial summary for owner's properties */}
-        </>
-      ) : (
-        <>
-          {/* Keep existing manager view sections */}
-        </>
-      )}
-    </ScrollView>
+    </View>
   );
 }
 
@@ -486,104 +249,88 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
-    padding: spacing.m,
   },
-  loadingContainer: {
+  content: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: theme.colors.background,
   },
-  loadingText: {
-    marginTop: spacing.m,
-    color: theme.colors.onSurfaceVariant,
+  scrollContent: {
+    paddingBottom: spacing.xxxl,
   },
-  header: {
+  section: {
+    marginBottom: spacing.xl,
+  },
+  sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.xl,
-    marginTop: Platform.OS === 'ios' ? spacing.xl : spacing.m,
-  },
-  greeting: {
-    fontSize: 16,
-    color: theme.colors.onSurfaceVariant,
-  },
-  userName: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: theme.colors.onSurface,
-  },
-  profileContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    overflow: 'hidden',
-    ...shadows.small,
-  },
-  profileImage: {
-    width: 48,
-    height: 48,
+    paddingHorizontal: spacing.m,
+    marginBottom: spacing.m,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: spacing.m,
-    color: theme.colors.onSurface,
-  },
-  metricsContainer: {
-    flexDirection: 'row',
-    marginBottom: spacing.xl,
-    paddingRight: spacing.m,
-  },
-  metricCard: {
-    width: 160,
-    padding: spacing.m,
-    borderRadius: 12,
-    marginRight: spacing.m,
-  },
-  metricLabel: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    marginBottom: spacing.xs,
-  },
-  metricValue: {
     fontSize: 20,
     fontWeight: '700',
     color: theme.colors.onSurface,
-    marginBottom: spacing.xs,
-  },
-  metricSubtext: {
-    fontSize: 12,
-    color: theme.colors.onSurfaceVariant,
-  },
-  progressBar: {
-    height: 6,
-    borderRadius: 3,
-    marginTop: spacing.xs,
-  },
-  quickActionsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: spacing.xl,
-  },
-  actionButton: {
-    marginRight: spacing.s,
-    marginBottom: spacing.s,
-    borderRadius: 8,
-    borderColor: theme.colors.outline,
-  },
-  listHeaderContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.s,
-  },
-  viewAllButton: {
-    marginRight: -10,
+    paddingHorizontal: spacing.m,
+    marginBottom: spacing.m,
   },
   viewAllLabel: {
     color: theme.colors.primary,
     fontSize: 14,
+  },
+  statsContainer: {
+    paddingHorizontal: spacing.m,
+  },
+  actionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: spacing.m,
+    gap: spacing.m,
+  },
+  actionCard: {
+    flex: 1,
+    minWidth: '45%',
+    maxWidth: '48%',
+  },
+  actionContent: {
+    flexDirection: 'column',
+    height: 80,
+    justifyContent: 'center',
+  },
+  actionLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: spacing.s,
+  },
+  activityItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.m,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.outlineVariant,
+  },
+  activityIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.m,
+  },
+  activityContent: {
+    flex: 1,
+  },
+  activityTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+  },
+  activitySubtitle: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    marginTop: 2,
+  },
+  activityTime: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
   },
 });

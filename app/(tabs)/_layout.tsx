@@ -10,7 +10,11 @@ import {
   Users,
   Bell,
   MessageSquare,
-  ClipboardList
+  ClipboardList,
+  Tool,
+  FileText,
+  CreditCard,
+  BarChart3
 } from 'lucide-react-native';
 import { useAppStore } from '@/lib/store';
 
@@ -29,10 +33,19 @@ export default function TabLayout() {
       backgroundColor: theme.colors.surface,
       borderTopWidth: 1,
       borderTopColor: theme.colors.outline,
+      elevation: 8,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: -2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
     },
     tabBarLabelStyle: {
       fontSize: 12,
       fontFamily: 'Inter-Medium',
+      fontWeight: '500',
+    },
+    tabBarIconStyle: {
+      marginBottom: 2,
     },
   };
 
@@ -54,7 +67,7 @@ export default function TabLayout() {
           options={{
             title: 'Maintenance',
             tabBarIcon: ({ size, color }) => (
-              <Settings size={size} color={color} />
+              <Tool size={size} color={color} />
             ),
           }}
         />
@@ -63,7 +76,7 @@ export default function TabLayout() {
           options={{
             title: 'Payments',
             tabBarIcon: ({ size, color }) => (
-              <DollarSign size={size} color={color} />
+              <CreditCard size={size} color={color} />
             ),
           }}
         />
@@ -72,7 +85,7 @@ export default function TabLayout() {
           options={{
             title: 'Documents',
             tabBarIcon: ({ size, color }) => (
-              <Building2 size={size} color={color} />
+              <FileText size={size} color={color} />
             ),
           }}
         />
@@ -85,6 +98,12 @@ export default function TabLayout() {
             ),
           }}
         />
+        {/* Hide other screens for tenants */}
+        <Tabs.Screen name="people" options={{ href: null }} />
+        <Tabs.Screen name="properties" options={{ href: null }} />
+        <Tabs.Screen name="tenants" options={{ href: null }} />
+        <Tabs.Screen name="finance" options={{ href: null }} />
+        <Tabs.Screen name="reports" options={{ href: null }} />
       </Tabs>
     );
   }
@@ -125,7 +144,7 @@ export default function TabLayout() {
           options={{
             title: 'Maintenance',
             tabBarIcon: ({ size, color }) => (
-              <Bell size={size} color={color} />
+              <Tool size={size} color={color} />
             ),
           }}
         />
@@ -139,6 +158,15 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
+          name="reports"
+          options={{
+            title: 'Reports',
+            tabBarIcon: ({ size, color }) => (
+              <BarChart3 size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
           name="settings"
           options={{
             title: 'Settings',
@@ -147,11 +175,15 @@ export default function TabLayout() {
             ),
           }}
         />
+        {/* Hide other screens for owners */}
+        <Tabs.Screen name="people" options={{ href: null }} />
+        <Tabs.Screen name="payments" options={{ href: null }} />
+        <Tabs.Screen name="documents" options={{ href: null }} />
       </Tabs>
     );
   }
 
-  // Manager navigation (default)
+  // Manager navigation (default - shows all screens)
   return (
     <Tabs screenOptions={screenOptions}>
       <Tabs.Screen
@@ -164,29 +196,20 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="properties"
+        name="people"
         options={{
-          title: 'Properties',
-          tabBarIcon: ({ size, color }) => (
-            <Building2 size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="tenants"
-        options={{
-          title: 'Tenants',
+          title: 'People',
           tabBarIcon: ({ size, color }) => (
             <Users size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="maintenance"
+        name="properties"
         options={{
-          title: 'Maintenance',
+          title: 'Properties',
           tabBarIcon: ({ size, color }) => (
-            <Settings size={size} color={color} />
+            <Building2 size={size} color={color} />
           ),
         }}
       />
@@ -204,7 +227,16 @@ export default function TabLayout() {
         options={{
           title: 'Reports',
           tabBarIcon: ({ size, color }) => (
-            <ClipboardList size={size} color={color} />
+            <BarChart3 size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="maintenance"
+        options={{
+          title: 'Operations',
+          tabBarIcon: ({ size, color }) => (
+            <Tool size={size} color={color} />
           ),
         }}
       />
@@ -217,6 +249,10 @@ export default function TabLayout() {
           ),
         }}
       />
+      {/* Hide tenant-specific screens for managers */}
+      <Tabs.Screen name="tenants" options={{ href: null }} />
+      <Tabs.Screen name="payments" options={{ href: null }} />
+      <Tabs.Screen name="documents" options={{ href: null }} />
     </Tabs>
   );
 }

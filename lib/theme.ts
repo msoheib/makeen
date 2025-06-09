@@ -42,32 +42,40 @@ export const fonts = configureFonts({
   },
 });
 
-// Custom theme with our colors
+// Modern color palette inspired by the reference app
 export const theme = {
   ...MD3LightTheme,
   fonts: fonts,
   colors: {
     ...MD3LightTheme.colors,
-    primary: '#4F46E5', // Indigo
-    primaryContainer: '#EEF2FF',
-    secondary: '#0D9488', // Teal
-    secondaryContainer: '#CCFBF1',
-    tertiary: '#F59E0B', // Gold
-    tertiaryContainer: '#FEF3C7',
-    error: '#DC2626',
-    errorContainer: '#FEE2E2',
-    success: '#10B981',
-    successContainer: '#D1FAE5',
-    warning: '#F59E0B',
-    warningContainer: '#FEF3C7',
-    background: '#FFFFFF',
+    primary: '#4F7EFF', // Vibrant blue
+    primaryContainer: '#E8F0FF',
+    secondary: '#00D4AA', // Teal green
+    secondaryContainer: '#E0FFF8',
+    tertiary: '#FF6B6B', // Coral red
+    tertiaryContainer: '#FFE8E8',
+    error: '#FF4757',
+    errorContainer: '#FFE8EA',
+    success: '#2ED573',
+    successContainer: '#E8F8F0',
+    warning: '#FFA726',
+    warningContainer: '#FFF3E0',
+    background: '#F8FAFC',
     surface: '#FFFFFF',
-    surfaceVariant: '#F3F4F6',
-    onSurface: '#1F2937',
-    onSurfaceVariant: '#4B5563',
-    outline: '#E5E7EB',
+    surfaceVariant: '#F1F5F9',
+    onSurface: '#1E293B',
+    onSurfaceVariant: '#64748B',
+    outline: '#E2E8F0',
+    outlineVariant: '#F1F5F9',
+    // Custom colors for the modern design
+    cardBackground: '#FFFFFF',
+    gradientStart: '#4F7EFF',
+    gradientEnd: '#00D4AA',
+    income: '#2ED573',
+    expense: '#FF6B6B',
+    neutral: '#64748B',
   },
-  roundness: 12,
+  roundness: 16,
   animation: {
     scale: 1.0,
   },
@@ -81,50 +89,95 @@ export const spacing = {
   l: 24,
   xl: 32,
   xxl: 48,
+  xxxl: 64,
 };
 
-// Shadow styles
+// Shadow styles with modern elevation
 export const shadows = {
   small: Platform.select({
     ios: {
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.05,
-      shadowRadius: 2,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 4,
     },
     android: {
-      elevation: 2,
+      elevation: 3,
     },
     web: {
-      boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
     },
   }),
   medium: Platform.select({
     ios: {
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 8,
     },
     android: {
-      elevation: 4,
+      elevation: 6,
     },
     web: {
-      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
     },
   }),
   large: Platform.select({
     ios: {
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.1,
-      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.16,
+      shadowRadius: 16,
     },
     android: {
-      elevation: 8,
+      elevation: 12,
     },
     web: {
-      boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.16)',
     },
   }),
+};
+
+// Typography scale
+export const typography = {
+  h1: {
+    fontSize: 32,
+    fontWeight: '700' as const,
+    lineHeight: 40,
+  },
+  h2: {
+    fontSize: 28,
+    fontWeight: '700' as const,
+    lineHeight: 36,
+  },
+  h3: {
+    fontSize: 24,
+    fontWeight: '600' as const,
+    lineHeight: 32,
+  },
+  h4: {
+    fontSize: 20,
+    fontWeight: '600' as const,
+    lineHeight: 28,
+  },
+  body1: {
+    fontSize: 16,
+    fontWeight: '400' as const,
+    lineHeight: 24,
+  },
+  body2: {
+    fontSize: 14,
+    fontWeight: '400' as const,
+    lineHeight: 20,
+  },
+  caption: {
+    fontSize: 12,
+    fontWeight: '400' as const,
+    lineHeight: 16,
+  },
+  button: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    lineHeight: 20,
+  },
 };
