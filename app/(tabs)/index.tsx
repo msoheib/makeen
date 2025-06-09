@@ -6,16 +6,7 @@ import { theme, spacing } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
 import { Property, MaintenanceRequest, Voucher } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
-import { 
-  Building2, 
-  DollarSign, 
-  Tool, 
-  Users, 
-  TrendingUp,
-  Calendar,
-  AlertCircle,
-  CheckCircle
-} from 'lucide-react-native';
+import { Building2, DollarSign, PenTool as Tool, Users, TrendingUp, Calendar, CircleAlert as AlertCircle, CircleCheck as CheckCircle } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import StatCard from '@/components/StatCard';
 import ModernCard from '@/components/ModernCard';

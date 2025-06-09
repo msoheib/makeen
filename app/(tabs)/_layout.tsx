@@ -2,20 +2,7 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { useTheme } from 'react-native-paper';
 import { Platform } from 'react-native';
-import { 
-  Home,
-  Building2,
-  DollarSign,
-  Settings,
-  Users,
-  Bell,
-  MessageSquare,
-  ClipboardList,
-  Tool,
-  FileText,
-  CreditCard,
-  BarChart3
-} from 'lucide-react-native';
+import { Chrome as Home, Building2, DollarSign, Settings, Users, Bell, MessageSquare, ClipboardList, PenTool as Tool, FileText, CreditCard, ChartBar as BarChart3 } from 'lucide-react-native';
 import { useAppStore } from '@/lib/store';
 
 export default function TabLayout() {

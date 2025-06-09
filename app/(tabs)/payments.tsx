@@ -3,16 +3,7 @@ import { View, StyleSheet, FlatList } from 'react-native';
 import { Text, Searchbar, SegmentedButtons, Chip } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
-import { 
-  CreditCard, 
-  DollarSign, 
-  TrendingUp, 
-  TrendingDown,
-  Calendar,
-  CheckCircle,
-  XCircle,
-  Clock
-} from 'lucide-react-native';
+import { CreditCard, DollarSign, TrendingUp, TrendingDown, Calendar, CircleCheck as CheckCircle, Circle as XCircle, Clock } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import StatCard from '@/components/StatCard';

@@ -3,17 +3,7 @@ import { View, StyleSheet, ScrollView, FlatList } from 'react-native';
 import { Text, Button, SegmentedButtons } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
-import { 
-  BarChart3, 
-  TrendingUp, 
-  DollarSign, 
-  Building2, 
-  Users, 
-  FileText,
-  Calendar,
-  Download,
-  Eye
-} from 'lucide-react-native';
+import { ChartBar as BarChart3, TrendingUp, DollarSign, Building2, Users, FileText, Calendar, Download, Eye } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import StatCard from '@/components/StatCard';
