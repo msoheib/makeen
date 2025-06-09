@@ -2,90 +2,145 @@ import React from 'react';
 import { View, StyleSheet, Image, Platform } from 'react-native';
 import { Text, IconButton } from 'react-native-paper';
 import { theme, spacing } from '@/lib/theme';
-import { Bell, Search } from 'lucide-react-native';
+import { Bell, Search, Menu } from 'lucide-react-native';
 
 interface ModernHeaderProps {
   title?: string;
   subtitle?: string;
   showNotifications?: boolean;
   showSearch?: boolean;
+  showMenu?: boolean;
   onNotificationPress?: () => void;
   onSearchPress?: () => void;
+  onMenuPress?: () => void;
   userAvatar?: string;
   userName?: string;
+  showLogo?: boolean;
 }
 
 export default function ModernHeader({
   title,
   subtitle,
   showNotifications = true,
-  showSearch = true,
+  showSearch = false,
+  showMenu = true,
   onNotificationPress,
   onSearchPress,
+  onMenuPress,
   userAvatar,
-  userName
+  userName,
+  showLogo = false
 }: ModernHeaderProps) {
   return (
     <View style={styles.container}>
-      <View style={styles.leftSection}>
-        {title && (
-          <View>
-            <Text style={styles.title}>{title}</Text>
-            {subtitle && (
-              <Text style={styles.subtitle}>{subtitle}</Text>
-            )}
+      <View style={styles.topRow}>
+        {showMenu && (
+          <IconButton
+            icon={() => <Menu size={24} color={theme.colors.onSurface} />}
+            onPress={onMenuPress}
+            style={styles.menuButton}
+          />
+        )}
+        
+        {showLogo && (
+          <View style={styles.logoContainer}>
+            <View style={styles.logo}>
+              <View style={[styles.logoSquare, { backgroundColor: theme.colors.primary }]} />
+              <View style={[styles.logoSquare, { backgroundColor: theme.colors.secondary }]} />
+            </View>
+            <Text style={styles.logoText}>LandlordStudio</Text>
           </View>
         )}
-        {userName && (
-          <View>
-            <Text style={styles.greeting}>Good morning,</Text>
-            <Text style={styles.userName}>{userName}</Text>
-          </View>
-        )}
+        
+        <View style={styles.rightSection}>
+          {showSearch && (
+            <IconButton
+              icon={() => <Search size={24} color={theme.colors.onSurfaceVariant} />}
+              onPress={onSearchPress}
+              style={styles.iconButton}
+            />
+          )}
+          {showNotifications && (
+            <IconButton
+              icon={() => <Bell size={24} color={theme.colors.onSurfaceVariant} />}
+              onPress={onNotificationPress}
+              style={styles.iconButton}
+            />
+          )}
+          {userAvatar && (
+            <Image
+              source={{ uri: userAvatar }}
+              style={styles.avatar}
+            />
+          )}
+        </View>
       </View>
       
-      <View style={styles.rightSection}>
-        {showSearch && (
-          <IconButton
-            icon={() => <Search size={24} color={theme.colors.onSurfaceVariant} />}
-            onPress={onSearchPress}
-            style={styles.iconButton}
-          />
-        )}
-        {showNotifications && (
-          <IconButton
-            icon={() => <Bell size={24} color={theme.colors.onSurfaceVariant} />}
-            onPress={onNotificationPress}
-            style={styles.iconButton}
-          />
-        )}
-        {userAvatar && (
-          <Image
-            source={{ uri: userAvatar }}
-            style={styles.avatar}
-          />
-        )}
-      </View>
+      {(title || userName) && (
+        <View style={styles.titleSection}>
+          {title && (
+            <View>
+              <Text style={styles.title}>{title}</Text>
+              {subtitle && (
+                <Text style={styles.subtitle}>{subtitle}</Text>
+              )}
+            </View>
+          )}
+          {userName && (
+            <View>
+              <Text style={styles.greeting}>Hello {userName},</Text>
+            </View>
+          )}
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    backgroundColor: theme.colors.background,
+    paddingTop: Platform.OS === 'ios' ? spacing.xl : spacing.m,
+    paddingHorizontal: spacing.m,
+    paddingBottom: spacing.m,
+  },
+  topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.m,
-    paddingTop: Platform.OS === 'ios' ? spacing.xl : spacing.m,
-    paddingBottom: spacing.m,
-    backgroundColor: theme.colors.background,
+    marginBottom: spacing.s,
   },
-  leftSection: {
+  menuButton: {
+    margin: 0,
+  },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 1,
+    justifyContent: 'center',
+    marginHorizontal: spacing.m,
+  },
+  logo: {
+    flexDirection: 'row',
+    marginRight: spacing.s,
+  },
+  logoSquare: {
+    width: 12,
+    height: 12,
+    marginRight: 2,
+    borderRadius: 2,
+  },
+  logoText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
   },
   rightSection: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  titleSection: {
+    marginTop: spacing.s,
   },
   title: {
     fontSize: 28,
@@ -98,14 +153,9 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   greeting: {
-    fontSize: 16,
-    color: theme.colors.onSurfaceVariant,
-  },
-  userName: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: '700',
     color: theme.colors.onSurface,
-    marginTop: 4,
   },
   iconButton: {
     margin: 0,

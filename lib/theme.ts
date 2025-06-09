@@ -42,17 +42,18 @@ export const fonts = configureFonts({
   },
 });
 
-// Modern color palette inspired by the reference app
+// Exact color palette from LandlordStudio
 export const theme = {
   ...MD3LightTheme,
   fonts: fonts,
   colors: {
     ...MD3LightTheme.colors,
-    primary: '#4F7EFF', // Vibrant blue
+    // Primary brand colors from the screenshot
+    primary: '#2B5CE6', // Blue from the logo and active elements
     primaryContainer: '#E8F0FF',
-    secondary: '#00D4AA', // Teal green
+    secondary: '#4ECDC4', // Teal from the logo
     secondaryContainer: '#E0FFF8',
-    tertiary: '#FF6B6B', // Coral red
+    tertiary: '#FF6B6B', // Red for outstanding amounts
     tertiaryContainer: '#FFE8E8',
     error: '#FF4757',
     errorContainer: '#FFE8EA',
@@ -60,20 +61,28 @@ export const theme = {
     successContainer: '#E8F8F0',
     warning: '#FFA726',
     warningContainer: '#FFF3E0',
-    background: '#F8FAFC',
+    
+    // Background colors matching the app
+    background: '#F8FAFC', // Light gray background
     surface: '#FFFFFF',
     surfaceVariant: '#F1F5F9',
-    onSurface: '#1E293B',
-    onSurfaceVariant: '#64748B',
+    onSurface: '#1E293B', // Dark navy text
+    onSurfaceVariant: '#64748B', // Gray text
     outline: '#E2E8F0',
     outlineVariant: '#F1F5F9',
+    
     // Custom colors for the modern design
     cardBackground: '#FFFFFF',
-    gradientStart: '#4F7EFF',
-    gradientEnd: '#00D4AA',
+    gradientStart: '#2B5CE6',
+    gradientEnd: '#4ECDC4',
     income: '#2ED573',
     expense: '#FF6B6B',
     neutral: '#64748B',
+    
+    // Tab bar colors
+    tabBarActive: '#2B5CE6',
+    tabBarInactive: '#64748B',
+    tabBarBackground: '#1E293B', // Dark navy from bottom
   },
   roundness: 16,
   animation: {

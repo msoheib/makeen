@@ -217,8 +217,9 @@ export default function ReportsScreen() {
       <ModernHeader
         title="Reports"
         subtitle="Analytics and insights"
+        showLogo={true}
         onNotificationPress={() => router.push('/notifications')}
-        onSearchPress={() => router.push('/search')}
+        onMenuPress={() => router.push('/menu')}
       />
 
       {/* Stats Overview */}

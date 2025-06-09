@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { List, Surface, Text, useTheme } from 'react-native-paper';
+import { List, Surface, Text } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { theme, spacing, shadows } from '@/lib/theme';
+import { theme, spacing } from '@/lib/theme';
 import { 
   Settings, 
   User, 
@@ -14,14 +14,20 @@ import {
   MessageSquare,
   FileText,
   ShieldCheck,
-  LogOut
+  LogOut,
+  Building2,
+  Users,
+  CreditCard,
+  BarChart3,
+  Tool
 } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/lib/store';
+import ModernHeader from '@/components/ModernHeader';
+import ModernCard from '@/components/ModernCard';
 
-export default function SettingsScreen() {
+export default function MoreScreen() {
   const router = useRouter();
-  const paperTheme = useTheme();
   const setUser = useAppStore(state => state.setUser);
   const setAuthenticated = useAppStore(state => state.setAuthenticated);
 
@@ -39,94 +45,139 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Surface style={[styles.section, shadows.small]}>
-        <List.Section>
-          <List.Subheader>Account Settings</List.Subheader>
-          <List.Item
-            title="Profile"
-            left={props => <User {...props} size={24} />}
-            right={props => <List.Icon {...props} icon="chevron-right" />}
-            onPress={() => router.push('/profile')}
-          />
-          <List.Item
-            title="Notifications"
-            left={props => <Bell {...props} size={24} />}
-            right={props => <List.Icon {...props} icon="chevron-right" />}
-            onPress={() => router.push('/notifications')}
-          />
-        </List.Section>
-      </Surface>
+    <View style={styles.container}>
+      <ModernHeader
+        title="More"
+        subtitle="Settings and tools"
+        showLogo={true}
+        onNotificationPress={() => router.push('/notifications')}
+        onMenuPress={() => router.push('/menu')}
+      />
 
-      <Surface style={[styles.section, shadows.small]}>
-        <List.Section>
-          <List.Subheader>App Settings</List.Subheader>
-          <List.Item
-            title="Language"
-            description="English"
-            left={props => <Globe {...props} size={24} />}
-            right={props => <List.Icon {...props} icon="chevron-right" />}
-            onPress={() => router.push('/language')}
-          />
-          <List.Item
-            title="Theme"
-            description="Light"
-            left={props => <Moon {...props} size={24} />}
-            right={props => <List.Icon {...props} icon="chevron-right" />}
-            onPress={() => router.push('/theme')}
-          />
-          <List.Item
-            title="Currency"
-            description="USD"
-            left={props => <DollarSign {...props} size={24} />}
-            right={props => <List.Icon {...props} icon="chevron-right" />}
-            onPress={() => router.push('/currency')}
-          />
-        </List.Section>
-      </Surface>
+      <ScrollView style={styles.content}>
+        {/* Quick Access */}
+        <ModernCard style={styles.section}>
+          <List.Section>
+            <List.Subheader>Quick Access</List.Subheader>
+            <List.Item
+              title="People"
+              left={props => <Users {...props} size={24} />}
+              right={props => <List.Icon {...props} icon="chevron-right" />}
+              onPress={() => router.push('/people')}
+            />
+            <List.Item
+              title="Maintenance"
+              left={props => <Tool {...props} size={24} />}
+              right={props => <List.Icon {...props} icon="chevron-right" />}
+              onPress={() => router.push('/maintenance')}
+            />
+            <List.Item
+              title="Finance"
+              left={props => <CreditCard {...props} size={24} />}
+              right={props => <List.Icon {...props} icon="chevron-right" />}
+              onPress={() => router.push('/finance')}
+            />
+            <List.Item
+              title="Documents"
+              left={props => <FileText {...props} size={24} />}
+              right={props => <List.Icon {...props} icon="chevron-right" />}
+              onPress={() => router.push('/documents')}
+            />
+          </List.Section>
+        </ModernCard>
 
-      <Surface style={[styles.section, shadows.small]}>
-        <List.Section>
-          <List.Subheader>Support</List.Subheader>
-          <List.Item
-            title="Help Center"
-            left={props => <HelpCircle {...props} size={24} />}
-            right={props => <List.Icon {...props} icon="chevron-right" />}
-            onPress={() => router.push('/help')}
-          />
-          <List.Item
-            title="Contact Support"
-            left={props => <MessageSquare {...props} size={24} />}
-            right={props => <List.Icon {...props} icon="chevron-right" />}
-            onPress={() => router.push('/support')}
-          />
-          <List.Item
-            title="Terms of Service"
-            left={props => <FileText {...props} size={24} />}
-            right={props => <List.Icon {...props} icon="chevron-right" />}
-            onPress={() => router.push('/terms')}
-          />
-          <List.Item
-            title="Privacy Policy"
-            left={props => <ShieldCheck {...props} size={24} />}
-            right={props => <List.Icon {...props} icon="chevron-right" />}
-            onPress={() => router.push('/privacy')}
-          />
-        </List.Section>
-      </Surface>
+        {/* Account Settings */}
+        <ModernCard style={styles.section}>
+          <List.Section>
+            <List.Subheader>Account Settings</List.Subheader>
+            <List.Item
+              title="Profile"
+              left={props => <User {...props} size={24} />}
+              right={props => <List.Icon {...props} icon="chevron-right" />}
+              onPress={() => router.push('/profile')}
+            />
+            <List.Item
+              title="Notifications"
+              left={props => <Bell {...props} size={24} />}
+              right={props => <List.Icon {...props} icon="chevron-right" />}
+              onPress={() => router.push('/notifications')}
+            />
+          </List.Section>
+        </ModernCard>
 
-      <Surface style={[styles.section, styles.dangerZone, shadows.small]}>
-        <List.Section>
-          <List.Subheader style={styles.dangerZoneHeader}>Danger Zone</List.Subheader>
-          <List.Item
-            title="Sign Out"
-            titleStyle={styles.signOutText}
-            left={props => <LogOut {...props} size={24} color={theme.colors.error} />}
-            onPress={handleSignOut}
-          />
-        </List.Section>
-      </Surface>
-    </ScrollView>
+        {/* App Settings */}
+        <ModernCard style={styles.section}>
+          <List.Section>
+            <List.Subheader>App Settings</List.Subheader>
+            <List.Item
+              title="Language"
+              description="English"
+              left={props => <Globe {...props} size={24} />}
+              right={props => <List.Icon {...props} icon="chevron-right" />}
+              onPress={() => router.push('/language')}
+            />
+            <List.Item
+              title="Theme"
+              description="Light"
+              left={props => <Moon {...props} size={24} />}
+              right={props => <List.Icon {...props} icon="chevron-right" />}
+              onPress={() => router.push('/theme')}
+            />
+            <List.Item
+              title="Currency"
+              description="USD"
+              left={props => <DollarSign {...props} size={24} />}
+              right={props => <List.Icon {...props} icon="chevron-right" />}
+              onPress={() => router.push('/currency')}
+            />
+          </List.Section>
+        </ModernCard>
+
+        {/* Support */}
+        <ModernCard style={styles.section}>
+          <List.Section>
+            <List.Subheader>Support</List.Subheader>
+            <List.Item
+              title="Help Center"
+              left={props => <HelpCircle {...props} size={24} />}
+              right={props => <List.Icon {...props} icon="chevron-right" />}
+              onPress={() => router.push('/help')}
+            />
+            <List.Item
+              title="Contact Support"
+              left={props => <MessageSquare {...props} size={24} />}
+              right={props => <List.Icon {...props} icon="chevron-right" />}
+              onPress={() => router.push('/support')}
+            />
+            <List.Item
+              title="Terms of Service"
+              left={props => <FileText {...props} size={24} />}
+              right={props => <List.Icon {...props} icon="chevron-right" />}
+              onPress={() => router.push('/terms')}
+            />
+            <List.Item
+              title="Privacy Policy"
+              left={props => <ShieldCheck {...props} size={24} />}
+              right={props => <List.Icon {...props} icon="chevron-right" />}
+              onPress={() => router.push('/privacy')}
+            />
+          </List.Section>
+        </ModernCard>
+
+        {/* Danger Zone */}
+        <ModernCard style={[styles.section, styles.dangerZone]}>
+          <List.Section>
+            <List.Subheader style={styles.dangerZoneHeader}>Account</List.Subheader>
+            <List.Item
+              title="Sign Out"
+              titleStyle={styles.signOutText}
+              left={props => <LogOut {...props} size={24} color={theme.colors.error} />}
+              onPress={handleSignOut}
+            />
+          </List.Section>
+        </ModernCard>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -135,16 +186,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
+  content: {
+    flex: 1,
+  },
   section: {
     margin: spacing.m,
-    borderRadius: 12,
-    overflow: 'hidden',
+    marginBottom: spacing.s,
   },
   dangerZone: {
     marginBottom: spacing.xl,
   },
   dangerZoneHeader: {
-    color: theme.colors.error,
+    color: theme.colors.onSurface,
   },
   signOutText: {
     color: theme.colors.error,

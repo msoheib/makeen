@@ -1,19 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, FlatList, Platform } from 'react-native';
-import { Text, FAB, ActivityIndicator, Appbar, Surface } from 'react-native-paper';
+import { View, StyleSheet, FlatList } from 'react-native';
+import { Text, Searchbar } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { theme, spacing, shadows } from '@/lib/theme';
+import { theme, spacing } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
 import PropertyCard from '@/components/PropertyCard';
-import PropertyFilter from '@/components/PropertyFilter';
 import { Property, PropertyStatus, PropertyType } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
+import { Building2, Plus } from 'lucide-react-native';
+import ModernHeader from '@/components/ModernHeader';
+import ModernCard from '@/components/ModernCard';
+import StatCard from '@/components/StatCard';
 
 export default function PropertiesScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [properties, setProperties] = useState<Property[]>([]);
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [stats, setStats] = useState({
+    total: 0,
+    available: 0,
+    rented: 0,
+    maintenance: 0,
+  });
   
   useEffect(() => {
     async function fetchProperties() {
@@ -29,6 +39,18 @@ export default function PropertiesScreen() {
         if (data) {
           setProperties(data);
           setFilteredProperties(data);
+          
+          // Calculate stats
+          const available = data.filter(p => p.status === 'available').length;
+          const rented = data.filter(p => p.status === 'rented').length;
+          const maintenance = data.filter(p => p.status === 'maintenance').length;
+          
+          setStats({
+            total: data.length,
+            available,
+            rented,
+            maintenance,
+          });
         }
       } catch (error) {
         console.error('Error fetching properties:', error);
@@ -40,40 +62,21 @@ export default function PropertiesScreen() {
     fetchProperties();
   }, []);
 
-  const handleFilter = (filters: {
-    search: string;
-    status: PropertyStatus[];
-    propertyType: PropertyType[];
-    location: string[];
-  }) => {
+  useEffect(() => {
+    filterProperties();
+  }, [properties, searchQuery]);
+
+  const filterProperties = () => {
     let filtered = [...properties];
     
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
+    if (searchQuery) {
+      const searchLower = searchQuery.toLowerCase();
       filtered = filtered.filter(
         property => 
           property.title.toLowerCase().includes(searchLower) ||
           property.description?.toLowerCase().includes(searchLower) ||
           property.address.toLowerCase().includes(searchLower) ||
           property.city.toLowerCase().includes(searchLower)
-      );
-    }
-    
-    if (filters.status.length > 0) {
-      filtered = filtered.filter(property => 
-        filters.status.includes(property.status)
-      );
-    }
-    
-    if (filters.propertyType.length > 0) {
-      filtered = filtered.filter(property => 
-        filters.propertyType.includes(property.property_type)
-      );
-    }
-    
-    if (filters.location.length > 0) {
-      filtered = filtered.filter(property => 
-        filters.location.includes(property.city)
       );
     }
     
@@ -84,22 +87,70 @@ export default function PropertiesScreen() {
     router.push(`/properties/${propertyId}`);
   };
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text style={styles.loadingText}>Loading properties...</Text>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
-      <Appbar.Header>
-        <Appbar.Content title="Properties" />
-      </Appbar.Header>
+      <ModernHeader
+        title="Organisation"
+        subtitle="Manage your properties"
+        showLogo={true}
+        onNotificationPress={() => router.push('/notifications')}
+        onMenuPress={() => router.push('/menu')}
+      />
+
+      {/* Stats Overview */}
+      <View style={styles.statsSection}>
+        <FlatList
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          data={[
+            {
+              title: 'Total Properties',
+              value: stats.total.toString(),
+              color: theme.colors.primary,
+              icon: <Building2 size={20} color={theme.colors.primary} />,
+            },
+            {
+              title: 'Available',
+              value: stats.available.toString(),
+              color: theme.colors.success,
+              icon: <Building2 size={20} color={theme.colors.success} />,
+            },
+            {
+              title: 'Rented',
+              value: stats.rented.toString(),
+              color: theme.colors.secondary,
+              icon: <Building2 size={20} color={theme.colors.secondary} />,
+            },
+            {
+              title: 'Maintenance',
+              value: stats.maintenance.toString(),
+              color: theme.colors.warning,
+              icon: <Building2 size={20} color={theme.colors.warning} />,
+            },
+          ]}
+          renderItem={({ item }) => (
+            <StatCard
+              title={item.title}
+              value={item.value}
+              color={item.color}
+              icon={item.icon}
+            />
+          )}
+          keyExtractor={(item) => item.title}
+          contentContainerStyle={styles.statsContainer}
+        />
+      </View>
       
-      <PropertyFilter onFilter={handleFilter} />
+      {/* Search */}
+      <View style={styles.filtersSection}>
+        <Searchbar
+          placeholder="Search properties..."
+          onChangeText={setSearchQuery}
+          value={searchQuery}
+          style={styles.searchbar}
+          iconColor={theme.colors.onSurfaceVariant}
+        />
+      </View>
       
       {filteredProperties.length > 0 ? (
         <FlatList
@@ -115,22 +166,16 @@ export default function PropertiesScreen() {
           showsVerticalScrollIndicator={false}
         />
       ) : (
-        <Surface style={styles.emptyStateContainer}>
+        <ModernCard style={styles.emptyStateContainer}>
+          <Plus size={48} color={theme.colors.onSurfaceVariant} />
           <Text style={styles.emptyStateTitle}>No properties found</Text>
           <Text style={styles.emptyStateSubtitle}>
             {properties.length > 0 
-              ? 'Try adjusting your filters to see more results' 
+              ? 'Try adjusting your search to see more results' 
               : 'Add your first property to get started'}
           </Text>
-        </Surface>
+        </ModernCard>
       )}
-      
-      <FAB
-        icon="plus"
-        style={styles.fab}
-        onPress={() => router.push('/properties/add')}
-        label="Add Property"
-      />
     </View>
   );
 }
@@ -140,18 +185,22 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  statsSection: {
+    marginBottom: spacing.m,
   },
-  loadingText: {
-    marginTop: spacing.m,
-    color: theme.colors.onSurfaceVariant,
+  statsContainer: {
+    paddingHorizontal: spacing.m,
+  },
+  filtersSection: {
+    paddingHorizontal: spacing.m,
+    marginBottom: spacing.m,
+  },
+  searchbar: {
+    backgroundColor: theme.colors.surface,
   },
   listContent: {
-    padding: spacing.m,
-    paddingBottom: spacing.xxl + 64, // Extra padding for FAB
+    paddingHorizontal: spacing.m,
+    paddingBottom: spacing.xxxl,
   },
   emptyStateContainer: {
     flex: 1,
@@ -160,7 +209,6 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     margin: spacing.l,
     borderRadius: 12,
-    ...shadows.medium,
   },
   emptyStateTitle: {
     fontSize: 20,
@@ -173,12 +221,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: theme.colors.onSurfaceVariant,
     textAlign: 'center',
-  },
-  fab: {
-    position: 'absolute',
-    margin: 16,
-    right: 0,
-    bottom: 0,
-    backgroundColor: theme.colors.primary,
   },
 });
