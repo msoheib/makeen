@@ -5,21 +5,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { Property } from '@/lib/types';
-import { 
-  ArrowLeft, 
-  Edit, 
-  Share, 
-  MapPin, 
-  Home, 
-  Bath, 
-  Bed, 
-  Square,
-  DollarSign,
-  Calendar,
-  User,
-  Phone,
-  Mail
-} from 'lucide-react-native';
+import { ArrowLeft, LocationEdit as Edit, Share, MapPin, Chrome as Home, Bath, Bed, Square, DollarSign, Calendar, User, Phone, Mail } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import StatCard from '@/components/StatCard';

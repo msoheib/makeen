@@ -6,7 +6,7 @@ import { theme, spacing } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/lib/store';
 import { PropertyType, PropertyStatus, PaymentMethod } from '@/lib/types';
-import { ArrowLeft, Building2, MapPin, DollarSign, Home } from 'lucide-react-native';
+import { ArrowLeft, Building2, MapPin, DollarSign, Chrome as Home } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 

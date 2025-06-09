@@ -6,7 +6,7 @@ import { theme, spacing } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/lib/store';
 import { MaintenanceStatus } from '@/lib/types';
-import { ArrowLeft, Tool, AlertTriangle, FileText, Building2 } from 'lucide-react-native';
+import { ArrowLeft, PenTool as Tool, TriangleAlert as AlertTriangle, FileText, Building2 } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 

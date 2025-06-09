@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { MaintenanceRequest } from '@/lib/types';
-import { Tool, Plus, AlertTriangle, CheckCircle, Clock, XCircle } from 'lucide-react-native';
+import { PenTool as Tool, Plus, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, Clock, Circle as XCircle } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import StatCard from '@/components/StatCard';

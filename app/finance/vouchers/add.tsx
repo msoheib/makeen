@@ -173,7 +173,7 @@ export default function AddVoucherScreen() {
             mode="outlined"
             style={styles.input}
             error={!!errors.voucher_number}
-            right={<TextInput.Icon icon="refresh" onPress={generateVoucherNumber} />}
+            right={<TextInput.Icon icon="refresh\" onPress={generateVoucherNumber} />}
           />
           {errors.voucher_number && <Text style={styles.errorText}>{errors.voucher_number}</Text>}
 
