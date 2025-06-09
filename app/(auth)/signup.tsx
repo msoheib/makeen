@@ -6,6 +6,7 @@ import { theme, spacing } from '@/lib/theme';
 import { Lock, Mail, Eye, EyeOff, User, ChevronLeft } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { UserRole } from '@/lib/types';
+import { AuthApiError } from '@supabase/supabase-js';
 
 export default function SignUpScreen() {
   const router = useRouter();
@@ -78,8 +79,12 @@ export default function SignUpScreen() {
         setError('Signup initiated. Please check your email to confirm your account.');
       }
     } catch (error: any) {
-      console.error('Error in handleSignUp:', error);
-      setError(error.message || 'Failed to sign up. Please try again.');
+      if (error instanceof AuthApiError && error.message.includes('User already registered')) {
+        setError('This email is already in use. Please sign in instead.');
+      } else {
+        console.error('Error in handleSignUp:', error);
+        setError(error.message || 'Failed to sign up. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
