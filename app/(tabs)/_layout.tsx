@@ -2,13 +2,7 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { useTheme } from 'react-native-paper';
 import { Platform } from 'react-native';
-import { 
-  Home,
-  FileText,
-  Users,
-  Building2,
-  MoreHorizontal
-} from 'lucide-react-native';
+import { Chrome as Home, FileText, Users, Building2, MoveHorizontal as MoreHorizontal } from 'lucide-react-native';
 import { useAppStore } from '@/lib/store';
 import { theme } from '@/lib/theme';
 

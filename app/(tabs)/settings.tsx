@@ -3,24 +3,7 @@ import { View, StyleSheet, ScrollView } from 'react-native';
 import { List, Surface, Text } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
-import { 
-  Settings, 
-  User, 
-  Bell, 
-  Globe, 
-  Moon, 
-  DollarSign,
-  HelpCircle,
-  MessageSquare,
-  FileText,
-  ShieldCheck,
-  LogOut,
-  Building2,
-  Users,
-  CreditCard,
-  BarChart3,
-  Tool
-} from 'lucide-react-native';
+import { Settings, User, Bell, Globe, Moon, DollarSign, CircleHelp as HelpCircle, MessageSquare, FileText, ShieldCheck, LogOut, Building2, Users, CreditCard, ChartBar as BarChart3, PenTool as Tool } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/lib/store';
 import ModernHeader from '@/components/ModernHeader';
