@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Text } from 'react-native-paper';
+import { Text, ActivityIndicator } from 'react-native-paper';
 import { theme, spacing, shadows } from '@/lib/theme';
 import ModernCard from './ModernCard';
 
@@ -10,6 +10,7 @@ interface StatCardProps {
   subtitle?: string;
   color?: string;
   icon?: React.ReactNode;
+  loading?: boolean;
   trend?: {
     value: string;
     isPositive: boolean;
@@ -22,6 +23,7 @@ export default function StatCard({
   subtitle, 
   color = theme.colors.primary,
   icon,
+  loading = false,
   trend 
 }: StatCardProps) {
   return (
@@ -31,7 +33,7 @@ export default function StatCard({
           <Text style={[styles.title, { color: theme.colors.onSurfaceVariant }]}>
             {title}
           </Text>
-          {trend && (
+          {trend && !loading && (
             <View style={[
               styles.trendContainer,
               { backgroundColor: trend.isPositive ? theme.colors.successContainer : theme.colors.errorContainer }
@@ -52,14 +54,22 @@ export default function StatCard({
         )}
       </View>
       
-      <Text style={[styles.value, { color }]}>
-        {value}
-      </Text>
-      
-      {subtitle && (
-        <Text style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
-          {subtitle}
-        </Text>
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="small" color={color} />
+        </View>
+      ) : (
+        <>
+          <Text style={[styles.value, { color }]}>
+            {value}
+          </Text>
+          
+          {subtitle && (
+            <Text style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
+              {subtitle}
+            </Text>
+          )}
+        </>
       )}
     </ModernCard>
   );
@@ -109,5 +119,10 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 12,
     fontWeight: '400',
+  },
+  loadingContainer: {
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
   },
 });

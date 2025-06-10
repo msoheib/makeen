@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList, RefreshControl } from 'react-native';
-import { Text, Chip, Button } from 'react-native-paper';
+import { Text, Chip, Button, Searchbar } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
 import { vouchersApi } from '@/lib/api';
@@ -8,7 +8,6 @@ import { useApi } from '@/hooks/useApi';
 import { TrendingUp, TrendingDown, DollarSign, Calendar, CheckCircle, Clock, XCircle, Filter, Plus } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
-import SearchInput from '@/components/SearchInput';
 
 // Updated interface to match voucher data structure
 interface Payment {
@@ -283,14 +282,12 @@ export default function PaymentsScreen() {
         />
       </View>
 
-      <View style={styles.searchSection}>
-        <SearchInput
-          value={searchQuery}
-          onChangeText={setSearchQuery}
+              <Searchbar
           placeholder="Search payments..."
-          style={styles.searchInput}
+          onChangeText={setSearchQuery}
+          value={searchQuery}
+          style={styles.searchbar}
         />
-      </View>
 
       {/* Add Payment Button */}
       <View style={styles.addButtonContainer}>
@@ -382,11 +379,9 @@ const styles = StyleSheet.create({
   filterText: {
     fontSize: 12,
   },
-  searchSection: {
-    paddingHorizontal: spacing.m,
-    paddingBottom: spacing.m,
-  },
-  searchInput: {
+  searchbar: {
+    marginHorizontal: spacing.m,
+    marginBottom: spacing.m,
     backgroundColor: theme.colors.surface,
   },
   addButtonContainer: {

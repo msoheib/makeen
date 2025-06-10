@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, FlatList } from 'react-native';
+import { View, StyleSheet, ScrollView, FlatList, RefreshControl } from 'react-native';
 import { Text, Button, SegmentedButtons } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
@@ -7,6 +7,8 @@ import { ChartBar as BarChart3, TrendingUp, DollarSign, Building2, Users, FileTe
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import StatCard from '@/components/StatCard';
+import { reportsApi } from '@/lib/api';
+import { useApi } from '@/hooks/useApi';
 
 interface ReportItem {
   id: string;
@@ -23,12 +25,69 @@ interface ReportItem {
 export default function ReportsScreen() {
   const router = useRouter();
   const [activeCategory, setActiveCategory] = useState('financial');
-  const [stats, setStats] = useState({
-    totalReports: 24,
-    generatedThisMonth: 8,
-    scheduledReports: 3,
-    avgGenerationTime: '2.3s',
-  });
+  
+  // API calls for real data
+  const { 
+    data: stats, 
+    loading: statsLoading, 
+    error: statsError, 
+    refetch: refetchStats 
+  } = useApi(() => reportsApi.getStats(), []);
+
+  const { 
+    data: revenueData, 
+    loading: revenueLoading, 
+    refetch: refetchRevenue 
+  } = useApi(() => reportsApi.getRevenueReport(), []);
+
+  const { 
+    data: expenseData, 
+    loading: expenseLoading, 
+    refetch: refetchExpense 
+  } = useApi(() => reportsApi.getExpenseReport(), []);
+
+  const { 
+    data: propertyData, 
+    loading: propertyLoading, 
+    refetch: refetchProperty 
+  } = useApi(() => reportsApi.getPropertyPerformanceReport(), []);
+
+  const { 
+    data: tenantData, 
+    loading: tenantLoading, 
+    refetch: refetchTenant 
+  } = useApi(() => reportsApi.getTenantReport(), []);
+
+  const { 
+    data: maintenanceData, 
+    loading: maintenanceLoading, 
+    refetch: refetchMaintenance 
+  } = useApi(() => reportsApi.getMaintenanceReport(), []);
+
+  const handleRefresh = async () => {
+    await Promise.all([
+      refetchStats(),
+      refetchRevenue(),
+      refetchExpense(), 
+      refetchProperty(),
+      refetchTenant(),
+      refetchMaintenance()
+    ]);
+  };
+
+  const isLoading = statsLoading || revenueLoading || expenseLoading || propertyLoading || tenantLoading || maintenanceLoading;
+
+  const formatLastGenerated = (isoString?: string) => {
+    if (!isoString) return 'Never generated';
+    const date = new Date(isoString);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 24) return `${diffInHours} hour${diffInHours === 1 ? '' : 's'} ago`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    return `${diffInDays} day${diffInDays === 1 ? '' : 's'} ago`;
+  };
 
   const reports: ReportItem[] = [
     // Financial Reports
@@ -39,7 +98,7 @@ export default function ReportsScreen() {
       category: 'financial',
       icon: <TrendingUp size={20} color={theme.colors.success} />,
       color: theme.colors.success,
-      lastGenerated: '2 hours ago',
+      lastGenerated: formatLastGenerated(revenueData?.lastGenerated),
       onView: () => router.push('/reports/revenue'),
       onDownload: () => console.log('Download revenue report'),
     },
@@ -50,7 +109,7 @@ export default function ReportsScreen() {
       category: 'financial',
       icon: <DollarSign size={20} color={theme.colors.error} />,
       color: theme.colors.error,
-      lastGenerated: '1 day ago',
+      lastGenerated: formatLastGenerated(expenseData?.lastGenerated),
       onView: () => router.push('/reports/expenses'),
       onDownload: () => console.log('Download expense report'),
     },
@@ -61,7 +120,7 @@ export default function ReportsScreen() {
       category: 'financial',
       icon: <BarChart3 size={20} color={theme.colors.primary} />,
       color: theme.colors.primary,
-      lastGenerated: '3 days ago',
+      lastGenerated: formatLastGenerated(revenueData?.lastGenerated), // Using revenue data as proxy
       onView: () => router.push('/reports/profit-loss'),
       onDownload: () => console.log('Download P&L report'),
     },
@@ -72,7 +131,7 @@ export default function ReportsScreen() {
       category: 'financial',
       icon: <DollarSign size={20} color={theme.colors.secondary} />,
       color: theme.colors.secondary,
-      lastGenerated: '1 week ago',
+      lastGenerated: formatLastGenerated(revenueData?.lastGenerated), // Using revenue data as proxy
       onView: () => router.push('/reports/cash-flow'),
       onDownload: () => console.log('Download cash flow report'),
     },
@@ -85,7 +144,7 @@ export default function ReportsScreen() {
       category: 'property',
       icon: <Building2 size={20} color={theme.colors.primary} />,
       color: theme.colors.primary,
-      lastGenerated: '1 day ago',
+      lastGenerated: formatLastGenerated(propertyData?.lastGenerated),
       onView: () => router.push('/reports/occupancy'),
       onDownload: () => console.log('Download occupancy report'),
     },
@@ -96,7 +155,7 @@ export default function ReportsScreen() {
       category: 'property',
       icon: <Building2 size={20} color={theme.colors.warning} />,
       color: theme.colors.warning,
-      lastGenerated: '2 days ago',
+      lastGenerated: formatLastGenerated(maintenanceData?.lastGenerated),
       onView: () => router.push('/reports/maintenance'),
       onDownload: () => console.log('Download maintenance report'),
     },
@@ -107,7 +166,7 @@ export default function ReportsScreen() {
       category: 'property',
       icon: <TrendingUp size={20} color={theme.colors.success} />,
       color: theme.colors.success,
-      lastGenerated: '3 days ago',
+      lastGenerated: formatLastGenerated(propertyData?.lastGenerated),
       onView: () => router.push('/reports/property-performance'),
       onDownload: () => console.log('Download property performance report'),
     },
@@ -120,7 +179,7 @@ export default function ReportsScreen() {
       category: 'tenant',
       icon: <Users size={20} color={theme.colors.secondary} />,
       color: theme.colors.secondary,
-      lastGenerated: '1 day ago',
+      lastGenerated: formatLastGenerated(tenantData?.lastGenerated),
       onView: () => router.push('/reports/tenants'),
       onDownload: () => console.log('Download tenant report'),
     },
@@ -131,7 +190,7 @@ export default function ReportsScreen() {
       category: 'tenant',
       icon: <DollarSign size={20} color={theme.colors.primary} />,
       color: theme.colors.primary,
-      lastGenerated: '6 hours ago',
+      lastGenerated: formatLastGenerated(tenantData?.lastGenerated),
       onView: () => router.push('/reports/payment-history'),
       onDownload: () => console.log('Download payment history report'),
     },
@@ -142,7 +201,7 @@ export default function ReportsScreen() {
       category: 'tenant',
       icon: <Calendar size={20} color={theme.colors.warning} />,
       color: theme.colors.warning,
-      lastGenerated: '2 days ago',
+      lastGenerated: formatLastGenerated(tenantData?.lastGenerated),
       onView: () => router.push('/reports/lease-expiry'),
       onDownload: () => console.log('Download lease expiry report'),
     },
@@ -155,7 +214,7 @@ export default function ReportsScreen() {
       category: 'operations',
       icon: <BarChart3 size={20} color={theme.colors.tertiary} />,
       color: theme.colors.tertiary,
-      lastGenerated: '1 day ago',
+      lastGenerated: formatLastGenerated(maintenanceData?.lastGenerated),
       onView: () => router.push('/reports/operations'),
       onDownload: () => console.log('Download operations report'),
     },
@@ -166,7 +225,7 @@ export default function ReportsScreen() {
       category: 'operations',
       icon: <Users size={20} color={theme.colors.primary} />,
       color: theme.colors.primary,
-      lastGenerated: '3 days ago',
+      lastGenerated: formatLastGenerated(maintenanceData?.lastGenerated),
       onView: () => router.push('/reports/vendors'),
       onDownload: () => console.log('Download vendor report'),
     },
@@ -228,33 +287,45 @@ export default function ReportsScreen() {
           horizontal 
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.statsContainer}
+          refreshControl={
+            <RefreshControl
+              refreshing={isLoading}
+              onRefresh={handleRefresh}
+              colors={[theme.colors.primary]}
+              tintColor={theme.colors.primary}
+            />
+          }
         >
           <StatCard
             title="Total Reports"
-            value={stats.totalReports.toString()}
+            value={stats?.totalReports?.toString() || '0'}
             color={theme.colors.primary}
             icon={<FileText size={20} color={theme.colors.primary} />}
+            loading={statsLoading}
           />
           <StatCard
             title="This Month"
-            value={stats.generatedThisMonth.toString()}
+            value={stats?.generatedThisMonth?.toString() || '0'}
             subtitle="Generated"
             color={theme.colors.success}
             icon={<TrendingUp size={20} color={theme.colors.success} />}
+            loading={statsLoading}
           />
           <StatCard
             title="Scheduled"
-            value={stats.scheduledReports.toString()}
+            value={stats?.scheduledReports?.toString() || '0'}
             subtitle="Auto-generated"
             color={theme.colors.secondary}
             icon={<Calendar size={20} color={theme.colors.secondary} />}
+            loading={statsLoading}
           />
           <StatCard
             title="Avg Time"
-            value={stats.avgGenerationTime}
+            value={stats?.avgGenerationTime || '0s'}
             subtitle="Generation time"
             color={theme.colors.warning}
             icon={<BarChart3 size={20} color={theme.colors.warning} />}
+            loading={statsLoading}
           />
         </ScrollView>
       </View>
