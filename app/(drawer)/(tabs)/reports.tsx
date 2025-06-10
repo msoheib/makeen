@@ -89,147 +89,174 @@ export default function ReportsScreen() {
     return `${diffInDays} day${diffInDays === 1 ? '' : 's'} ago`;
   };
 
-  const reports: ReportItem[] = [
-    // Financial Reports
-    {
-      id: 'revenue-report',
-      title: 'Revenue Report',
-      description: 'Monthly revenue breakdown by property',
-      category: 'financial',
-      icon: <TrendingUp size={20} color={theme.colors.success} />,
-      color: theme.colors.success,
-      lastGenerated: formatLastGenerated(revenueData?.lastGenerated),
-      onView: () => router.push('/reports/revenue'),
-      onDownload: () => console.log('Download revenue report'),
-    },
-    {
-      id: 'expense-report',
-      title: 'Expense Report',
-      description: 'Detailed breakdown of all expenses',
-      category: 'financial',
-      icon: <DollarSign size={20} color={theme.colors.error} />,
-      color: theme.colors.error,
-      lastGenerated: formatLastGenerated(expenseData?.lastGenerated),
-      onView: () => router.push('/reports/expenses'),
-      onDownload: () => console.log('Download expense report'),
-    },
-    {
-      id: 'profit-loss',
-      title: 'Profit & Loss',
-      description: 'P&L statement for the current period',
-      category: 'financial',
-      icon: <BarChart3 size={20} color={theme.colors.primary} />,
-      color: theme.colors.primary,
-      lastGenerated: formatLastGenerated(revenueData?.lastGenerated), // Using revenue data as proxy
-      onView: () => router.push('/reports/profit-loss'),
-      onDownload: () => console.log('Download P&L report'),
-    },
-    {
-      id: 'cash-flow',
-      title: 'Cash Flow Statement',
-      description: 'Cash inflows and outflows analysis',
-      category: 'financial',
-      icon: <DollarSign size={20} color={theme.colors.secondary} />,
-      color: theme.colors.secondary,
-      lastGenerated: formatLastGenerated(revenueData?.lastGenerated), // Using revenue data as proxy
-      onView: () => router.push('/reports/cash-flow'),
-      onDownload: () => console.log('Download cash flow report'),
-    },
+  // Generate dynamic reports list based on available data
+  const generateReportsList = (): ReportItem[] => {
+    const reports: ReportItem[] = [];
     
-    // Property Reports
-    {
-      id: 'occupancy-report',
-      title: 'Occupancy Report',
-      description: 'Property occupancy rates and trends',
-      category: 'property',
-      icon: <Building2 size={20} color={theme.colors.primary} />,
-      color: theme.colors.primary,
-      lastGenerated: formatLastGenerated(propertyData?.lastGenerated),
-      onView: () => router.push('/reports/occupancy'),
-      onDownload: () => console.log('Download occupancy report'),
-    },
-    {
-      id: 'maintenance-report',
-      title: 'Maintenance Report',
-      description: 'Maintenance costs and frequency analysis',
-      category: 'property',
-      icon: <Building2 size={20} color={theme.colors.warning} />,
-      color: theme.colors.warning,
-      lastGenerated: formatLastGenerated(maintenanceData?.lastGenerated),
-      onView: () => router.push('/reports/maintenance'),
-      onDownload: () => console.log('Download maintenance report'),
-    },
-    {
-      id: 'property-performance',
-      title: 'Property Performance',
-      description: 'Individual property ROI and metrics',
-      category: 'property',
-      icon: <TrendingUp size={20} color={theme.colors.success} />,
-      color: theme.colors.success,
-      lastGenerated: formatLastGenerated(propertyData?.lastGenerated),
-      onView: () => router.push('/reports/property-performance'),
-      onDownload: () => console.log('Download property performance report'),
-    },
+    // Financial Reports (only if revenue or expense data exists)
+    if (revenueData || expenseData) {
+      reports.push(
+        {
+          id: 'revenue-report',
+          title: 'Revenue Report',
+          description: 'Monthly revenue breakdown by property',
+          category: 'financial',
+          icon: <TrendingUp size={20} color={theme.colors.success} />,
+          color: theme.colors.success,
+          lastGenerated: formatLastGenerated(revenueData?.lastGenerated),
+          onView: () => router.push('/reports/revenue'),
+          onDownload: () => console.log('Download revenue report'),
+        },
+        {
+          id: 'expense-report',
+          title: 'Expense Report',
+          description: 'Detailed breakdown of all expenses',
+          category: 'financial',
+          icon: <DollarSign size={20} color={theme.colors.error} />,
+          color: theme.colors.error,
+          lastGenerated: formatLastGenerated(expenseData?.lastGenerated),
+          onView: () => router.push('/reports/expenses'),
+          onDownload: () => console.log('Download expense report'),
+        },
+        {
+          id: 'profit-loss',
+          title: 'Profit & Loss',
+          description: 'P&L statement for the current period',
+          category: 'financial',
+          icon: <BarChart3 size={20} color={theme.colors.primary} />,
+          color: theme.colors.primary,
+          lastGenerated: formatLastGenerated(revenueData?.lastGenerated),
+          onView: () => router.push('/reports/profit-loss'),
+          onDownload: () => console.log('Download P&L report'),
+        },
+        {
+          id: 'cash-flow',
+          title: 'Cash Flow Statement',
+          description: 'Cash inflows and outflows analysis',
+          category: 'financial',
+          icon: <DollarSign size={20} color={theme.colors.secondary} />,
+          color: theme.colors.secondary,
+          lastGenerated: formatLastGenerated(revenueData?.lastGenerated),
+          onView: () => router.push('/reports/cash-flow'),
+          onDownload: () => console.log('Download cash flow report'),
+        }
+      );
+    }
     
-    // Tenant Reports
-    {
-      id: 'tenant-report',
-      title: 'Tenant Report',
-      description: 'Tenant demographics and payment history',
-      category: 'tenant',
-      icon: <Users size={20} color={theme.colors.secondary} />,
-      color: theme.colors.secondary,
-      lastGenerated: formatLastGenerated(tenantData?.lastGenerated),
-      onView: () => router.push('/reports/tenants'),
-      onDownload: () => console.log('Download tenant report'),
-    },
-    {
-      id: 'payment-history',
-      title: 'Payment History',
-      description: 'Detailed payment tracking and late fees',
-      category: 'tenant',
-      icon: <DollarSign size={20} color={theme.colors.primary} />,
-      color: theme.colors.primary,
-      lastGenerated: formatLastGenerated(tenantData?.lastGenerated),
-      onView: () => router.push('/reports/payment-history'),
-      onDownload: () => console.log('Download payment history report'),
-    },
-    {
-      id: 'lease-expiry',
-      title: 'Lease Expiry Report',
-      description: 'Upcoming lease renewals and expirations',
-      category: 'tenant',
-      icon: <Calendar size={20} color={theme.colors.warning} />,
-      color: theme.colors.warning,
-      lastGenerated: formatLastGenerated(tenantData?.lastGenerated),
-      onView: () => router.push('/reports/lease-expiry'),
-      onDownload: () => console.log('Download lease expiry report'),
-    },
+    // Property Reports (only if property data exists)
+    if (propertyData) {
+      reports.push(
+        {
+          id: 'occupancy-report',
+          title: 'Occupancy Report',
+          description: 'Property occupancy rates and trends',
+          category: 'property',
+          icon: <Building2 size={20} color={theme.colors.primary} />,
+          color: theme.colors.primary,
+          lastGenerated: formatLastGenerated(propertyData?.lastGenerated),
+          onView: () => router.push('/reports/occupancy'),
+          onDownload: () => console.log('Download occupancy report'),
+        },
+        {
+          id: 'property-performance',
+          title: 'Property Performance',
+          description: 'Individual property ROI and metrics',
+          category: 'property',
+          icon: <TrendingUp size={20} color={theme.colors.success} />,
+          color: theme.colors.success,
+          lastGenerated: formatLastGenerated(propertyData?.lastGenerated),
+          onView: () => router.push('/reports/property-performance'),
+          onDownload: () => console.log('Download property performance report'),
+        }
+      );
+    }
     
-    // Operations Reports
-    {
-      id: 'operations-summary',
-      title: 'Operations Summary',
-      description: 'Overall operational metrics and KPIs',
-      category: 'operations',
-      icon: <BarChart3 size={20} color={theme.colors.tertiary} />,
-      color: theme.colors.tertiary,
-      lastGenerated: formatLastGenerated(maintenanceData?.lastGenerated),
-      onView: () => router.push('/reports/operations'),
-      onDownload: () => console.log('Download operations report'),
-    },
-    {
-      id: 'vendor-report',
-      title: 'Vendor Report',
-      description: 'Vendor performance and cost analysis',
-      category: 'operations',
-      icon: <Users size={20} color={theme.colors.primary} />,
-      color: theme.colors.primary,
-      lastGenerated: formatLastGenerated(maintenanceData?.lastGenerated),
-      onView: () => router.push('/reports/vendors'),
-      onDownload: () => console.log('Download vendor report'),
-    },
-  ];
+    // Add maintenance report if maintenance data exists
+    if (maintenanceData) {
+      reports.push({
+        id: 'maintenance-report',
+        title: 'Maintenance Report',
+        description: 'Maintenance costs and frequency analysis',
+        category: 'property',
+        icon: <Building2 size={20} color={theme.colors.warning} />,
+        color: theme.colors.warning,
+        lastGenerated: formatLastGenerated(maintenanceData?.lastGenerated),
+        onView: () => router.push('/reports/maintenance'),
+        onDownload: () => console.log('Download maintenance report'),
+      });
+    }
+    
+    // Tenant Reports (only if tenant data exists)
+    if (tenantData) {
+      reports.push(
+        {
+          id: 'tenant-report',
+          title: 'Tenant Report',
+          description: 'Tenant demographics and payment history',
+          category: 'tenant',
+          icon: <Users size={20} color={theme.colors.secondary} />,
+          color: theme.colors.secondary,
+          lastGenerated: formatLastGenerated(tenantData?.lastGenerated),
+          onView: () => router.push('/reports/tenants'),
+          onDownload: () => console.log('Download tenant report'),
+        },
+        {
+          id: 'payment-history',
+          title: 'Payment History',
+          description: 'Detailed payment tracking and late fees',
+          category: 'tenant',
+          icon: <DollarSign size={20} color={theme.colors.primary} />,
+          color: theme.colors.primary,
+          lastGenerated: formatLastGenerated(tenantData?.lastGenerated),
+          onView: () => router.push('/reports/payment-history'),
+          onDownload: () => console.log('Download payment history report'),
+        },
+        {
+          id: 'lease-expiry',
+          title: 'Lease Expiry Report',
+          description: 'Upcoming lease renewals and expirations',
+          category: 'tenant',
+          icon: <Calendar size={20} color={theme.colors.warning} />,
+          color: theme.colors.warning,
+          lastGenerated: formatLastGenerated(tenantData?.lastGenerated),
+          onView: () => router.push('/reports/lease-expiry'),
+          onDownload: () => console.log('Download lease expiry report'),
+        }
+      );
+    }
+    
+    // Operations Reports (only if maintenance data exists)
+    if (maintenanceData) {
+      reports.push(
+        {
+          id: 'operations-summary',
+          title: 'Operations Summary',
+          description: 'Overall operational metrics and KPIs',
+          category: 'operations',
+          icon: <BarChart3 size={20} color={theme.colors.tertiary} />,
+          color: theme.colors.tertiary,
+          lastGenerated: formatLastGenerated(maintenanceData?.lastGenerated),
+          onView: () => router.push('/reports/operations'),
+          onDownload: () => console.log('Download operations report'),
+        },
+        {
+          id: 'vendor-report',
+          title: 'Vendor Report',
+          description: 'Vendor performance and cost analysis',
+          category: 'operations',
+          icon: <Users size={20} color={theme.colors.primary} />,
+          color: theme.colors.primary,
+          lastGenerated: formatLastGenerated(maintenanceData?.lastGenerated),
+          onView: () => router.push('/reports/vendors'),
+          onDownload: () => console.log('Download vendor report'),
+        }
+      );
+    }
+    
+    return reports;
+  };
+
+  const reports = generateReportsList();
 
   const filteredReports = reports.filter(report => report.category === activeCategory);
 
