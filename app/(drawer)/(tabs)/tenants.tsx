@@ -147,9 +147,9 @@ export default function TenantsScreen() {
       <ModernHeader
         title="Tenants"
         subtitle="Manage your tenants"
-        showLogo={true}
         variant="dark"
         showNotifications
+        isHomepage={false}
       />
 
       {/* Stats Overview - Only show when data is loaded */}

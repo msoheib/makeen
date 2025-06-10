@@ -3,6 +3,7 @@ import { View, StyleSheet, FlatList, Image } from 'react-native';
 import { Text, Searchbar, SegmentedButtons, IconButton, Chip } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
+import { documentsApi } from '@/lib/api';
 import { 
   FileText, 
   Image as ImageIcon, 
@@ -55,66 +56,38 @@ export default function DocumentsScreen() {
   }, [documents, searchQuery, activeFilter]);
 
   const fetchDocuments = async () => {
-    // Mock data - replace with actual API call
-    const mockDocuments: Document[] = [
-      {
-        id: '1',
-        name: 'Lease Agreement - Apartment 2A.pdf',
-        type: 'contract',
-        size: '2.4 MB',
-        uploadDate: '2024-01-15',
-        uploadedBy: 'John Smith',
-        property: 'Apartment 2A',
-        tenant: 'Sarah Johnson',
-        url: 'https://example.com/doc1.pdf',
-      },
-      {
-        id: '2',
-        name: 'Monthly Invoice - January 2024.pdf',
-        type: 'invoice',
-        size: '1.2 MB',
-        uploadDate: '2024-01-14',
-        uploadedBy: 'Admin',
-        property: 'Villa 5B',
-        tenant: 'Mike Wilson',
-        url: 'https://example.com/doc2.pdf',
-      },
-      {
-        id: '3',
-        name: 'Property Inspection Photos.zip',
-        type: 'image',
-        size: '15.6 MB',
-        uploadDate: '2024-01-13',
-        uploadedBy: 'Inspector',
-        property: 'Office 3C',
-        url: 'https://example.com/doc3.zip',
-        thumbnail: 'https://images.pexels.com/photos/1396122/pexels-photo-1396122.jpeg',
-      },
-      {
-        id: '4',
-        name: 'Payment Receipt - Rent.pdf',
-        type: 'receipt',
-        size: '856 KB',
-        uploadDate: '2024-01-12',
-        uploadedBy: 'Emily Davis',
-        property: 'Apartment 1B',
-        tenant: 'Emily Davis',
-        url: 'https://example.com/doc4.pdf',
-      },
-      {
-        id: '5',
-        name: 'Monthly Financial Report.xlsx',
-        type: 'report',
-        size: '3.2 MB',
-        uploadDate: '2024-01-11',
-        uploadedBy: 'Finance Team',
-        url: 'https://example.com/doc5.xlsx',
-      },
-    ];
-    
-    setDocuments(mockDocuments);
-    setLoading(false);
+    try {
+      const response = await documentsApi.getAll();
+      if (response.success && response.data) {
+        // Transform documents to match expected format
+        const transformedDocs: Document[] = response.data.map(doc => ({
+          id: doc.id,
+          name: doc.title,
+          type: doc.document_type as any,
+          size: doc.file_size ? formatFileSize(doc.file_size) : 'Unknown',
+          uploadDate: doc.created_at,
+          uploadedBy: 'User', // would need to join with profiles table for real name
+          property: doc.related_entity_type === 'property' ? 'Property' : undefined,
+          tenant: doc.related_entity_type === 'tenant' ? 'Tenant' : undefined,
+          url: doc.file_path,
+        }));
+        setDocuments(transformedDocs);
+      }
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  // Helper function to format file size
+  function formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
 
   const filterDocuments = () => {
     let filtered = [...documents];
@@ -251,8 +224,8 @@ export default function DocumentsScreen() {
       <ModernHeader
         title="Documents"
         subtitle="Manage all files and documents"
+        isHomepage={false}
         onNotificationPress={() => router.push('/notifications')}
-        onSearchPress={() => router.push('/search')}
       />
 
       {/* Stats Overview */}

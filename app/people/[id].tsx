@@ -4,6 +4,7 @@ import { Text, Button, IconButton, Chip, List } from 'react-native-paper';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
+import { vouchersApi } from '@/lib/api';
 import { User, Property, Contract } from '@/lib/types';
 import { ArrowLeft, LocationEdit as Edit, Phone, Mail, MapPin, Calendar, Building2, DollarSign, User as UserIcon, FileText } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
@@ -64,13 +65,36 @@ export default function PersonDetailsScreen() {
         if (contractsData) setContracts(contractsData);
       }
 
-      // Calculate stats (mock for now)
-      setStats({
-        totalProperties: properties.length,
-        activeContracts: contracts.filter(c => c.status === 'active').length,
-        totalPayments: 12500,
-        avgRent: 1200,
-      });
+      // Calculate real stats from vouchers
+      try {
+        const { data: vouchersData } = await vouchersApi.getAll();
+        const personVouchers = vouchersData?.filter(v => v.tenant_id === id) || [];
+        const totalPayments = personVouchers
+          .filter(v => v.voucher_type === 'receipt' && v.status === 'posted')
+          .reduce((sum, v) => sum + v.amount, 0);
+        
+        const avgRent = contracts.length > 0 
+          ? contracts.reduce((sum, c) => sum + c.rent_amount, 0) / contracts.length 
+          : 0;
+
+        setStats({
+          totalProperties: properties.length,
+          activeContracts: contracts.filter(c => c.status === 'active').length,
+          totalPayments,
+          avgRent,
+        });
+      } catch (error) {
+        console.error('Error fetching vouchers for stats:', error);
+        // Fall back to basic stats without voucher data
+        setStats({
+          totalProperties: properties.length,
+          activeContracts: contracts.filter(c => c.status === 'active').length,
+          totalPayments: 0,
+          avgRent: contracts.length > 0 
+            ? contracts.reduce((sum, c) => sum + c.rent_amount, 0) / contracts.length 
+            : 0,
+        });
+      }
 
     } catch (error) {
       console.error('Error fetching person details:', error);

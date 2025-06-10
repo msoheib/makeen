@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Platform } from 'react-native';
+import { Text } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
@@ -50,9 +51,9 @@ export default function DashboardScreen() {
   return (
     <View style={styles.container}>
       <ModernHeader
-        userName={user?.first_name || 'User'}
         showLogo={true}
         variant="dark"
+        isHomepage={true}
         onNotificationPress={() => router.push('/notifications')}
       />
 
@@ -61,6 +62,10 @@ export default function DashboardScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
+        <View style={styles.greetingContainer}>
+          <Text style={styles.greeting}>Hello {user?.first_name || 'User'},</Text>
+        </View>
+        
         <RentCard
           outstandingAmount={rentData.outstanding}
           totalDue={rentData.totalDue}
@@ -89,7 +94,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: spacing.m,
+    paddingHorizontal: spacing.m,
     paddingBottom: spacing.xxxl,
+  },
+  greetingContainer: {
+    padding: spacing.m,
+    paddingBottom: spacing.s,
+  },
+  greeting: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: theme.colors.onBackground,
   },
 });

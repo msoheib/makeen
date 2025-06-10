@@ -94,6 +94,7 @@ export default function PropertiesScreen() {
           subtitle="Properties and units"
           variant="dark"
           showNotifications
+          isHomepage={false}
         />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -111,6 +112,7 @@ export default function PropertiesScreen() {
           subtitle="Properties and units"
           variant="dark"
           showNotifications
+          isHomepage={false}
         />
         <ModernCard style={styles.errorContainer}>
           <Text style={styles.errorText}>Error loading properties</Text>
@@ -127,6 +129,7 @@ export default function PropertiesScreen() {
         subtitle="Properties and units"
         variant="dark"
         showNotifications
+        isHomepage={false}
       />
 
       {/* Stats Overview */}

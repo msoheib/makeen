@@ -219,6 +219,7 @@ export default function ReportsScreen() {
         subtitle="Financial insights and analytics"
         variant="dark"
         showNotifications
+        isHomepage={false}
       />
 
       {/* Stats Overview */}

@@ -70,7 +70,7 @@ export default function SignInScreen() {
         setAuthenticated(true);
         
         // Navigate to the main app
-        router.replace('/(tabs)');
+        router.replace('/(drawer)');
       } else {
         // This case should ideally not be reached if signInError is null, 
         // as data.user should be present on successful sign-in.

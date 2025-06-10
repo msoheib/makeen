@@ -60,8 +60,10 @@ export default function MoreScreen() {
     <View style={styles.container}>
       <ModernHeader
         title="Settings"
+        subtitle="App preferences and account"
         variant="dark"
         showNotifications
+        isHomepage={false}
       />
 
       <ScrollView style={styles.content}>

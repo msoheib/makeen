@@ -1,110 +1,71 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, FlatList } from 'react-native';
-import { Text, Searchbar, SegmentedButtons, Chip } from 'react-native-paper';
+import { View, StyleSheet, FlatList, RefreshControl } from 'react-native';
+import { Text, Chip, Button } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
-import { CreditCard, DollarSign, TrendingUp, TrendingDown, Calendar, CircleCheck as CheckCircle, Circle as XCircle, Clock } from 'lucide-react-native';
+import { vouchersApi } from '@/lib/api';
+import { useApi } from '@/hooks/useApi';
+import { TrendingUp, TrendingDown, DollarSign, Calendar, CheckCircle, Clock, XCircle, Filter, Plus } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
-import StatCard from '@/components/StatCard';
+import SearchInput from '@/components/SearchInput';
 
+// Updated interface to match voucher data structure
 interface Payment {
   id: string;
   amount: number;
-  status: 'completed' | 'pending' | 'failed' | 'cancelled';
-  type: 'rent' | 'deposit' | 'maintenance' | 'utility';
-  tenant: string;
-  property: string;
-  date: string;
-  method: 'card' | 'bank' | 'cash' | 'check';
-  reference: string;
+  status: 'draft' | 'posted' | 'cancelled';
+  type: 'receipt' | 'payment' | 'journal';
+  description: string;
+  voucher_number: string;
+  currency: string;
+  created_at: string;
+  property_title?: string;
+  tenant_name?: string;
+  payment_method?: string;
 }
 
 export default function PaymentsScreen() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [filteredPayments, setFilteredPayments] = useState<Payment[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState('all');
-  const [stats, setStats] = useState({
-    totalReceived: 45250,
-    pendingPayments: 8750,
-    thisMonth: 12500,
-    avgPaymentTime: '2.3 days',
-  });
+  const [activeFilter, setActiveFilter] = useState<'all' | 'posted' | 'draft' | 'cancelled'>('all');
+  const [filteredPayments, setFilteredPayments] = useState<Payment[]>([]);
 
-  useEffect(() => {
-    fetchPayments();
-  }, []);
+  // Fetch vouchers from API
+  const { 
+    data: vouchers, 
+    loading, 
+    error, 
+    refetch 
+  } = useApi(() => vouchersApi.getAll(), []);
+
+  // Transform vouchers to payment format
+  const payments: Payment[] = vouchers ? vouchers.map(voucher => ({
+    id: voucher.id,
+    amount: voucher.amount,
+    status: voucher.status,
+    type: voucher.voucher_type,
+    description: voucher.description || '',
+    voucher_number: voucher.voucher_number,
+    currency: voucher.currency,
+    created_at: voucher.created_at,
+    // These would come from joins in a real implementation
+    property_title: 'Property', // placeholder - would need join
+    tenant_name: 'Tenant', // placeholder - would need join
+    payment_method: voucher.payment_method || 'bank',
+  })) : [];
+
+  // Calculate stats from real data
+  const stats = {
+    totalReceived: payments.filter(p => p.type === 'receipt' && p.status === 'posted').reduce((sum, p) => sum + p.amount, 0),
+    totalPaid: payments.filter(p => p.type === 'payment' && p.status === 'posted').reduce((sum, p) => sum + p.amount, 0),
+    pendingPayments: payments.filter(p => p.status === 'draft').length,
+    completedPayments: payments.filter(p => p.status === 'posted').length,
+  };
 
   useEffect(() => {
     filterPayments();
   }, [payments, searchQuery, activeFilter]);
-
-  const fetchPayments = async () => {
-    // Mock data - replace with actual API call
-    const mockPayments: Payment[] = [
-      {
-        id: '1',
-        amount: 1200,
-        status: 'completed',
-        type: 'rent',
-        tenant: 'John Smith',
-        property: 'Apartment 2A',
-        date: '2024-01-15',
-        method: 'card',
-        reference: 'PAY-001',
-      },
-      {
-        id: '2',
-        amount: 2500,
-        status: 'pending',
-        type: 'deposit',
-        tenant: 'Sarah Johnson',
-        property: 'Villa 5B',
-        date: '2024-01-14',
-        method: 'bank',
-        reference: 'PAY-002',
-      },
-      {
-        id: '3',
-        amount: 350,
-        status: 'completed',
-        type: 'maintenance',
-        tenant: 'Mike Wilson',
-        property: 'Office 3C',
-        date: '2024-01-13',
-        method: 'card',
-        reference: 'PAY-003',
-      },
-      {
-        id: '4',
-        amount: 800,
-        status: 'failed',
-        type: 'rent',
-        tenant: 'Emily Davis',
-        property: 'Apartment 1B',
-        date: '2024-01-12',
-        method: 'card',
-        reference: 'PAY-004',
-      },
-      {
-        id: '5',
-        amount: 150,
-        status: 'completed',
-        type: 'utility',
-        tenant: 'David Brown',
-        property: 'Apartment 2A',
-        date: '2024-01-11',
-        method: 'cash',
-        reference: 'PAY-005',
-      },
-    ];
-    
-    setPayments(mockPayments);
-    setLoading(false);
-  };
 
   const filterPayments = () => {
     let filtered = [...payments];
@@ -118,9 +79,10 @@ export default function PaymentsScreen() {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(payment => 
-        payment.tenant.toLowerCase().includes(query) ||
-        payment.property.toLowerCase().includes(query) ||
-        payment.reference.toLowerCase().includes(query)
+        payment.description.toLowerCase().includes(query) ||
+        payment.voucher_number.toLowerCase().includes(query) ||
+        (payment.tenant_name && payment.tenant_name.toLowerCase().includes(query)) ||
+        (payment.property_title && payment.property_title.toLowerCase().includes(query))
       );
     }
     
@@ -129,14 +91,12 @@ export default function PaymentsScreen() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'completed':
+      case 'posted':
         return <CheckCircle size={16} color={theme.colors.success} />;
-      case 'pending':
+      case 'draft':
         return <Clock size={16} color={theme.colors.warning} />;
-      case 'failed':
-        return <XCircle size={16} color={theme.colors.error} />;
       case 'cancelled':
-        return <XCircle size={16} color={theme.colors.onSurfaceVariant} />;
+        return <XCircle size={16} color={theme.colors.error} />;
       default:
         return <Clock size={16} color={theme.colors.onSurfaceVariant} />;
     }
@@ -144,14 +104,12 @@ export default function PaymentsScreen() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed':
+      case 'posted':
         return theme.colors.success;
-      case 'pending':
+      case 'draft':
         return theme.colors.warning;
-      case 'failed':
-        return theme.colors.error;
       case 'cancelled':
-        return theme.colors.onSurfaceVariant;
+        return theme.colors.error;
       default:
         return theme.colors.onSurfaceVariant;
     }
@@ -159,13 +117,11 @@ export default function PaymentsScreen() {
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'rent':
-        return <DollarSign size={16} color={theme.colors.primary} />;
-      case 'deposit':
+      case 'receipt':
         return <TrendingUp size={16} color={theme.colors.success} />;
-      case 'maintenance':
-        return <TrendingDown size={16} color={theme.colors.warning} />;
-      case 'utility':
+      case 'payment':
+        return <TrendingDown size={16} color={theme.colors.error} />;
+      case 'journal':
         return <Calendar size={16} color={theme.colors.secondary} />;
       default:
         return <DollarSign size={16} color={theme.colors.onSurfaceVariant} />;
@@ -178,7 +134,7 @@ export default function PaymentsScreen() {
         <View style={styles.paymentInfo}>
           <View style={styles.paymentTitleRow}>
             <Text style={styles.paymentAmount}>
-              ${item.amount.toLocaleString()}
+              {item.currency} {item.amount.toLocaleString()}
             </Text>
             <View style={styles.statusContainer}>
               {getStatusIcon(item.status)}
@@ -195,35 +151,62 @@ export default function PaymentsScreen() {
                 {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
               </Text>
             </View>
-            <Text style={styles.tenantName}>{item.tenant}</Text>
-            <Text style={styles.propertyName}>{item.property}</Text>
+            <Text style={styles.description} numberOfLines={2}>
+              {item.description || 'No description'}
+            </Text>
+            {item.tenant_name && (
+              <Text style={styles.tenantName}>{item.tenant_name}</Text>
+            )}
+            {item.property_title && (
+              <Text style={styles.propertyName}>{item.property_title}</Text>
+            )}
           </View>
         </View>
       </View>
       
       <View style={styles.paymentFooter}>
         <Text style={styles.paymentDate}>
-          {new Date(item.date).toLocaleDateString()}
+          {new Date(item.created_at).toLocaleDateString()}
         </Text>
-        <Chip
-          mode="outlined"
-          style={styles.methodChip}
-          textStyle={styles.methodText}
-        >
-          {item.method.toUpperCase()}
-        </Chip>
-        <Text style={styles.reference}>#{item.reference}</Text>
+        {item.payment_method && (
+          <Chip
+            mode="outlined"
+            style={styles.methodChip}
+            textStyle={styles.methodText}
+          >
+            {item.payment_method.toUpperCase()}
+          </Chip>
+        )}
+        <Text style={styles.reference}>#{item.voucher_number}</Text>
       </View>
     </ModernCard>
   );
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <ModernHeader
+          title="Payments"
+          subtitle="Track all transactions"
+          isHomepage={false}
+        />
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Failed to load payments</Text>
+          <Button mode="contained" onPress={refetch} style={styles.retryButton}>
+            Retry
+          </Button>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <ModernHeader
         title="Payments"
         subtitle="Track all transactions"
+        isHomepage={false}
         onNotificationPress={() => router.push('/notifications')}
-        onSearchPress={() => router.push('/search')}
       />
 
       {/* Stats Overview */}
@@ -234,87 +217,120 @@ export default function PaymentsScreen() {
           data={[
             {
               title: 'Total Received',
-              value: `$${stats.totalReceived.toLocaleString()}`,
+              value: `SAR ${stats.totalReceived.toLocaleString()}`,
               color: theme.colors.success,
               icon: <TrendingUp size={20} color={theme.colors.success} />,
-              trend: { value: '+12.5%', isPositive: true },
+            },
+            {
+              title: 'Total Paid',
+              value: `SAR ${stats.totalPaid.toLocaleString()}`,
+              color: theme.colors.error,
+              icon: <TrendingDown size={20} color={theme.colors.error} />,
             },
             {
               title: 'Pending',
-              value: `$${stats.pendingPayments.toLocaleString()}`,
+              value: stats.pendingPayments.toString(),
               color: theme.colors.warning,
               icon: <Clock size={20} color={theme.colors.warning} />,
             },
             {
-              title: 'This Month',
-              value: `$${stats.thisMonth.toLocaleString()}`,
-              color: theme.colors.primary,
-              icon: <Calendar size={20} color={theme.colors.primary} />,
-              trend: { value: '+8.2%', isPositive: true },
-            },
-            {
-              title: 'Avg Time',
-              value: stats.avgPaymentTime,
-              subtitle: 'Payment processing',
-              color: theme.colors.secondary,
-              icon: <CreditCard size={20} color={theme.colors.secondary} />,
+              title: 'Completed',
+              value: stats.completedPayments.toString(),
+              color: theme.colors.success,
+              icon: <CheckCircle size={20} color={theme.colors.success} />,
             },
           ]}
           renderItem={({ item }) => (
-            <StatCard
-              title={item.title}
-              value={item.value}
-              subtitle={item.subtitle}
-              color={item.color}
-              icon={item.icon}
-              trend={item.trend}
-            />
+            <ModernCard style={styles.statCard}>
+              <View style={styles.statHeader}>
+                {item.icon}
+                <Text style={[styles.statValue, { color: item.color }]}>
+                  {item.value}
+                </Text>
+              </View>
+              <Text style={styles.statTitle}>{item.title}</Text>
+            </ModernCard>
           )}
           keyExtractor={(item) => item.title}
           contentContainerStyle={styles.statsContainer}
         />
       </View>
 
-      {/* Search and Filters */}
+      {/* Filter and Search */}
       <View style={styles.filtersSection}>
-        <Searchbar
-          placeholder="Search payments..."
-          onChangeText={setSearchQuery}
-          value={searchQuery}
-          style={styles.searchbar}
-          iconColor={theme.colors.onSurfaceVariant}
-        />
-        
-        <SegmentedButtons
-          value={activeFilter}
-          onValueChange={setActiveFilter}
-          buttons={[
-            { value: 'all', label: 'All' },
-            { value: 'completed', label: 'Completed' },
-            { value: 'pending', label: 'Pending' },
-            { value: 'failed', label: 'Failed' },
+        <FlatList
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          data={[
+            { key: 'all', label: 'All' },
+            { key: 'posted', label: 'Posted' },
+            { key: 'draft', label: 'Draft' },
+            { key: 'cancelled', label: 'Cancelled' },
           ]}
-          style={styles.segmentedButtons}
+          renderItem={({ item }) => (
+            <Chip
+              mode={activeFilter === item.key ? 'elevated' : 'outlined'}
+              selected={activeFilter === item.key}
+              onPress={() => setActiveFilter(item.key as any)}
+              style={styles.filterChip}
+              textStyle={styles.filterText}
+            >
+              {item.label}
+            </Chip>
+          )}
+          keyExtractor={(item) => item.key}
+          contentContainerStyle={styles.filtersContainer}
         />
+      </View>
+
+      <View style={styles.searchSection}>
+        <SearchInput
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder="Search payments..."
+          style={styles.searchInput}
+        />
+      </View>
+
+      {/* Add Payment Button */}
+      <View style={styles.addButtonContainer}>
+        <Button
+          mode="contained"
+          onPress={() => router.push('/finance/vouchers/add')}
+          icon={() => <Plus size={20} color="white" />}
+          style={styles.addButton}
+        >
+          Add Payment
+        </Button>
       </View>
 
       {/* Payments List */}
       <FlatList
         data={filteredPayments}
         renderItem={renderPayment}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.listContent}
+        keyExtractor={(item) => item.id}
+        style={styles.paymentsList}
+        contentContainerStyle={styles.paymentsContainer}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={loading} onRefresh={refetch} />
+        }
         ListEmptyComponent={
-          <ModernCard style={styles.emptyState}>
-            <CreditCard size={48} color={theme.colors.onSurfaceVariant} />
-            <Text style={styles.emptyStateTitle}>No payments found</Text>
-            <Text style={styles.emptyStateSubtitle}>
-              {searchQuery || activeFilter !== 'all' 
-                ? 'Try adjusting your search or filters' 
-                : 'Payments will appear here once processed'}
-            </Text>
-          </ModernCard>
+          loading ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>Loading payments...</Text>
+            </View>
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No payments found</Text>
+              <Text style={styles.emptySubtext}>
+                {searchQuery || activeFilter !== 'all' 
+                  ? 'Try adjusting your search or filters'
+                  : 'Start by adding your first payment'
+                }
+              </Text>
+            </View>
+          )
         }
       />
     </View>
@@ -327,28 +343,69 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   statsSection: {
-    marginBottom: spacing.m,
+    paddingVertical: spacing.m,
   },
   statsContainer: {
     paddingHorizontal: spacing.m,
+    gap: spacing.m,
+  },
+  statCard: {
+    padding: spacing.m,
+    minWidth: 140,
+    alignItems: 'center',
+  },
+  statHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  statValue: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  statTitle: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
+    textAlign: 'center',
   },
   filtersSection: {
-    paddingHorizontal: spacing.m,
-    marginBottom: spacing.m,
+    paddingVertical: spacing.s,
   },
-  searchbar: {
-    marginBottom: spacing.m,
+  filtersContainer: {
+    paddingHorizontal: spacing.m,
+    gap: spacing.s,
+  },
+  filterChip: {
+    marginRight: spacing.s,
+  },
+  filterText: {
+    fontSize: 12,
+  },
+  searchSection: {
+    paddingHorizontal: spacing.m,
+    paddingBottom: spacing.m,
+  },
+  searchInput: {
     backgroundColor: theme.colors.surface,
   },
-  segmentedButtons: {
-    backgroundColor: theme.colors.surface,
-  },
-  listContent: {
+  addButtonContainer: {
     paddingHorizontal: spacing.m,
-    paddingBottom: spacing.xxxl,
+    paddingBottom: spacing.m,
+  },
+  addButton: {
+    borderRadius: 8,
+  },
+  paymentsList: {
+    flex: 1,
+  },
+  paymentsContainer: {
+    paddingHorizontal: spacing.m,
+    paddingBottom: spacing.xl,
   },
   paymentCard: {
     marginBottom: spacing.m,
+    padding: spacing.m,
   },
   paymentHeader: {
     marginBottom: spacing.m,
@@ -359,42 +416,49 @@ const styles = StyleSheet.create({
   paymentTitleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: spacing.s,
   },
   paymentAmount: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
     color: theme.colors.onSurface,
+    flex: 1,
   },
   statusContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: spacing.xs,
   },
   statusText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   paymentDetails: {
-    gap: 4,
+    gap: spacing.xs,
   },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: spacing.xs,
   },
   detailText: {
     fontSize: 14,
     fontWeight: '500',
     color: theme.colors.onSurface,
   },
-  tenantName: {
+  description: {
     fontSize: 14,
     color: theme.colors.onSurfaceVariant,
+    lineHeight: 18,
+  },
+  tenantName: {
+    fontSize: 14,
+    color: theme.colors.onSurface,
+    fontWeight: '500',
   },
   propertyName: {
-    fontSize: 14,
+    fontSize: 12,
     color: theme.colors.onSurfaceVariant,
   },
   paymentFooter: {
@@ -403,7 +467,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: spacing.s,
     borderTopWidth: 1,
-    borderTopColor: theme.colors.outlineVariant,
+    borderTopColor: theme.colors.outline,
   },
   paymentDate: {
     fontSize: 12,
@@ -414,28 +478,39 @@ const styles = StyleSheet.create({
   },
   methodText: {
     fontSize: 10,
-    fontWeight: '600',
   },
   reference: {
     fontSize: 12,
     color: theme.colors.onSurfaceVariant,
     fontFamily: 'monospace',
   },
-  emptyState: {
-    alignItems: 'center',
+  emptyContainer: {
     padding: spacing.xl,
-    marginTop: spacing.xl,
+    alignItems: 'center',
   },
-  emptyStateTitle: {
-    fontSize: 18,
+  emptyText: {
+    fontSize: 16,
     fontWeight: '600',
     color: theme.colors.onSurface,
-    marginTop: spacing.m,
     marginBottom: spacing.s,
   },
-  emptyStateSubtitle: {
+  emptySubtext: {
     fontSize: 14,
     color: theme.colors.onSurfaceVariant,
     textAlign: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  errorText: {
+    fontSize: 16,
+    color: theme.colors.error,
+    marginBottom: spacing.m,
+  },
+  retryButton: {
+    borderRadius: 8,
   },
 });

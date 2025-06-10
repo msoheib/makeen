@@ -19,6 +19,7 @@ interface ModernHeaderProps {
   userName?: string;
   showLogo?: boolean;
   variant?: 'light' | 'dark';
+  isHomepage?: boolean;
 }
 
 export default function ModernHeader({
@@ -33,7 +34,8 @@ export default function ModernHeader({
   userAvatar,
   userName,
   showLogo = false,
-  variant = 'dark'
+  variant = 'dark',
+  isHomepage = false
 }: ModernHeaderProps) {
   const navigation = useNavigation();
   const isDark = variant === 'dark';
@@ -61,15 +63,30 @@ export default function ModernHeader({
           />
         )}
         
-        {showLogo && (
-          <View style={styles.logoContainer}>
-            <View style={styles.logo}>
-              <View style={[styles.logoSquare, { backgroundColor: theme.colors.primary }]} />
-              <View style={[styles.logoSquare, { backgroundColor: theme.colors.secondary }]} />
+        <View style={styles.centerContent}>
+          {isHomepage && showLogo ? (
+            <View style={styles.logoContainer}>
+              <View style={styles.logo}>
+                <View style={[styles.logoSquare, { backgroundColor: theme.colors.primary }]} />
+                <View style={[styles.logoSquare, { backgroundColor: theme.colors.secondary }]} />
+              </View>
+              <Text style={[styles.logoText, { color: textColor }]}>LandlordStudio</Text>
             </View>
-            <Text style={[styles.logoText, { color: textColor }]}>LandlordStudio</Text>
-          </View>
-        )}
+          ) : (
+            title && (
+              <View style={styles.pageTitleContainer}>
+                <Text style={[styles.pageTitle, { color: textColor }]} numberOfLines={1}>
+                  {title}
+                </Text>
+                {subtitle && (
+                  <Text style={[styles.pageSubtitle, { color: isDark ? '#94A3B8' : theme.colors.onSurfaceVariant }]} numberOfLines={1}>
+                    {subtitle}
+                  </Text>
+                )}
+              </View>
+            )
+          )}
+        </View>
         
         <View style={styles.rightSection}>
           {showSearch && (
@@ -95,23 +112,9 @@ export default function ModernHeader({
         </View>
       </View>
       
-      {(title || userName) && (
-        <View style={styles.titleSection}>
-          {title && (
-            <View>
-              <Text style={[styles.title, { color: textColor }]}>{title}</Text>
-              {subtitle && (
-                <Text style={[styles.subtitle, { color: isDark ? '#94A3B8' : theme.colors.onSurfaceVariant }]}>
-                  {subtitle}
-                </Text>
-              )}
-            </View>
-          )}
-          {userName && (
-            <View>
-              <Text style={[styles.greeting, { color: textColor }]}>Hello {userName},</Text>
-            </View>
-          )}
+      {isHomepage && userName && (
+        <View style={styles.greetingSection}>
+          <Text style={[styles.greeting, { color: textColor }]}>Hello {userName},</Text>
         </View>
       )}
     </View>
@@ -130,17 +133,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.s,
+    minHeight: 40,
   },
   menuButton: {
     margin: 0,
   },
+  centerContent: {
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: spacing.m,
+  },
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-    marginHorizontal: spacing.m,
   },
   logo: {
     flexDirection: 'row',
@@ -156,20 +161,26 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
   },
+  pageTitleContainer: {
+    alignItems: 'center',
+    maxWidth: '100%',
+  },
+  pageTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  pageSubtitle: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 2,
+  },
   rightSection: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  titleSection: {
-    marginTop: spacing.s,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-  },
-  subtitle: {
-    fontSize: 16,
-    marginTop: 4,
+  greetingSection: {
+    marginTop: spacing.m,
   },
   greeting: {
     fontSize: 32,
