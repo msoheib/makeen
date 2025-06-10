@@ -30,12 +30,9 @@ export default function MoreScreen() {
   return (
     <View style={styles.container}>
       <ModernHeader
-        title="More"
-        subtitle="Settings and tools"
-        showLogo={true}
+        title="Settings"
         variant="dark"
-        onNotificationPress={() => router.push('/notifications')}
-        onMenuPress={() => router.push('/menu')}
+        showNotifications
       />
 
       <ScrollView style={styles.content}>

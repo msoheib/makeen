@@ -3,6 +3,8 @@ import { View, StyleSheet, Image, Platform } from 'react-native';
 import { Text, IconButton } from 'react-native-paper';
 import { theme, spacing } from '@/lib/theme';
 import { Bell, Search, Menu } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
+import { DrawerActions } from '@react-navigation/native';
 
 interface ModernHeaderProps {
   title?: string;
@@ -33,10 +35,20 @@ export default function ModernHeader({
   showLogo = false,
   variant = 'dark'
 }: ModernHeaderProps) {
+  const navigation = useNavigation();
   const isDark = variant === 'dark';
   const textColor = isDark ? '#FFFFFF' : theme.colors.onSurface;
   const iconColor = isDark ? '#FFFFFF' : theme.colors.onSurfaceVariant;
   const backgroundColor = isDark ? '#1E293B' : theme.colors.background;
+
+  const handleMenuPress = () => {
+    if (onMenuPress) {
+      onMenuPress();
+    } else {
+      // Open the drawer
+      navigation.dispatch(DrawerActions.openDrawer());
+    }
+  };
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
@@ -44,7 +56,7 @@ export default function ModernHeader({
         {showMenu && (
           <IconButton
             icon={() => <Menu size={24} color={iconColor} />}
-            onPress={onMenuPress}
+            onPress={handleMenuPress}
             style={styles.menuButton}
           />
         )}
@@ -111,6 +123,8 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? spacing.xl : spacing.m,
     paddingHorizontal: spacing.m,
     paddingBottom: spacing.m,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
   },
   topRow: {
     flexDirection: 'row',

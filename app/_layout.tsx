@@ -9,6 +9,7 @@ import { useFonts } from 'expo-font';
 import { Inter_400Regular, Inter_500Medium, Inter_700Bold } from '@expo-google-fonts/inter';
 import * as SplashScreen from 'expo-splash-screen';
 import { initLocale } from '@/lib/i18n';
+import 'react-native-gesture-handler';
 
 // Prevent the splash screen from auto-hiding only on native platforms
 if (Platform.OS !== 'web') {
@@ -64,7 +65,7 @@ export default function RootLayout() {
       <StatusBar style="auto" />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(auth)" options={{ animation: 'none' }} />
-        <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
+        <Stack.Screen name="(drawer)" options={{ animation: 'fade' }} />
         <Stack.Screen name="+not-found" options={{ presentation: 'modal' }} />
       </Stack>
     </PaperProvider>

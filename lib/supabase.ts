@@ -5,8 +5,13 @@ import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
 
 // Get Supabase URL and anon key from environment variables
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || 
+                   Constants.expoConfig?.extra?.EXPO_PUBLIC_SUPABASE_URL || 
+                   'https://fbabpaorcvatejkrelrf.supabase.co';
+
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 
+                       Constants.expoConfig?.extra?.EXPO_PUBLIC_SUPABASE_ANON_KEY || 
+                       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZiYWJwYW9yY3ZhdGVqa3JlbHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyNjYzMzMsImV4cCI6MjA2Mzg0MjMzM30.L_DLnMQUw7cepGKjtrbkFZ_E6Rsz4pecAtnUrbc0F5w';
 
 // Custom storage implementation for React Native
 class ReactNativeStorage {

@@ -1,21 +1,112 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Text, Button } from 'react-native-paper';
+import { Text, Button, ActivityIndicator } from 'react-native-paper';
 import { theme, spacing } from '@/lib/theme';
-import { Plus } from 'lucide-react-native';
+import { Plus, Home, Users, AlertTriangle, Calendar } from 'lucide-react-native';
 import ModernCard from './ModernCard';
 
 interface CashflowCardProps {
   onAddPress?: () => void;
+  loading?: boolean;
+  propertySummary?: any;
+  expiringContracts?: number;
+  pendingMaintenance?: number;
 }
 
-export default function CashflowCard({ onAddPress }: CashflowCardProps) {
+export default function CashflowCard({ 
+  onAddPress,
+  loading = false,
+  propertySummary,
+  expiringContracts = 0,
+  pendingMaintenance = 0
+}: CashflowCardProps) {
+  if (loading) {
+    return (
+      <ModernCard style={styles.container}>
+        <Text style={styles.title}>System Overview</Text>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={styles.loadingText}>Loading dashboard...</Text>
+        </View>
+      </ModernCard>
+    );
+  }
+
   return (
     <ModernCard style={styles.container}>
-      <Text style={styles.title}>Cashflow</Text>
+      <Text style={styles.title}>System Overview</Text>
       
       <View style={styles.content}>
-        <Text style={styles.loadingText}>Loading Dashboard...</Text>
+        {/* Properties Overview */}
+        <View style={styles.metricRow}>
+          <View style={styles.metric}>
+            <Home size={24} color={theme.colors.primary} />
+            <View style={styles.metricContent}>
+              <Text style={styles.metricValue}>
+                {propertySummary?.total_properties || 0}
+              </Text>
+              <Text style={styles.metricLabel}>Total Properties</Text>
+            </View>
+          </View>
+          
+          <View style={styles.metric}>
+            <Users size={24} color={theme.colors.primary} />
+            <View style={styles.metricContent}>
+              <Text style={styles.metricValue}>
+                {propertySummary?.active_contracts || 0}
+              </Text>
+              <Text style={styles.metricLabel}>Active Tenants</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Status Overview */}
+        <View style={styles.metricRow}>
+          <View style={styles.metric}>
+            <View style={[styles.statusDot, { backgroundColor: theme.colors.primary }]} />
+            <View style={styles.metricContent}>
+              <Text style={styles.metricValue}>
+                {propertySummary?.occupied || 0}
+              </Text>
+              <Text style={styles.metricLabel}>Occupied</Text>
+            </View>
+          </View>
+          
+          <View style={styles.metric}>
+            <View style={[styles.statusDot, { backgroundColor: theme.colors.secondary }]} />
+            <View style={styles.metricContent}>
+              <Text style={styles.metricValue}>
+                {propertySummary?.available || 0}
+              </Text>
+              <Text style={styles.metricLabel}>Available</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Alerts */}
+        {(expiringContracts > 0 || pendingMaintenance > 0) && (
+          <View style={styles.alertsSection}>
+            <Text style={styles.alertsTitle}>Attention Required</Text>
+            
+            {expiringContracts > 0 && (
+              <View style={styles.alertItem}>
+                <Calendar size={20} color={theme.colors.error} />
+                <Text style={styles.alertText}>
+                  {expiringContracts} contract(s) expiring soon
+                </Text>
+              </View>
+            )}
+            
+            {pendingMaintenance > 0 && (
+              <View style={styles.alertItem}>
+                <AlertTriangle size={20} color={theme.colors.error} />
+                <Text style={styles.alertText}>
+                  {pendingMaintenance} pending maintenance request(s)
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
       </View>
       
       <Button
@@ -42,13 +133,66 @@ const styles = StyleSheet.create({
     marginBottom: spacing.l,
   },
   content: {
+    paddingBottom: spacing.xl,
+  },
+  loadingContainer: {
     alignItems: 'center',
     paddingVertical: spacing.xl,
   },
   loadingText: {
     fontSize: 16,
     color: theme.colors.onSurfaceVariant,
+    marginTop: spacing.m,
+  },
+  metricRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: spacing.l,
+  },
+  metric: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    paddingHorizontal: spacing.s,
+  },
+  metricContent: {
+    marginLeft: spacing.s,
+  },
+  metricValue: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: theme.colors.onSurface,
+  },
+  metricLabel: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
+  },
+  statusDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  alertsSection: {
+    marginTop: spacing.m,
+    padding: spacing.m,
+    backgroundColor: theme.colors.errorContainer,
+    borderRadius: 8,
+  },
+  alertsTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.onErrorContainer,
+    marginBottom: spacing.s,
+  },
+  alertItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  alertText: {
+    fontSize: 12,
+    color: theme.colors.onErrorContainer,
+    marginLeft: spacing.s,
   },
   addButton: {
     backgroundColor: theme.colors.primary,

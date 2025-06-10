@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Text } from 'react-native-paper';
+import { Text, ActivityIndicator } from 'react-native-paper';
 import { theme, spacing, shadows } from '@/lib/theme';
 import ModernCard from './ModernCard';
 
@@ -9,41 +9,39 @@ interface RentCardProps {
   totalDue: number;
   collectedAmount: number;
   currency?: string;
+  loading?: boolean;
 }
 
 export default function RentCard({ 
   outstandingAmount, 
   totalDue, 
   collectedAmount,
-  currency = '?'
+  currency = '$',
+  loading = false
 }: RentCardProps) {
+  if (loading) {
+    return (
+      <ModernCard style={styles.container}>
+        <Text style={styles.title}>Rent</Text>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={styles.loadingText}>Loading financial data...</Text>
+        </View>
+      </ModernCard>
+    );
+  }
+
   return (
     <ModernCard style={styles.container}>
-      <Text style={styles.title}>Rent</Text>
+      <Text style={styles.title}>Financial Overview</Text>
       
       <View style={styles.amountsContainer}>
         <View style={styles.amountRow}>
           <View style={styles.amountItem}>
-            <Text style={[styles.amount, { color: theme.colors.tertiary }]}>
+            <Text style={[styles.amount, { color: theme.colors.error }]}>
               {currency}{outstandingAmount.toFixed(2)}
             </Text>
-            <Text style={styles.label}>Outstanding</Text>
-          </View>
-          
-          <View style={styles.amountItem}>
-            <Text style={[styles.amount, { color: theme.colors.primary }]}>
-              {currency}{totalDue.toFixed(2)}
-            </Text>
-            <Text style={styles.label}>Total Due</Text>
-          </View>
-        </View>
-        
-        <View style={styles.amountRow}>
-          <View style={styles.amountItem}>
-            <Text style={[styles.amount, { color: theme.colors.primary }]}>
-              {currency}{outstandingAmount.toFixed(2)}
-            </Text>
-            <Text style={styles.label}>Outstanding in June</Text>
+            <Text style={styles.label}>Outstanding Payments</Text>
           </View>
           
           <View style={styles.amountItem}>
@@ -55,8 +53,8 @@ export default function RentCard({
         </View>
         
         <View style={styles.collectedRow}>
-          <Text style={[styles.collectedText, { color: theme.colors.onSurfaceVariant }]}>
-            {currency}{collectedAmount.toFixed(2)} collected
+          <Text style={[styles.collectedText, { color: theme.colors.primary }]}>
+            {currency}{collectedAmount.toFixed(2)} collected this month
           </Text>
         </View>
       </View>
@@ -100,5 +98,13 @@ const styles = StyleSheet.create({
   collectedText: {
     fontSize: 16,
     fontWeight: '500',
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    paddingVertical: spacing.xl,
+  },
+  loadingText: {
+    marginTop: spacing.m,
+    color: theme.colors.onSurfaceVariant,
   },
 });

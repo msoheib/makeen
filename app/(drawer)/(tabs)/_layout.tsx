@@ -22,6 +22,8 @@ export default function TabLayout() {
       borderTopWidth: 0,
       elevation: 0,
       shadowOpacity: 0,
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
     },
     tabBarLabelStyle: {
       fontSize: 12,

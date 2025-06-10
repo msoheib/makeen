@@ -3,7 +3,8 @@ import { View, StyleSheet, ScrollView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
-import { supabase } from '@/lib/supabase';
+import { propertiesApi, vouchersApi, contractsApi, maintenanceApi } from '@/lib/api';
+import { useApi } from '@/hooks/useApi';
 import ModernHeader from '@/components/ModernHeader';
 import RentCard from '@/components/RentCard';
 import CashflowCard from '@/components/CashflowCard';
@@ -11,58 +12,48 @@ import CashflowCard from '@/components/CashflowCard';
 export default function DashboardScreen() {
   const router = useRouter();
   const user = useAppStore(state => state.user);
-  const [loading, setLoading] = useState(true);
-  const [rentData, setRentData] = useState({
-    outstanding: 90.00,
-    totalDue: 90.00,
-    collected: 90.00,
-  });
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, [user?.role]);
+  // Fetch dashboard data using our API layer
+  const { data: propertySummary, loading: propertiesLoading } = useApi(
+    () => propertiesApi.getDashboardSummary(),
+    []
+  );
 
-  const fetchDashboardData = async () => {
-    if (!user) return;
-    
-    setLoading(true);
-    try {
-      // Fetch actual data from Supabase
-      const { data: vouchers } = await supabase
-        .from('vouchers')
-        .select('amount, status, voucher_type')
-        .eq('voucher_type', 'receipt');
+  const { data: voucherSummary, loading: vouchersLoading } = useApi(
+    () => vouchersApi.getSummary('month'),
+    []
+  );
 
-      if (vouchers) {
-        const collected = vouchers
-          .filter(v => v.status === 'posted')
-          .reduce((sum, v) => sum + v.amount, 0);
-        
-        const pending = vouchers
-          .filter(v => v.status === 'draft')
-          .reduce((sum, v) => sum + v.amount, 0);
+  const { data: expiringContracts, loading: contractsLoading } = useApi(
+    () => contractsApi.getExpiring(),
+    []
+  );
 
-        setRentData({
-          outstanding: pending,
-          totalDue: collected + pending,
-          collected: collected,
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
+  const { data: maintenanceRequests, loading: maintenanceLoading } = useApi(
+    () => maintenanceApi.getRequests({ status: 'pending' }),
+    []
+  );
+
+  // Calculate rent data from vouchers
+  const rentData = voucherSummary ? {
+    outstanding: voucherSummary.total_payments || 0,
+    totalDue: (voucherSummary.total_receipts || 0) + (voucherSummary.total_payments || 0),
+    collected: voucherSummary.total_receipts || 0,
+  } : {
+    outstanding: 0,
+    totalDue: 0,
+    collected: 0,
   };
+
+  const isLoading = propertiesLoading || vouchersLoading || contractsLoading || maintenanceLoading;
 
   return (
     <View style={styles.container}>
       <ModernHeader
-        userName={user?.first_name || 'John'}
+        userName={user?.first_name || 'User'}
         showLogo={true}
         variant="dark"
         onNotificationPress={() => router.push('/notifications')}
-        onMenuPress={() => router.push('/menu')}
       />
 
       <ScrollView 
@@ -74,10 +65,15 @@ export default function DashboardScreen() {
           outstandingAmount={rentData.outstanding}
           totalDue={rentData.totalDue}
           collectedAmount={rentData.collected}
+          loading={vouchersLoading}
         />
         
         <CashflowCard
           onAddPress={() => router.push('/finance/vouchers/add')}
+          loading={isLoading}
+          propertySummary={propertySummary}
+          expiringContracts={expiringContracts?.length || 0}
+          pendingMaintenance={maintenanceRequests?.length || 0}
         />
       </ScrollView>
     </View>
