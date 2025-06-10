@@ -1,120 +1,79 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert, Image } from 'react-native';
-import { Text, TextInput, Button, IconButton, Avatar } from 'react-native-paper';
+import React, { useState } from 'react';
+import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { Text, IconButton, Button, TextInput, Avatar } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
-import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/lib/store';
-import { ArrowLeft, User, Mail, Phone, Camera, Save } from 'lucide-react-native';
-import ModernHeader from '@/components/ModernHeader';
+import { ArrowLeft, User, Mail, Phone, MapPin, Edit3, Save, X, Camera, Shield } from 'lucide-react-native';
 import ModernCard from '@/components/ModernCard';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const user = useAppStore(state => state.user);
-  const setUser = useAppStore(state => state.setUser);
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    first_name: user?.first_name || '',
-    last_name: user?.last_name || '',
-    email: user?.email || '',
-    phone_number: user?.phone_number || '',
+  const { settings, updateSettings } = useAppStore();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedProfile, setEditedProfile] = useState({
+    name: settings.userProfile?.name || '',
+    email: settings.userProfile?.email || '',
+    phone: settings.userProfile?.phone || '',
+    company: settings.userProfile?.company || '',
+    address: settings.userProfile?.address || '',
+    city: settings.userProfile?.city || '',
+    country: settings.userProfile?.country || 'Saudi Arabia',
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.first_name.trim()) {
-      newErrors.first_name = 'First name is required';
-    }
-    if (!formData.last_name.trim()) {
-      newErrors.last_name = 'Last name is required';
-    }
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
-    if (formData.phone_number && !/^\+?[\d\s\-\(\)]+$/.test(formData.phone_number)) {
-      newErrors.phone_number = 'Please enter a valid phone number';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSave = async () => {
-    if (!validateForm()) {
+  const handleSave = () => {
+    if (!editedProfile.name.trim() || !editedProfile.email.trim()) {
+      Alert.alert('Missing Information', 'Name and email are required fields.');
       return;
     }
 
-    if (!user) {
-      Alert.alert('Error', 'User not found');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const updateData = {
-        first_name: formData.first_name.trim(),
-        last_name: formData.last_name.trim(),
-        email: formData.email.trim().toLowerCase(),
-        phone_number: formData.phone_number.trim() || null,
-      };
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .update(updateData)
-        .eq('id', user.id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Update user in store
-      setUser({ ...user, ...updateData });
-
-      Alert.alert('Success', 'Profile updated successfully!');
-    } catch (error: any) {
-      console.error('Error updating profile:', error);
-      if (error.code === '23505') {
-        setErrors({ email: 'This email address is already in use' });
-      } else {
-        Alert.alert('Error', error.message || 'Failed to update profile');
-      }
-    } finally {
-      setLoading(false);
-    }
+    updateSettings({
+      userProfile: {
+        ...settings.userProfile,
+        ...editedProfile,
+        updatedAt: new Date().toISOString(),
+      },
+    });
+    
+    setIsEditing(false);
+    Alert.alert('Success', 'Profile updated successfully!');
   };
 
-  const handleChangePassword = () => {
-    router.push('/profile/change-password');
+  const handleCancel = () => {
+    setEditedProfile({
+      name: settings.userProfile?.name || '',
+      email: settings.userProfile?.email || '',
+      phone: settings.userProfile?.phone || '',
+      company: settings.userProfile?.company || '',
+      address: settings.userProfile?.address || '',
+      city: settings.userProfile?.city || '',
+      country: settings.userProfile?.country || 'Saudi Arabia',
+    });
+    setIsEditing(false);
   };
 
-  const handleUploadPhoto = () => {
+  const handleChangePhoto = () => {
     Alert.alert(
-      'Upload Photo',
-      'Photo upload functionality will be implemented soon.',
+      'Change Profile Photo',
+      'Photo upload functionality will be available in a future update.',
       [{ text: 'OK' }]
     );
   };
 
-  if (!user) {
-    return (
-      <View style={styles.container}>
-        <ModernHeader
-          title="Profile"
-          showLogo={false}
-          onNotificationPress={() => router.push('/notifications')}
-          onMenuPress={() => router.back()}
-        />
-        <View style={styles.loadingContainer}>
-          <Text>Loading profile...</Text>
-        </View>
-      </View>
-    );
-  }
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const profileStats = [
+    { label: 'Properties Managed', value: '0', icon: MapPin },
+    { label: 'Active Tenants', value: '0', icon: User },
+    { label: 'Account Type', value: 'Standard', icon: Shield },
+  ];
 
   return (
     <View style={styles.container}>
@@ -124,146 +83,275 @@ export default function ProfileScreen() {
           onPress={() => router.back()}
           style={styles.backButton}
         />
-        <Text style={styles.headerTitle}>Profile</Text>
+        <Text style={styles.headerTitle}>My Profile</Text>
         <IconButton
-          icon={() => <Save size={24} color={theme.colors.primary} />}
-          onPress={handleSave}
-          style={styles.saveButton}
+          icon={() => isEditing ? <X size={24} color={theme.colors.error} /> : <Edit3 size={24} color={theme.colors.primary} />}
+          onPress={isEditing ? handleCancel : () => setIsEditing(true)}
+          style={styles.editButton}
         />
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Profile Photo */}
-        <ModernCard style={styles.photoSection}>
-          <View style={styles.photoContainer}>
+        {/* Profile Header */}
+        <ModernCard style={styles.profileCard}>
+          <View style={styles.profileHeader}>
             <View style={styles.avatarContainer}>
-              {user.avatar_url ? (
-                <Image
-                  source={{ uri: user.avatar_url }}
-                  style={styles.avatar}
-                />
-              ) : (
-                <Avatar.Text
-                  size={100}
-                  label={`${user.first_name?.[0] || ''}${user.last_name?.[0] || ''}`}
-                  style={styles.avatar}
-                />
-              )}
+              <Avatar.Text 
+                size={80} 
+                label={getInitials(editedProfile.name || 'U')}
+                style={[styles.avatar, { backgroundColor: theme.colors.primary }]}
+                labelStyle={{ color: 'white', fontSize: 24, fontWeight: '600' }}
+              />
               <IconButton
-                icon={() => <Camera size={20} color="white" />}
-                onPress={handleUploadPhoto}
+                icon={() => <Camera size={18} color={theme.colors.onSurface} />}
+                onPress={handleChangePhoto}
                 style={styles.cameraButton}
-                iconColor="white"
+                size={18}
               />
             </View>
-            <View style={styles.userInfo}>
-              <Text style={styles.userName}>
-                {user.first_name} {user.last_name}
+            <View style={styles.profileInfo}>
+              <Text style={styles.profileName}>
+                {editedProfile.name || 'User Name'}
               </Text>
-              <Text style={styles.userRole}>
-                {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+              <Text style={styles.profileEmail}>
+                {editedProfile.email || 'user@example.com'}
               </Text>
-              <Text style={styles.memberSince}>
-                Member since {new Date(user.created_at).toLocaleDateString()}
+              <Text style={styles.profileCompany}>
+                {editedProfile.company || 'Real Estate Professional'}
               </Text>
             </View>
           </View>
         </ModernCard>
 
-        {/* Personal Information */}
-        <ModernCard style={styles.section}>
+        {/* Profile Stats */}
+        <ModernCard style={styles.statsCard}>
+          <Text style={styles.statsTitle}>Account Overview</Text>
+          <View style={styles.statsContainer}>
+            {profileStats.map((stat, index) => (
+              <View key={index} style={styles.statItem}>
+                <View style={[styles.statIcon, { backgroundColor: `${theme.colors.primary}15` }]}>
+                  <stat.icon size={20} color={theme.colors.primary} />
+                </View>
+                <Text style={styles.statValue}>{stat.value}</Text>
+                <Text style={styles.statLabel}>{stat.label}</Text>
+              </View>
+            ))}
+          </View>
+        </ModernCard>
+
+        {/* Profile Details */}
+        <ModernCard style={styles.detailsCard}>
           <View style={styles.sectionHeader}>
-            <User size={20} color={theme.colors.primary} />
             <Text style={styles.sectionTitle}>Personal Information</Text>
+            {isEditing && (
+              <Button
+                mode="contained"
+                onPress={handleSave}
+                style={styles.saveButton}
+                buttonColor={theme.colors.primary}
+                icon={() => <Save size={16} color="white" />}
+                compact
+              >
+                Save
+              </Button>
+            )}
           </View>
 
-          <View style={styles.row}>
-            <TextInput
-              label="First Name *"
-              value={formData.first_name}
-              onChangeText={(text) => setFormData({ ...formData, first_name: text })}
-              mode="outlined"
-              style={[styles.input, styles.halfInput]}
-              error={!!errors.first_name}
-            />
-            <TextInput
-              label="Last Name *"
-              value={formData.last_name}
-              onChangeText={(text) => setFormData({ ...formData, last_name: text })}
-              mode="outlined"
-              style={[styles.input, styles.halfInput]}
-              error={!!errors.last_name}
-            />
+          <View style={styles.detailsContainer}>
+            <View style={styles.detailRow}>
+              <View style={styles.detailIcon}>
+                <User size={20} color={theme.colors.onSurfaceVariant} />
+              </View>
+              <View style={styles.detailContent}>
+                <Text style={styles.detailLabel}>Full Name</Text>
+                {isEditing ? (
+                  <TextInput
+                    mode="outlined"
+                    value={editedProfile.name}
+                    onChangeText={(text) => setEditedProfile(prev => ({ ...prev, name: text }))}
+                    placeholder="Enter your full name"
+                    style={styles.textInput}
+                    outlineColor={theme.colors.outline}
+                    activeOutlineColor={theme.colors.primary}
+                  />
+                ) : (
+                  <Text style={styles.detailValue}>{editedProfile.name || 'Not set'}</Text>
+                )}
+              </View>
+            </View>
+
+            <View style={styles.detailRow}>
+              <View style={styles.detailIcon}>
+                <Mail size={20} color={theme.colors.onSurfaceVariant} />
+              </View>
+              <View style={styles.detailContent}>
+                <Text style={styles.detailLabel}>Email Address</Text>
+                {isEditing ? (
+                  <TextInput
+                    mode="outlined"
+                    value={editedProfile.email}
+                    onChangeText={(text) => setEditedProfile(prev => ({ ...prev, email: text }))}
+                    placeholder="Enter your email"
+                    keyboardType="email-address"
+                    style={styles.textInput}
+                    outlineColor={theme.colors.outline}
+                    activeOutlineColor={theme.colors.primary}
+                  />
+                ) : (
+                  <Text style={styles.detailValue}>{editedProfile.email || 'Not set'}</Text>
+                )}
+              </View>
+            </View>
+
+            <View style={styles.detailRow}>
+              <View style={styles.detailIcon}>
+                <Phone size={20} color={theme.colors.onSurfaceVariant} />
+              </View>
+              <View style={styles.detailContent}>
+                <Text style={styles.detailLabel}>Phone Number</Text>
+                {isEditing ? (
+                  <TextInput
+                    mode="outlined"
+                    value={editedProfile.phone}
+                    onChangeText={(text) => setEditedProfile(prev => ({ ...prev, phone: text }))}
+                    placeholder="Enter your phone number"
+                    keyboardType="phone-pad"
+                    style={styles.textInput}
+                    outlineColor={theme.colors.outline}
+                    activeOutlineColor={theme.colors.primary}
+                  />
+                ) : (
+                  <Text style={styles.detailValue}>{editedProfile.phone || 'Not set'}</Text>
+                )}
+              </View>
+            </View>
+
+            <View style={styles.detailRow}>
+              <View style={styles.detailIcon}>
+                <MapPin size={20} color={theme.colors.onSurfaceVariant} />
+              </View>
+              <View style={styles.detailContent}>
+                <Text style={styles.detailLabel}>Company/Business</Text>
+                {isEditing ? (
+                  <TextInput
+                    mode="outlined"
+                    value={editedProfile.company}
+                    onChangeText={(text) => setEditedProfile(prev => ({ ...prev, company: text }))}
+                    placeholder="Enter your company name"
+                    style={styles.textInput}
+                    outlineColor={theme.colors.outline}
+                    activeOutlineColor={theme.colors.primary}
+                  />
+                ) : (
+                  <Text style={styles.detailValue}>{editedProfile.company || 'Not set'}</Text>
+                )}
+              </View>
+            </View>
           </View>
-          {(errors.first_name || errors.last_name) && (
-            <Text style={styles.errorText}>{errors.first_name || errors.last_name}</Text>
-          )}
         </ModernCard>
 
-        {/* Contact Information */}
-        <ModernCard style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Mail size={20} color={theme.colors.secondary} />
-            <Text style={styles.sectionTitle}>Contact Information</Text>
+        {/* Address Information */}
+        <ModernCard style={styles.addressCard}>
+          <Text style={styles.sectionTitle}>Address Information</Text>
+          
+          <View style={styles.detailsContainer}>
+            <View style={styles.detailRow}>
+              <View style={styles.detailIcon}>
+                <MapPin size={20} color={theme.colors.onSurfaceVariant} />
+              </View>
+              <View style={styles.detailContent}>
+                <Text style={styles.detailLabel}>Street Address</Text>
+                {isEditing ? (
+                  <TextInput
+                    mode="outlined"
+                    value={editedProfile.address}
+                    onChangeText={(text) => setEditedProfile(prev => ({ ...prev, address: text }))}
+                    placeholder="Enter your address"
+                    multiline
+                    numberOfLines={2}
+                    style={styles.textInput}
+                    outlineColor={theme.colors.outline}
+                    activeOutlineColor={theme.colors.primary}
+                  />
+                ) : (
+                  <Text style={styles.detailValue}>{editedProfile.address || 'Not set'}</Text>
+                )}
+              </View>
+            </View>
+
+            <View style={styles.addressRow}>
+              <View style={styles.addressColumn}>
+                <Text style={styles.detailLabel}>City</Text>
+                {isEditing ? (
+                  <TextInput
+                    mode="outlined"
+                    value={editedProfile.city}
+                    onChangeText={(text) => setEditedProfile(prev => ({ ...prev, city: text }))}
+                    placeholder="City"
+                    style={styles.smallTextInput}
+                    outlineColor={theme.colors.outline}
+                    activeOutlineColor={theme.colors.primary}
+                  />
+                ) : (
+                  <Text style={styles.detailValue}>{editedProfile.city || 'Not set'}</Text>
+                )}
+              </View>
+
+              <View style={styles.addressColumn}>
+                <Text style={styles.detailLabel}>Country</Text>
+                {isEditing ? (
+                  <TextInput
+                    mode="outlined"
+                    value={editedProfile.country}
+                    onChangeText={(text) => setEditedProfile(prev => ({ ...prev, country: text }))}
+                    placeholder="Country"
+                    style={styles.smallTextInput}
+                    outlineColor={theme.colors.outline}
+                    activeOutlineColor={theme.colors.primary}
+                  />
+                ) : (
+                  <Text style={styles.detailValue}>{editedProfile.country}</Text>
+                )}
+              </View>
+            </View>
           </View>
-
-          <TextInput
-            label="Email Address *"
-            value={formData.email}
-            onChangeText={(text) => setFormData({ ...formData, email: text })}
-            mode="outlined"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            style={styles.input}
-            error={!!errors.email}
-            left={<TextInput.Icon icon="email-outline" />}
-          />
-          {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
-
-          <TextInput
-            label="Phone Number"
-            value={formData.phone_number}
-            onChangeText={(text) => setFormData({ ...formData, phone_number: text })}
-            mode="outlined"
-            keyboardType="phone-pad"
-            style={styles.input}
-            error={!!errors.phone_number}
-            left={<TextInput.Icon icon="phone-outline" />}
-          />
-          {errors.phone_number && <Text style={styles.errorText}>{errors.phone_number}</Text>}
         </ModernCard>
 
-        {/* Security */}
-        <ModernCard style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Phone size={20} color={theme.colors.tertiary} />
-            <Text style={styles.sectionTitle}>Security</Text>
-          </View>
-
+        {/* Account Actions */}
+        <ModernCard style={styles.actionsCard}>
+          <Text style={styles.sectionTitle}>Account Actions</Text>
+          
           <Button
             mode="outlined"
-            onPress={handleChangePassword}
-            style={styles.passwordButton}
-            icon="lock-outline"
+            onPress={() => Alert.alert('Change Password', 'Password change functionality will be available in a future update.')}
+            style={styles.actionButton}
+            icon={() => <Shield size={20} color={theme.colors.primary} />}
           >
             Change Password
           </Button>
-        </ModernCard>
 
-        {/* Save Button */}
-        <View style={styles.submitContainer}>
           <Button
-            mode="contained"
-            onPress={handleSave}
-            loading={loading}
-            disabled={loading}
-            style={styles.submitButton}
-            contentStyle={styles.submitButtonContent}
-            icon={() => <Save size={20} color="white" />}
+            mode="outlined"
+            onPress={() => router.push('/privacy')}
+            style={styles.actionButton}
+            icon={() => <Shield size={20} color={theme.colors.onSurfaceVariant} />}
           >
-            Save Changes
+            Privacy Settings
           </Button>
-        </View>
+
+          <Button
+            mode="text"
+            onPress={() => Alert.alert(
+              'Delete Account',
+              'Account deletion functionality will be available in a future update. Please contact support for assistance.',
+              [{ text: 'OK' }]
+            )}
+            style={styles.deleteButton}
+            textColor={theme.colors.error}
+          >
+            Delete Account
+          </Button>
+        </ModernCard>
       </ScrollView>
     </View>
   );
@@ -276,121 +364,186 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.m,
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.s,
+    paddingTop: spacing.l,
+    paddingBottom: spacing.m,
+    backgroundColor: theme.colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.outline,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
   },
   backButton: {
     margin: 0,
   },
   headerTitle: {
+    flex: 1,
     fontSize: 20,
     fontWeight: '600',
     color: theme.colors.onSurface,
-    flex: 1,
     textAlign: 'center',
   },
-  saveButton: {
+  editButton: {
     margin: 0,
   },
   content: {
     flex: 1,
+    padding: spacing.m,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  photoSection: {
-    marginHorizontal: spacing.m,
+  profileCard: {
     marginBottom: spacing.m,
+    backgroundColor: `${theme.colors.primary}05`,
+    borderColor: `${theme.colors.primary}15`,
+    borderWidth: 1,
   },
-  photoContainer: {
+  profileHeader: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   avatarContainer: {
     position: 'relative',
-    marginRight: spacing.l,
+    marginRight: spacing.m,
   },
   avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    elevation: 4,
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   cameraButton: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: theme.colors.primary,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    bottom: -5,
+    right: -5,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 2,
+    borderColor: theme.colors.outline,
   },
-  userInfo: {
+  profileInfo: {
     flex: 1,
   },
-  userName: {
-    fontSize: 24,
+  profileName: {
+    fontSize: 20,
     fontWeight: '700',
     color: theme.colors.onSurface,
     marginBottom: 4,
   },
-  userRole: {
-    fontSize: 16,
-    color: theme.colors.primary,
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  memberSince: {
+  profileEmail: {
     fontSize: 14,
     color: theme.colors.onSurfaceVariant,
+    marginBottom: 2,
   },
-  section: {
-    marginHorizontal: spacing.m,
+  profileCompany: {
+    fontSize: 13,
+    color: theme.colors.primary,
+    fontWeight: '500',
+  },
+  statsCard: {
+    marginBottom: spacing.m,
+  },
+  statsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginBottom: spacing.m,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  statItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  statIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.s,
+  },
+  statValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: theme.colors.onSurface,
+    marginBottom: 2,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
+    textAlign: 'center',
+  },
+  detailsCard: {
     marginBottom: spacing.m,
   },
   sectionHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: spacing.m,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: theme.colors.onSurface,
-    marginLeft: spacing.s,
   },
-  input: {
-    marginBottom: spacing.m,
-    backgroundColor: theme.colors.surface,
+  saveButton: {
+    paddingHorizontal: spacing.s,
   },
-  row: {
+  detailsContainer: {
+    gap: spacing.m,
+  },
+  detailRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
-  halfInput: {
-    width: '48%',
+  detailIcon: {
+    width: 40,
+    alignItems: 'center',
+    paddingTop: spacing.xs,
   },
-  passwordButton: {
-    borderColor: theme.colors.tertiary,
+  detailContent: {
+    flex: 1,
   },
-  errorText: {
-    color: theme.colors.error,
-    fontSize: 12,
-    marginTop: -spacing.s,
+  detailLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: theme.colors.onSurfaceVariant,
+    marginBottom: spacing.xs,
+  },
+  detailValue: {
+    fontSize: 16,
+    color: theme.colors.onSurface,
+  },
+  textInput: {
+    backgroundColor: theme.colors.surface,
+    marginTop: 0,
+  },
+  addressCard: {
+    marginBottom: spacing.m,
+  },
+  addressRow: {
+    flexDirection: 'row',
+    gap: spacing.m,
+    marginTop: spacing.m,
+  },
+  addressColumn: {
+    flex: 1,
+  },
+  smallTextInput: {
+    backgroundColor: theme.colors.surface,
+    marginTop: spacing.xs,
+  },
+  actionsCard: {
+    marginBottom: spacing.xl,
+  },
+  actionButton: {
     marginBottom: spacing.s,
+    borderColor: theme.colors.outline,
   },
-  submitContainer: {
-    padding: spacing.m,
-    paddingBottom: spacing.xxxl,
-  },
-  submitButton: {
-    backgroundColor: theme.colors.primary,
-  },
-  submitButtonContent: {
-    paddingVertical: spacing.s,
+  deleteButton: {
+    marginTop: spacing.m,
   },
 });

@@ -1,4 +1,4 @@
-import { MD3LightTheme, configureFonts } from 'react-native-paper';
+import { MD3LightTheme, MD3DarkTheme, configureFonts } from 'react-native-paper';
 import { Platform } from 'react-native';
 
 const fontConfig = {
@@ -42,53 +42,63 @@ export const fonts = configureFonts({
   },
 });
 
-// Exact color palette from LandlordStudio
-export const theme = {
-  ...MD3LightTheme,
-  fonts: fonts,
-  colors: {
-    ...MD3LightTheme.colors,
-    // Primary brand colors from the screenshot
-    primary: '#2B5CE6', // Blue from the logo and active elements
-    primaryContainer: '#E8F0FF',
-    secondary: '#4ECDC4', // Teal from the logo
-    secondaryContainer: '#E0FFF8',
-    tertiary: '#FF6B6B', // Red for outstanding amounts
-    tertiaryContainer: '#FFE8E8',
-    error: '#FF4757',
-    errorContainer: '#FFE8EA',
-    success: '#2ED573',
-    successContainer: '#E8F8F0',
-    warning: '#FFA726',
-    warningContainer: '#FFF3E0',
-    
-    // Background colors matching the app
-    background: '#F8FAFC', // Light gray background
-    surface: '#FFFFFF',
-    surfaceVariant: '#F1F5F9',
-    onSurface: '#1E293B', // Dark navy text
-    onSurfaceVariant: '#64748B', // Gray text
-    outline: '#E2E8F0',
-    outlineVariant: '#F1F5F9',
-    
-    // Custom colors for the modern design
-    cardBackground: '#FFFFFF',
-    gradientStart: '#2B5CE6',
-    gradientEnd: '#4ECDC4',
-    income: '#2ED573',
-    expense: '#FF6B6B',
-    neutral: '#64748B',
-    
-    // Tab bar colors
-    tabBarActive: '#2B5CE6',
-    tabBarInactive: '#64748B',
-    tabBarBackground: '#1E293B', // Dark navy from bottom
-  },
-  roundness: 16,
-  animation: {
-    scale: 1.0,
-  },
+// Theme configuration function
+export const createTheme = (mode: 'light' | 'dark') => {
+  const baseTheme = mode === 'dark' ? MD3DarkTheme : MD3LightTheme;
+  
+  return {
+    ...baseTheme,
+    fonts: fonts,
+    colors: {
+      ...baseTheme.colors,
+      // Primary brand colors - consistent across themes
+      primary: '#2B5CE6', // Blue from the logo and active elements
+      primaryContainer: mode === 'dark' ? '#1A3B8F' : '#E8F0FF',
+      secondary: '#4ECDC4', // Teal from the logo
+      secondaryContainer: mode === 'dark' ? '#2A7A72' : '#E0FFF8',
+      tertiary: '#FF6B6B', // Red for outstanding amounts
+      tertiaryContainer: mode === 'dark' ? '#8B2635' : '#FFE8E8',
+      error: '#FF4757',
+      errorContainer: mode === 'dark' ? '#8B2635' : '#FFE8EA',
+      success: '#2ED573',
+      successContainer: mode === 'dark' ? '#1A5D3F' : '#E8F8F0',
+      warning: '#FFA726',
+      warningContainer: mode === 'dark' ? '#7A4A1A' : '#FFF3E0',
+      
+      // Background colors for light/dark modes
+      background: mode === 'dark' ? '#121212' : '#F8FAFC',
+      surface: mode === 'dark' ? '#1E1E1E' : '#FFFFFF',
+      surfaceVariant: mode === 'dark' ? '#2A2A2A' : '#F1F5F9',
+      onSurface: mode === 'dark' ? '#E1E1E1' : '#1E293B',
+      onSurfaceVariant: mode === 'dark' ? '#B0B0B0' : '#64748B',
+      outline: mode === 'dark' ? '#3A3A3A' : '#E2E8F0',
+      outlineVariant: mode === 'dark' ? '#2A2A2A' : '#F1F5F9',
+      
+      // Custom colors for the modern design
+      cardBackground: mode === 'dark' ? '#1E1E1E' : '#FFFFFF',
+      gradientStart: '#2B5CE6',
+      gradientEnd: '#4ECDC4',
+      income: '#2ED573',
+      expense: '#FF6B6B',
+      neutral: mode === 'dark' ? '#B0B0B0' : '#64748B',
+      
+      // Tab bar colors
+      tabBarActive: '#2B5CE6',
+      tabBarInactive: mode === 'dark' ? '#B0B0B0' : '#64748B',
+      tabBarBackground: mode === 'dark' ? '#1E1E1E' : '#1E293B',
+    },
+    roundness: 16,
+    animation: {
+      scale: 1.0,
+    },
+  };
 };
+
+// Default light theme (for backwards compatibility)
+export const theme = createTheme('light');
+
+// Dark theme
+export const darkTheme = createTheme('dark');
 
 // Spacing system
 export const spacing = {

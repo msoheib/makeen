@@ -1,5 +1,23 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User, Property, MaintenanceRequest, Invoice, Voucher } from './types';
+
+// Settings types
+export interface NotificationSettings {
+  maintenanceRequests: boolean;
+  paymentReminders: boolean;
+  contractExpirations: boolean;
+  systemUpdates: boolean;
+}
+
+export interface AppSettings {
+  theme: 'light' | 'dark' | 'system';
+  language: 'en' | 'ar';
+  currency: 'SAR';
+  notifications: NotificationSettings;
+  supportEmail: string;
+}
 
 // Define the state store structure
 interface AppState {
@@ -41,92 +59,147 @@ interface AppState {
   updateVoucher: (id: string, voucher: Partial<Voucher>) => void;
   deleteVoucher: (id: string) => void;
   
-  // UI state
+  // Settings state
+  settings: AppSettings;
+  updateSettings: (settings: Partial<AppSettings>) => void;
+  updateNotificationSettings: (notifications: Partial<NotificationSettings>) => void;
+  
+  // Legacy UI state (kept for backwards compatibility)
   locale: string;
   theme: 'light' | 'dark';
   setLocale: (locale: string) => void;
   setTheme: (theme: 'light' | 'dark') => void;
 }
 
-// Create the store
-export const useAppStore = create<AppState>((set) => ({
-  // Auth state
-  user: null,
-  isAuthenticated: false,
-  isLoading: true,
-  setUser: (user) => set({ user }),
-  setAuthenticated: (isAuthenticated) => set({ isAuthenticated }),
-  setLoading: (isLoading) => set({ isLoading }),
-  
-  // Properties state
-  properties: [],
-  selectedProperty: null,
-  setProperties: (properties) => set({ properties }),
-  setSelectedProperty: (selectedProperty) => set({ selectedProperty }),
-  addProperty: (property) => 
-    set((state) => ({ properties: [...state.properties, property] })),
-  updateProperty: (id, updatedProperty) => 
-    set((state) => ({
-      properties: state.properties.map((property) => 
-        property.id === id ? { ...property, ...updatedProperty } : property
-      ),
-    })),
-  deleteProperty: (id) => 
-    set((state) => ({
-      properties: state.properties.filter((property) => property.id !== id),
-    })),
-  
-  // Maintenance state
-  maintenanceRequests: [],
-  selectedRequest: null,
-  setMaintenanceRequests: (maintenanceRequests) => set({ maintenanceRequests }),
-  setSelectedRequest: (selectedRequest) => set({ selectedRequest }),
-  addMaintenanceRequest: (request) => 
-    set((state) => ({ maintenanceRequests: [...state.maintenanceRequests, request] })),
-  updateMaintenanceRequest: (id, updatedRequest) => 
-    set((state) => ({
-      maintenanceRequests: state.maintenanceRequests.map((request) => 
-        request.id === id ? { ...request, ...updatedRequest } : request
-      ),
-    })),
-  deleteMaintenanceRequest: (id) => 
-    set((state) => ({
-      maintenanceRequests: state.maintenanceRequests.filter((request) => request.id !== id),
-    })),
-  
-  // Financial state
-  invoices: [],
-  vouchers: [],
-  setInvoices: (invoices) => set({ invoices }),
-  setVouchers: (vouchers) => set({ vouchers }),
-  addInvoice: (invoice) => 
-    set((state) => ({ invoices: [...state.invoices, invoice] })),
-  updateInvoice: (id, updatedInvoice) => 
-    set((state) => ({
-      invoices: state.invoices.map((invoice) => 
-        invoice.id === id ? { ...invoice, ...updatedInvoice } : invoice
-      ),
-    })),
-  deleteInvoice: (id) => 
-    set((state) => ({
-      invoices: state.invoices.filter((invoice) => invoice.id !== id),
-    })),
-  addVoucher: (voucher) => 
-    set((state) => ({ vouchers: [...state.vouchers, voucher] })),
-  updateVoucher: (id, updatedVoucher) => 
-    set((state) => ({
-      vouchers: state.vouchers.map((voucher) => 
-        voucher.id === id ? { ...voucher, ...updatedVoucher } : voucher
-      ),
-    })),
-  deleteVoucher: (id) => 
-    set((state) => ({
-      vouchers: state.vouchers.filter((voucher) => voucher.id !== id),
-    })),
-  
-  // UI state
-  locale: 'en',
-  theme: 'light',
-  setLocale: (locale) => set({ locale }),
-  setTheme: (theme) => set({ theme }),
-}));
+// Create the store with persistence
+export const useAppStore = create<AppState>()(
+  persist(
+    (set, get) => ({
+      // Auth state
+      user: null,
+      isAuthenticated: false,
+      isLoading: true,
+      setUser: (user) => set({ user }),
+      setAuthenticated: (isAuthenticated) => set({ isAuthenticated }),
+      setLoading: (isLoading) => set({ isLoading }),
+      
+      // Properties state
+      properties: [],
+      selectedProperty: null,
+      setProperties: (properties) => set({ properties }),
+      setSelectedProperty: (selectedProperty) => set({ selectedProperty }),
+      addProperty: (property) => 
+        set((state) => ({ properties: [...state.properties, property] })),
+      updateProperty: (id, updatedProperty) => 
+        set((state) => ({
+          properties: state.properties.map((property) => 
+            property.id === id ? { ...property, ...updatedProperty } : property
+          ),
+        })),
+      deleteProperty: (id) => 
+        set((state) => ({
+          properties: state.properties.filter((property) => property.id !== id),
+        })),
+      
+      // Maintenance state
+      maintenanceRequests: [],
+      selectedRequest: null,
+      setMaintenanceRequests: (maintenanceRequests) => set({ maintenanceRequests }),
+      setSelectedRequest: (selectedRequest) => set({ selectedRequest }),
+      addMaintenanceRequest: (request) => 
+        set((state) => ({ maintenanceRequests: [...state.maintenanceRequests, request] })),
+      updateMaintenanceRequest: (id, updatedRequest) => 
+        set((state) => ({
+          maintenanceRequests: state.maintenanceRequests.map((request) => 
+            request.id === id ? { ...request, ...updatedRequest } : request
+          ),
+        })),
+      deleteMaintenanceRequest: (id) => 
+        set((state) => ({
+          maintenanceRequests: state.maintenanceRequests.filter((request) => request.id !== id),
+        })),
+      
+      // Financial state
+      invoices: [],
+      vouchers: [],
+      setInvoices: (invoices) => set({ invoices }),
+      setVouchers: (vouchers) => set({ vouchers }),
+      addInvoice: (invoice) => 
+        set((state) => ({ invoices: [...state.invoices, invoice] })),
+      updateInvoice: (id, updatedInvoice) => 
+        set((state) => ({
+          invoices: state.invoices.map((invoice) => 
+            invoice.id === id ? { ...invoice, ...updatedInvoice } : invoice
+          ),
+        })),
+      deleteInvoice: (id) => 
+        set((state) => ({
+          invoices: state.invoices.filter((invoice) => invoice.id !== id),
+        })),
+      addVoucher: (voucher) => 
+        set((state) => ({ vouchers: [...state.vouchers, voucher] })),
+      updateVoucher: (id, updatedVoucher) => 
+        set((state) => ({
+          vouchers: state.vouchers.map((voucher) => 
+            voucher.id === id ? { ...voucher, ...updatedVoucher } : voucher
+          ),
+        })),
+      deleteVoucher: (id) => 
+        set((state) => ({
+          vouchers: state.vouchers.filter((voucher) => voucher.id !== id),
+        })),
+      
+      // Settings state
+      settings: {
+        theme: 'system',
+        language: 'en',
+        currency: 'SAR',
+        notifications: {
+          maintenanceRequests: true,
+          paymentReminders: true,
+          contractExpirations: true,
+          systemUpdates: false,
+        },
+        supportEmail: 'info@example.com',
+      },
+      updateSettings: (newSettings) => 
+        set((state) => ({
+          settings: { ...state.settings, ...newSettings },
+        })),
+      updateNotificationSettings: (newNotifications) => 
+        set((state) => ({
+          settings: {
+            ...state.settings,
+            notifications: { ...state.settings.notifications, ...newNotifications },
+          },
+        })),
+      
+      // Legacy UI state (kept for backwards compatibility)
+      locale: 'en',
+      theme: 'light',
+      setLocale: (locale) => {
+        set({ locale });
+        // Also update new settings
+        const state = get();
+        state.updateSettings({ language: locale as 'en' | 'ar' });
+      },
+      setTheme: (theme) => {
+        set({ theme });
+        // Also update new settings
+        const state = get();
+        state.updateSettings({ theme });
+      },
+    }),
+    {
+      name: 'real-estate-app-storage',
+      storage: AsyncStorage,
+      // Only persist settings, auth state, and some UI preferences
+      partialize: (state) => ({
+        settings: state.settings,
+        locale: state.locale,
+        theme: state.theme,
+        isAuthenticated: state.isAuthenticated,
+      }),
+    }
+  )
+);

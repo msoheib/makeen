@@ -1,0 +1,301 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Property Management System - Product Requirements Document
+## Based on Current Implementation
+
+## 1. Executive Summary
+
+### 1.1 Project Overview
+A comprehensive real estate management system built with **Expo React Native** and **Supabase**, featuring a complete property portfolio management platform with financial tracking, maintenance workflows, tenant management, and real-time analytics.
+
+### 1.2 Current Technology Stack (Implemented)
+- **Frontend**: Expo React Native with TypeScript
+- **Backend**: Supabase (PostgreSQL, Auth, Realtime, Storage)  
+- **UI Framework**: React Native Paper (Material Design 3)
+- **Navigation**: React Navigation with Drawer + Tab structure
+- **State Management**: Custom hooks with Zustand store
+- **Database**: 15-table PostgreSQL schema with comprehensive relationships
+
+## 2. Current Implementation Status
+
+### 2.1 ✅ **COMPLETED INFRASTRUCTURE**
+- **Complete Database Schema**: 15 tables covering all business entities
+- **API Layer**: Comprehensive `lib/api.ts` with 847 lines covering all operations
+- **Type Safety**: Auto-generated TypeScript types from Supabase schema
+- **Navigation**: Functional hamburger menu with expandable sidebar
+- **Authentication**: Supabase Auth integration with secure token management
+- **Real-time Capabilities**: Supabase realtime subscriptions ready
+
+### 2.2 ✅ **IMPLEMENTED SCREENS**
+- **Dashboard**: Live financial summary, property statistics, system overview
+- **Properties**: Complete property listing with real database integration
+- **Tenants**: API integration completed, search and filtering ready
+- **Navigation Structure**: Drawer → Tabs → Content hierarchy
+
+### 2.3 ✅ **BUILT COMPONENTS**
+- `ModernHeader`, `ModernCard`, `PropertyCard`, `MaintenanceRequestCard`
+- `VoucherCard`, `StatusBadge`, `PropertyFilter`
+- `RentCard`, `CashflowCard`, `StatCard`
+- `SideBar` with complete menu structure matching HTML admin
+
+## 3. Database Architecture (Implemented)
+
+### 3.1 **Core Tables**
+```sql
+profiles (users/tenants/owners) → properties → contracts
+                                → maintenance_requests → work_orders
+                                → vouchers (financial transactions)
+                                → invoices (billing)
+                                → property_reservations
+                                → documents, issues, letters
+accounts (chart of accounts) → vouchers (accounting integration)
+cost_centers → expense allocation
+fixed_assets → depreciation tracking
+clients → external customers/suppliers
+```
+
+### 3.2 **Business Logic Coverage**
+- **People Management**: Unified profiles table with role-based access
+- **Property Portfolio**: Complete property lifecycle management
+- **Financial Operations**: Double-entry accounting with vouchers + invoices
+- **Maintenance Workflows**: Request → Work Order → Completion tracking
+- **Document Management**: File storage with entity relationships
+- **Legal/Compliance**: Contract management, issue tracking, letters
+
+## 4. User Roles & Access Levels (Designed)
+
+### 4.1 **SuperAdmin** (Platform: Web/Mobile)
+- Complete system configuration and user management
+- Cross-portfolio analytics and global reporting
+- Financial oversight across all properties and owners
+- System-wide settings and integration management
+
+### 4.2 **Property Manager** (Platform: Web/Mobile)
+- Property portfolio oversight and management
+- Tenant relations and lease management
+- Maintenance coordination and vendor management
+- Financial transaction processing and reporting
+
+### 4.3 **Landlord/Owner** (Platform: Mobile)
+- Own property management and performance tracking
+- Tenant management for owned properties only
+- Financial reports and income tracking for owned assets
+- Maintenance request approval and cost oversight
+
+### 4.4 **Tenant** (Platform: Mobile)
+- Lease information and payment history access
+- Maintenance request submission with photo upload
+- Document access (contracts, receipts, communications)
+- Payment portal integration
+
+## 5. Application Structure (Current Implementation)
+
+### 5.1 **Navigation Hierarchy**
+```
+app/
+├── index.tsx (redirects to drawer)
+└── (drawer)/
+    ├── _layout.tsx (DrawerNavigator with SideBar)
+    ├── index.tsx (redirects to tabs)
+    └── (tabs)/
+        ├── _layout.tsx (TabNavigator)
+        ├── index.tsx (Dashboard) ✅ LIVE
+        ├── properties.tsx ✅ LIVE
+        ├── tenants.tsx ✅ API INTEGRATED
+        ├── maintenance.tsx 🚧 PLANNED
+        ├── reports.tsx 🚧 PLANNED
+        └── settings.tsx 🚧 PLANNED
+```
+
+### 5.2 **Sidebar Menu Structure (Implemented)**
+```
+Real Estate MG
+├── Home (Dashboard) ✅
+├── Owners and Customers
+│   ├── Owner or Property Manager 🚧
+│   ├── Tenant ✅
+│   ├── Buyer 📋
+│   ├── Foreign Tenants 📋
+│   └── Customers and suppliers 📋
+├── Property Management
+│   ├── Properties List ✅
+│   ├── Rent a property 📋
+│   ├── Foreign Tenant Contracts 📋
+│   ├── List cash property 📋
+│   ├── List installment property 📋
+│   └── Property Reservation List 📋
+├── Accounting & Voucher
+│   ├── Receipt Voucher 📋
+│   ├── Payment Voucher 📋
+│   ├── Entry voucher 📋
+│   ├── Credit notification 📋
+│   ├── Debit notification 📋
+│   └── VAT invoices 📋
+├── Reports 🚧
+├── Maintenance, letters, issues 🚧
+├── Settings 🚧
+└── Users 📋
+```
+
+**Legend**: ✅ Live | 🚧 In Progress | 📋 Planned
+
+## 6. Current API Coverage (Implemented)
+
+### 6.1 **Properties API** ✅
+- `getAll()`, `getById()`, `create()`, `update()`, `delete()`
+- `getDashboardSummary()` - Live dashboard integration
+- Advanced filtering by owner, status, type, location
+
+### 6.2 **Profiles API** ✅
+- `getAll()`, `getById()`, `getTenants()`, `getOwners()`
+- Role-based filtering and relationship queries
+- Integration with contracts and properties
+
+### 6.3 **Financial APIs** ✅
+- **Vouchers**: Complete CRUD with accounting integration
+- **Invoices**: VAT handling, payment tracking, overdue management
+- **Accounts**: Chart of accounts with hierarchical structure
+- Financial summary calculations and reporting
+
+### 6.4 **Maintenance APIs** ✅
+- **Requests**: Priority levels, status tracking, photo support
+- **Work Orders**: Assignment, cost estimation, completion tracking
+- Integration with properties and tenant profiles
+
+### 6.5 **Additional APIs** ✅
+- **Contracts**: Lease management, expiration tracking
+- **Documents**: File management with entity relationships
+- **Issues**: Complaint tracking and resolution
+- **Clients**: External customer/supplier management
+- **Reservations**: Property booking system
+
+## 7. Technical Features (Implemented)
+
+### 7.1 **Development Infrastructure**
+- **Task-Driven Development**: Complete PBI/task framework
+- **Type Safety**: 847-line auto-generated database types
+- **Error Handling**: Comprehensive API error management
+- **Loading States**: Shimmer effects and proper UX patterns
+
+### 7.2 **UI/UX Implementation**
+- **Material Design 3**: Consistent theming and components
+- **Responsive Design**: Mobile-first with proper spacing/typography
+- **Real-time Updates**: Supabase subscriptions ready
+- **Accessibility**: Proper contrast and semantic markup
+
+### 7.3 **Security & Data**
+- **Row Level Security**: Supabase RLS policies ready for implementation
+- **JWT Authentication**: Secure token management
+- **Data Validation**: Database constraints and API validation
+- **Audit Trails**: Timestamp tracking on all entities
+
+## 8. Development Roadmap (Based on Current PBIs)
+
+### **PHASE 1: Complete Core Functionality** (Current Focus)
+**PBI-1: Tenants Screen Integration** 🚧 InProgress
+- [x] Task 1-1: API Integration (COMPLETED)
+- [ ] Task 1-2: Search and Filtering
+- [ ] Task 1-3: Tenant Details View
+- [ ] Task 1-4: Add New Tenant Form
+- [ ] Task 1-5: Edit Functionality
+
+### **PHASE 2: Maintenance Management** 
+**PBI-2: Maintenance Management** 📋 Proposed
+- Maintenance requests list with priority filtering
+- Work order assignment and tracking
+- Photo upload and progress monitoring
+- Cost estimation and approval workflows
+
+### **PHASE 3: Financial Operations**
+**PBI-3: Finance Voucher/Invoice System** 📋 Proposed  
+- Receipt, payment, and entry voucher creation
+- VAT invoice management with tax calculations
+- Chart of accounts integration
+- Financial validation and approval workflows
+
+### **PHASE 4: Analytics & Reporting**
+**PBI-4: Reports with Data Visualization** 📋 Proposed
+- Interactive charts with React Native charting library
+- Financial summaries and property performance analytics
+- Export capabilities (PDF/Excel)
+- Custom date range filtering
+
+### **PHASE 5: Real-time Features**
+**PBI-5: Real-time Notifications** 📋 Proposed
+- Supabase realtime subscriptions
+- Push notifications via Expo
+- In-app notification center
+- User preference management
+
+## 9. Success Metrics (Defined)
+
+### 9.1 **Technical Performance**
+- Database query response time < 500ms
+- Mobile app startup time < 3 seconds  
+- Real-time update delivery < 1 second
+- API error rate < 1%
+
+### 9.2 **User Experience**
+- Task completion rate > 95%
+- User onboarding completion > 80%
+- Feature adoption rate > 70%
+- User satisfaction score > 4.5/5
+
+### 9.3 **Business Impact**
+- Property management efficiency gain > 40%
+- Maintenance response time reduction > 60%
+- Financial accuracy improvement > 99%
+- Tenant satisfaction increase > 30%
+
+## 10. Deployment Architecture (Ready)
+
+### 10.1 **Production Environment**
+- **Frontend**: Expo EAS Build → App Store deployment
+- **Backend**: Supabase Production instance (EU-Central-1)
+- **Database**: PostgreSQL 15.8 with automatic backups
+- **Authentication**: Supabase Auth with JWT tokens
+
+### 10.2 **Development Pipeline**
+- **Version Control**: GitHub with protected main branch
+- **CI/CD**: EAS Build integration for mobile releases
+- **Testing**: Jest + React Native Testing Library
+- **Monitoring**: Supabase Analytics + Expo Application Services
+
+## 11. Risk Assessment & Mitigation
+
+### 11.1 **Technical Risks**
+- **Database Performance**: Mitigated by proper indexing and query optimization
+- **Mobile Compatibility**: Addressed through Expo managed workflow
+- **Real-time Scalability**: Handled by Supabase infrastructure
+
+### 11.2 **Business Risks**
+- **User Adoption**: Mitigated by incremental feature rollout
+- **Data Migration**: Handled by comprehensive import/export tools
+- **Compliance**: Addressed through proper audit trails and security
+
+## 12. Next Immediate Actions
+
+### 12.1 **Complete PBI-1 (Tenants)**
+1. Implement search and filtering (Task 1-2)
+2. Build tenant details view (Task 1-3)  
+3. Create add/edit forms (Task 1-4, 1-5)
+4. Add pull-to-refresh capability
+
+### 12.2 **Prepare PBI-2 (Maintenance)**
+1. Design maintenance request screens
+2. Implement work order assignment UI
+3. Add photo upload capabilities
+4. Build status tracking workflows
+
+### 12.3 **Infrastructure Improvements**
+1. Implement Row Level Security policies
+2. Add real-time subscriptions
+3. Set up push notification infrastructure
+4. Create comprehensive test suite
+
+---
+
+**Current Status**: Solid foundation with 15-table database, comprehensive API layer, and core screens live. Ready for systematic feature completion following the established PBI/task framework.
