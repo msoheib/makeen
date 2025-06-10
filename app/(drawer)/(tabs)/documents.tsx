@@ -202,7 +202,7 @@ export default function DocumentsScreen() {
       <View style={styles.documentActions}>
         <IconButton
           icon={() => <Eye size={20} color={theme.colors.primary} />}
-          onPress={() => router.push(`/documents/${item.id}`)}
+          onPress={() => router.push(`/(drawer)/documents/${item.id}`)}
           style={styles.actionButton}
         />
         <IconButton
