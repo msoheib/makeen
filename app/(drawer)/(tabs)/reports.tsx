@@ -154,7 +154,7 @@ export default function ReportsScreen() {
           icon: <Building2 size={20} color={theme.colors.primary} />,
           color: theme.colors.primary,
           lastGenerated: formatLastGenerated(propertyData?.lastGenerated),
-          onView: () => alert('Occupancy report details coming soon!'),
+          onView: () => router.push('/(drawer)/reports/occupancy'),
           onDownload: () => console.log('Download occupancy report'),
         },
         {
@@ -165,7 +165,7 @@ export default function ReportsScreen() {
           icon: <TrendingUp size={20} color={theme.colors.success} />,
           color: theme.colors.success,
           lastGenerated: formatLastGenerated(propertyData?.lastGenerated),
-          onView: () => alert('Property Performance report details coming soon!'),
+          onView: () => router.push('/(drawer)/reports/property-performance'),
           onDownload: () => console.log('Download property performance report'),
         }
       );
@@ -181,7 +181,7 @@ export default function ReportsScreen() {
         icon: <Building2 size={20} color={theme.colors.warning} />,
         color: theme.colors.warning,
         lastGenerated: formatLastGenerated(maintenanceData?.lastGenerated),
-        onView: () => alert('Maintenance report details coming soon!'),
+                  onView: () => router.push('/(drawer)/reports/maintenance-costs'),
         onDownload: () => console.log('Download maintenance report'),
       });
     }
@@ -208,7 +208,7 @@ export default function ReportsScreen() {
           icon: <DollarSign size={20} color={theme.colors.primary} />,
           color: theme.colors.primary,
           lastGenerated: formatLastGenerated(tenantData?.lastGenerated),
-          onView: () => alert('Payment History report details coming soon!'),
+          onView: () => router.push('/(drawer)/reports/payment-history'),
           onDownload: () => console.log('Download payment history report'),
         },
         {
@@ -219,7 +219,7 @@ export default function ReportsScreen() {
           icon: <Calendar size={20} color={theme.colors.warning} />,
           color: theme.colors.warning,
           lastGenerated: formatLastGenerated(tenantData?.lastGenerated),
-          onView: () => alert('Lease Expiry report details coming soon!'),
+          onView: () => router.push('/(drawer)/reports/lease-expiry'),
           onDownload: () => console.log('Download lease expiry report'),
         }
       );
