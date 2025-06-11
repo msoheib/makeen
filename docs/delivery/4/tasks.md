@@ -9,7 +9,7 @@ This document lists all tasks associated with PBI 4.
 | Task ID | Name | Status | Description |
 | :------ | :--- | :----- | :---------- |
 | 4-1 | [Setup charting library and infrastructure](mdc:4-1.md) | Review | Install and configure charting library for data visualization |
-| 4-2 | [Create financial summary reports](mdc:4-2.md) | Proposed | Build revenue, expenses, and profit reporting screens |
+| 4-2 | [Create financial summary reports](mdc:4-2.md) | Review | Build revenue, expenses, and profit reporting screens |
 | 4-3 | [Implement property performance analytics](mdc:4-3.md) | Proposed | Develop occupancy and revenue per property analysis |
 | 4-4 | [Build tenant occupancy reports](mdc:4-4.md) | Proposed | Create vacancy analysis and turnover metrics |
 | 4-5 | [Add maintenance cost analysis](mdc:4-5.md) | Proposed | Implement spending trends and maintenance category analysis |

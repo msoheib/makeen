@@ -104,7 +104,7 @@ export default function ReportsScreen() {
           icon: <TrendingUp size={20} color={theme.colors.success} />,
           color: theme.colors.success,
           lastGenerated: formatLastGenerated(revenueData?.lastGenerated),
-          onView: () => alert('Revenue report details coming soon!'),
+          onView: () => router.push('/(drawer)/reports/revenue'),
           onDownload: () => console.log('Download revenue report'),
         },
         {
@@ -115,7 +115,7 @@ export default function ReportsScreen() {
           icon: <DollarSign size={20} color={theme.colors.error} />,
           color: theme.colors.error,
           lastGenerated: formatLastGenerated(expenseData?.lastGenerated),
-          onView: () => alert('Expense report details coming soon!'),
+          onView: () => router.push('/(drawer)/reports/expenses'),
           onDownload: () => console.log('Download expense report'),
         },
         {
@@ -126,7 +126,7 @@ export default function ReportsScreen() {
           icon: <BarChart3 size={20} color={theme.colors.primary} />,
           color: theme.colors.primary,
           lastGenerated: formatLastGenerated(revenueData?.lastGenerated),
-          onView: () => alert('Profit & Loss report details coming soon!'),
+          onView: () => router.push('/(drawer)/reports/profit-loss'),
           onDownload: () => console.log('Download P&L report'),
         },
         {
@@ -137,7 +137,7 @@ export default function ReportsScreen() {
           icon: <DollarSign size={20} color={theme.colors.secondary} />,
           color: theme.colors.secondary,
           lastGenerated: formatLastGenerated(revenueData?.lastGenerated),
-          onView: () => alert('Cash Flow report details coming soon!'),
+          onView: () => router.push('/(drawer)/reports/cash-flow'),
           onDownload: () => console.log('Download cash flow report'),
         }
       );
