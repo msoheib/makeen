@@ -52,11 +52,15 @@ export default function DocumentViewerScreen() {
   const fetchDocument = async () => {
     try {
       setLoading(true);
+      console.log('Fetching document with ID:', id);
       const response = await documentsApi.getById(id!);
+      console.log('API Response:', response);
       
       if (response.data) {
         setDocument(response.data);
+        console.log('Document loaded successfully:', response.data.title);
       } else {
+        console.log('No document data in response');
         setError('Document not found');
       }
     } catch (error) {

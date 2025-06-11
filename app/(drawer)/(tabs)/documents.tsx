@@ -58,7 +58,7 @@ export default function DocumentsScreen() {
   const fetchDocuments = async () => {
     try {
       const response = await documentsApi.getAll();
-      if (response.success && response.data) {
+      if (response.data) {
         // Transform documents to match expected format
         const transformedDocs: Document[] = response.data.map(doc => ({
           id: doc.id,
@@ -72,6 +72,9 @@ export default function DocumentsScreen() {
           url: doc.file_path,
         }));
         setDocuments(transformedDocs);
+        console.log('Loaded documents:', transformedDocs.length);
+      } else if (response.error) {
+        console.error('API Error:', response.error);
       }
     } catch (error) {
       console.error('Error fetching documents:', error);
@@ -202,7 +205,10 @@ export default function DocumentsScreen() {
       <View style={styles.documentActions}>
         <IconButton
           icon={() => <Eye size={20} color={theme.colors.primary} />}
-          onPress={() => router.push(`/(drawer)/documents/${item.id}`)}
+          onPress={() => {
+            console.log('Navigating to document:', item.id);
+            router.push(`/(drawer)/documents/${item.id}`);
+          }}
           style={styles.actionButton}
         />
         <IconButton
