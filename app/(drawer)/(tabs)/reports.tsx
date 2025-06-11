@@ -104,7 +104,7 @@ export default function ReportsScreen() {
           icon: <TrendingUp size={20} color={theme.colors.success} />,
           color: theme.colors.success,
           lastGenerated: formatLastGenerated(revenueData?.lastGenerated),
-          onView: () => router.push('/reports/revenue'),
+          onView: () => alert('Revenue report details coming soon!'),
           onDownload: () => console.log('Download revenue report'),
         },
         {
@@ -115,7 +115,7 @@ export default function ReportsScreen() {
           icon: <DollarSign size={20} color={theme.colors.error} />,
           color: theme.colors.error,
           lastGenerated: formatLastGenerated(expenseData?.lastGenerated),
-          onView: () => router.push('/reports/expenses'),
+          onView: () => alert('Expense report details coming soon!'),
           onDownload: () => console.log('Download expense report'),
         },
         {
@@ -126,7 +126,7 @@ export default function ReportsScreen() {
           icon: <BarChart3 size={20} color={theme.colors.primary} />,
           color: theme.colors.primary,
           lastGenerated: formatLastGenerated(revenueData?.lastGenerated),
-          onView: () => router.push('/reports/profit-loss'),
+          onView: () => alert('Profit & Loss report details coming soon!'),
           onDownload: () => console.log('Download P&L report'),
         },
         {
@@ -137,7 +137,7 @@ export default function ReportsScreen() {
           icon: <DollarSign size={20} color={theme.colors.secondary} />,
           color: theme.colors.secondary,
           lastGenerated: formatLastGenerated(revenueData?.lastGenerated),
-          onView: () => router.push('/reports/cash-flow'),
+          onView: () => alert('Cash Flow report details coming soon!'),
           onDownload: () => console.log('Download cash flow report'),
         }
       );
@@ -154,7 +154,7 @@ export default function ReportsScreen() {
           icon: <Building2 size={20} color={theme.colors.primary} />,
           color: theme.colors.primary,
           lastGenerated: formatLastGenerated(propertyData?.lastGenerated),
-          onView: () => router.push('/reports/occupancy'),
+          onView: () => alert('Occupancy report details coming soon!'),
           onDownload: () => console.log('Download occupancy report'),
         },
         {
@@ -165,7 +165,7 @@ export default function ReportsScreen() {
           icon: <TrendingUp size={20} color={theme.colors.success} />,
           color: theme.colors.success,
           lastGenerated: formatLastGenerated(propertyData?.lastGenerated),
-          onView: () => router.push('/reports/property-performance'),
+          onView: () => alert('Property Performance report details coming soon!'),
           onDownload: () => console.log('Download property performance report'),
         }
       );
@@ -181,7 +181,7 @@ export default function ReportsScreen() {
         icon: <Building2 size={20} color={theme.colors.warning} />,
         color: theme.colors.warning,
         lastGenerated: formatLastGenerated(maintenanceData?.lastGenerated),
-        onView: () => router.push('/reports/maintenance'),
+        onView: () => alert('Maintenance report details coming soon!'),
         onDownload: () => console.log('Download maintenance report'),
       });
     }
@@ -197,7 +197,7 @@ export default function ReportsScreen() {
           icon: <Users size={20} color={theme.colors.secondary} />,
           color: theme.colors.secondary,
           lastGenerated: formatLastGenerated(tenantData?.lastGenerated),
-          onView: () => router.push('/reports/tenants'),
+          onView: () => alert('Tenant report details coming soon!'),
           onDownload: () => console.log('Download tenant report'),
         },
         {
@@ -208,7 +208,7 @@ export default function ReportsScreen() {
           icon: <DollarSign size={20} color={theme.colors.primary} />,
           color: theme.colors.primary,
           lastGenerated: formatLastGenerated(tenantData?.lastGenerated),
-          onView: () => router.push('/reports/payment-history'),
+          onView: () => alert('Payment History report details coming soon!'),
           onDownload: () => console.log('Download payment history report'),
         },
         {
@@ -219,7 +219,7 @@ export default function ReportsScreen() {
           icon: <Calendar size={20} color={theme.colors.warning} />,
           color: theme.colors.warning,
           lastGenerated: formatLastGenerated(tenantData?.lastGenerated),
-          onView: () => router.push('/reports/lease-expiry'),
+          onView: () => alert('Lease Expiry report details coming soon!'),
           onDownload: () => console.log('Download lease expiry report'),
         }
       );
@@ -236,7 +236,7 @@ export default function ReportsScreen() {
           icon: <BarChart3 size={20} color={theme.colors.tertiary} />,
           color: theme.colors.tertiary,
           lastGenerated: formatLastGenerated(maintenanceData?.lastGenerated),
-          onView: () => router.push('/reports/operations'),
+          onView: () => alert('Operations report details coming soon!'),
           onDownload: () => console.log('Download operations report'),
         },
         {
@@ -247,7 +247,7 @@ export default function ReportsScreen() {
           icon: <Users size={20} color={theme.colors.primary} />,
           color: theme.colors.primary,
           lastGenerated: formatLastGenerated(maintenanceData?.lastGenerated),
-          onView: () => router.push('/reports/vendors'),
+          onView: () => alert('Vendor report details coming soon!'),
           onDownload: () => console.log('Download vendor report'),
         }
       );
