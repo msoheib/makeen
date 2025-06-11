@@ -86,6 +86,16 @@ export const createTheme = (mode: 'light' | 'dark') => {
       tabBarActive: '#2B5CE6',
       tabBarInactive: mode === 'dark' ? '#B0B0B0' : '#64748B',
       tabBarBackground: mode === 'dark' ? '#1E1E1E' : '#1E293B',
+      
+      // Chart colors
+      chartPrimary: '#2B5CE6',
+      chartSecondary: '#4ECDC4',
+      chartSuccess: '#2ED573',
+      chartWarning: '#FFA726',
+      chartError: '#FF6B6B',
+      chartNeutral: mode === 'dark' ? '#B0B0B0' : '#64748B',
+      chartGrid: mode === 'dark' ? '#3A3A3A' : '#E2E8F0',
+      chartText: mode === 'dark' ? '#E1E1E1' : '#1E293B',
     },
     roundness: 16,
     animation: {
