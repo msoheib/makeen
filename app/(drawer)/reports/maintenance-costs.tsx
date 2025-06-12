@@ -7,10 +7,8 @@ import { reportsApi } from '@/lib/api';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import StatCard from '@/components/StatCard';
-import CustomLineChart from '@/components/CustomLineChart';
-import CustomBarChart from '@/components/CustomBarChart';
-import CustomPieChart from '@/components/CustomPieChart';
-import DateRangePicker, { DateRange } from '@/components/DateRangePicker';
+import { CustomLineChart, CustomBarChart, CustomPieChart } from '../../../components/charts';
+import DateRangePicker, { DateRange } from '../../../components/DateRangePicker';
 import { 
   TrendingUp, 
   TrendingDown, 

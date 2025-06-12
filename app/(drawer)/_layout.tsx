@@ -3,6 +3,7 @@ import { Drawer } from 'expo-router/drawer';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/lib/store';
+import { realTimeService } from '@/lib/realtime';
 import SideBar from '../../components/SideBar';
 
 export default function DrawerLayout() {
@@ -41,6 +42,8 @@ export default function DrawerLayout() {
           if (profileData) {
             setUser(profileData);
             setAuthenticated(true);
+            // Initialize real-time service after successful authentication
+            realTimeService.initialize().catch(console.error);
           } else {
             setAuthenticated(false);
             router.replace('/(auth)');
@@ -67,6 +70,8 @@ export default function DrawerLayout() {
       if (event === 'SIGNED_OUT' || !session) {
         setUser(null);
         setAuthenticated(false);
+        // Clean up real-time service on sign out
+        realTimeService.cleanup().catch(console.error);
         router.replace('/(auth)');
       } else if (event === 'SIGNED_IN' && session?.user) {
         // Fetch user profile
@@ -79,6 +84,8 @@ export default function DrawerLayout() {
         if (profileData && !profileError) {
           setUser(profileData);
           setAuthenticated(true);
+          // Initialize real-time service after successful authentication
+          realTimeService.initialize().catch(console.error);
         }
       }
     });

@@ -1,14 +1,35 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { useTheme } from 'react-native-paper';
-import { Platform } from 'react-native';
+import { Platform, View } from 'react-native';
 import { Chrome as Home, FileText, Users, Building2, MoveHorizontal as MoreHorizontal } from 'lucide-react-native';
 import { useAppStore } from '@/lib/store';
 import { theme } from '@/lib/theme';
+import { NotificationBadge } from '@/components/NotificationBadge';
+import { useTabBadgeCount } from '@/hooks/useNotificationBadges';
 
 export default function TabLayout() {
   const paperTheme = useTheme();
   const user = useAppStore(state => state.user);
+
+  // Badge counts for different tabs
+  const totalBadges = useTabBadgeCount();
+  const tenantBadges = useTabBadgeCount('tenant');
+  const propertyBadges = useTabBadgeCount('property');
+  const maintenanceBadges = useTabBadgeCount('maintenance');
+  const paymentBadges = useTabBadgeCount('payment');
+
+  // Helper component for tab icons with badges
+  const TabIconWithBadge: React.FC<{
+    Icon: React.ComponentType<{ size: number; color: string }>;
+    badgeCount: number;
+    size: number;
+    color: string;
+  }> = ({ Icon, badgeCount, size, color }) => (
+    <NotificationBadge count={badgeCount} size="small" position="top-right">
+      <Icon size={size} color={color} />
+    </NotificationBadge>
+  );
 
   const screenOptions = {
     headerShown: false,
@@ -21,7 +42,14 @@ export default function TabLayout() {
       backgroundColor: theme.colors.tabBarBackground,
       borderTopWidth: 0,
       elevation: 0,
-      shadowOpacity: 0,
+      ...Platform.select({
+        web: {
+          boxShadow: 'none',
+        },
+        default: {
+          shadowOpacity: 0,
+        },
+      }),
       borderTopLeftRadius: 16,
       borderTopRightRadius: 16,
     },
@@ -43,7 +71,12 @@ export default function TabLayout() {
         options={{
           title: 'Dashboard',
           tabBarIcon: ({ size, color }) => (
-            <Home size={size} color={color} />
+            <TabIconWithBadge 
+              Icon={Home} 
+              badgeCount={totalBadges.count} 
+              size={size} 
+              color={color} 
+            />
           ),
         }}
       />
@@ -52,7 +85,12 @@ export default function TabLayout() {
         options={{
           title: 'Reports',
           tabBarIcon: ({ size, color }) => (
-            <FileText size={size} color={color} />
+            <TabIconWithBadge 
+              Icon={FileText} 
+              badgeCount={paymentBadges.count} 
+              size={size} 
+              color={color} 
+            />
           ),
         }}
       />
@@ -61,7 +99,12 @@ export default function TabLayout() {
         options={{
           title: 'Tenants',
           tabBarIcon: ({ size, color }) => (
-            <Users size={size} color={color} />
+            <TabIconWithBadge 
+              Icon={Users} 
+              badgeCount={tenantBadges.count} 
+              size={size} 
+              color={color} 
+            />
           ),
         }}
       />
@@ -70,7 +113,12 @@ export default function TabLayout() {
         options={{
           title: 'Organisation',
           tabBarIcon: ({ size, color }) => (
-            <Building2 size={size} color={color} />
+            <TabIconWithBadge 
+              Icon={Building2} 
+              badgeCount={propertyBadges.count + maintenanceBadges.count} 
+              size={size} 
+              color={color} 
+            />
           ),
         }}
       />

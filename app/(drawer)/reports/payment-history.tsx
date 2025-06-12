@@ -48,7 +48,7 @@ export default function PaymentHistoryReportScreen() {
     loading, 
     error, 
     refetch 
-  } = useApi<PaymentHistoryData>(() => reportsApi.getTenantReport(dateRange.startDate, dateRange.endDate), [dateRange]);
+  } = useApi<PaymentHistoryData>(() => reportsApi.getTenantReport(dateRange.startDate.toISOString(), dateRange.endDate.toISOString()), [dateRange]);
 
   // Mock data for demonstration
   const mockPaymentData: PaymentHistoryData = {

@@ -49,7 +49,10 @@ export default function LeaseExpiryReportScreen() {
     loading, 
     error, 
     refetch 
-  } = useApi<LeaseExpiryData>(() => reportsApi.getTenantReport(dateRange.startDate, dateRange.endDate), [dateRange]);
+  } = useApi<LeaseExpiryData>(() => reportsApi.getTenantReport(
+    dateRange.startDate.toISOString(), 
+    dateRange.endDate.toISOString()
+  ), [dateRange]);
 
   // Mock data for demonstration
   const mockLeaseData: LeaseExpiryData = {

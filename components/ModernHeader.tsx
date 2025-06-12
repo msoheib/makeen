@@ -5,6 +5,9 @@ import { theme, spacing } from '@/lib/theme';
 import { Bell, Search, Menu } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { DrawerActions } from '@react-navigation/native';
+import { NotificationBadge } from './NotificationBadge';
+import { useTotalBadgeCount } from '@/hooks/useNotificationBadges';
+import { useBadgeNavigation } from '@/hooks/useNotificationNavigation';
 
 interface ModernHeaderProps {
   title?: string;
@@ -38,6 +41,9 @@ export default function ModernHeader({
   isHomepage = false
 }: ModernHeaderProps) {
   const navigation = useNavigation();
+  const { count: totalNotifications } = useTotalBadgeCount();
+  const { navigateFromBadge, isNavigating } = useBadgeNavigation();
+  
   const isDark = variant === 'dark';
   const textColor = isDark ? '#FFFFFF' : theme.colors.onSurface;
   const iconColor = isDark ? '#FFFFFF' : theme.colors.onSurfaceVariant;
@@ -49,6 +55,19 @@ export default function ModernHeader({
     } else {
       // Open the drawer
       navigation.dispatch(DrawerActions.openDrawer());
+    }
+  };
+
+  const handleNotificationPress = async () => {
+    if (onNotificationPress) {
+      onNotificationPress();
+    } else {
+      // Navigate to notification center via badge navigation
+      try {
+        await navigateFromBadge();
+      } catch (error) {
+        console.warn('Failed to navigate from badge:', error);
+      }
     }
   };
 
@@ -97,11 +116,13 @@ export default function ModernHeader({
             />
           )}
           {showNotifications && (
-            <IconButton
-              icon={() => <Bell size={24} color={iconColor} />}
-              onPress={onNotificationPress}
-              style={styles.iconButton}
-            />
+            <NotificationBadge count={totalNotifications} size="small" position="top-right">
+              <IconButton
+                icon={() => <Bell size={24} color={iconColor} />}
+                onPress={handleNotificationPress}
+                style={styles.iconButton}
+              />
+            </NotificationBadge>
           )}
           {userAvatar && (
             <Image

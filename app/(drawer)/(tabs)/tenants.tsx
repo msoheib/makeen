@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, FlatList, RefreshControl } from 'react-native';
-import { Text, Searchbar, Avatar, List, ActivityIndicator, Button } from 'react-native-paper';
+import { Text, Searchbar, Avatar, List, ActivityIndicator, Button, FAB } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
 import { profilesApi } from '@/lib/api';
@@ -229,6 +229,13 @@ export default function TenantsScreen() {
           ListEmptyComponent={renderEmptyState()}
         />
       )}
+
+      <FAB
+        icon="plus"
+        style={styles.fab}
+        onPress={() => router.push('/tenants/add')}
+        label="Add Tenant"
+      />
     </View>
   );
 }
@@ -329,5 +336,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: theme.colors.onSurfaceVariant,
     textAlign: 'center',
+  },
+  fab: {
+    position: 'absolute',
+    margin: spacing.m,
+    right: 0,
+    bottom: 0,
+    backgroundColor: theme.colors.primary,
   },
 });

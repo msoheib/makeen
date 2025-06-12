@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import { BarChart } from 'react-native-chart-kit';
-import { useTheme } from 'react-native-paper';
+import { useTheme, Text } from 'react-native-paper';
 import { createChartConfig, BarChartData } from './chartConfig';
+import { validateChartData, createEmptyChartData } from '../../lib/chartUtils';
 
 interface CustomBarChartProps {
   data: BarChartData;
@@ -30,10 +31,27 @@ export const CustomBarChart: React.FC<CustomBarChartProps> = ({
   const theme = useTheme();
   const chartConfig = createChartConfig(theme.colors);
 
+  // Validate chart data using utility function
+  const validatedData = validateChartData(data);
+  
+  // If data is invalid, use empty chart data or show message
+  const chartData = validatedData || createEmptyChartData();
+  const hasValidData = validatedData !== null;
+
+  if (!hasValidData) {
+    return (
+      <View style={[styles.container, style, { height, width, justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center', fontSize: 14 }}>
+          No chart data available
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, style]}>
       <BarChart
-        data={data}
+        data={chartData}
         width={width}
         height={height}
         chartConfig={{

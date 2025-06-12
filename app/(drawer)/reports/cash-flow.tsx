@@ -32,62 +32,48 @@ export default function CashFlowReportScreen() {
   const { 
     data: revenueData, 
     loading: revenueLoading 
-  } = useApi(() => reportsApi.getRevenueReport(dateRange.startDate, dateRange.endDate), [dateRange]);
+  } = useApi(() => reportsApi.getRevenueReport(dateRange.startDate.toISOString(), dateRange.endDate.toISOString()), [dateRange]);
 
   const { 
     data: expenseData, 
     loading: expenseLoading 
-  } = useApi(() => reportsApi.getExpenseReport(dateRange.startDate, dateRange.endDate), [dateRange]);
+  } = useApi(() => reportsApi.getExpenseReport(dateRange.startDate.toISOString(), dateRange.endDate.toISOString()), [dateRange]);
 
   const loading = revenueLoading || expenseLoading;
 
-  // Calculate cash flow data
+  // Calculate derived values
   const totalInflow = revenueData?.totalRevenue || 0;
   const totalOutflow = expenseData?.totalExpenses || 0;
   const netCashFlow = totalInflow - totalOutflow;
+  const runningCashPosition = 50000 + netCashFlow; // Starting with base cash position
 
-  // Prepare monthly cash flow data
-  const monthlyInflows = revenueData?.monthlyRevenue || [];
-  const monthlyOutflows = expenseData?.monthlyExpenses || [];
-  
-  // Create a comprehensive monthly cash flow analysis
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  let runningCashPosition = 50000; // Starting cash position assumption
-
+  // Prepare chart data with proper validation  
   const cashFlowData = {
-    labels: months,
-    datasets: [
-      {
-        data: months.map((month, index) => {
-          const inflow = monthlyInflows.find(m => m.month.includes(month))?.amount || 0;
-          const outflow = monthlyOutflows.find(m => m.month.includes(month))?.amount || 0;
-          const netFlow = inflow - outflow;
-          runningCashPosition += netFlow;
-          return runningCashPosition;
-        }),
-        color: (opacity = 1) => `rgba(43, 92, 230, ${opacity})`,
-        strokeWidth: 3,
-      },
-    ],
+    labels: revenueData?.monthlyData?.map(item => item.month) || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+    datasets: [{
+      data: revenueData?.monthlyData?.map((item, index) => {
+        const inflow = item.amount || 0;
+        const outflow = expenseData?.monthlyData?.[index]?.amount || 0;
+        return 50000 + (inflow - outflow); // Cumulative cash position
+      }) || [50000, 50000, 50000, 50000, 50000, 50000],
+      color: (opacity = 1) => `rgba(33, 150, 243, ${opacity})`,
+      strokeWidth: 3,
+    }],
   };
 
   const inflowOutflowData = {
-    labels: months.slice(0, 6), // Show last 6 months
+    labels: revenueData?.monthlyData?.map(item => item.month) || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
     datasets: [
       {
-        data: months.slice(0, 6).map((month) => {
-          return monthlyInflows.find(m => m.month.includes(month))?.amount || 0;
-        }),
-        color: (opacity = 1) => `rgba(46, 213, 115, ${opacity})`, // Green for inflows
+        data: revenueData?.monthlyData?.map(item => item.amount) || [0, 0, 0, 0, 0, 0],
+        color: (opacity = 1) => `rgba(46, 213, 115, ${opacity})`,
       },
       {
-        data: months.slice(0, 6).map((month) => {
-          return monthlyOutflows.find(m => m.month.includes(month))?.amount || 0;
-        }),
-        color: (opacity = 1) => `rgba(255, 107, 107, ${opacity})`, // Red for outflows
+        data: expenseData?.monthlyData?.map(item => item.amount) || [0, 0, 0, 0, 0, 0],
+        color: (opacity = 1) => `rgba(255, 107, 107, ${opacity})`,
       },
     ],
-    legend: ['Cash Inflow', 'Cash Outflow'],
+    legend: ['Inflow', 'Outflow'],
   };
 
   const formatCurrency = (amount: number) => {
@@ -209,12 +195,20 @@ export default function CashFlowReportScreen() {
             <Text variant="titleMedium" style={[styles.chartTitle, { color: theme.colors.onSurface }]}>
               Cash Position Trend
             </Text>
-            <CustomLineChart
-              data={cashFlowData}
-              width={Dimensions.get('window').width - 64}
-              height={220}
-              style={styles.chart}
-            />
+            {cashFlowData.labels.length > 0 && cashFlowData.datasets[0].data.length > 0 ? (
+              <CustomLineChart
+                data={cashFlowData}
+                width={Dimensions.get('window').width - 64}
+                height={220}
+                style={styles.chart}
+              />
+            ) : (
+              <View style={styles.noDataContainer}>
+                <Text style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}>
+                  No data available for chart display
+                </Text>
+              </View>
+            )}
           </Card.Content>
         </Card>
 
@@ -224,12 +218,20 @@ export default function CashFlowReportScreen() {
             <Text variant="titleMedium" style={[styles.chartTitle, { color: theme.colors.onSurface }]}>
               Monthly Inflow vs Outflow (Last 6 Months)
             </Text>
-            <CustomBarChart
-              data={inflowOutflowData}
-              width={Dimensions.get('window').width - 64}
-              height={220}
-              style={styles.chart}
-            />
+            {inflowOutflowData.labels.length > 0 && inflowOutflowData.datasets[0].data.length > 0 ? (
+              <CustomBarChart
+                data={inflowOutflowData}
+                width={Dimensions.get('window').width - 64}
+                height={220}
+                style={styles.chart}
+              />
+            ) : (
+              <View style={styles.noDataContainer}>
+                <Text style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}>
+                  No data available for chart display
+                </Text>
+              </View>
+            )}
           </Card.Content>
         </Card>
 
@@ -373,6 +375,11 @@ const styles = StyleSheet.create({
   },
   chart: {
     alignSelf: 'center',
+  },
+  noDataContainer: {
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   analysisCard: {
     marginBottom: 16,

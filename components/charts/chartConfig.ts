@@ -103,10 +103,10 @@ export interface BarChartData {
   }>;
 }
 
-export interface PieChartData {
+export interface PieChartData extends Array<{
   name: string;
   population: number;
   color: string;
   legendFontColor: string;
   legendFontSize: number;
-}[] 
+}> {} 

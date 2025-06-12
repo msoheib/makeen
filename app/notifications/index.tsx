@@ -116,15 +116,48 @@ export default function NotificationSettingsScreen() {
           </View>
         </ModernCard>
 
-        {/* Future Enhancement Notice */}
-        <ModernCard style={styles.futureCard}>
-          <Text style={styles.futureTitle}>Coming Soon</Text>
-          <Text style={styles.futureDescription}>
-            • Email notification preferences{'\n'}
-            • Notification scheduling{'\n'}
-            • Custom notification sounds{'\n'}
-            • Quiet hours configuration
-          </Text>
+        {/* Advanced Preferences */}
+        <ModernCard style={styles.settingsCard}>
+          <Text style={styles.sectionTitle}>Advanced Settings</Text>
+          <List.Item
+            title="Notification Preferences"
+            description="Configure advanced notification settings, timing, and priorities"
+            left={() => (
+              <View style={styles.iconContainer}>
+                <Settings size={20} color={theme.colors.primary} />
+              </View>
+            )}
+            right={() => (
+              <IconButton
+                icon={() => <Settings size={20} color={theme.colors.onSurfaceVariant} />}
+                onPress={() => router.push('/notifications/preferences')}
+              />
+            )}
+            style={[styles.listItem]}
+            titleStyle={styles.listItemTitle}
+            descriptionStyle={styles.listItemDescription}
+            onPress={() => router.push('/notifications/preferences')}
+          />
+          
+          <List.Item
+            title="Notification Center"
+            description="View and manage all your notifications"
+            left={() => (
+              <View style={styles.iconContainer}>
+                <Bell size={20} color={theme.colors.primary} />
+              </View>
+            )}
+            right={() => (
+              <IconButton
+                icon={() => <Bell size={20} color={theme.colors.onSurfaceVariant} />}
+                onPress={() => router.push('/notifications/center')}
+              />
+            )}
+            style={[styles.listItem]}
+            titleStyle={styles.listItemTitle}
+            descriptionStyle={styles.listItemDescription}
+            onPress={() => router.push('/notifications/center')}
+          />
         </ModernCard>
       </ScrollView>
     </View>

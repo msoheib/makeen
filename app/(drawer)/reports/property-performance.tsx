@@ -48,7 +48,7 @@ export default function PropertyPerformanceReportScreen() {
     loading, 
     error, 
     refetch 
-  } = useApi<PropertyPerformanceData>(() => reportsApi.getPropertyPerformanceReport(dateRange.startDate, dateRange.endDate), [dateRange]);
+  } = useApi<PropertyPerformanceData>(() => reportsApi.getPropertyPerformanceReport(dateRange.startDate.toISOString(), dateRange.endDate.toISOString()), [dateRange]);
 
   // Prepare chart data
   const occupancyTrendData = {

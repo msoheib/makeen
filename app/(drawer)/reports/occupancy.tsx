@@ -43,7 +43,7 @@ export default function OccupancyAnalyticsScreen() {
     loading, 
     error, 
     refetch 
-  } = useApi<OccupancyData>(() => reportsApi.getPropertyPerformanceReport(dateRange.startDate, dateRange.endDate), [dateRange]);
+  } = useApi<OccupancyData>(() => reportsApi.getPropertyPerformanceReport(dateRange.startDate.toISOString(), dateRange.endDate.toISOString()), [dateRange]);
 
   // Prepare chart data with mock structure for now
   const mockOccupancyData = {

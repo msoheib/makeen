@@ -1,38 +1,73 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { Text, TextInput, Button, SegmentedButtons, IconButton } from 'react-native-paper';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { View, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import { Text, TextInput, Button, SegmentedButtons, ActivityIndicator, Chip, Modal, Portal, Searchbar } from 'react-native-paper';
+import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
-import { supabase } from '@/lib/supabase';
-import { useAppStore } from '@/lib/store';
-import { MaintenanceStatus } from '@/lib/types';
-import { ArrowLeft, PenTool as Tool, TriangleAlert as AlertTriangle, FileText, Building2 } from 'lucide-react-native';
+import { useApi } from '@/hooks/useApi';
+import { maintenanceApi, propertiesApi } from '@/lib/api';
+import { Tables, TablesInsert } from '@/lib/database.types';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
+import { Wrench, AlertTriangle, Building, Search, Check } from 'lucide-react-native';
+
+type MaintenanceRequest = TablesInsert<'maintenance_requests'>;
+type Property = Tables<'properties'>;
+
+interface FormData {
+  title: string;
+  description: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  property_id: string;
+  images: string[];
+}
 
 export default function AddMaintenanceRequestScreen() {
   const router = useRouter();
-  const { property } = useLocalSearchParams();
-  const user = useAppStore(state => state.user);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [showPropertyModal, setShowPropertyModal] = useState(false);
+  const [propertySearch, setPropertySearch] = useState('');
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  
+  const [formData, setFormData] = useState<FormData>({
     title: '',
     description: '',
-    priority: 'medium' as 'low' | 'medium' | 'high' | 'urgent',
-    status: 'pending' as MaintenanceStatus,
-    property_id: property as string || '',
+    priority: 'medium',
+    property_id: '',
+    images: []
   });
+  
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const validateForm = () => {
+  // Load properties for selection
+  const { 
+    data: properties, 
+    loading: propertiesLoading, 
+    error: propertiesError,
+    refetch: refetchProperties 
+  } = useApi(() => propertiesApi.getAll(), []);
+
+  // Filter properties based on search
+  const filteredProperties = properties?.filter(property =>
+    property.title.toLowerCase().includes(propertySearch.toLowerCase()) ||
+    property.address.toLowerCase().includes(propertySearch.toLowerCase()) ||
+    property.property_code?.toLowerCase().includes(propertySearch.toLowerCase())
+  ) || [];
+
+  const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.title.trim()) {
       newErrors.title = 'Title is required';
+    } else if (formData.title.trim().length < 5) {
+      newErrors.title = 'Title must be at least 5 characters';
     }
+
     if (!formData.description.trim()) {
       newErrors.description = 'Description is required';
+    } else if (formData.description.trim().length < 10) {
+      newErrors.description = 'Description must be at least 10 characters';
     }
+
     if (!formData.property_id) {
       newErrors.property_id = 'Property selection is required';
     }
@@ -46,30 +81,23 @@ export default function AddMaintenanceRequestScreen() {
       return;
     }
 
-    if (!user) {
-      Alert.alert('Error', 'You must be logged in to submit a maintenance request');
-      return;
-    }
-
     setLoading(true);
     try {
-      const requestData = {
+      const requestData: MaintenanceRequest = {
         title: formData.title.trim(),
         description: formData.description.trim(),
         priority: formData.priority,
-        status: formData.status,
+        status: 'pending',
         property_id: formData.property_id,
-        tenant_id: user.id,
-        images: [], // Empty array for now
+        tenant_id: null, // Will be set based on property/contract later
+        images: formData.images
       };
 
-      const { data, error } = await supabase
-        .from('maintenance_requests')
-        .insert([requestData])
-        .select()
-        .single();
+      const response = await maintenanceApi.createRequest(requestData);
 
-      if (error) throw error;
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
 
       Alert.alert(
         'Success',
@@ -89,55 +117,103 @@ export default function AddMaintenanceRequestScreen() {
     }
   };
 
+  const handlePropertySelect = (property: Property) => {
+    setSelectedProperty(property);
+    setFormData({ ...formData, property_id: property.id });
+    setShowPropertyModal(false);
+    setPropertySearch('');
+    // Clear property selection error if it exists
+    if (errors.property_id) {
+      setErrors({ ...errors, property_id: '' });
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'low': return theme.colors.primary;
+      case 'medium': return theme.colors.warning;
+      case 'high': return theme.colors.error;
+      case 'urgent': return '#d32f2f';
+      default: return theme.colors.primary;
+    }
+  };
+
+  const getPriorityDescription = (priority: string) => {
+    switch (priority) {
+      case 'low': 
+        return 'Non-urgent issues that can be addressed during regular maintenance.';
+      case 'medium': 
+        return 'Standard maintenance issues that should be addressed within a few days.';
+      case 'high': 
+        return 'Important issues that need attention within 24-48 hours.';
+      case 'urgent': 
+        return 'Emergency issues requiring immediate attention (safety hazards, water leaks, etc.).';
+      default: 
+        return '';
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <IconButton
-          icon={() => <ArrowLeft size={24} color={theme.colors.onSurface} />}
-          onPress={() => router.back()}
-          style={styles.backButton}
-        />
-        <Text style={styles.headerTitle}>Maintenance Request</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+      <ModernHeader 
+        title="New Maintenance Request"
+        showBack={true}
+        onBack={() => router.back()}
+      />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Request Details */}
+        {/* Request Details Section */}
         <ModernCard style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Tool size={20} color={theme.colors.primary} />
+            <Wrench size={20} color={theme.colors.primary} />
             <Text style={styles.sectionTitle}>Request Details</Text>
           </View>
 
           <TextInput
             label="Title *"
             value={formData.title}
-            onChangeText={(text) => setFormData({ ...formData, title: text })}
+            onChangeText={(text) => {
+              setFormData({ ...formData, title: text });
+              if (errors.title && text.trim().length >= 5) {
+                setErrors({ ...errors, title: '' });
+              }
+            }}
             mode="outlined"
             style={styles.input}
             error={!!errors.title}
             placeholder="Brief description of the issue"
+            maxLength={100}
           />
           {errors.title && <Text style={styles.errorText}>{errors.title}</Text>}
 
           <TextInput
             label="Description *"
             value={formData.description}
-            onChangeText={(text) => setFormData({ ...formData, description: text })}
+            onChangeText={(text) => {
+              setFormData({ ...formData, description: text });
+              if (errors.description && text.trim().length >= 10) {
+                setErrors({ ...errors, description: '' });
+              }
+            }}
             mode="outlined"
             multiline
             numberOfLines={4}
             style={styles.input}
             error={!!errors.description}
             placeholder="Detailed description of the maintenance issue..."
+            maxLength={500}
           />
           {errors.description && <Text style={styles.errorText}>{errors.description}</Text>}
+          
+          <Text style={styles.characterCount}>
+            {formData.description.length}/500 characters
+          </Text>
         </ModernCard>
 
-        {/* Priority Level */}
+        {/* Priority Level Section */}
         <ModernCard style={styles.section}>
           <View style={styles.sectionHeader}>
-            <AlertTriangle size={20} color={theme.colors.warning} />
+            <AlertTriangle size={20} color={getPriorityColor(formData.priority)} />
             <Text style={styles.sectionTitle}>Priority Level</Text>
           </View>
 
@@ -145,88 +221,72 @@ export default function AddMaintenanceRequestScreen() {
             value={formData.priority}
             onValueChange={(value) => setFormData({ ...formData, priority: value as any })}
             buttons={[
-              { value: 'low', label: 'Low' },
-              { value: 'medium', label: 'Medium' },
-              { value: 'high', label: 'High' },
-              { value: 'urgent', label: 'Urgent' },
+              { 
+                value: 'low', 
+                label: 'Low',
+                style: formData.priority === 'low' ? { backgroundColor: theme.colors.primaryContainer } : {}
+              },
+              { 
+                value: 'medium', 
+                label: 'Medium',
+                style: formData.priority === 'medium' ? { backgroundColor: theme.colors.primaryContainer } : {}
+              },
+              { 
+                value: 'high', 
+                label: 'High',
+                style: formData.priority === 'high' ? { backgroundColor: theme.colors.errorContainer } : {}
+              },
+              { 
+                value: 'urgent', 
+                label: 'Urgent',
+                style: formData.priority === 'urgent' ? { backgroundColor: theme.colors.errorContainer } : {}
+              },
             ]}
             style={styles.segmentedButtons}
           />
 
           <View style={styles.priorityInfo}>
-            {formData.priority === 'low' && (
-              <Text style={styles.priorityDescription}>
-                Non-urgent issues that can be addressed during regular maintenance.
-              </Text>
-            )}
-            {formData.priority === 'medium' && (
-              <Text style={styles.priorityDescription}>
-                Standard maintenance issues that should be addressed within a few days.
-              </Text>
-            )}
-            {formData.priority === 'high' && (
-              <Text style={styles.priorityDescription}>
-                Important issues that need attention within 24-48 hours.
-              </Text>
-            )}
-            {formData.priority === 'urgent' && (
-              <Text style={styles.priorityDescription}>
-                Emergency issues requiring immediate attention (safety hazards, water leaks, etc.).
-              </Text>
-            )}
-          </View>
-        </ModernCard>
-
-        {/* Property Selection */}
-        <ModernCard style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Building2 size={20} color={theme.colors.secondary} />
-            <Text style={styles.sectionTitle}>Property</Text>
-          </View>
-
-          <TextInput
-            label="Property ID"
-            value={formData.property_id}
-            onChangeText={(text) => setFormData({ ...formData, property_id: text })}
-            mode="outlined"
-            style={styles.input}
-            error={!!errors.property_id}
-            placeholder="Enter property ID or select from list"
-          />
-          {errors.property_id && <Text style={styles.errorText}>{errors.property_id}</Text>}
-
-          <Button
-            mode="outlined"
-            onPress={() => router.push('/properties/select')}
-            style={styles.selectButton}
-            icon="home-outline"
-          >
-            Select Property
-          </Button>
-        </ModernCard>
-
-        {/* Status */}
-        <ModernCard style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <FileText size={20} color={theme.colors.tertiary} />
-            <Text style={styles.sectionTitle}>Status</Text>
-          </View>
-
-          <SegmentedButtons
-            value={formData.status}
-            onValueChange={(value) => setFormData({ ...formData, status: value as MaintenanceStatus })}
-            buttons={[
-              { value: 'pending', label: 'Pending' },
-              { value: 'approved', label: 'Approved' },
-            ]}
-            style={styles.segmentedButtons}
-          />
-
-          <View style={styles.statusInfo}>
-            <Text style={styles.statusDescription}>
-              New requests are automatically set to "Pending" status for review.
+            <Text style={[styles.priorityDescription, { color: getPriorityColor(formData.priority) }]}>
+              {getPriorityDescription(formData.priority)}
             </Text>
           </View>
+        </ModernCard>
+
+        {/* Property Selection Section */}
+        <ModernCard style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Building size={20} color={theme.colors.secondary} />
+            <Text style={styles.sectionTitle}>Property Selection</Text>
+          </View>
+
+          <TouchableOpacity
+            style={[
+              styles.propertySelector,
+              { borderColor: errors.property_id ? theme.colors.error : theme.colors.outline }
+            ]}
+            onPress={() => setShowPropertyModal(true)}
+          >
+            {selectedProperty ? (
+              <View style={styles.selectedPropertyContainer}>
+                <View style={styles.selectedPropertyInfo}>
+                  <Text style={styles.selectedPropertyTitle}>{selectedProperty.title}</Text>
+                  <Text style={styles.selectedPropertyAddress}>{selectedProperty.address}</Text>
+                  {selectedProperty.property_code && (
+                    <Chip size="small" style={styles.propertyCodeChip}>
+                      {selectedProperty.property_code}
+                    </Chip>
+                  )}
+                </View>
+                                 <Check size={20} color={theme.colors.primary} />
+              </View>
+            ) : (
+                             <View style={styles.emptyPropertySelector}>
+                 <Building size={24} color={theme.colors.onSurfaceVariant} />
+                 <Text style={styles.placeholderText}>Tap to select property</Text>
+               </View>
+            )}
+          </TouchableOpacity>
+          {errors.property_id && <Text style={styles.errorText}>{errors.property_id}</Text>}
         </ModernCard>
 
         {/* Submit Button */}
@@ -239,10 +299,76 @@ export default function AddMaintenanceRequestScreen() {
             style={styles.submitButton}
             contentStyle={styles.submitButtonContent}
           >
-            Submit Request
+            {loading ? 'Submitting...' : 'Submit Request'}
           </Button>
         </View>
       </ScrollView>
+
+      {/* Property Selection Modal */}
+      <Portal>
+        <Modal
+          visible={showPropertyModal}
+          onDismiss={() => setShowPropertyModal(false)}
+          contentContainerStyle={styles.modalContainer}
+        >
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Select Property</Text>
+            <Button onPress={() => setShowPropertyModal(false)}>Cancel</Button>
+          </View>
+
+          <Searchbar
+            placeholder="Search properties..."
+            onChangeText={setPropertySearch}
+            value={propertySearch}
+            style={styles.searchBar}
+            icon={() => <Search size={20} color={theme.colors.onSurfaceVariant} />}
+          />
+
+          <ScrollView style={styles.modalContent}>
+            {propertiesLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={theme.colors.primary} />
+                <Text style={styles.loadingText}>Loading properties...</Text>
+              </View>
+            ) : propertiesError ? (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>Error loading properties</Text>
+                <Button onPress={refetchProperties}>Retry</Button>
+              </View>
+                         ) : filteredProperties.length === 0 ? (
+               <View style={styles.emptyContainer}>
+                 <Building size={48} color={theme.colors.onSurfaceVariant} />
+                 <Text style={styles.emptyText}>
+                   {propertySearch ? 'No properties match your search' : 'No properties available'}
+                 </Text>
+               </View>
+            ) : (
+              filteredProperties.map((property) => (
+                <TouchableOpacity
+                  key={property.id}
+                  style={styles.propertyItem}
+                  onPress={() => handlePropertySelect(property)}
+                >
+                  <View style={styles.propertyItemContent}>
+                    <Text style={styles.propertyItemTitle}>{property.title}</Text>
+                    <Text style={styles.propertyItemAddress}>{property.address}</Text>
+                    <View style={styles.propertyItemDetails}>
+                      <Chip size="small" style={styles.statusChip}>
+                        {property.status}
+                      </Chip>
+                      {property.property_code && (
+                        <Chip size="small" style={styles.codeChip}>
+                          {property.property_code}
+                        </Chip>
+                      )}
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))
+            )}
+          </ScrollView>
+        </Modal>
+      </Portal>
     </View>
   );
 }
@@ -252,88 +378,181 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.m,
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.s,
-  },
-  backButton: {
-    margin: 0,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    flex: 1,
-    textAlign: 'center',
-  },
-  headerSpacer: {
-    width: 40,
-  },
   content: {
     flex: 1,
+    padding: spacing.md,
   },
   section: {
-    marginHorizontal: spacing.m,
-    marginBottom: spacing.m,
+    marginBottom: spacing.md,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.m,
+    marginBottom: spacing.md,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
+    marginLeft: spacing.sm,
     color: theme.colors.onSurface,
-    marginLeft: spacing.s,
   },
   input: {
-    marginBottom: spacing.m,
-    backgroundColor: theme.colors.surface,
-  },
-  segmentedButtons: {
-    marginBottom: spacing.m,
-  },
-  priorityInfo: {
-    backgroundColor: theme.colors.warningContainer,
-    padding: spacing.m,
-    borderRadius: 8,
-  },
-  priorityDescription: {
-    fontSize: 14,
-    color: theme.colors.warning,
-    lineHeight: 20,
-  },
-  statusInfo: {
-    backgroundColor: theme.colors.surfaceVariant,
-    padding: spacing.m,
-    borderRadius: 8,
-  },
-  statusDescription: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    lineHeight: 20,
-  },
-  selectButton: {
-    borderColor: theme.colors.secondary,
+    marginBottom: spacing.sm,
   },
   errorText: {
     color: theme.colors.error,
     fontSize: 12,
-    marginTop: -spacing.s,
-    marginBottom: spacing.s,
+    marginTop: 4,
+    marginLeft: 12,
+  },
+  characterCount: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
+    textAlign: 'right',
+    marginTop: 4,
+  },
+  segmentedButtons: {
+    marginBottom: spacing.md,
+  },
+  priorityInfo: {
+    backgroundColor: theme.colors.surfaceVariant,
+    padding: spacing.sm,
+    borderRadius: 8,
+  },
+  priorityDescription: {
+    fontSize: 14,
+    fontStyle: 'italic',
+  },
+  propertySelector: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: spacing.md,
+    minHeight: 80,
+    justifyContent: 'center',
+  },
+  selectedPropertyContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  selectedPropertyInfo: {
+    flex: 1,
+  },
+  selectedPropertyTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginBottom: 4,
+  },
+  selectedPropertyAddress: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    marginBottom: 8,
+  },
+  propertyCodeChip: {
+    alignSelf: 'flex-start',
+  },
+  emptyPropertySelector: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.md,
+  },
+  placeholderText: {
+    fontSize: 16,
+    color: theme.colors.onSurfaceVariant,
+    marginTop: spacing.sm,
   },
   submitContainer: {
-    padding: spacing.m,
-    paddingBottom: spacing.xxxl,
+    marginTop: spacing.lg,
+    marginBottom: spacing.xl,
   },
   submitButton: {
-    backgroundColor: theme.colors.primary,
+    borderRadius: 8,
   },
   submitButtonContent: {
-    paddingVertical: spacing.s,
+    paddingVertical: spacing.sm,
+  },
+  modalContainer: {
+    backgroundColor: theme.colors.surface,
+    margin: spacing.lg,
+    borderRadius: 12,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.outline,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+  },
+  searchBar: {
+    margin: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  modalContent: {
+    flex: 1,
+    padding: spacing.md,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xl,
+  },
+  loadingText: {
+    marginTop: spacing.md,
+    fontSize: 16,
+    color: theme.colors.onSurfaceVariant,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xl,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xl,
+  },
+  emptyText: {
+    marginTop: spacing.md,
+    fontSize: 16,
+    color: theme.colors.onSurfaceVariant,
+    textAlign: 'center',
+  },
+  propertyItem: {
+    backgroundColor: theme.colors.surfaceVariant,
+    borderRadius: 8,
+    marginBottom: spacing.sm,
+    overflow: 'hidden',
+  },
+  propertyItemContent: {
+    padding: spacing.md,
+  },
+  propertyItemTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginBottom: 4,
+  },
+  propertyItemAddress: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    marginBottom: spacing.sm,
+  },
+  propertyItemDetails: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  statusChip: {
+    alignSelf: 'flex-start',
+  },
+  codeChip: {
+    alignSelf: 'flex-start',
   },
 });

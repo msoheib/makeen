@@ -39,7 +39,7 @@ export default function RevenueReportScreen() {
     loading, 
     error, 
     refetch 
-  } = useApi<RevenueData>(() => reportsApi.getRevenueReport(dateRange.startDate, dateRange.endDate), [dateRange]);
+  } = useApi<RevenueData>(() => reportsApi.getRevenueReport(dateRange.startDate.toISOString(), dateRange.endDate.toISOString()), [dateRange]);
 
   // Prepare chart data
   const lineChartData = {

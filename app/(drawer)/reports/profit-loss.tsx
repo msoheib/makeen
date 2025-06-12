@@ -36,33 +36,39 @@ export default function ProfitLossReportScreen() {
   const { 
     data: revenueData, 
     loading: revenueLoading 
-  } = useApi(() => reportsApi.getRevenueReport(dateRange.startDate, dateRange.endDate), [dateRange]);
+  } = useApi(() => reportsApi.getRevenueReport(dateRange.startDate.toISOString(), dateRange.endDate.toISOString()), [dateRange]);
 
   const { 
     data: expenseData, 
     loading: expenseLoading 
-  } = useApi(() => reportsApi.getExpenseReport(dateRange.startDate, dateRange.endDate), [dateRange]);
+  } = useApi(() => reportsApi.getExpenseReport(dateRange.startDate.toISOString(), dateRange.endDate.toISOString()), [dateRange]);
 
   const loading = revenueLoading || expenseLoading;
 
-  // Calculate P&L data
+  // Calculate derived values
   const totalRevenue = revenueData?.totalRevenue || 0;
   const totalExpenses = expenseData?.totalExpenses || 0;
   const netProfit = totalRevenue - totalExpenses;
   const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
 
-  // Prepare comparison chart data
+  // Prepare chart data with proper validation
   const comparisonData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    labels: revenueData?.monthlyData?.map(item => item.month) || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
     datasets: [
       {
-        data: revenueData?.monthlyRevenue?.map(item => item.amount) || new Array(12).fill(0),
-        color: (opacity = 1) => `rgba(43, 92, 230, ${opacity})`, // Blue for revenue
+        data: revenueData?.monthlyData?.map(item => {
+          const amount = Number(item?.amount || 0);
+          return isNaN(amount) ? 0 : amount;
+        }) || [0, 0, 0, 0, 0, 0],
+        color: (opacity = 1) => `rgba(33, 150, 243, ${opacity})`,
         strokeWidth: 3,
       },
       {
-        data: expenseData?.monthlyExpenses?.map(item => item.amount) || new Array(12).fill(0),
-        color: (opacity = 1) => `rgba(255, 107, 107, ${opacity})`, // Red for expenses
+        data: expenseData?.monthlyData?.map(item => {
+          const amount = Number(item?.amount || 0);
+          return isNaN(amount) ? 0 : amount;
+        }) || [0, 0, 0, 0, 0, 0],
+        color: (opacity = 1) => `rgba(255, 107, 107, ${opacity})`,
         strokeWidth: 3,
       },
     ],
@@ -70,16 +76,20 @@ export default function ProfitLossReportScreen() {
   };
 
   const profitData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    labels: revenueData?.monthlyData?.map(item => item.month) || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
     datasets: [{
-      data: comparisonData.datasets[0].data.map((revenue, index) => 
-        revenue - (comparisonData.datasets[1].data[index] || 0)
-      ),
-      color: (opacity = 1) => `rgba(46, 213, 115, ${opacity})`, // Green for profit
+      data: revenueData?.monthlyData?.map((item, index) => {
+        const revenue = Number(item?.amount || 0);
+        const expense = Number(expenseData?.monthlyData?.[index]?.amount || 0);
+        const profit = (isNaN(revenue) ? 0 : revenue) - (isNaN(expense) ? 0 : expense);
+        return isNaN(profit) ? 0 : profit;
+      }) || [0, 0, 0, 0, 0, 0],
+      color: (opacity = 1) => `rgba(46, 213, 115, ${opacity})`,
       strokeWidth: 3,
     }],
   };
 
+  // Helper functions
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('ar-SA', {
       style: 'currency',
@@ -89,7 +99,7 @@ export default function ProfitLossReportScreen() {
   };
 
   const formatPercentage = (value: number) => {
-    return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
+    return `${value.toFixed(1)}%`;
   };
 
   if (loading) {
@@ -186,12 +196,20 @@ export default function ProfitLossReportScreen() {
             <Text variant="titleMedium" style={[styles.chartTitle, { color: theme.colors.onSurface }]}>
               Revenue vs Expenses Comparison
             </Text>
-            <CustomLineChart
-              data={comparisonData}
-              width={Dimensions.get('window').width - 64}
-              height={220}
-              style={styles.chart}
-            />
+            {comparisonData.labels.length > 0 && comparisonData.datasets[0].data.length > 0 ? (
+              <CustomLineChart
+                data={comparisonData}
+                width={Dimensions.get('window').width - 64}
+                height={220}
+                style={styles.chart}
+              />
+            ) : (
+              <View style={styles.noDataContainer}>
+                <Text style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}>
+                  No data available for chart display
+                </Text>
+              </View>
+            )}
           </Card.Content>
         </Card>
 
@@ -201,12 +219,20 @@ export default function ProfitLossReportScreen() {
             <Text variant="titleMedium" style={[styles.chartTitle, { color: theme.colors.onSurface }]}>
               Monthly Profit Trend
             </Text>
-            <CustomLineChart
-              data={profitData}
-              width={Dimensions.get('window').width - 64}
-              height={220}
-              style={styles.chart}
-            />
+            {profitData.labels.length > 0 && profitData.datasets[0].data.length > 0 ? (
+              <CustomLineChart
+                data={profitData}
+                width={Dimensions.get('window').width - 64}
+                height={220}
+                style={styles.chart}
+              />
+            ) : (
+              <View style={styles.noDataContainer}>
+                <Text style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}>
+                  No data available for chart display
+                </Text>
+              </View>
+            )}
           </Card.Content>
         </Card>
 
@@ -326,6 +352,11 @@ const styles = StyleSheet.create({
   },
   chart: {
     alignSelf: 'center',
+  },
+  noDataContainer: {
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   summaryCard: {
     marginBottom: 16,

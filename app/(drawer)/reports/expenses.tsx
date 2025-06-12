@@ -38,7 +38,7 @@ export default function ExpenseReportScreen() {
     loading, 
     error, 
     refetch 
-  } = useApi<ExpenseData>(() => reportsApi.getExpenseReport(dateRange.startDate, dateRange.endDate), [dateRange]);
+  } = useApi<ExpenseData>(() => reportsApi.getExpenseReport(dateRange.startDate.toISOString(), dateRange.endDate.toISOString()), [dateRange]);
 
   // Prepare chart data
   const lineChartData = {
