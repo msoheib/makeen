@@ -9,7 +9,7 @@ const locales = {
 };
 
 // Arabic-Indic numerals mapping
-const arabicNumerals = {
+const arabicNumerals: { [key: string]: string } = {
   '0': '٠',
   '1': '١',
   '2': '٢',
@@ -26,7 +26,7 @@ const arabicNumerals = {
 export const toArabicNumerals = (text: string): string => {
   if (!isRTL()) return text;
   
-  return text.toString().replace(/[0-9]/g, (digit) => arabicNumerals[digit] || digit);
+  return text.toString().replace(/[0-9]/g, (digit: string) => arabicNumerals[digit] || digit);
 };
 
 export const formatDate = (date: Date | string, formatString: string = 'PPP'): string => {
@@ -51,8 +51,8 @@ export const formatNumber = (num: number | string): string => {
   return isRTL() ? toArabicNumerals(numStr) : numStr;
 };
 
-export const formatPercentage = (value: number, decimals: number = 1): string => {
-  const percentage = `${value.toFixed(decimals)}%`;
+export const formatPercentage = (value: number): string => {
+  const percentage = `${value.toFixed(1)}%`;
   return toArabicNumerals(percentage);
 };
 

@@ -1,47 +1,5 @@
-import { MD3LightTheme, MD3DarkTheme, configureFonts } from 'react-native-paper';
-import { Platform, I18nManager } from 'react-native';
-import { isRTL, getDirection, getTextAlign, getFlexDirection } from './rtl';
-
-const fontConfig = {
-  fontFamily: 'Inter-Regular',
-  headingFontFamily: 'Inter-Bold',
-};
-
-// Font configuration
-export const fonts = configureFonts({
-  config: {
-    ...Platform.select({
-      web: {
-        regular: {
-          fontFamily: fontConfig.fontFamily,
-          fontWeight: '400' as const,
-        },
-        medium: {
-          fontFamily: fontConfig.fontFamily,
-          fontWeight: '500' as const,
-        },
-        bold: {
-          fontFamily: fontConfig.headingFontFamily,
-          fontWeight: '700' as const,
-        },
-      },
-      default: {
-        regular: {
-          fontFamily: fontConfig.fontFamily,
-          fontWeight: '400' as const,
-        },
-        medium: {
-          fontFamily: fontConfig.fontFamily,
-          fontWeight: '500' as const,
-        },
-        bold: {
-          fontFamily: fontConfig.headingFontFamily,
-          fontWeight: '700' as const,
-        },
-      },
-    }),
-  },
-});
+import { MD3LightTheme, MD3DarkTheme } from 'react-native-paper';
+import { isRTL } from './rtl';
 
 // Compact sizing scale (reduced from original sizes)
 const compactSpacing = {
@@ -197,6 +155,9 @@ const darkTheme = {
   components: lightTheme.components,
 };
 
+// Default theme export for backward compatibility
+export const theme = lightTheme;
+
 export { lightTheme, darkTheme };
 
 // RTL-aware styling utilities
@@ -227,231 +188,42 @@ export const rtlLayout = {
   alignItems: isRTL() ? 'flex-end' : 'flex-start',
 } as const;
 
-// Spacing system
+// Spacing system for backwards compatibility
 export const spacing = {
-  xs: 4,
-  s: 8,
-  m: 16,
-  l: 24,
-  xl: 32,
-  xxl: 48,
-  xxxl: 64,
+  xs: compactSpacing.xs,
+  sm: compactSpacing.sm,
+  md: compactSpacing.md,
+  lg: compactSpacing.lg,
+  xl: compactSpacing.xl,
+  xxl: compactSpacing['2xl'],
+  xxxl: compactSpacing['3xl'],
+  xxxxl: compactSpacing['4xl'],
+  s: compactSpacing.sm,
+  m: compactSpacing.md,
+  l: compactSpacing.lg,
 };
 
-// Shadow styles with modern elevation
+// Shadow styles for backwards compatibility
 export const shadows = {
-  small: Platform.select({
-    ios: {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.08,
-      shadowRadius: 4,
-    },
-    android: {
-      elevation: 3,
-    },
-    web: {
-      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
-    },
-  }),
-  medium: Platform.select({
-    ios: {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.12,
-      shadowRadius: 8,
-    },
-    android: {
-      elevation: 6,
-    },
-    web: {
-      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
-    },
-  }),
-  large: Platform.select({
-    ios: {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.16,
-      shadowRadius: 16,
-    },
-    android: {
-      elevation: 12,
-    },
-    web: {
-      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.16)',
-    },
-  }),
-};
-
-// Typography scale
-export const typography = {
-  h1: {
-    fontSize: 32,
-    fontWeight: '700' as const,
-    lineHeight: 40,
+  small: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
-  h2: {
-    fontSize: 28,
-    fontWeight: '700' as const,
-    lineHeight: 36,
+  medium: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
   },
-  h3: {
-    fontSize: 24,
-    fontWeight: '600' as const,
-    lineHeight: 32,
-  },
-  h4: {
-    fontSize: 20,
-    fontWeight: '600' as const,
-    lineHeight: 28,
-  },
-  body1: {
-    fontSize: 16,
-    fontWeight: '400' as const,
-    lineHeight: 24,
-  },
-  body2: {
-    fontSize: 14,
-    fontWeight: '400' as const,
-    lineHeight: 20,
-  },
-  caption: {
-    fontSize: 12,
-    fontWeight: '400' as const,
-    lineHeight: 16,
-  },
-  button: {
-    fontSize: 16,
-    fontWeight: '600' as const,
-    lineHeight: 20,
-  },
-};
-
-// RTL layout utilities
-export const rtlLayout = {
-  // Check if current layout is RTL
-  isRTL: () => isRTL(),
-  
-  // Get layout direction
-  direction: () => getDirection(),
-  
-  // Transform values for RTL
-  transform: {
-    // Flip horizontal values for RTL
-    scaleX: (value: number) => isRTL() ? -value : value,
-    
-    // Rotate icons/elements for RTL
-    rotateY: () => isRTL() ? '180deg' : '0deg',
-    
-    // Translate horizontally accounting for RTL
-    translateX: (value: number) => isRTL() ? -value : value,
-  },
-  
-  // Icon mirroring for directional icons
-  iconTransform: {
-    // For directional icons (arrows, chevrons)
-    mirror: {
-      transform: [{ scaleX: isRTL() ? -1 : 1 }],
-    },
-    
-    // For icons that should not be mirrored
-    noMirror: {
-      transform: [{ scaleX: 1 }],
-    },
-  },
-  
-  // Layout helpers
-  justify: {
-    start: isRTL() ? 'flex-end' : 'flex-start',
-    end: isRTL() ? 'flex-start' : 'flex-end',
-    center: 'center',
-    spaceBetween: 'space-between',
-    spaceAround: 'space-around',
-    spaceEvenly: 'space-evenly',
-  },
-  
-  // Text input direction
-  textDirection: {
-    auto: 'auto' as const,
-    ltr: 'ltr' as const,
-    rtl: 'rtl' as const,
-    current: getDirection(),
-  },
-};
-
-// Enhanced spacing with RTL support
-export const rtlSpacing = {
-  ...spacing,
-  
-  // Horizontal spacing with RTL awareness
-  horizontal: {
-    xs: { ...rtlStyles.paddingStart(spacing.xs), ...rtlStyles.paddingEnd(spacing.xs) },
-    s: { ...rtlStyles.paddingStart(spacing.s), ...rtlStyles.paddingEnd(spacing.s) },
-    m: { ...rtlStyles.paddingStart(spacing.m), ...rtlStyles.paddingEnd(spacing.m) },
-    l: { ...rtlStyles.paddingStart(spacing.l), ...rtlStyles.paddingEnd(spacing.l) },
-    xl: { ...rtlStyles.paddingStart(spacing.xl), ...rtlStyles.paddingEnd(spacing.xl) },
-  },
-  
-  // Start/end specific spacing
-  start: {
-    xs: rtlStyles.paddingStart(spacing.xs),
-    s: rtlStyles.paddingStart(spacing.s),
-    m: rtlStyles.paddingStart(spacing.m),
-    l: rtlStyles.paddingStart(spacing.l),
-    xl: rtlStyles.paddingStart(spacing.xl),
-  },
-  
-  end: {
-    xs: rtlStyles.paddingEnd(spacing.xs),
-    s: rtlStyles.paddingEnd(spacing.s),
-    m: rtlStyles.paddingEnd(spacing.m),
-    l: rtlStyles.paddingEnd(spacing.l),
-    xl: rtlStyles.paddingEnd(spacing.xl),
-  },
-};
-
-// Typography with RTL support
-export const rtlTypography = {
-  ...typography,
-  
-  // Text styles with proper alignment
-  h1RTL: {
-    ...typography.h1,
-    textAlign: getTextAlign('left'),
-    writingDirection: getDirection(),
-  },
-  h2RTL: {
-    ...typography.h2,
-    textAlign: getTextAlign('left'),
-    writingDirection: getDirection(),
-  },
-  h3RTL: {
-    ...typography.h3,
-    textAlign: getTextAlign('left'),
-    writingDirection: getDirection(),
-  },
-  body1RTL: {
-    ...typography.body1,
-    textAlign: getTextAlign('left'),
-    writingDirection: getDirection(),
-  },
-  body2RTL: {
-    ...typography.body2,
-    textAlign: getTextAlign('left'),
-    writingDirection: getDirection(),
-  },
-  
-  // Specialized text styles
-  input: {
-    ...typography.body1,
-    textAlign: getTextAlign('left'),
-    writingDirection: getDirection(),
-  },
-  
-  navigation: {
-    ...typography.button,
-    textAlign: getTextAlign('left'),
-    writingDirection: getDirection(),
+  large: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4,
   },
 };

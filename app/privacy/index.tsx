@@ -208,8 +208,8 @@ const styles = StyleSheet.create({
   },
   infoCard: {
     marginBottom: spacing.m,
-    backgroundColor: `${theme.colors.primary}08`,
-    borderColor: `${theme.colors.primary}20`,
+    backgroundColor: '#E3F2FD',
+    borderColor: '#1976D2',
     borderWidth: 1,
   },
   infoHeader: {
@@ -257,8 +257,8 @@ const styles = StyleSheet.create({
   },
   protectionCard: {
     marginBottom: spacing.m,
-    backgroundColor: `${theme.colors.secondary}08`,
-    borderColor: `${theme.colors.secondary}20`,
+    backgroundColor: '#F5F5F5',
+    borderColor: '#424242',
     borderWidth: 1,
   },
   protectionHeader: {
@@ -282,14 +282,14 @@ const styles = StyleSheet.create({
   },
   complianceCard: {
     marginBottom: spacing.m,
-    backgroundColor: `${theme.colors.tertiary}08`,
-    borderColor: `${theme.colors.tertiary}20`,
+    backgroundColor: '#FFF8E1',
+    borderColor: '#FF9800',
     borderWidth: 1,
   },
   complianceTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: theme.colors.tertiary,
+    color: '#FF9800',
     marginBottom: spacing.s,
   },
   complianceText: {
@@ -299,14 +299,14 @@ const styles = StyleSheet.create({
   },
   contactCard: {
     marginBottom: spacing.xl,
-    backgroundColor: `${theme.colors.primary}05`,
-    borderColor: `${theme.colors.primary}15`,
+    backgroundColor: '#E8F5E8',
+    borderColor: '#4CAF50',
     borderWidth: 1,
   },
   contactTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: theme.colors.primary,
+    color: '#4CAF50',
     marginBottom: spacing.s,
   },
   contactText: {
