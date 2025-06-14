@@ -1,0 +1,279 @@
+{
+  "title": "Settings",
+  "subtitle": "App preferences and account",
+  "profile": {
+    "title": "Profile",
+    "description": "Manage your personal information and account details",
+    "myProfile": "My Profile",
+    "personalInformation": "Personal Information",
+    "accountOverview": "Account Overview",
+    "contactInformation": "Contact Information",
+    "addressInformation": "Address Information",
+    "accountActions": "Account Actions",
+    "fullName": "Full Name",
+    "emailAddress": "Email Address", 
+    "phoneNumber": "Phone Number",
+    "company": "Company",
+    "address": "Address",
+    "streetAddress": "Street Address",
+    "city": "City",
+    "country": "Country",
+    "enterFullName": "Enter your full name",
+    "enterEmail": "Enter your email",
+    "enterPhone": "Enter your phone number",
+    "enterCompany": "Enter your company name",
+    "enterAddress": "Enter your address",
+    "enterCity": "Enter your city",
+    "selectCountry": "Select your country",
+    "notSet": "Not set",
+    "missingInformation": "Missing Information",
+    "nameEmailRequired": "Name and email are required fields.",
+    "success": "Success",
+    "profileUpdateSuccess": "Profile updated successfully!",
+    "changeProfilePhoto": "Change Profile Photo",
+    "photoUploadComingSoon": "Photo upload functionality will be available in a future update.",
+    "propertiesManaged": "Properties Managed",
+    "activeTenants": "Active Tenants",
+    "accountType": "Account Type",
+    "standard": "Standard",
+    "premium": "Premium",
+    "realEstateProfessional": "Real Estate Professional",
+    "changePassword": "Change Password",
+    "changePasswordDesc": "Password change functionality will be available in a future update.",
+    "privacySettings": "Privacy Settings",
+    "deleteAccount": "Delete Account",
+    "deleteAccountDesc": "Account deletion functionality will be available in a future update. Please contact support for assistance.",
+    "save": "Save",
+    "edit": "Edit",
+    "cancel": "Cancel"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "description": "Configure your notification preferences",
+    "notificationSettings": "Notification Settings",
+    "manageNotifications": "Manage Your Notifications",
+    "manageDescription": "Control which notifications you receive to stay informed about important updates while reducing unnecessary distractions.",
+    "notificationTypes": "Notification Types",
+    "pushNotificationStatus": "Push Notification Status",
+    "advancedSettings": "Advanced Settings",
+    "maintenanceRequests": {
+      "title": "Maintenance Requests",
+      "description": "Get notified when new maintenance requests are submitted"
+    },
+    "paymentReminders": {
+      "title": "Payment Reminders", 
+      "description": "Receive alerts for upcoming or overdue payments"
+    },
+    "contractExpirations": {
+      "title": "Contract Expirations",
+      "description": "Get notified when contracts are about to expire"
+    },
+    "systemUpdates": {
+      "title": "System Updates",
+      "description": "Receive notifications about app updates and new features"
+    },
+    "pushEnabled": "Push notifications are enabled",
+    "pushDisabled": "Push notifications are disabled",
+    "pushDescription": "You will receive push notifications on your device for enabled notification types. To disable all push notifications, change your device settings.",
+    "notificationPreferences": {
+      "title": "Notification Preferences",
+      "description": "Configure advanced notification settings, timing, and priorities"
+    },
+    "notificationCenter": {
+      "title": "Notification Center",
+      "description": "View and manage all your notifications"
+    }
+  },
+  "language": {
+    "title": "Language",
+    "description": "Change your preferred language and regional settings",
+    "choose": "Choose Your Language",
+    "available": "Available Languages",
+    "confirmChange": {
+      "title": "Change Language",
+      "message": "Are you sure you want to change the language to {{language}}? The app will restart to apply the changes."
+    },
+    "changeError": "Failed to change language. Please try again."
+  },
+  "theme": {
+    "title": "Theme",
+    "description": "Customize your app appearance",
+    "choose": "Choose Your Theme",
+    "appearanceOptions": "Appearance Options",
+    "currentTheme": "Current Theme",
+    "themeBenefits": "Theme Benefits",
+    "implementationStatus": "Implementation Status",
+    "lightTheme": {
+      "title": "Light Theme",
+      "description": "Clean and bright interface for day time use",
+      "benefit": "Better visibility in bright environments, reduces eye strain during day time"
+    },
+    "darkTheme": {
+      "title": "Dark Theme", 
+      "description": "Easy on the eyes for night time or low light environments",
+      "benefit": "Reduces eye strain in low light, saves battery on OLED displays"
+    },
+    "systemTheme": {
+      "title": "Follow Device Setting",
+      "description": "Automatically switch between light and dark based on your device settings",
+      "benefit": "Seamlessly adapts to your device's appearance settings"
+    },
+    "selectPreferred": "Select your preferred appearance mode. The theme will be applied immediately and saved for future app launches.",
+    "implementationNote": "Dark theme is currently being implemented across all app screens. Some screens may still display in light mode while the implementation is completed."
+  },
+  "currency": {
+    "title": "Currency",
+    "description": "Set your preferred currency for financial displays",
+    "regionalSetting": "Regional Currency Setting",
+    "regionalDescription": "The currency is automatically set based on your regional location. This ensures compliance with local financial regulations and standards.",
+    "currentCurrency": "Current Currency",
+    "locked": "Locked",
+    "saudiRiyal": "Saudi Riyal",
+    "currencyCode": "SAR (SR)",
+    "currencyRegion": "Kingdom of Saudi Arabia",
+    "regionalInformation": "Regional Information",
+    "country": "Country:",
+    "saudiArabia": "Saudi Arabia (SA)",
+    "currencyCodeLabel": "Currency Code:",
+    "currencySymbolLabel": "Currency Symbol:",
+    "currencySymbolValue": "﷼ / SR",
+    "decimalPlaces": "Decimal Places:",
+    "formatExample": "Format Example:",
+    "formatExampleValue": "﷼ 1,250.50",
+    "whyLocked": "Why Currency is Locked",
+    "lockedExplanation": "The currency setting is locked to ensure:",
+    "complianceRegulations": "• Compliance with Saudi financial regulations",
+    "consistencyValuations": "• Consistency in property valuations and contracts",
+    "taxCalculations": "• Proper tax calculations and reporting",
+    "financialStatements": "• Accurate financial statements and records",
+    "bankingIntegration": "• Integration with local banking systems",
+    "currencyFeatures": "Currency Features",
+    "automaticFormatting": {
+      "title": "Automatic Formatting",
+      "description": "All amounts are automatically formatted according to Saudi standards"
+    },
+    "vatIntegration": {
+      "title": "VAT Integration", 
+      "description": "Built-in support for Saudi VAT calculations and reporting"
+    },
+    "numberFormatting": {
+      "title": "Number Formatting",
+      "description": "Proper thousand separators and decimal notation"
+    }
+  },
+  "support": {
+    "title": "Contact Support",
+    "description": "Get help and technical assistance",
+    "getHelp": "Get Help & Support",
+    "helpDescription": "Need assistance? Send us a message and our support team will get back to you as soon as possible. We're here to help!",
+    "commonTopics": "Common Support Topics",
+    "technicalIssues": {
+      "title": "Technical Issues",
+      "description": "App bugs, login problems, sync issues"
+    },
+    "accountSupport": {
+      "title": "Account Support", 
+      "description": "Profile, settings, subscription questions"
+    },
+    "featureRequests": {
+      "title": "Feature Requests",
+      "description": "Suggestions for new features or improvements"
+    },
+    "sendMessage": "Send a Message",
+    "supportEmail": "Support Email:",
+    "subject": "Subject",
+    "subjectPlaceholder": "What's this about?",
+    "message": "Message",
+    "messagePlaceholder": "Describe your issue or question in detail...",
+    "characters": "characters",
+    "sendMessageButton": "Send Message",
+    "missingInfo": "Missing Information",
+    "missingInfoMessage": "Please enter both subject and message before sending.",
+    "emailNotAvailable": "Email Not Available",
+    "emailNotConfigured": "Email is not configured on this device. Please set up your email app first.",
+    "emailSent": "Email Sent",
+    "emailSentMessage": "Your message has been sent successfully!",
+    "error": "Error",
+    "sendError": "Failed to send email. Please try again later.",
+    "responseTime": "Response Time",
+    "responseDescription": "We typically respond to support requests within 24-48 hours during business days. For urgent issues, please mark your subject line with \"[URGENT]\".",
+    "businessHours": "Business Hours",
+    "businessHoursText": "Sunday - Thursday: 9:00 AM - 6:00 PM (AST)\nFriday - Saturday: Closed",
+    "alternativeContact": "Alternative Contact Methods",
+    "phoneSupport": "Phone support available for premium accounts",
+    "liveChat": "Live chat during business hours"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "description": "Read our privacy policy and data handling practices"
+  },
+  "terms": {
+    "title": "Terms of Service",
+    "description": "Read our terms of service and user agreement"
+  },
+  "about": {
+    "title": "About",
+    "description": "App information and version details"
+  },
+  "version": "Version",
+  "logout": "Logout",
+  "logoutConfirm": "Are you sure you want to logout?",
+  "accountSettings": "Account Settings",
+  "appSettings": "App Settings",
+  "legal": "Legal",
+  "languageSettings": {
+    "currentLanguage": "Current Language",
+    "selectLanguage": "Select Language",
+    "languageChanged": "Language changed successfully",
+    "availableLanguages": {
+      "en": "English",
+      "ar": "العربية (Coming Soon)"
+    }
+  },
+  "helpSection": "Help & Support",
+  "help": {
+    "title": "Help Center",
+    "description": "Get help and learn how to use the application",
+    "quickActions": "Quick Actions", 
+    "downloadManual": "Download User Manual",
+    "videoTutorials": "Video Tutorials",
+    "contactSupport": "Contact Support",
+    "gettingStarted": "Getting Started",
+    "quickStartGuide": "Quick Start Guide",
+    "settingUpAccount": "Setting Up Your Account",
+    "addingFirstProperty": "Adding Your First Property",
+    "invitingTenants": "Inviting Tenants",
+    "propertyManagement": "Property Management",
+    "managingProperties": "Managing Properties",
+    "handlingMaintenance": "Handling Maintenance Requests",
+    "rentCollection": "Rent Collection",
+    "tenantCommunication": "Tenant Communication",
+    "financialManagement": "Financial Management",
+    "creatingVouchers": "Creating Vouchers",
+    "generatingReports": "Generating Reports",
+    "managingInvoices": "Managing Invoices",
+    "taxPreparation": "Tax Preparation",
+    "troubleshooting": "Troubleshooting",
+    "commonIssues": "Common Issues",
+    "errorMessages": "Error Messages",
+    "performanceTips": "Performance Tips",
+    "browserCompatibility": "Browser Compatibility",
+    "supportOptions": "Contact Support",
+    "supportDescription": "Need more help? Our support team is here to assist you.",
+    "liveChat": "Live Chat",
+    "liveChatDescription": "Chat with our support team",
+    "phoneSupport": "Phone Support",
+    "phoneSupportDescription": "Call us at +1 (555) 123-4567",
+    "emailSupport": "Email Support",
+    "emailSupportDescription": "Send us an email",
+    "communityForum": "Community Forum",
+    "communityForumDescription": "Ask the community",
+    "available": "Available",
+    "offline": "Offline",
+    "appInformation": "App Information",
+    "version": "Version:",
+    "lastUpdated": "Last Updated:",
+    "platform": "Platform:",
+    "webApplication": "Web Application"
+  }
+} 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { Text, Card, useTheme, ActivityIndicator, Button } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Stack } from 'expo-router';
+import ModernHeader from '../../../components/ModernHeader';
 import { CustomLineChart, CustomBarChart } from '../../../components/charts';
 import { reportsApi } from '../../../lib/api';
 import { useApi } from '../../../hooks/useApi';
@@ -87,12 +87,11 @@ export default function CashFlowReportScreen() {
   if (loading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <Stack.Screen 
-          options={{ 
-            title: 'Cash Flow Report',
-            headerStyle: { backgroundColor: theme.colors.surface },
-            headerTintColor: theme.colors.onSurface,
-          }} 
+        <ModernHeader
+          title="Cash Flow Report"
+          subtitle="Loading cash flow data..."
+          showNotifications={false}
+          showSearch={false}
         />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -106,12 +105,11 @@ export default function CashFlowReportScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <Stack.Screen 
-        options={{ 
-          title: 'Cash Flow Report',
-          headerStyle: { backgroundColor: theme.colors.surface },
-          headerTintColor: theme.colors.onSurface,
-        }} 
+      <ModernHeader
+        title="Cash Flow Report"
+        subtitle="Cash inflows and outflows analysis"
+        showNotifications={false}
+        showSearch={false}
       />
       
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>

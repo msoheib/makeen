@@ -1,13 +1,16 @@
 import React from 'react';
 import { View, StyleSheet, Image, Platform } from 'react-native';
 import { Text, IconButton } from 'react-native-paper';
-import { theme, spacing } from '@/lib/theme';
-import { Bell, Search, Menu } from 'lucide-react-native';
+import { theme, spacing, rtlStyles, rtlLayout } from '@/lib/theme';
+import { Bell, Search, Menu, ArrowLeft } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { DrawerActions } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { NotificationBadge } from './NotificationBadge';
 import { useTotalBadgeCount } from '@/hooks/useNotificationBadges';
 import { useBadgeNavigation } from '@/hooks/useNotificationNavigation';
+import { useRouteContext } from '@/hooks/useRouteContext';
+import { useTranslation } from '@/lib/useTranslation';
 
 interface ModernHeaderProps {
   title?: string;
@@ -41,8 +44,11 @@ export default function ModernHeader({
   isHomepage = false
 }: ModernHeaderProps) {
   const navigation = useNavigation();
+  const router = useRouter();
   const { count: totalNotifications } = useTotalBadgeCount();
   const { navigateFromBadge, isNavigating } = useBadgeNavigation();
+  const { shouldShowHamburger, shouldShowBackButton } = useRouteContext();
+  const { t } = useTranslation('common');
   
   const isDark = variant === 'dark';
   const textColor = isDark ? '#FFFFFF' : theme.colors.onSurface;
@@ -55,6 +61,16 @@ export default function ModernHeader({
     } else {
       // Open the drawer
       navigation.dispatch(DrawerActions.openDrawer());
+    }
+  };
+
+  const handleBackPress = () => {
+    // Try to go back, fallback to home if no back history
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      // Navigate to the main dashboard/home
+      router.push('/(drawer)/(tabs)/');
     }
   };
 
@@ -74,11 +90,22 @@ export default function ModernHeader({
   return (
     <View style={[styles.container, { backgroundColor }]}>
       <View style={styles.topRow}>
-        {showMenu && (
+        {showMenu && shouldShowHamburger && (
           <IconButton
             icon={() => <Menu size={24} color={iconColor} />}
             onPress={handleMenuPress}
             style={styles.menuButton}
+            accessibilityLabel={t('navigation.openMenu')}
+            accessibilityHint={t('navigation.openMenuHint')}
+          />
+        )}
+        {showMenu && shouldShowBackButton && (
+          <IconButton
+            icon={() => <ArrowLeft size={24} color={iconColor} />}
+            onPress={handleBackPress}
+            style={styles.menuButton}
+            accessibilityLabel={t('navigation.goBack')}
+            accessibilityHint={t('navigation.goBackHint')}
           />
         )}
         
@@ -135,7 +162,9 @@ export default function ModernHeader({
       
       {isHomepage && userName && (
         <View style={styles.greetingSection}>
-          <Text style={[styles.greeting, { color: textColor }]}>Hello {userName},</Text>
+          <Text style={[styles.greeting, { color: textColor, ...rtlStyles.textLeft }]}>
+            {t('greetings.hello', { name: userName })}
+          </Text>
         </View>
       )}
     </View>
@@ -151,7 +180,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 16,
   },
   topRow: {
-    flexDirection: 'row',
+    ...rtlStyles.row,
     justifyContent: 'space-between',
     alignItems: 'center',
     minHeight: 40,
@@ -165,12 +194,12 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.m,
   },
   logoContainer: {
-    flexDirection: 'row',
+    ...rtlStyles.row,
     alignItems: 'center',
   },
   logo: {
-    flexDirection: 'row',
-    marginRight: spacing.s,
+    ...rtlStyles.row,
+    ...rtlStyles.marginEnd(spacing.s),
   },
   logoSquare: {
     width: 12,

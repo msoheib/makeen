@@ -4,36 +4,38 @@ import { Text, Switch, List, IconButton } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
+import { useTranslation } from '@/lib/useTranslation';
 import { ArrowLeft, Bell, Tool, DollarSign, FileText, Settings } from 'lucide-react-native';
 import ModernCard from '@/components/ModernCard';
 
 export default function NotificationSettingsScreen() {
   const router = useRouter();
   const { settings, updateNotificationSettings } = useAppStore();
+  const { t } = useTranslation('settings');
 
   const notificationTypes = [
     {
       key: 'maintenanceRequests' as const,
-      title: 'Maintenance Requests',
-      description: 'Get notified when new maintenance requests are submitted',
+      title: t('notifications.maintenanceRequests.title'),
+      description: t('notifications.maintenanceRequests.description'),
       icon: Tool,
     },
     {
       key: 'paymentReminders' as const,
-      title: 'Payment Reminders',
-      description: 'Receive alerts for upcoming or overdue payments',
+      title: t('notifications.paymentReminders.title'),
+      description: t('notifications.paymentReminders.description'),
       icon: DollarSign,
     },
     {
       key: 'contractExpirations' as const,
-      title: 'Contract Expirations',
-      description: 'Get notified when contracts are about to expire',
+      title: t('notifications.contractExpirations.title'),
+      description: t('notifications.contractExpirations.description'),
       icon: FileText,
     },
     {
       key: 'systemUpdates' as const,
-      title: 'System Updates',
-      description: 'Receive notifications about app updates and new features',
+      title: t('notifications.systemUpdates.title'),
+      description: t('notifications.systemUpdates.description'),
       icon: Settings,
     },
   ];
@@ -52,7 +54,7 @@ export default function NotificationSettingsScreen() {
           onPress={() => router.back()}
           style={styles.backButton}
         />
-        <Text style={styles.headerTitle}>Notification Settings</Text>
+        <Text style={styles.headerTitle}>{t('notifications.notificationSettings')}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -61,17 +63,16 @@ export default function NotificationSettingsScreen() {
         <ModernCard style={styles.infoCard}>
           <View style={styles.infoHeader}>
             <Bell size={24} color={theme.colors.primary} />
-            <Text style={styles.infoTitle}>Manage Your Notifications</Text>
+            <Text style={styles.infoTitle}>{t('notifications.manageNotifications')}</Text>
           </View>
           <Text style={styles.infoDescription}>
-            Control which notifications you receive to stay informed about important updates 
-            while reducing unnecessary distractions.
+            {t('notifications.manageDescription')}
           </Text>
         </ModernCard>
 
         {/* Notification Types */}
         <ModernCard style={styles.settingsCard}>
-          <Text style={styles.sectionTitle}>Notification Types</Text>
+          <Text style={styles.sectionTitle}>{t('notifications.notificationTypes')}</Text>
           {notificationTypes.map((item, index) => (
             <View key={item.key}>
               <List.Item
@@ -103,25 +104,24 @@ export default function NotificationSettingsScreen() {
 
         {/* Push Notification Settings */}
         <ModernCard style={styles.settingsCard}>
-          <Text style={styles.sectionTitle}>Push Notification Status</Text>
+          <Text style={styles.sectionTitle}>{t('notifications.pushNotificationStatus')}</Text>
           <View style={styles.statusContainer}>
             <View style={styles.statusIndicator}>
               <View style={[styles.statusDot, { backgroundColor: theme.colors.success }]} />
-              <Text style={styles.statusText}>Push notifications are enabled</Text>
+              <Text style={styles.statusText}>{t('notifications.pushEnabled')}</Text>
             </View>
             <Text style={styles.statusDescription}>
-              You will receive push notifications on your device for enabled notification types. 
-              To disable all push notifications, change your device settings.
+              {t('notifications.pushDescription')}
             </Text>
           </View>
         </ModernCard>
 
         {/* Advanced Preferences */}
         <ModernCard style={styles.settingsCard}>
-          <Text style={styles.sectionTitle}>Advanced Settings</Text>
+          <Text style={styles.sectionTitle}>{t('notifications.advancedSettings')}</Text>
           <List.Item
-            title="Notification Preferences"
-            description="Configure advanced notification settings, timing, and priorities"
+            title={t('notifications.notificationPreferences.title')}
+            description={t('notifications.notificationPreferences.description')}
             left={() => (
               <View style={styles.iconContainer}>
                 <Settings size={20} color={theme.colors.primary} />
@@ -140,8 +140,8 @@ export default function NotificationSettingsScreen() {
           />
           
           <List.Item
-            title="Notification Center"
-            description="View and manage all your notifications"
+            title={t('notifications.notificationCenter.title')}
+            description={t('notifications.notificationCenter.description')}
             left={() => (
               <View style={styles.iconContainer}>
                 <Bell size={20} color={theme.colors.primary} />

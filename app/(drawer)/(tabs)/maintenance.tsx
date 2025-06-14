@@ -10,9 +10,11 @@ import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import StatCard from '@/components/StatCard';
 import MaintenanceRequestCard from '@/components/MaintenanceRequestCard';
+import { useTranslation } from '@/lib/useTranslation';
 
 export default function MaintenanceScreen() {
   const router = useRouter();
+  const { t } = useTranslation('maintenance');
   const [loading, setLoading] = useState(true);
   const [requests, setRequests] = useState<MaintenanceRequest[]>([]);
   const [filteredRequests, setFilteredRequests] = useState<MaintenanceRequest[]>([]);
@@ -93,8 +95,8 @@ export default function MaintenanceScreen() {
   return (
     <View style={styles.container}>
       <ModernHeader
-        title="Maintenance"
-        subtitle="Manage maintenance requests"
+        title={t('title')}
+        subtitle={t('subtitle')}
         onNotificationPress={() => router.push('/notifications')}
         onSearchPress={() => router.push('/search')}
       />
@@ -106,25 +108,25 @@ export default function MaintenanceScreen() {
           showsHorizontalScrollIndicator={false}
           data={[
             {
-              title: 'Total Requests',
+              title: t('totalRequests'),
               value: stats.total.toString(),
               color: theme.colors.primary,
               icon: <Tool size={20} color={theme.colors.primary} />,
             },
             {
-              title: 'Pending',
+              title: t('statuses.pending'),
               value: stats.pending.toString(),
               color: theme.colors.warning,
               icon: <Clock size={20} color={theme.colors.warning} />,
             },
             {
-              title: 'In Progress',
+              title: t('statuses.inProgress'),
               value: stats.inProgress.toString(),
               color: theme.colors.secondary,
               icon: <AlertTriangle size={20} color={theme.colors.secondary} />,
             },
             {
-              title: 'Completed',
+              title: t('statuses.completed'),
               value: stats.completed.toString(),
               color: theme.colors.success,
               icon: <CheckCircle size={20} color={theme.colors.success} />,
@@ -146,7 +148,7 @@ export default function MaintenanceScreen() {
       {/* Search and Filters */}
       <View style={styles.filtersSection}>
         <Searchbar
-          placeholder="Search maintenance requests..."
+          placeholder={t('searchPlaceholder')}
           onChangeText={setSearchQuery}
           value={searchQuery}
           style={styles.searchbar}
@@ -157,10 +159,10 @@ export default function MaintenanceScreen() {
           value={activeFilter}
           onValueChange={setActiveFilter}
           buttons={[
-            { value: 'all', label: 'All' },
-            { value: 'pending', label: 'Pending' },
-            { value: 'in_progress', label: 'In Progress' },
-            { value: 'completed', label: 'Completed' },
+            { value: 'all', label: t('common:all') },
+            { value: 'pending', label: t('statuses.pending') },
+            { value: 'in_progress', label: t('statuses.inProgress') },
+            { value: 'completed', label: t('statuses.completed') },
           ]}
           style={styles.segmentedButtons}
         />
@@ -181,11 +183,11 @@ export default function MaintenanceScreen() {
         ListEmptyComponent={
           <ModernCard style={styles.emptyState}>
             <Plus size={48} color={theme.colors.onSurfaceVariant} />
-            <Text style={styles.emptyStateTitle}>No maintenance requests found</Text>
+            <Text style={styles.emptyStateTitle}>{t('noMaintenanceRequests')}</Text>
             <Text style={styles.emptyStateSubtitle}>
               {searchQuery || activeFilter !== 'all' 
-                ? 'Try adjusting your search or filters' 
-                : 'Submit your first maintenance request to get started'}
+                ? t('adjustSearchOrFilters') 
+                : t('addFirstRequest')}
             </Text>
           </ModernCard>
         }

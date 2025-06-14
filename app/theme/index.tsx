@@ -4,32 +4,34 @@ import { Text, List, IconButton, RadioButton } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
+import { useTranslation } from '@/lib/useTranslation';
 import { ArrowLeft, Sun, Moon, Monitor, Check } from 'lucide-react-native';
 import ModernCard from '@/components/ModernCard';
 
 export default function ThemeSelectionScreen() {
   const router = useRouter();
   const { settings, updateSettings } = useAppStore();
+  const { t } = useTranslation('settings');
 
   const themeOptions = [
     {
       value: 'light' as const,
-      title: 'Light Theme',
-      description: 'Clean and bright interface for day time use',
+      title: t('theme.lightTheme.title'),
+      description: t('theme.lightTheme.description'),
       icon: Sun,
       preview: '#F8FAFC',
     },
     {
       value: 'dark' as const,
-      title: 'Dark Theme',
-      description: 'Easy on the eyes for night time or low light environments',
+      title: t('theme.darkTheme.title'),
+      description: t('theme.darkTheme.description'),
       icon: Moon,
       preview: '#121212',
     },
     {
       value: 'system' as const,
-      title: 'Follow Device Setting',
-      description: 'Automatically switch between light and dark based on your device settings',
+      title: t('theme.systemTheme.title'),
+      description: t('theme.systemTheme.description'),
       icon: Monitor,
       preview: 'linear-gradient',
     },
@@ -46,7 +48,7 @@ export default function ThemeSelectionScreen() {
 
   const getThemeTitle = (themeValue: string) => {
     const option = themeOptions.find(opt => opt.value === themeValue);
-    return option ? option.title : 'Light Theme';
+    return option ? option.title : t('theme.lightTheme.title');
   };
 
   return (
@@ -57,7 +59,7 @@ export default function ThemeSelectionScreen() {
           onPress={() => router.back()}
           style={styles.backButton}
         />
-        <Text style={styles.headerTitle}>Theme</Text>
+        <Text style={styles.headerTitle}>{t('theme.title')}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -66,17 +68,16 @@ export default function ThemeSelectionScreen() {
         <ModernCard style={styles.infoCard}>
           <View style={styles.infoHeader}>
             <Moon size={24} color={theme.colors.primary} />
-            <Text style={styles.infoTitle}>Choose Your Theme</Text>
+            <Text style={styles.infoTitle}>{t('theme.choose')}</Text>
           </View>
           <Text style={styles.infoDescription}>
-            Select your preferred appearance mode. The theme will be applied immediately 
-            and saved for future app launches.
+            {t('theme.selectPreferred')}
           </Text>
         </ModernCard>
 
         {/* Theme Options */}
         <ModernCard style={styles.themeCard}>
-          <Text style={styles.sectionTitle}>Appearance Options</Text>
+          <Text style={styles.sectionTitle}>{t('theme.appearanceOptions')}</Text>
           {themeOptions.map((option, index) => (
             <View key={option.value}>
               <List.Item
@@ -135,7 +136,7 @@ export default function ThemeSelectionScreen() {
 
         {/* Current Theme */}
         <ModernCard style={styles.currentCard}>
-          <Text style={styles.currentTitle}>Current Theme</Text>
+          <Text style={styles.currentTitle}>{t('theme.currentTheme')}</Text>
           <View style={styles.currentSelection}>
             <View style={styles.currentIconContainer}>
               {React.createElement(getThemeIcon(settings.theme), {
@@ -154,24 +155,24 @@ export default function ThemeSelectionScreen() {
 
         {/* Theme Benefits */}
         <ModernCard style={styles.benefitsCard}>
-          <Text style={styles.benefitsTitle}>Theme Benefits</Text>
+          <Text style={styles.benefitsTitle}>{t('theme.themeBenefits')}</Text>
           <View style={styles.benefitsList}>
             <View style={styles.benefitItem}>
               <Sun size={16} color={theme.colors.warning} />
               <Text style={styles.benefitText}>
-                <Text style={styles.benefitLabel}>Light Theme:</Text> Better visibility in bright environments, reduces eye strain during day time
+                <Text style={styles.benefitLabel}>{t('theme.lightTheme.title')}:</Text> {t('theme.lightTheme.benefit')}
               </Text>
             </View>
             <View style={styles.benefitItem}>
               <Moon size={16} color={theme.colors.primary} />
               <Text style={styles.benefitText}>
-                <Text style={styles.benefitLabel}>Dark Theme:</Text> Reduces eye strain in low light, saves battery on OLED displays
+                <Text style={styles.benefitLabel}>{t('theme.darkTheme.title')}:</Text> {t('theme.darkTheme.benefit')}
               </Text>
             </View>
             <View style={styles.benefitItem}>
               <Monitor size={16} color={theme.colors.secondary} />
               <Text style={styles.benefitText}>
-                <Text style={styles.benefitLabel}>Auto:</Text> Seamlessly adapts to your device's appearance settings
+                <Text style={styles.benefitLabel}>{t('theme.systemTheme.title')}:</Text> {t('theme.systemTheme.benefit')}
               </Text>
             </View>
           </View>
@@ -179,10 +180,9 @@ export default function ThemeSelectionScreen() {
 
         {/* Dark Mode Implementation Notice */}
         <ModernCard style={styles.implementationCard}>
-          <Text style={styles.implementationTitle}>Implementation Status</Text>
+          <Text style={styles.implementationTitle}>{t('theme.implementationStatus')}</Text>
           <Text style={styles.implementationDescription}>
-            Dark theme is currently being implemented across all app screens. Some screens 
-            may still display in light mode while the implementation is completed.
+            {t('theme.implementationNote')}
           </Text>
         </ModernCard>
       </ScrollView>

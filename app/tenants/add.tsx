@@ -7,6 +7,7 @@ import { profilesApi } from '@/lib/api';
 import { ArrowLeft, User, Mail, Phone, MapPin, FileText } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
+import { useTranslation } from '@/lib/useTranslation';
 
 interface TenantFormData {
   first_name: string;
@@ -38,6 +39,7 @@ interface FormErrors {
 
 export default function AddTenantScreen() {
   const router = useRouter();
+  const { t } = useTranslation('tenants');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<TenantFormData>({
     first_name: '',
@@ -167,8 +169,8 @@ export default function AddTenantScreen() {
   return (
     <View style={styles.container}>
       <ModernHeader
-        title="Add New Tenant"
-        subtitle="Create a new tenant profile"
+        title={t('add.title')}
+        subtitle={t('add.subtitle')}
         variant="dark"
         showNotifications={false}
         isHomepage={false}
@@ -179,7 +181,7 @@ export default function AddTenantScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Personal Information */}
         <ModernCard style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Personal Information</Text>
+          <Text style={styles.sectionTitle}>{t('details.personalInfo')}</Text>
           
           <View style={styles.row}>
             <View style={styles.halfWidth}>
@@ -212,27 +214,11 @@ export default function AddTenantScreen() {
           </View>
 
           <TextInput
-            label="ID Number"
-            value={formData.id_number}
-            onChangeText={(text) => updateFormData('id_number', text)}
-            mode="outlined"
-            style={styles.formInput}
-            left={<TextInput.Icon icon={() => <FileText size={20} color={theme.colors.onSurfaceVariant} />} />}
-            placeholder="National ID or passport number"
-          />
-        </ModernCard>
-
-        {/* Contact Information */}
-        <ModernCard style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Contact Information</Text>
-          
-          <TextInput
-            label="Email Address *"
+            label={`${t('details.email')} *`}
             value={formData.email}
             onChangeText={(text) => updateFormData('email', text)}
             error={!!errors.email}
             mode="outlined"
-            style={styles.formInput}
             keyboardType="email-address"
             autoCapitalize="none"
             left={<TextInput.Icon icon={() => <Mail size={20} color={theme.colors.onSurfaceVariant} />} />}
@@ -242,32 +228,24 @@ export default function AddTenantScreen() {
           </HelperText>
 
           <TextInput
-            label="Phone Number *"
+            label={`${t('details.phone')} *`}
             value={formData.phone}
             onChangeText={(text) => updateFormData('phone', text)}
             error={!!errors.phone}
             mode="outlined"
-            style={styles.formInput}
             keyboardType="phone-pad"
             left={<TextInput.Icon icon={() => <Phone size={20} color={theme.colors.onSurfaceVariant} />} />}
-            placeholder="+966 50 123 4567"
           />
           <HelperText type="error" visible={!!errors.phone}>
             {errors.phone}
           </HelperText>
-        </ModernCard>
 
-        {/* Address Information */}
-        <ModernCard style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Address Information</Text>
-          
           <TextInput
-            label="Address *"
+            label={`${t('details.address')} *`}
             value={formData.address}
             onChangeText={(text) => updateFormData('address', text)}
             error={!!errors.address}
             mode="outlined"
-            style={styles.formInput}
             multiline
             numberOfLines={2}
             left={<TextInput.Icon icon={() => <MapPin size={20} color={theme.colors.onSurfaceVariant} />} />}
@@ -303,71 +281,55 @@ export default function AddTenantScreen() {
               </HelperText>
             </View>
           </View>
-        </ModernCard>
 
-        {/* Tenant Classification */}
-        <ModernCard style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Tenant Classification</Text>
-          
-          {/* Foreign Tenant Toggle */}
-          <View style={styles.switchRow}>
-            <View style={styles.switchContent}>
-              <Text style={styles.switchLabel}>Foreign Tenant</Text>
-              <Text style={styles.switchDescription}>
-                Enable if this tenant is not a Saudi citizen
-              </Text>
-            </View>
+          <Divider style={styles.divider} />
+
+          <View style={styles.switchContainer}>
+            <Text style={styles.switchLabel}>Foreign Tenant</Text>
             <Switch
               value={formData.is_foreign}
               onValueChange={handleForeignTenantToggle}
-              color={theme.colors.primary}
             />
           </View>
 
-          {/* Nationality Field - Show when foreign tenant */}
           {formData.is_foreign && (
-            <>
-              <Divider style={styles.divider} />
+            <View style={styles.foreignSection}>
               <TextInput
-                label="Nationality *"
+                label={`${t('details.nationality')} *`}
                 value={formData.nationality}
                 onChangeText={(text) => updateFormData('nationality', text)}
                 error={!!errors.nationality}
                 mode="outlined"
-                style={styles.formInput}
               />
               <HelperText type="error" visible={!!errors.nationality}>
                 {errors.nationality}
               </HelperText>
-            </>
+            </View>
           )}
+
+          <TextInput
+            label={t('details.idNumber')}
+            value={formData.id_number}
+            onChangeText={(text) => updateFormData('id_number', text)}
+            mode="outlined"
+            left={<TextInput.Icon icon={() => <FileText size={20} color={theme.colors.onSurfaceVariant} />} />}
+          />
 
           <Divider style={styles.divider} />
 
-          {/* Status Selection */}
-          <Text style={styles.fieldLabel}>Tenant Status</Text>
+          <Text style={styles.fieldLabel}>Status</Text>
           <SegmentedButtons
             value={formData.status}
             onValueChange={(value) => updateFormData('status', value)}
             buttons={[
-              {
-                value: 'active',
-                label: 'Active',
-              },
-              {
-                value: 'inactive',
-                label: 'Inactive',
-              },
-              {
-                value: 'suspended',
-                label: 'Suspended',
-              },
+              { value: 'active', label: t('common:active') },
+              { value: 'inactive', label: t('common:inactive') },
+              { value: 'suspended', label: 'Suspended' },
             ]}
-            style={styles.segmentedButtons}
           />
         </ModernCard>
 
-        {/* Form Actions */}
+        {/* Actions */}
         <View style={styles.actionsContainer}>
           <Button
             mode="outlined"
@@ -375,7 +337,7 @@ export default function AddTenantScreen() {
             style={styles.cancelButton}
             disabled={loading}
           >
-            Cancel
+            {t('common:cancel')}
           </Button>
           
           <Button
@@ -385,7 +347,7 @@ export default function AddTenantScreen() {
             loading={loading}
             disabled={loading}
           >
-            Create Tenant
+            {t('add.createProfile')}
           </Button>
         </View>
       </ScrollView>
@@ -464,5 +426,14 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     flex: 1,
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.m,
+  },
+  foreignSection: {
+    marginBottom: spacing.m,
   },
 }); 

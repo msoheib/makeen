@@ -8,6 +8,7 @@ import { useApi } from '@/hooks/useApi';
 import { ArrowLeft, User, Mail, Phone, MapPin, FileText } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
+import { useTranslation } from '@/lib/useTranslation';
 
 interface TenantFormData {
   first_name: string;
@@ -26,6 +27,7 @@ interface TenantFormData {
 export default function EditTenantScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { t } = useTranslation('tenants');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<TenantFormData>({
     first_name: '',
@@ -45,7 +47,8 @@ export default function EditTenantScreen() {
   const { 
     data: tenant, 
     loading: tenantLoading, 
-    error: tenantError 
+    error: tenantError,
+    refetch: refetchTenant 
   } = useApi(() => profilesApi.getById(id!), [id]);
 
   // Pre-populate form when tenant data loads
@@ -100,8 +103,8 @@ export default function EditTenantScreen() {
     return (
       <View style={styles.container}>
         <ModernHeader
-          title="Edit Tenant"
-          subtitle="Loading..."
+          title={t('edit.title')}
+          subtitle={t('edit.loading')}
           variant="dark"
           showNotifications={false}
           isHomepage={false}
@@ -110,7 +113,7 @@ export default function EditTenantScreen() {
         />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Loading tenant information...</Text>
+          <Text style={styles.loadingText}>{t('edit.loading')}</Text>
         </View>
       </View>
     );
@@ -120,8 +123,8 @@ export default function EditTenantScreen() {
     return (
       <View style={styles.container}>
         <ModernHeader
-          title="Edit Tenant"
-          subtitle="Error"
+          title={t('edit.title')}
+          subtitle={t('edit.error')}
           variant="dark"
           showNotifications={false}
           isHomepage={false}
@@ -129,9 +132,9 @@ export default function EditTenantScreen() {
           onLeftPress={() => router.back()}
         />
         <View style={styles.loadingContainer}>
-          <Text style={styles.errorTitle}>Unable to load tenant</Text>
+          <Text style={styles.errorTitle}>{t('edit.error')}</Text>
           <Button mode="contained" onPress={() => router.back()}>
-            Go Back
+            {t('common:back')}
           </Button>
         </View>
       </View>
@@ -141,8 +144,8 @@ export default function EditTenantScreen() {
   return (
     <View style={styles.container}>
       <ModernHeader
-        title="Edit Tenant"
-        subtitle={`Editing ${tenant.first_name} ${tenant.last_name}`}
+        title={t('edit.title')}
+        subtitle={`${t('common:edit')} ${tenant.first_name} ${tenant.last_name}`}
         variant="dark"
         showNotifications={false}
         isHomepage={false}
@@ -152,7 +155,7 @@ export default function EditTenantScreen() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <ModernCard style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Personal Information</Text>
+          <Text style={styles.sectionTitle}>{t('details.personalInfo')}</Text>
           
           <TextInput
             label="First Name"
@@ -171,7 +174,7 @@ export default function EditTenantScreen() {
           />
 
           <TextInput
-            label="Email"
+            label={t('details.email')}
             value={formData.email}
             onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
             mode="outlined"
@@ -180,7 +183,7 @@ export default function EditTenantScreen() {
           />
 
           <TextInput
-            label="Phone"
+            label={t('details.phone')}
             value={formData.phone}
             onChangeText={(text) => setFormData(prev => ({ ...prev, phone: text }))}
             mode="outlined"
@@ -189,7 +192,7 @@ export default function EditTenantScreen() {
           />
 
           <TextInput
-            label="Address"
+            label={t('details.address')}
             value={formData.address}
             onChangeText={(text) => setFormData(prev => ({ ...prev, address: text }))}
             mode="outlined"
@@ -225,7 +228,7 @@ export default function EditTenantScreen() {
 
           {formData.is_foreign && (
             <TextInput
-              label="Nationality"
+              label={t('details.nationality')}
               value={formData.nationality}
               onChangeText={(text) => setFormData(prev => ({ ...prev, nationality: text }))}
               mode="outlined"
@@ -238,8 +241,8 @@ export default function EditTenantScreen() {
             value={formData.status}
             onValueChange={(value) => setFormData(prev => ({ ...prev, status: value as any }))}
             buttons={[
-              { value: 'active', label: 'Active' },
-              { value: 'inactive', label: 'Inactive' },
+              { value: 'active', label: t('common:active') },
+              { value: 'inactive', label: t('common:inactive') },
               { value: 'suspended', label: 'Suspended' },
             ]}
           />
@@ -252,7 +255,7 @@ export default function EditTenantScreen() {
             style={styles.cancelButton}
             disabled={loading}
           >
-            Cancel
+            {t('common:cancel')}
           </Button>
           
           <Button
@@ -262,7 +265,7 @@ export default function EditTenantScreen() {
             loading={loading}
             disabled={loading}
           >
-            Update Tenant
+            {loading ? t('edit.savingChanges') : `${t('common:edit')} ${t('title').slice(0, -1)}`}
           </Button>
         </View>
       </ScrollView>

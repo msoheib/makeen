@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User, Property, MaintenanceRequest, Invoice, Voucher } from './types';
+import i18n, { changeLanguage as changeI18nLanguage } from './i18n';
+import { applyRTL } from './rtl';
 
 // Settings types
 export interface NotificationSettings {
@@ -63,6 +65,11 @@ interface AppState {
   settings: AppSettings;
   updateSettings: (settings: Partial<AppSettings>) => void;
   updateNotificationSettings: (notifications: Partial<NotificationSettings>) => void;
+  
+  // Language management
+  changeLanguage: (language: 'en' | 'ar') => Promise<void>;
+  getCurrentLanguage: () => 'en' | 'ar';
+  isRTL: () => boolean;
   
   // Legacy UI state (kept for backwards compatibility)
   locale: string;
@@ -152,7 +159,7 @@ export const useAppStore = create<AppState>()(
       // Settings state
       settings: {
         theme: 'system',
-        language: 'en',
+        language: 'ar',
         currency: 'SAR',
         notifications: {
           maintenanceRequests: true,
@@ -174,14 +181,58 @@ export const useAppStore = create<AppState>()(
           },
         })),
       
+      // Language management
+      changeLanguage: async (language: 'en' | 'ar') => {
+        try {
+          console.log('Store: Starting language change to:', language);
+          
+          // Update i18n language (this will also persist it)
+          await changeI18nLanguage(language);
+          console.log('Store: i18n language changed successfully');
+          
+          // Update store state first
+          set((state) => ({
+            settings: { ...state.settings, language },
+            locale: language, // Update legacy state too
+          }));
+          console.log('Store: State updated successfully');
+          
+          // Apply RTL layout changes (non-blocking)
+          setTimeout(() => {
+            try {
+              applyRTL(language === 'ar');
+              console.log('Store: RTL applied successfully');
+            } catch (rtlError) {
+              console.warn('Store: RTL application failed:', rtlError);
+              // Don't throw, RTL is not critical
+            }
+          }, 100);
+          
+          console.log('Store: Language change completed successfully');
+        } catch (error) {
+          console.error('Store: Failed to change language:', error);
+          throw error; // Re-throw to handle in UI
+        }
+      },
+      
+      getCurrentLanguage: () => {
+        const state = get();
+        return state.settings.language;
+      },
+      
+      isRTL: () => {
+        const state = get();
+        return state.settings.language === 'ar';
+      },
+      
       // Legacy UI state (kept for backwards compatibility)
       locale: 'en',
       theme: 'light',
       setLocale: (locale) => {
         set({ locale });
-        // Also update new settings
+        // Also update new settings and trigger proper language change
         const state = get();
-        state.updateSettings({ language: locale as 'en' | 'ar' });
+        state.changeLanguage(locale as 'en' | 'ar');
       },
       setTheme: (theme) => {
         set({ theme });

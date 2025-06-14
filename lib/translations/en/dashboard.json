@@ -1,0 +1,37 @@
+{
+  "title": "Dashboard",
+  "welcome": "Welcome",
+  "overview": "Overview",
+  "greetings": {
+    "hello": "Hello {{name}},"
+  },
+  "totalProperties": "Total Properties",
+  "totalTenants": "Total Tenants",
+  "totalRevenue": "Total Revenue",
+  "monthlyIncome": "Monthly Income",
+  "expenses": "Expenses",
+  "netIncome": "Net Income",
+  "occupancyRate": "Occupancy Rate",
+  "recentActivity": "Recent Activity",
+  "systemOverview": "System Overview",
+  "activeTenants": "Active Tenants",
+  "occupied": "Occupied",
+  "available": "Available",
+  "attentionRequired": "Attention Required",
+  "contractsExpiring": "contract(s) expiring soon",
+  "pendingMaintenance": "pending maintenance request(s)",
+  "add": "Add",
+  "finance": {
+    "rent": "Rent",
+    "overview": "Finance Overview",
+    "totalDue": "Total Due",
+    "outstandingPayments": "Outstanding Payments",
+    "collectedThisMonth": "Collected This Month"
+  },
+  "quickActions": {
+    "addProperty": "Add Property",
+    "addTenant": "Add Tenant",
+    "createVoucher": "Create Voucher",
+    "viewReports": "View Reports"
+  }
+} 

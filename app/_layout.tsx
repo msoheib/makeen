@@ -8,8 +8,12 @@ import { theme } from '@/lib/theme';
 import { useFonts } from 'expo-font';
 import { Inter_400Regular, Inter_500Medium, Inter_700Bold } from '@expo-google-fonts/inter';
 import * as SplashScreen from 'expo-splash-screen';
-import { initLocale } from '@/lib/i18n';
+import i18n from '@/lib/i18n'; // Initialize i18n
+import { initializeRTL } from '@/lib/rtl';
 import 'react-native-gesture-handler';
+
+// Initialize RTL support
+initializeRTL();
 
 // Prevent the splash screen from auto-hiding only on native platforms
 if (Platform.OS !== 'web') {
@@ -17,53 +21,70 @@ if (Platform.OS !== 'web') {
 }
 
 export default function RootLayout() {
-  const [appIsReady, setAppIsReady] = useState(false);
-  useFrameworkReady();
-
+  const { ready: frameworkReady } = useFrameworkReady();
+  const [i18nReady, setI18nReady] = useState(false);
+  
   // Load fonts
-  const [fontsLoaded, fontError] = useFonts({
-    'Inter-Regular': Inter_400Regular,
-    'Inter-Medium': Inter_500Medium,
-    'Inter-Bold': Inter_700Bold,
+  const [fontsLoaded] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_700Bold,
   });
 
-  // Initialize app
+  // Initialize i18n
   useEffect(() => {
-    async function prepare() {
+    const initI18n = async () => {
       try {
-        // Initialize i18n
-        await initLocale();
-        
-        // Any other initialization can go here
-        
-        // Wait for fonts to load
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      } catch (e) {
-        console.warn('Error during app initialization:', e);
-      } finally {
-        setAppIsReady(true);
+        // Check if i18next is already initialized
+        if (i18n.isInitialized) {
+          setI18nReady(true);
+        } else {
+          // Wait a short time for initialization to complete
+          setTimeout(() => {
+            if (i18n.isInitialized) {
+              setI18nReady(true);
+            } else {
+              // Force ready state to prevent infinite loading
+              console.warn('i18n not initialized within expected time, proceeding anyway');
+              setI18nReady(true);
+            }
+          }, 500);
+        }
+      } catch (error) {
+        console.error('Failed to initialize i18n:', error);
+        // Fallback: assume ready to prevent infinite loading
+        setI18nReady(true);
       }
-    }
-
-    prepare();
+    };
+    
+    initI18n();
   }, []);
 
-  useEffect(() => {
-    if ((fontsLoaded || fontError) && appIsReady && Platform.OS !== 'web') {
-      // Hide the splash screen once fonts are loaded and app is ready (only on native)
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded, fontError, appIsReady]);
+  // Check if everything is ready
+  const appReady = frameworkReady && fontsLoaded && i18nReady;
 
-  // Return null until fonts and app are ready
-  if (!fontsLoaded && !fontError && !appIsReady) {
+  useEffect(() => {
+    if (appReady) {
+      // Hide the splash screen once everything is ready
+      if (Platform.OS !== 'web') {
+        SplashScreen.hideAsync();
+      }
+    }
+  }, [appReady]);
+
+  // Don't render the app until everything is ready
+  if (!appReady) {
     return null;
   }
 
   return (
     <PaperProvider theme={theme}>
       <StatusBar style="auto" />
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+        }}
+      >
         <Stack.Screen name="(auth)" options={{ animation: 'none' }} />
         <Stack.Screen name="(drawer)" options={{ animation: 'fade' }} />
         <Stack.Screen name="+not-found" options={{ presentation: 'modal' }} />

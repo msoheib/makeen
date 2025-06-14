@@ -1,52 +1,68 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text, Avatar, Chip, Divider, List, ActivityIndicator, Button } from 'react-native-paper';
+import { Text, ActivityIndicator, Button, List, Chip, Divider } from 'react-native-paper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
-import { profilesApi, contractsApi } from '@/lib/api';
-import { useApi } from '@/hooks/useApi';
-import { ArrowLeft, User, Mail, Phone, MapPin, Calendar, FileText, Home } from 'lucide-react-native';
-import ModernHeader from '@/components/ModernHeader';
-import ModernCard from '@/components/ModernCard';
+import { ModernHeader } from '@/components/ModernHeader';
+import { ModernCard } from '@/components/ModernCard';
+import { profilesApi } from '@/lib/api';
+import { 
+  User, 
+  Mail, 
+  Phone, 
+  MapPin, 
+  Home, 
+  FileText, 
+  Calendar,
+  ArrowLeft 
+} from 'lucide-react-native';
+import { useTranslation } from '@/lib/useTranslation';
 
 export default function TenantDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { t } = useTranslation('tenants');
+  const [tenant, setTenant] = useState<any>(null);
+  const [contracts, setContracts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch tenant data
-  const { 
-    data: tenant, 
-    loading: tenantLoading, 
-    error: tenantError,
-    refetch: refetchTenant 
-  } = useApi(() => profilesApi.getById(id!), [id]);
+  useEffect(() => {
+    if (id) {
+      fetchTenantDetails();
+    }
+  }, [id]);
 
-  // Fetch tenant contracts
-  const { 
-    data: contracts, 
-    loading: contractsLoading, 
-    error: contractsError 
-  } = useApi(() => contractsApi.getByTenant(id!), [id]);
-
-  const loading = tenantLoading || contractsLoading;
-  const error = tenantError || contractsError;
+  const fetchTenantDetails = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // TODO: Implement API calls when ready
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setError('API not implemented yet');
+    } catch (err) {
+      setError('Failed to load tenant details');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
+    switch (status?.toLowerCase()) {
       case 'active':
         return { bg: theme.colors.successContainer, text: theme.colors.success };
+      case 'pending':
+        return { bg: theme.colors.warningContainer, text: theme.colors.warning };
       case 'inactive':
         return { bg: theme.colors.errorContainer, text: theme.colors.error };
-      case 'suspended':
-        return { bg: theme.colors.warningContainer, text: theme.colors.warning };
       default:
         return { bg: theme.colors.surfaceVariant, text: theme.colors.onSurfaceVariant };
     }
@@ -55,23 +71,28 @@ export default function TenantDetailsScreen() {
   const renderLoadingState = () => (
     <View style={styles.centerContainer}>
       <ActivityIndicator size="large" color={theme.colors.primary} />
-      <Text style={styles.loadingText}>Loading tenant details...</Text>
+      <Text style={styles.loadingText}>{t('details.loading')}</Text>
     </View>
   );
 
   const renderErrorState = () => (
     <View style={styles.centerContainer}>
       <ModernCard style={styles.errorCard}>
-        <Text style={styles.errorTitle}>Unable to load tenant</Text>
-        <Text style={styles.errorSubtitle}>
-          {error || 'This tenant may not exist or there was a connection issue.'}
-        </Text>
+        <Text style={styles.errorTitle}>{t('details.error')}</Text>
+        <Text style={styles.errorSubtitle}>{error}</Text>
         <View style={styles.errorActions}>
-          <Button mode="outlined" onPress={() => router.back()} style={styles.backButton}>
-            Go Back
+          <Button 
+            mode="outlined" 
+            onPress={() => router.back()}
+            style={styles.backButton}
+          >
+            {t('common:back')}
           </Button>
-          <Button mode="contained" onPress={refetchTenant}>
-            Try Again
+          <Button 
+            mode="contained" 
+            onPress={fetchTenantDetails}
+          >
+            {t('common:retry')}
           </Button>
         </View>
       </ModernCard>
@@ -82,20 +103,17 @@ export default function TenantDetailsScreen() {
     if (!tenant) return null;
 
     const fullName = `${tenant.first_name || ''} ${tenant.last_name || ''}`.trim();
-    const statusColors = getStatusColor(tenant.status || 'active');
-    const activeContract = contracts?.find(c => c.status === 'active');
+    const statusColors = getStatusColor(tenant.status);
+    const activeContract = contracts.find(c => c.status === 'active');
 
     return (
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Profile Header */}
         <ModernCard style={styles.profileCard}>
           <View style={styles.profileHeader}>
-            <Avatar.Image
-              size={80}
-              source={{ 
-                uri: tenant.avatar_url || 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg' 
-              }}
-            />
+            <View style={styles.avatar}>
+              <User size={32} color={theme.colors.primary} />
+            </View>
             <View style={styles.profileInfo}>
               <Text style={styles.tenantName}>{fullName || 'No Name'}</Text>
               <Chip 
@@ -117,23 +135,23 @@ export default function TenantDetailsScreen() {
         <ModernCard style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Contact Information</Text>
           <List.Item
-            title="Email"
+            title={t('details.email')}
             description={tenant.email || 'No email provided'}
             left={(props) => <Mail {...props} size={20} color={theme.colors.primary} />}
           />
           <List.Item
-            title="Phone"
+            title={t('details.phone')}
             description={tenant.phone || 'No phone provided'}
             left={(props) => <Phone {...props} size={20} color={theme.colors.primary} />}
           />
           <List.Item
-            title="Address"
+            title={t('details.address')}
             description={tenant.address || 'No address provided'}
             left={(props) => <MapPin {...props} size={20} color={theme.colors.primary} />}
           />
           {tenant.nationality && (
             <List.Item
-              title="Nationality"
+              title={t('details.nationality')}
               description={tenant.nationality}
               left={(props) => <User {...props} size={20} color={theme.colors.primary} />}
             />
@@ -150,12 +168,12 @@ export default function TenantDetailsScreen() {
               left={(props) => <Home {...props} size={20} color={theme.colors.primary} />}
             />
             <List.Item
-              title="Monthly Rent"
+              title={t('details.monthlyRent')}
               description={`${activeContract.rent_amount?.toLocaleString()} SAR`}
               left={(props) => <FileText {...props} size={20} color={theme.colors.success} />}
             />
             <List.Item
-              title="Contract Period"
+              title={t('details.contractPeriod')}
               description={`${formatDate(activeContract.start_date)} - ${formatDate(activeContract.end_date)}`}
               left={(props) => <Calendar {...props} size={20} color={theme.colors.warning} />}
             />
@@ -165,7 +183,7 @@ export default function TenantDetailsScreen() {
         {/* Contract History */}
         {contracts && contracts.length > 0 && (
           <ModernCard style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Contract History</Text>
+            <Text style={styles.sectionTitle}>{t('details.contractInfo')}</Text>
             {contracts.map((contract, index) => (
               <View key={contract.id}>
                 <List.Item
@@ -199,21 +217,21 @@ export default function TenantDetailsScreen() {
 
         {/* Account Details */}
         <ModernCard style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Account Details</Text>
+          <Text style={styles.sectionTitle}>{t('details.personalInfo')}</Text>
           <List.Item
-            title="Tenant ID"
+            title={t('details.tenantId')}
             description={tenant.id}
             left={(props) => <User {...props} size={20} color={theme.colors.primary} />}
           />
           {tenant.id_number && (
             <List.Item
-              title="ID Number"
+              title={t('details.idNumber')}
               description={tenant.id_number}
               left={(props) => <FileText {...props} size={20} color={theme.colors.primary} />}
             />
           )}
           <List.Item
-            title="Join Date"
+            title={t('details.joinDate')}
             description={formatDate(tenant.created_at)}
             left={(props) => <Calendar {...props} size={20} color={theme.colors.primary} />}
           />
@@ -227,7 +245,7 @@ export default function TenantDetailsScreen() {
             style={styles.editButton}
             icon="pencil"
           >
-            Edit Tenant
+            {t('common:edit')} {t('title').slice(0, -1)}
           </Button>
         </View>
       </ScrollView>
@@ -237,8 +255,8 @@ export default function TenantDetailsScreen() {
   return (
     <View style={styles.container}>
       <ModernHeader
-        title="Tenant Details"
-        subtitle={loading ? "Loading..." : (tenant ? `${tenant.first_name} ${tenant.last_name}` : "Not Found")}
+        title={t('details.title')}
+        subtitle={loading ? t('details.loading') : (tenant ? `${tenant.first_name} ${tenant.last_name}` : "Not Found")}
         variant="dark"
         showNotifications={false}
         isHomepage={false}
@@ -298,6 +316,14 @@ const styles = StyleSheet.create({
   },
   profileHeader: {
     flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: theme.colors.surfaceVariant,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   profileInfo: {

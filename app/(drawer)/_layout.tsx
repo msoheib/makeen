@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/lib/store';
 import { realTimeService } from '@/lib/realtime';
 import SideBar from '../../components/SideBar';
+import { isRTL } from '@/lib/rtl';
 
 export default function DrawerLayout() {
   const router = useRouter();
@@ -43,7 +44,8 @@ export default function DrawerLayout() {
             setUser(profileData);
             setAuthenticated(true);
             // Initialize real-time service after successful authentication
-            realTimeService.initialize().catch(console.error);
+            // TEMPORARILY DISABLED for debugging logout issue
+            // realTimeService.initialize().catch(console.error);
           } else {
             setAuthenticated(false);
             router.replace('/(auth)');
@@ -71,7 +73,8 @@ export default function DrawerLayout() {
         setUser(null);
         setAuthenticated(false);
         // Clean up real-time service on sign out
-        realTimeService.cleanup().catch(console.error);
+        // TEMPORARILY DISABLED for debugging logout issue
+        // realTimeService.cleanup().catch(console.error);
         router.replace('/(auth)');
       } else if (event === 'SIGNED_IN' && session?.user) {
         // Fetch user profile
@@ -85,7 +88,8 @@ export default function DrawerLayout() {
           setUser(profileData);
           setAuthenticated(true);
           // Initialize real-time service after successful authentication
-          realTimeService.initialize().catch(console.error);
+          // TEMPORARILY DISABLED for debugging logout issue
+          // realTimeService.initialize().catch(console.error);
         }
       }
     });
@@ -96,8 +100,27 @@ export default function DrawerLayout() {
   }, []);
 
   return (
-    <Drawer id="main-drawer" drawerContent={(props) => <SideBar {...props} />}>
+    <Drawer 
+      id="main-drawer" 
+      drawerContent={(props) => <SideBar {...props} />}
+      screenOptions={{
+        drawerPosition: isRTL() ? 'right' : 'left',
+        drawerType: 'slide',
+        drawerStyle: {
+          width: 280,
+          backgroundColor: 'transparent',
+        },
+        overlayColor: 'rgba(0,0,0,0.5)',
+        drawerActiveTintColor: '#2196F3',
+        drawerInactiveTintColor: '#666',
+        sceneContainerStyle: {
+          backgroundColor: 'white',
+        },
+      }}
+    >
       <Drawer.Screen name="(tabs)" options={{ headerShown: false, title: 'Home' }} />
+      <Drawer.Screen name="reports" options={{ headerShown: false, title: 'Reports' }} />
+      <Drawer.Screen name="documents" options={{ headerShown: false, title: 'Documents' }} />
     </Drawer>
   );
 } 

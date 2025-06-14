@@ -1,0 +1,45 @@
+{
+  "currentTenant": "المستأجر الحالي",
+  "formerTenant": "مستأجر سابق",
+  "potentialTenant": "مستأجر محتمل",
+  "title": "المستأجرين",
+  "subtitle": "إدارة المستأجرين",
+  "totalTenants": "إجمالي المستأجرين",
+  "activeTenants": "نشط",
+  "pendingTenants": "قيد الانتظار",
+  "latePayments": "دفعات متأخرة",
+  "noTenantsFound": "لم يتم العثور على مستأجرين",
+  "adjustSearch": "حاول تعديل البحث",
+  "addFirstTenant": "أضف أول مستأجر للبدء",
+  "activeStatus": "نشط",
+  "pendingStatus": "قيد الانتظار",
+  "searchPlaceholder": "البحث عن المستأجرين...",
+  "balance": "الرصيد",
+  "details": {
+    "title": "تفاصيل المستأجر",
+    "loading": "جارٍ التحميل...",
+    "error": "خطأ",
+    "email": "البريد الإلكتروني",
+    "phone": "الهاتف",
+    "address": "العنوان",
+    "nationality": "الجنسية",
+    "monthlyRent": "الإيجار الشهري",
+    "contractPeriod": "فترة العقد",
+    "tenantId": "معرف المستأجر",
+    "idNumber": "رقم الهوية",
+    "joinDate": "تاريخ الانضمام",
+    "contractInfo": "معلومات العقد",
+    "personalInfo": "المعلومات الشخصية"
+  },
+  "edit": {
+    "title": "تعديل المستأجر",
+    "loading": "جارٍ التحميل...",
+    "error": "خطأ",
+    "savingChanges": "جارٍ حفظ التغييرات..."
+  },
+  "add": {
+    "title": "إضافة مستأجر جديد",
+    "subtitle": "إنشاء ملف تعريف مستأجر جديد",
+    "createProfile": "إنشاء ملف تعريف مستأجر جديد"
+  }
+} 

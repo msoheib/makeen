@@ -7,9 +7,11 @@ import { useAppStore } from '@/lib/store';
 import { theme } from '@/lib/theme';
 import { NotificationBadge } from '@/components/NotificationBadge';
 import { useTabBadgeCount } from '@/hooks/useNotificationBadges';
+import { useTranslation } from '@/lib/useTranslation';
 
 export default function TabLayout() {
   const paperTheme = useTheme();
+  const { t } = useTranslation('navigation');
   const user = useAppStore(state => state.user);
 
   // Badge counts for different tabs
@@ -69,7 +71,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Dashboard',
+          title: t('dashboard'),
           tabBarIcon: ({ size, color }) => (
             <TabIconWithBadge 
               Icon={Home} 
@@ -83,7 +85,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="reports"
         options={{
-          title: 'Reports',
+          title: t('reports'),
           tabBarIcon: ({ size, color }) => (
             <TabIconWithBadge 
               Icon={FileText} 
@@ -97,7 +99,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="tenants"
         options={{
-          title: 'Tenants',
+          title: t('tenants'),
           tabBarIcon: ({ size, color }) => (
             <TabIconWithBadge 
               Icon={Users} 
@@ -111,7 +113,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="properties"
         options={{
-          title: 'Organisation',
+          title: t('properties'),
           tabBarIcon: ({ size, color }) => (
             <TabIconWithBadge 
               Icon={Building2} 
@@ -125,7 +127,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'More',
+          title: t('settings'),
           tabBarIcon: ({ size, color }) => (
             <MoreHorizontal size={size} color={color} />
           ),

@@ -1,0 +1,37 @@
+{
+  "title": "لوحة التحكم",
+  "welcome": "مرحباً",
+  "overview": "نظرة عامة",
+  "greetings": {
+    "hello": "أهلاً {{name}}،"
+  },
+  "totalProperties": "إجمالي العقارات",
+  "totalTenants": "إجمالي المستأجرين",
+  "totalRevenue": "إجمالي الإيرادات",
+  "monthlyIncome": "الدخل الشهري",
+  "expenses": "المصروفات",
+  "netIncome": "صافي الدخل",
+  "occupancyRate": "معدل الإشغال",
+  "recentActivity": "النشاط الأخير",
+  "systemOverview": "نظرة عامة على النظام",
+  "activeTenants": "المستأجرين النشطين",
+  "occupied": "مشغول",
+  "available": "متاح",
+  "attentionRequired": "يتطلب اهتمام",
+  "contractsExpiring": "عقد/عقود تنتهي قريباً",
+  "pendingMaintenance": "طلبات صيانة معلقة",
+  "add": "إضافة",
+  "finance": {
+    "rent": "الإيجار",
+    "overview": "نظرة عامة مالية",
+    "totalDue": "إجمالي المستحق",
+    "outstandingPayments": "المدفوعات المعلقة",
+    "collectedThisMonth": "المحصل هذا الشهر"
+  },
+  "quickActions": {
+    "addProperty": "إضافة عقار",
+    "addTenant": "إضافة مستأجر",
+    "createVoucher": "إنشاء قسيمة",
+    "viewReports": "عرض التقارير"
+  }
+} 

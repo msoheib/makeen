@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { Text, Card, useTheme, ActivityIndicator, Button } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Stack } from 'expo-router';
+import ModernHeader from '../../../components/ModernHeader';
 import { CustomLineChart, CustomBarChart, CustomPieChart } from '../../../components/charts';
 import { reportsApi } from '../../../lib/api';
 import { useApi } from '../../../hooks/useApi';
@@ -121,12 +121,11 @@ export default function PropertyPerformanceReportScreen() {
   if (loading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <Stack.Screen 
-          options={{ 
-            title: 'Property Performance',
-            headerStyle: { backgroundColor: theme.colors.surface },
-            headerTintColor: theme.colors.onSurface,
-          }} 
+        <ModernHeader
+          title="Property Performance"
+          subtitle="Loading performance data..."
+          showNotifications={false}
+          showSearch={false}
         />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -141,12 +140,11 @@ export default function PropertyPerformanceReportScreen() {
   if (error) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <Stack.Screen 
-          options={{ 
-            title: 'Property Performance',
-            headerStyle: { backgroundColor: theme.colors.surface },
-            headerTintColor: theme.colors.onSurface,
-          }} 
+        <ModernHeader
+          title="Property Performance"
+          subtitle="Failed to load data"
+          showNotifications={false}
+          showSearch={false}
         />
         <View style={styles.errorContainer}>
           <Text style={[styles.errorText, { color: theme.colors.error }]}>
@@ -162,12 +160,11 @@ export default function PropertyPerformanceReportScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <Stack.Screen 
-        options={{ 
-          title: 'Property Performance',
-          headerStyle: { backgroundColor: theme.colors.surface },
-          headerTintColor: theme.colors.onSurface,
-        }} 
+      <ModernHeader
+        title="Property Performance"
+        subtitle="Portfolio analytics and ROI"
+        showNotifications={false}
+        showSearch={false}
       />
       
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>

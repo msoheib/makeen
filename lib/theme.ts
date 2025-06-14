@@ -1,5 +1,6 @@
 import { MD3LightTheme, MD3DarkTheme, configureFonts } from 'react-native-paper';
-import { Platform } from 'react-native';
+import { Platform, I18nManager } from 'react-native';
+import { isRTL, getDirection, getTextAlign, getFlexDirection } from './rtl';
 
 const fontConfig = {
   fontFamily: 'Inter-Regular',
@@ -208,5 +209,197 @@ export const typography = {
     fontSize: 16,
     fontWeight: '600' as const,
     lineHeight: 20,
+  },
+};
+
+// RTL-aware styling utilities
+export const rtlStyles = {
+  // Flexbox direction utilities
+  row: {
+    flexDirection: getFlexDirection('row'),
+  },
+  rowReverse: {
+    flexDirection: getFlexDirection('row') === 'row' ? 'row-reverse' : 'row',
+  },
+  
+  // Text alignment utilities
+  textLeft: {
+    textAlign: getTextAlign('left'),
+  },
+  textRight: {
+    textAlign: getTextAlign('right'),
+  },
+  textCenter: {
+    textAlign: 'center' as const,
+  },
+  
+  // Positioning utilities
+  alignStart: {
+    alignSelf: 'flex-start' as const,
+  },
+  alignEnd: {
+    alignSelf: 'flex-end' as const,
+  },
+  
+  // Margin utilities (RTL-aware)
+  marginStart: (value: number) => ({
+    [isRTL() ? 'marginRight' : 'marginLeft']: value,
+  }),
+  marginEnd: (value: number) => ({
+    [isRTL() ? 'marginLeft' : 'marginRight']: value,
+  }),
+  
+  // Padding utilities (RTL-aware)
+  paddingStart: (value: number) => ({
+    [isRTL() ? 'paddingRight' : 'paddingLeft']: value,
+  }),
+  paddingEnd: (value: number) => ({
+    [isRTL() ? 'paddingLeft' : 'paddingRight']: value,
+  }),
+  
+  // Border utilities (RTL-aware)
+  borderStart: (width: number, color: string) => ({
+    [isRTL() ? 'borderRightWidth' : 'borderLeftWidth']: width,
+    [isRTL() ? 'borderRightColor' : 'borderLeftColor']: color,
+  }),
+  borderEnd: (width: number, color: string) => ({
+    [isRTL() ? 'borderLeftWidth' : 'borderRightWidth']: width,
+    [isRTL() ? 'borderLeftColor' : 'borderRightColor']: color,
+  }),
+  
+  // Position utilities (RTL-aware)
+  positionStart: (value: number) => ({
+    [isRTL() ? 'right' : 'left']: value,
+  }),
+  positionEnd: (value: number) => ({
+    [isRTL() ? 'left' : 'right']: value,
+  }),
+};
+
+// RTL layout utilities
+export const rtlLayout = {
+  // Check if current layout is RTL
+  isRTL: () => isRTL(),
+  
+  // Get layout direction
+  direction: () => getDirection(),
+  
+  // Transform values for RTL
+  transform: {
+    // Flip horizontal values for RTL
+    scaleX: (value: number) => isRTL() ? -value : value,
+    
+    // Rotate icons/elements for RTL
+    rotateY: () => isRTL() ? '180deg' : '0deg',
+    
+    // Translate horizontally accounting for RTL
+    translateX: (value: number) => isRTL() ? -value : value,
+  },
+  
+  // Icon mirroring for directional icons
+  iconTransform: {
+    // For directional icons (arrows, chevrons)
+    mirror: {
+      transform: [{ scaleX: isRTL() ? -1 : 1 }],
+    },
+    
+    // For icons that should not be mirrored
+    noMirror: {
+      transform: [{ scaleX: 1 }],
+    },
+  },
+  
+  // Layout helpers
+  justify: {
+    start: isRTL() ? 'flex-end' : 'flex-start',
+    end: isRTL() ? 'flex-start' : 'flex-end',
+    center: 'center',
+    spaceBetween: 'space-between',
+    spaceAround: 'space-around',
+    spaceEvenly: 'space-evenly',
+  },
+  
+  // Text input direction
+  textDirection: {
+    auto: 'auto' as const,
+    ltr: 'ltr' as const,
+    rtl: 'rtl' as const,
+    current: getDirection(),
+  },
+};
+
+// Enhanced spacing with RTL support
+export const rtlSpacing = {
+  ...spacing,
+  
+  // Horizontal spacing with RTL awareness
+  horizontal: {
+    xs: { ...rtlStyles.paddingStart(spacing.xs), ...rtlStyles.paddingEnd(spacing.xs) },
+    s: { ...rtlStyles.paddingStart(spacing.s), ...rtlStyles.paddingEnd(spacing.s) },
+    m: { ...rtlStyles.paddingStart(spacing.m), ...rtlStyles.paddingEnd(spacing.m) },
+    l: { ...rtlStyles.paddingStart(spacing.l), ...rtlStyles.paddingEnd(spacing.l) },
+    xl: { ...rtlStyles.paddingStart(spacing.xl), ...rtlStyles.paddingEnd(spacing.xl) },
+  },
+  
+  // Start/end specific spacing
+  start: {
+    xs: rtlStyles.paddingStart(spacing.xs),
+    s: rtlStyles.paddingStart(spacing.s),
+    m: rtlStyles.paddingStart(spacing.m),
+    l: rtlStyles.paddingStart(spacing.l),
+    xl: rtlStyles.paddingStart(spacing.xl),
+  },
+  
+  end: {
+    xs: rtlStyles.paddingEnd(spacing.xs),
+    s: rtlStyles.paddingEnd(spacing.s),
+    m: rtlStyles.paddingEnd(spacing.m),
+    l: rtlStyles.paddingEnd(spacing.l),
+    xl: rtlStyles.paddingEnd(spacing.xl),
+  },
+};
+
+// Typography with RTL support
+export const rtlTypography = {
+  ...typography,
+  
+  // Text styles with proper alignment
+  h1RTL: {
+    ...typography.h1,
+    textAlign: getTextAlign('left'),
+    writingDirection: getDirection(),
+  },
+  h2RTL: {
+    ...typography.h2,
+    textAlign: getTextAlign('left'),
+    writingDirection: getDirection(),
+  },
+  h3RTL: {
+    ...typography.h3,
+    textAlign: getTextAlign('left'),
+    writingDirection: getDirection(),
+  },
+  body1RTL: {
+    ...typography.body1,
+    textAlign: getTextAlign('left'),
+    writingDirection: getDirection(),
+  },
+  body2RTL: {
+    ...typography.body2,
+    textAlign: getTextAlign('left'),
+    writingDirection: getDirection(),
+  },
+  
+  // Specialized text styles
+  input: {
+    ...typography.body1,
+    textAlign: getTextAlign('left'),
+    writingDirection: getDirection(),
+  },
+  
+  navigation: {
+    ...typography.button,
+    textAlign: getTextAlign('left'),
+    writingDirection: getDirection(),
   },
 };

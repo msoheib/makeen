@@ -9,6 +9,7 @@ import ModernCard from '@/components/ModernCard';
 import StatCard from '@/components/StatCard';
 import { reportsApi } from '@/lib/api';
 import { useApi } from '@/hooks/useApi';
+import { useTranslation } from '@/lib/useTranslation';
 
 interface ReportItem {
   id: string;
@@ -24,6 +25,7 @@ interface ReportItem {
 
 export default function ReportsScreen() {
   const router = useRouter();
+  const { t } = useTranslation('reports');
   const [activeCategory, setActiveCategory] = useState('financial');
   
   // API calls for real data
@@ -78,15 +80,15 @@ export default function ReportsScreen() {
   const isLoading = statsLoading || revenueLoading || expenseLoading || propertyLoading || tenantLoading || maintenanceLoading;
 
   const formatLastGenerated = (isoString?: string) => {
-    if (!isoString) return 'Never generated';
+    if (!isoString) return t('neverGenerated');
     const date = new Date(isoString);
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
     
-    if (diffInHours < 1) return 'Just now';
-    if (diffInHours < 24) return `${diffInHours} hour${diffInHours === 1 ? '' : 's'} ago`;
+    if (diffInHours < 1) return t('justNow');
+    if (diffInHours < 24) return `${diffInHours} ${diffInHours === 1 ? t('hourAgo') : t('hoursAgo')}`;
     const diffInDays = Math.floor(diffInHours / 24);
-    return `${diffInDays} day${diffInDays === 1 ? '' : 's'} ago`;
+    return `${diffInDays} ${diffInDays === 1 ? t('dayAgo') : t('daysAgo')}`;
   };
 
   // Generate dynamic reports list based on available data
@@ -98,8 +100,8 @@ export default function ReportsScreen() {
       reports.push(
         {
           id: 'revenue-report',
-          title: 'Revenue Report',
-          description: 'Monthly revenue breakdown by property',
+          title: t('revenueReport'),
+          description: t('revenueReportDesc'),
           category: 'financial',
           icon: <TrendingUp size={20} color={theme.colors.success} />,
           color: theme.colors.success,
@@ -109,8 +111,8 @@ export default function ReportsScreen() {
         },
         {
           id: 'expense-report',
-          title: 'Expense Report',
-          description: 'Detailed breakdown of all expenses',
+          title: t('expenseReport'),
+          description: t('expenseReportDesc'),
           category: 'financial',
           icon: <DollarSign size={20} color={theme.colors.error} />,
           color: theme.colors.error,
@@ -120,8 +122,8 @@ export default function ReportsScreen() {
         },
         {
           id: 'profit-loss',
-          title: 'Profit & Loss',
-          description: 'P&L statement for the current period',
+          title: t('profitLoss'),
+          description: t('profitLossDesc'),
           category: 'financial',
           icon: <BarChart3 size={20} color={theme.colors.primary} />,
           color: theme.colors.primary,
@@ -131,8 +133,8 @@ export default function ReportsScreen() {
         },
         {
           id: 'cash-flow',
-          title: 'Cash Flow Statement',
-          description: 'Cash inflows and outflows analysis',
+          title: t('cashFlow'),
+          description: t('cashFlowDesc'),
           category: 'financial',
           icon: <DollarSign size={20} color={theme.colors.secondary} />,
           color: theme.colors.secondary,
@@ -148,8 +150,8 @@ export default function ReportsScreen() {
       reports.push(
         {
           id: 'occupancy-report',
-          title: 'Occupancy Report',
-          description: 'Property occupancy rates and trends',
+          title: t('occupancyReport'),
+          description: t('occupancyReportDesc'),
           category: 'property',
           icon: <Building2 size={20} color={theme.colors.primary} />,
           color: theme.colors.primary,
@@ -159,8 +161,8 @@ export default function ReportsScreen() {
         },
         {
           id: 'property-performance',
-          title: 'Property Performance',
-          description: 'Individual property ROI and metrics',
+          title: t('propertyPerformance'),
+          description: t('propertyPerformanceDesc'),
           category: 'property',
           icon: <TrendingUp size={20} color={theme.colors.success} />,
           color: theme.colors.success,
@@ -175,8 +177,8 @@ export default function ReportsScreen() {
     if (maintenanceData) {
       reports.push({
         id: 'maintenance-report',
-        title: 'Maintenance Report',
-        description: 'Maintenance costs and frequency analysis',
+        title: t('maintenanceReport'),
+        description: t('maintenanceReportDesc'),
         category: 'property',
         icon: <Building2 size={20} color={theme.colors.warning} />,
         color: theme.colors.warning,
@@ -191,8 +193,8 @@ export default function ReportsScreen() {
       reports.push(
         {
           id: 'tenant-report',
-          title: 'Tenant Report',
-          description: 'Tenant demographics and payment history',
+          title: t('tenantReport'),
+          description: t('tenantReportDesc'),
           category: 'tenant',
           icon: <Users size={20} color={theme.colors.secondary} />,
           color: theme.colors.secondary,
@@ -202,8 +204,8 @@ export default function ReportsScreen() {
         },
         {
           id: 'payment-history',
-          title: 'Payment History',
-          description: 'Detailed payment tracking and late fees',
+          title: t('paymentHistory'),
+          description: t('paymentHistoryDesc'),
           category: 'tenant',
           icon: <DollarSign size={20} color={theme.colors.primary} />,
           color: theme.colors.primary,
@@ -213,8 +215,8 @@ export default function ReportsScreen() {
         },
         {
           id: 'lease-expiry',
-          title: 'Lease Expiry Report',
-          description: 'Upcoming lease renewals and expirations',
+          title: t('leaseExpiry'),
+          description: t('leaseExpiryDesc'),
           category: 'tenant',
           icon: <Calendar size={20} color={theme.colors.warning} />,
           color: theme.colors.warning,
@@ -230,8 +232,8 @@ export default function ReportsScreen() {
       reports.push(
         {
           id: 'operations-summary',
-          title: 'Operations Summary',
-          description: 'Overall operational metrics and KPIs',
+          title: t('operationsSummary'),
+          description: t('operationsSummaryDesc'),
           category: 'operations',
           icon: <BarChart3 size={20} color={theme.colors.tertiary} />,
           color: theme.colors.tertiary,
@@ -241,8 +243,8 @@ export default function ReportsScreen() {
         },
         {
           id: 'vendor-report',
-          title: 'Vendor Report',
-          description: 'Vendor performance and cost analysis',
+          title: t('vendorReport'),
+          description: t('vendorReportDesc'),
           category: 'operations',
           icon: <Users size={20} color={theme.colors.primary} />,
           color: theme.colors.primary,
@@ -270,7 +272,7 @@ export default function ReportsScreen() {
           <Text style={styles.reportTitle}>{item.title}</Text>
           <Text style={styles.reportDescription}>{item.description}</Text>
           {item.lastGenerated && (
-            <Text style={styles.lastGenerated}>Last generated: {item.lastGenerated}</Text>
+            <Text style={styles.lastGenerated}>{t('lastGenerated')}: {item.lastGenerated}</Text>
           )}
         </View>
       </View>
@@ -283,7 +285,7 @@ export default function ReportsScreen() {
           contentStyle={styles.actionContent}
           icon={() => <Eye size={16} color={theme.colors.primary} />}
         >
-          View
+          {t('view')}
         </Button>
         <Button
           mode="contained"
@@ -292,7 +294,7 @@ export default function ReportsScreen() {
           contentStyle={styles.actionContent}
           icon={() => <Download size={16} color="white" />}
         >
-          Download
+          {t('download')}
         </Button>
       </View>
     </ModernCard>
@@ -301,8 +303,8 @@ export default function ReportsScreen() {
   return (
     <View style={styles.container}>
       <ModernHeader
-        title="Reports"
-        subtitle="Financial insights and analytics"
+        title={t('title')}
+        subtitle={t('subtitle')}
         variant="dark"
         showNotifications
         isHomepage={false}
@@ -324,32 +326,32 @@ export default function ReportsScreen() {
           }
         >
           <StatCard
-            title="Total Reports"
+            title={t('totalReports')}
             value={stats?.totalReports?.toString() || '0'}
             color={theme.colors.primary}
             icon={<FileText size={20} color={theme.colors.primary} />}
             loading={statsLoading}
           />
           <StatCard
-            title="This Month"
+            title={t('thisMonth')}
             value={stats?.generatedThisMonth?.toString() || '0'}
-            subtitle="Generated"
+            subtitle={t('generated')}
             color={theme.colors.success}
             icon={<TrendingUp size={20} color={theme.colors.success} />}
             loading={statsLoading}
           />
           <StatCard
-            title="Scheduled"
+            title={t('scheduled')}
             value={stats?.scheduledReports?.toString() || '0'}
-            subtitle="Auto-generated"
+            subtitle={t('autoGenerated')}
             color={theme.colors.secondary}
             icon={<Calendar size={20} color={theme.colors.secondary} />}
             loading={statsLoading}
           />
           <StatCard
-            title="Avg Time"
+            title={t('avgTime')}
             value={stats?.avgGenerationTime || '0s'}
-            subtitle="Generation time"
+            subtitle={t('generationTime')}
             color={theme.colors.warning}
             icon={<BarChart3 size={20} color={theme.colors.warning} />}
             loading={statsLoading}
@@ -363,10 +365,10 @@ export default function ReportsScreen() {
           value={activeCategory}
           onValueChange={setActiveCategory}
           buttons={[
-            { value: 'financial', label: 'Financial' },
-            { value: 'property', label: 'Property' },
-            { value: 'tenant', label: 'Tenant' },
-            { value: 'operations', label: 'Operations' },
+            { value: 'financial', label: t('categories.financial') },
+            { value: 'property', label: t('categories.property') },
+            { value: 'tenant', label: t('categories.tenant') },
+            { value: 'operations', label: t('categories.operations') },
           ]}
           style={styles.segmentedButtons}
         />
@@ -382,9 +384,9 @@ export default function ReportsScreen() {
         ListEmptyComponent={
           <ModernCard style={styles.emptyState}>
             <FileText size={48} color={theme.colors.onSurfaceVariant} />
-            <Text style={styles.emptyStateTitle}>No reports available</Text>
+            <Text style={styles.emptyStateTitle}>{t('noReportsAvailable')}</Text>
             <Text style={styles.emptyStateSubtitle}>
-              Reports for this category will appear here
+              {t('noReportsDesc')}
             </Text>
           </ModernCard>
         }

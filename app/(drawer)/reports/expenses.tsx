@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { Text, Card, useTheme, ActivityIndicator, Button } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Stack } from 'expo-router';
 import { CustomLineChart, CustomPieChart } from '../../../components/charts';
 import { reportsApi } from '../../../lib/api';
 import { useApi } from '../../../hooks/useApi';
+import ModernHeader from '../../../components/ModernHeader';
 
 interface ExpenseData {
   totalExpenses: number;
@@ -75,12 +75,11 @@ export default function ExpenseReportScreen() {
   if (loading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <Stack.Screen 
-          options={{ 
-            title: 'Expense Report',
-            headerStyle: { backgroundColor: theme.colors.surface },
-            headerTintColor: theme.colors.onSurface,
-          }} 
+        <ModernHeader
+          title="Expense Report"
+          subtitle="Loading expense data..."
+          showNotifications={false}
+          showSearch={false}
         />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -95,12 +94,11 @@ export default function ExpenseReportScreen() {
   if (error) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <Stack.Screen 
-          options={{ 
-            title: 'Expense Report',
-            headerStyle: { backgroundColor: theme.colors.surface },
-            headerTintColor: theme.colors.onSurface,
-          }} 
+        <ModernHeader
+          title="Expense Report"
+          subtitle="Failed to load data"
+          showNotifications={false}
+          showSearch={false}
         />
         <View style={styles.errorContainer}>
           <Text style={[styles.errorText, { color: theme.colors.error }]}>
@@ -116,12 +114,11 @@ export default function ExpenseReportScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <Stack.Screen 
-        options={{ 
-          title: 'Expense Report',
-          headerStyle: { backgroundColor: theme.colors.surface },
-          headerTintColor: theme.colors.onSurface,
-        }} 
+      <ModernHeader
+        title="Expense Report"
+        subtitle="Cost analysis and breakdown"
+        showNotifications={false}
+        showSearch={false}
       />
       
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>

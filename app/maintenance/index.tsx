@@ -9,6 +9,7 @@ import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import StatusUpdateModal from '@/components/StatusUpdateModal';
 import { Wrench, Plus, Filter, Calendar, MapPin, User, AlertTriangle, CheckCircle2, Clock, XCircle } from 'lucide-react-native';
+import { useTranslation } from '@/lib/useTranslation';
 
 type MaintenanceRequest = {
   id: string;
@@ -63,6 +64,7 @@ const PRIORITY_LABELS = {
 
 export default function MaintenanceRequestsScreen() {
   const router = useRouter();
+  const { t } = useTranslation('maintenance');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [selectedPriority, setSelectedPriority] = useState<string>('');
@@ -111,19 +113,19 @@ export default function MaintenanceRequestsScreen() {
       const result = await maintenanceApi.updateRequest(selectedRequestForUpdate.id, updateData);
       
       if (result.error) {
-        Alert.alert('Error', result.error.message);
+        Alert.alert(t('common:error'), result.error.message);
       } else {
-        Alert.alert('Success', 'Status updated successfully');
+        Alert.alert(t('common:success'), t('requestUpdated'));
         setStatusModalVisible(false);
         setSelectedRequestForUpdate(null);
         refetch();
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to update status');
+      Alert.alert(t('common:error'), 'Failed to update status');
     } finally {
       setStatusUpdateLoading(false);
     }
-  }, [selectedRequestForUpdate, refetch]);
+  }, [selectedRequestForUpdate, refetch, t]);
 
   const openStatusModal = useCallback((request: MaintenanceRequest) => {
     setSelectedRequestForUpdate(request);
@@ -160,14 +162,14 @@ export default function MaintenanceRequestsScreen() {
               color={STATUS_COLORS[item.status]} 
             />
             <Text style={[styles.statusText, { color: STATUS_COLORS[item.status] }]}>
-              {item.status.replace('_', ' ').toUpperCase()}
+              {t(`statuses.${item.status}`).toUpperCase()}
             </Text>
           </View>
           <Chip 
             style={[styles.priorityChip, { backgroundColor: PRIORITY_COLORS[item.priority] + '20' }]}
             textStyle={{ color: PRIORITY_COLORS[item.priority], fontSize: 12 }}
           >
-            {PRIORITY_LABELS[item.priority]}
+            {t(`priorities.${item.priority}`)}
           </Chip>
         </View>
 
@@ -201,23 +203,19 @@ export default function MaintenanceRequestsScreen() {
         )}
 
         <View style={styles.cardFooter}>
-          <View style={styles.dateInfo}>
+          <View style={styles.dateContainer}>
             <Calendar size={12} color={theme.colors.onSurfaceVariant} />
             <Text style={styles.dateText}>
-              Created {formatDate(item.created_at)}
+              {formatDate(item.created_at)}
             </Text>
           </View>
-          
-          <View style={styles.actionButtons}>
-            <Button
-              mode="outlined"
-              compact
-              onPress={() => openStatusModal(item)}
-              disabled={item.status === 'completed' || item.status === 'cancelled'}
-            >
-              Update Status
-            </Button>
-          </View>
+          <Button 
+            mode="outlined" 
+            size="small"
+            onPress={() => openStatusModal(item)}
+          >
+            {t('updateStatus')}
+          </Button>
         </View>
       </ModernCard>
     );
@@ -230,15 +228,21 @@ export default function MaintenanceRequestsScreen() {
     const priorityOptions = ['low', 'medium', 'high', 'urgent'];
 
     return (
-      <View style={styles.filtersContainer}>
-        <Text style={styles.filterTitle}>Status</Text>
+      <ModernCard style={styles.filtersCard}>
+        <View style={styles.filtersHeader}>
+          <Text style={styles.filtersTitle}>{t('filterByStatus')}</Text>
+          <Button onPress={clearFilters} mode="text">
+            {t('common:clear')}
+          </Button>
+        </View>
+        
         <View style={styles.filterChips}>
-          <Chip
+          <Chip 
             selected={selectedStatus === ''}
             onPress={() => setSelectedStatus('')}
             style={styles.filterChip}
           >
-            All
+            {t('common:all')}
           </Chip>
           {statusOptions.map(status => (
             <Chip
@@ -247,19 +251,19 @@ export default function MaintenanceRequestsScreen() {
               onPress={() => setSelectedStatus(status)}
               style={styles.filterChip}
             >
-              {status.replace('_', ' ').toUpperCase()}
+              {t(`statuses.${status}`).toUpperCase()}
             </Chip>
           ))}
         </View>
 
-        <Text style={styles.filterTitle}>Priority</Text>
+        <Text style={styles.filtersTitle}>{t('filterByPriority')}</Text>
         <View style={styles.filterChips}>
           <Chip
             selected={selectedPriority === ''}
             onPress={() => setSelectedPriority('')}
             style={styles.filterChip}
           >
-            All
+            {t('common:all')}
           </Chip>
           {priorityOptions.map(priority => (
             <Chip
@@ -268,58 +272,54 @@ export default function MaintenanceRequestsScreen() {
               onPress={() => setSelectedPriority(priority)}
               style={styles.filterChip}
             >
-              {PRIORITY_LABELS[priority]}
+              {t(`priorities.${priority}`)}
             </Chip>
           ))}
         </View>
-
-        <Button
-          mode="outlined"
-          onPress={clearFilters}
-          style={styles.clearFiltersButton}
-        >
-          Clear Filters
-        </Button>
-      </View>
+      </ModernCard>
     );
   };
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
       <Wrench size={64} color={theme.colors.onSurfaceVariant} />
-      <Text style={styles.emptyTitle}>No Maintenance Requests</Text>
-      <Text style={styles.emptySubtitle}>
-        {searchQuery || selectedStatus || selectedPriority
-          ? 'No requests match your current filters'
-          : 'Get started by creating your first maintenance request'
+      <Text style={styles.emptyTitle}>
+        {filteredRequests.length === 0 && maintenanceRequests?.length > 0 
+          ? t('noMaintenanceRequests')
+          : t('addFirstRequest')
         }
       </Text>
-      {(!searchQuery && !selectedStatus && !selectedPriority) && (
-        <Button
-          mode="contained"
-          onPress={() => router.push('/maintenance/add')}
-          style={styles.emptyButton}
-        >
-          Create Request
-        </Button>
-      )}
+      <Text style={styles.emptySubtitle}>
+        {filteredRequests.length === 0 && maintenanceRequests?.length > 0 
+          ? t('adjustSearchOrFilters')
+          : t('description')
+        }
+      </Text>
     </View>
   );
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ModernHeader title={t('title')} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={styles.loadingText}>{t('common:loading')}</Text>
+        </View>
+      </View>
+    );
+  }
 
   if (error) {
     return (
       <View style={styles.container}>
-        <ModernHeader title="Maintenance Requests" />
+        <ModernHeader title={t('title')} />
         <View style={styles.errorContainer}>
           <AlertTriangle size={64} color={theme.colors.error} />
-          <Text style={styles.errorTitle}>Unable to load requests</Text>
+          <Text style={styles.errorTitle}>{t('common:error')}</Text>
           <Text style={styles.errorSubtitle}>{error}</Text>
-          <Button
-            mode="contained"
-            onPress={refetch}
-            style={styles.retryButton}
-          >
-            Try Again
+          <Button mode="contained" onPress={refetch}>
+            {t('common:retry')}
           </Button>
         </View>
       </View>
@@ -329,80 +329,66 @@ export default function MaintenanceRequestsScreen() {
   return (
     <View style={styles.container}>
       <ModernHeader 
-        title="Maintenance Requests"
-        rightIcon={
-          <Button
-            mode="text"
-            onPress={() => setShowFilters(!showFilters)}
-            compact
-          >
-            <Filter size={20} color={theme.colors.primary} />
-          </Button>
-        }
+        title={t('title')}
+        subtitle={t('subtitle')}
       />
-
+      
       <View style={styles.content}>
-        <Searchbar
-          placeholder="Search requests, properties, or tenants..."
-          onChangeText={setSearchQuery}
-          value={searchQuery}
-          style={styles.searchBar}
-        />
-
-        {renderFilters()}
-
-        <View style={styles.statsContainer}>
-          <Text style={styles.statsText}>
-            {filteredRequests.length} request{filteredRequests.length !== 1 ? 's' : ''}
-            {maintenanceRequests && filteredRequests.length !== maintenanceRequests.length && 
-              ` of ${maintenanceRequests.length} total`
-            }
-          </Text>
+        {/* Search and Filter Bar */}
+        <View style={styles.searchContainer}>
+          <Searchbar
+            placeholder={t('searchPlaceholder')}
+            onChangeText={setSearchQuery}
+            value={searchQuery}
+            style={styles.searchBar}
+          />
+          <Button 
+            mode="outlined" 
+            onPress={() => setShowFilters(!showFilters)}
+            style={styles.filterButton}
+          >
+            <Filter size={16} />
+          </Button>
         </View>
 
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={theme.colors.primary} />
-            <Text style={styles.loadingText}>Loading maintenance requests...</Text>
-          </View>
-        ) : (
-          <FlatList
-            data={filteredRequests}
-            renderItem={renderMaintenanceCard}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.listContainer}
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl
-                refreshing={loading}
-                onRefresh={refetch}
-                colors={[theme.colors.primary]}
-              />
-            }
-            ListEmptyComponent={renderEmpty}
-          />
-        )}
+        {/* Filters */}
+        {renderFilters()}
+
+        {/* Requests List */}
+        <FlatList
+          data={filteredRequests}
+          renderItem={renderMaintenanceCard}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={refetch} />
+          }
+          ListEmptyComponent={renderEmpty}
+        />
+
+        {/* Add Request FAB */}
+        <FAB
+          icon={() => <Plus size={24} color="white" />}
+          style={styles.fab}
+          onPress={() => router.push('/maintenance/add')}
+          label={t('addRequest')}
+        />
+
+        {/* Status Update Modal */}
+        <StatusUpdateModal
+          visible={statusModalVisible}
+          onDismiss={() => {
+            setStatusModalVisible(false);
+            setSelectedRequestForUpdate(null);
+          }}
+          onUpdate={handleStatusUpdate}
+          currentStatus={selectedRequestForUpdate?.status || 'pending'}
+          loading={statusUpdateLoading}
+          title={t('updateStatus')}
+          entityType="maintenance"
+        />
       </View>
-
-      <FAB
-        icon={({ size, color }) => <Plus size={size} color={color} />}
-        style={styles.fab}
-        onPress={() => router.push('/maintenance/add')}
-        label="Add Request"
-      />
-
-      <StatusUpdateModal
-        visible={statusModalVisible}
-        onDismiss={() => {
-          setStatusModalVisible(false);
-          setSelectedRequestForUpdate(null);
-        }}
-        onUpdate={handleStatusUpdate}
-        currentStatus={selectedRequestForUpdate?.status || ''}
-        itemType="maintenance_request"
-        title={selectedRequestForUpdate?.title || ''}
-        loading={statusUpdateLoading}
-      />
     </View>
   );
 }
@@ -416,23 +402,35 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: spacing.md,
   },
-  searchBar: {
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: spacing.md,
+  },
+  searchBar: {
+    flex: 1,
     elevation: 2,
   },
-  filtersContainer: {
+  filterButton: {
+    elevation: 2,
+  },
+  filtersCard: {
     backgroundColor: theme.colors.surface,
     borderRadius: 12,
     padding: spacing.md,
     marginBottom: spacing.md,
     elevation: 1,
   },
-  filterTitle: {
+  filtersHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  filtersTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: theme.colors.onSurface,
-    marginBottom: spacing.sm,
-    marginTop: spacing.sm,
   },
   filterChips: {
     flexDirection: 'row',
@@ -441,20 +439,6 @@ const styles = StyleSheet.create({
   },
   filterChip: {
     marginRight: 0,
-  },
-  clearFiltersButton: {
-    marginTop: spacing.md,
-    alignSelf: 'flex-start',
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  statsText: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
   },
   listContainer: {
     paddingBottom: 100,
@@ -518,7 +502,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: theme.colors.outline + '30',
   },
-  dateInfo: {
+  dateContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -526,10 +510,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.colors.onSurfaceVariant,
     marginLeft: spacing.xs,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: spacing.sm,
   },
   loadingContainer: {
     flex: 1,
@@ -562,9 +542,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginBottom: spacing.xl,
   },
-  emptyButton: {
-    paddingHorizontal: spacing.xl,
-  },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -585,9 +562,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: spacing.xl,
-  },
-  retryButton: {
-    paddingHorizontal: spacing.xl,
   },
   fab: {
     position: 'absolute',

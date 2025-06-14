@@ -19,6 +19,7 @@ import {
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import StatCard from '@/components/StatCard';
+import { useTranslation } from '@/lib/useTranslation';
 
 interface Document {
   id: string;
@@ -35,6 +36,7 @@ interface Document {
 
 export default function DocumentsScreen() {
   const router = useRouter();
+  const { t } = useTranslation('documents');
   const [loading, setLoading] = useState(true);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([]);
@@ -198,7 +200,7 @@ export default function DocumentsScreen() {
           style={[styles.typeChip, { borderColor: getTypeColor(item.type) }]}
           textStyle={[styles.typeText, { color: getTypeColor(item.type) }]}
         >
-          {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
+          {t(`documentTypes.${item.type}`) || item.type.charAt(0).toUpperCase() + item.type.slice(1)}
         </Chip>
       </View>
       
@@ -228,8 +230,8 @@ export default function DocumentsScreen() {
   return (
     <View style={styles.container}>
       <ModernHeader
-        title="Documents"
-        subtitle="Manage all files and documents"
+        title={t('title')}
+        subtitle={t('subtitle')}
         isHomepage={false}
         onNotificationPress={() => router.push('/notifications')}
       />
@@ -241,29 +243,29 @@ export default function DocumentsScreen() {
           showsHorizontalScrollIndicator={false}
           data={[
             {
-              title: 'Total Documents',
+              title: t('totalDocuments'),
               value: stats.totalDocuments.toString(),
               color: theme.colors.primary,
               icon: <FileText size={20} color={theme.colors.primary} />,
             },
             {
-              title: 'This Month',
+              title: t('thisMonth'),
               value: stats.thisMonth.toString(),
-              subtitle: 'Uploaded',
+              subtitle: t('uploaded'),
               color: theme.colors.success,
               icon: <Upload size={20} color={theme.colors.success} />,
               trend: { value: '+15%', isPositive: true },
             },
             {
-              title: 'Total Size',
+              title: t('totalSize'),
               value: stats.totalSize,
               color: theme.colors.secondary,
               icon: <File size={20} color={theme.colors.secondary} />,
             },
             {
-              title: 'Avg Size',
+              title: t('avgSize'),
               value: stats.avgSize,
-              subtitle: 'Per document',
+              subtitle: t('perDocument'),
               color: theme.colors.warning,
               icon: <FileText size={20} color={theme.colors.warning} />,
             },
@@ -286,7 +288,7 @@ export default function DocumentsScreen() {
       {/* Search and Filters */}
       <View style={styles.filtersSection}>
         <Searchbar
-          placeholder="Search documents..."
+          placeholder={t('searchPlaceholder')}
           onChangeText={setSearchQuery}
           value={searchQuery}
           style={styles.searchbar}
@@ -297,10 +299,10 @@ export default function DocumentsScreen() {
           value={activeFilter}
           onValueChange={setActiveFilter}
           buttons={[
-            { value: 'all', label: 'All' },
-            { value: 'contract', label: 'Contracts' },
-            { value: 'invoice', label: 'Invoices' },
-            { value: 'image', label: 'Images' },
+            { value: 'all', label: t('common:all') },
+            { value: 'contract', label: t('documentTypes.contract') },
+            { value: 'invoice', label: t('documentTypes.invoice') },
+            { value: 'image', label: t('documentTypes.photo') },
           ]}
           style={styles.segmentedButtons}
         />
@@ -316,11 +318,11 @@ export default function DocumentsScreen() {
         ListEmptyComponent={
           <ModernCard style={styles.emptyState}>
             <FileText size={48} color={theme.colors.onSurfaceVariant} />
-            <Text style={styles.emptyStateTitle}>No documents found</Text>
+            <Text style={styles.emptyStateTitle}>{t('noDocumentsFound')}</Text>
             <Text style={styles.emptyStateSubtitle}>
               {searchQuery || activeFilter !== 'all' 
-                ? 'Try adjusting your search or filters' 
-                : 'Upload your first document to get started'}
+                ? t('adjustSearchOrFilters') 
+                : t('uploadFirstDocument')}
             </Text>
           </ModernCard>
         }

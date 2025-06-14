@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from 'react-native-paper';
+import { isRTL } from '@/lib/rtl';
 
 interface NotificationBadgeProps {
   count: number;
@@ -17,10 +18,21 @@ const BADGE_SIZES = {
   large: { width: 24, height: 24, fontSize: 14, minWidth: 24 },
 };
 
-const POSITION_STYLES = {
-  'top-right': { position: 'absolute' as const, top: -8, right: -8 },
-  'top-left': { position: 'absolute' as const, top: -8, left: -8 },
-  'inline': { position: 'relative' as const },
+const getPositionStyles = () => {
+  const rtl = isRTL();
+  return {
+    'top-right': { 
+      position: 'absolute' as const, 
+      top: -8, 
+      [rtl ? 'left' : 'right']: -8 
+    },
+    'top-left': { 
+      position: 'absolute' as const, 
+      top: -8, 
+      [rtl ? 'right' : 'left']: -8 
+    },
+    'inline': { position: 'relative' as const },
+  };
 };
 
 export const NotificationBadge: React.FC<NotificationBadgeProps> = ({
@@ -33,7 +45,7 @@ export const NotificationBadge: React.FC<NotificationBadgeProps> = ({
 }) => {
   const theme = useTheme();
   const sizeStyle = BADGE_SIZES[size];
-  const positionStyle = POSITION_STYLES[position];
+  const positionStyle = getPositionStyles()[position];
 
   const formatCount = (num: number): string => {
     if (num <= 0) return '';

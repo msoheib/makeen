@@ -4,6 +4,7 @@ import { Text, IconButton, Button, TextInput } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
+import { useTranslation } from '@/lib/useTranslation';
 import { ArrowLeft, Mail, MessageSquare, Phone, HelpCircle } from 'lucide-react-native';
 import ModernCard from '@/components/ModernCard';
 import * as MailComposer from 'expo-mail-composer';
@@ -11,13 +12,14 @@ import * as MailComposer from 'expo-mail-composer';
 export default function ContactSupportScreen() {
   const router = useRouter();
   const { settings } = useAppStore();
+  const { t } = useTranslation('settings');
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSendEmail = async () => {
     if (!subject.trim() || !message.trim()) {
-      Alert.alert('Missing Information', 'Please enter both subject and message before sending.');
+      Alert.alert(t('support.missingInfo'), t('support.missingInfoMessage'));
       return;
     }
 
@@ -27,8 +29,8 @@ export default function ContactSupportScreen() {
       
       if (!isAvailable) {
         Alert.alert(
-          'Email Not Available',
-          'Email is not configured on this device. Please set up your email app first.'
+          t('support.emailNotAvailable'),
+          t('support.emailNotConfigured')
         );
         setIsLoading(false);
         return;
@@ -41,12 +43,12 @@ export default function ContactSupportScreen() {
       });
 
       if (result.status === 'sent') {
-        Alert.alert('Email Sent', 'Your message has been sent successfully!');
+        Alert.alert(t('support.emailSent'), t('support.emailSentMessage'));
         setSubject('');
         setMessage('');
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to send email. Please try again later.');
+      Alert.alert(t('support.error'), t('support.sendError'));
       console.error('Email error:', error);
     }
     setIsLoading(false);
@@ -54,20 +56,20 @@ export default function ContactSupportScreen() {
 
   const supportCategories = [
     {
-      title: 'Technical Issues',
-      description: 'App bugs, login problems, sync issues',
+      title: t('support.technicalIssues.title'),
+      description: t('support.technicalIssues.description'),
       icon: HelpCircle,
       color: theme.colors.primary,
     },
     {
-      title: 'Account Support',
-      description: 'Profile, settings, subscription questions',
+      title: t('support.accountSupport.title'),
+      description: t('support.accountSupport.description'),
       icon: MessageSquare,
       color: theme.colors.secondary,
     },
     {
-      title: 'Feature Requests',
-      description: 'Suggestions for new features or improvements',
+      title: t('support.featureRequests.title'),
+      description: t('support.featureRequests.description'),
       icon: Mail,
       color: theme.colors.tertiary,
     },
@@ -81,7 +83,7 @@ export default function ContactSupportScreen() {
           onPress={() => router.back()}
           style={styles.backButton}
         />
-        <Text style={styles.headerTitle}>Contact Support</Text>
+        <Text style={styles.headerTitle}>{t('support.title')}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -90,17 +92,16 @@ export default function ContactSupportScreen() {
         <ModernCard style={styles.infoCard}>
           <View style={styles.infoHeader}>
             <Mail size={24} color={theme.colors.primary} />
-            <Text style={styles.infoTitle}>Get Help & Support</Text>
+            <Text style={styles.infoTitle}>{t('support.getHelp')}</Text>
           </View>
           <Text style={styles.infoDescription}>
-            Need assistance? Send us a message and our support team will get back to you 
-            as soon as possible. We're here to help!
+            {t('support.helpDescription')}
           </Text>
         </ModernCard>
 
         {/* Support Categories */}
         <ModernCard style={styles.categoriesCard}>
-          <Text style={styles.sectionTitle}>Common Support Topics</Text>
+          <Text style={styles.sectionTitle}>{t('support.commonTopics')}</Text>
           {supportCategories.map((category, index) => (
             <View key={index} style={styles.categoryItem}>
               <View style={[styles.categoryIcon, { backgroundColor: `${category.color}15` }]}>
@@ -116,18 +117,18 @@ export default function ContactSupportScreen() {
 
         {/* Contact Form */}
         <ModernCard style={styles.formCard}>
-          <Text style={styles.sectionTitle}>Send a Message</Text>
+          <Text style={styles.sectionTitle}>{t('support.sendMessage')}</Text>
           
           <View style={styles.supportEmail}>
-            <Text style={styles.supportEmailLabel}>Support Email:</Text>
+            <Text style={styles.supportEmailLabel}>{t('support.supportEmail')}</Text>
             <Text style={styles.supportEmailValue}>{settings.supportEmail}</Text>
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.formLabel}>Subject</Text>
+            <Text style={styles.formLabel}>{t('support.subject')}</Text>
             <TextInput
               mode="outlined"
-              placeholder="What's this about?"
+              placeholder={t('support.subjectPlaceholder')}
               value={subject}
               onChangeText={setSubject}
               style={styles.textInput}
@@ -139,10 +140,10 @@ export default function ContactSupportScreen() {
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.formLabel}>Message</Text>
+            <Text style={styles.formLabel}>{t('support.message')}</Text>
             <TextInput
               mode="outlined"
-              placeholder="Describe your issue or question in detail..."
+              placeholder={t('support.messagePlaceholder')}
               value={message}
               onChangeText={setMessage}
               multiline
@@ -152,7 +153,7 @@ export default function ContactSupportScreen() {
               activeOutlineColor={theme.colors.primary}
               maxLength={1000}
             />
-            <Text style={styles.charCount}>{message.length}/1000 characters</Text>
+            <Text style={styles.charCount}>{message.length}/1000 {t('support.characters')}</Text>
           </View>
 
           <Button
@@ -164,41 +165,39 @@ export default function ContactSupportScreen() {
             buttonColor={theme.colors.primary}
             icon={() => <Mail size={20} color="white" />}
           >
-            Send Message
+            {t('support.sendMessageButton')}
           </Button>
         </ModernCard>
 
         {/* Response Time */}
         <ModernCard style={styles.responseCard}>
-          <Text style={styles.responseTitle}>Response Time</Text>
+          <Text style={styles.responseTitle}>{t('support.responseTime')}</Text>
           <Text style={styles.responseDescription}>
-            We typically respond to support requests within 24-48 hours during business days. 
-            For urgent issues, please mark your subject line with "[URGENT]".
+            {t('support.responseDescription')}
           </Text>
           
           <View style={styles.businessHours}>
-            <Text style={styles.businessHoursTitle}>Business Hours</Text>
+            <Text style={styles.businessHoursTitle}>{t('support.businessHours')}</Text>
             <Text style={styles.businessHoursText}>
-              Sunday - Thursday: 9:00 AM - 6:00 PM (AST){'\n'}
-              Friday - Saturday: Closed
+              {t('support.businessHoursText')}
             </Text>
           </View>
         </ModernCard>
 
         {/* Alternative Contact */}
         <ModernCard style={styles.alternativeCard}>
-          <Text style={styles.alternativeTitle}>Alternative Contact Methods</Text>
+          <Text style={styles.alternativeTitle}>{t('support.alternativeContact')}</Text>
           <View style={styles.alternativeList}>
             <View style={styles.alternativeItem}>
               <Phone size={16} color={theme.colors.onSurfaceVariant} />
               <Text style={styles.alternativeText}>
-                Phone support available for premium accounts
+                {t('support.phoneSupport')}
               </Text>
             </View>
             <View style={styles.alternativeItem}>
               <MessageSquare size={16} color={theme.colors.onSurfaceVariant} />
               <Text style={styles.alternativeText}>
-                In-app chat coming in a future update
+                {t('support.liveChat')}
               </Text>
             </View>
           </View>

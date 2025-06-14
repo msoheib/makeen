@@ -1,0 +1,306 @@
+{
+  "title": "الإعدادات",
+  "subtitle": "تفضيلات التطبيق والحساب",
+  "profile": {
+    "title": "الملف الشخصي",
+    "description": "إدارة معلوماتك الشخصية وتفاصيل الحساب",
+    "myProfile": "ملفي الشخصي",
+    "personalInformation": "المعلومات الشخصية",
+    "accountOverview": "نظرة عامة على الحساب",
+    "contactInformation": "معلومات الاتصال",
+    "addressInformation": "معلومات العنوان",
+    "accountActions": "إجراءات الحساب",
+    "fullName": "الاسم الكامل",
+    "emailAddress": "عنوان البريد الإلكتروني",
+    "phoneNumber": "رقم الهاتف",
+    "company": "الشركة",
+    "address": "العنوان",
+    "streetAddress": "عنوان الشارع",
+    "city": "المدينة",
+    "country": "البلد",
+    "enterFullName": "أدخل اسمك الكامل",
+    "enterEmail": "أدخل بريدك الإلكتروني",
+    "enterPhone": "أدخل رقم هاتفك",
+    "enterCompany": "أدخل اسم شركتك",
+    "enterAddress": "أدخل عنوانك",
+    "enterCity": "أدخل مدينتك",
+    "selectCountry": "اختر بلدك",
+    "notSet": "غير محدد",
+    "missingInformation": "معلومات مفقودة",
+    "nameEmailRequired": "الاسم والبريد الإلكتروني حقول مطلوبة.",
+    "success": "نجح",
+    "profileUpdateSuccess": "تم تحديث الملف الشخصي بنجاح!",
+    "changeProfilePhoto": "تغيير صورة الملف الشخصي",
+    "photoUploadComingSoon": "ستكون وظيفة رفع الصور متاحة في تحديث مستقبلي.",
+    "propertiesManaged": "العقارات المدارة",
+    "activeTenants": "المستأجرون النشطون",
+    "accountType": "نوع الحساب",
+    "standard": "عادي",
+    "premium": "مميز",
+    "realEstateProfessional": "محترف عقاري",
+    "changePassword": "تغيير كلمة المرور",
+    "changePasswordDesc": "ستكون وظيفة تغيير كلمة المرور متاحة في تحديث مستقبلي.",
+    "privacySettings": "إعدادات الخصوصية",
+    "deleteAccount": "حذف الحساب",
+    "deleteAccountDesc": "ستكون وظيفة حذف الحساب متاحة في تحديث مستقبلي. يرجى الاتصال بالدعم للحصول على المساعدة.",
+    "save": "حفظ",
+    "edit": "تحرير",
+    "cancel": "إلغاء"
+  },
+  "notifications": {
+    "title": "الإشعارات", 
+    "description": "تكوين تفضيلات الإشعارات",
+    "notificationSettings": "إعدادات الإشعارات",
+    "manageNotifications": "إدارة إشعاراتك",
+    "manageDescription": "تحكم في الإشعارات التي تتلقاها لتبقى على اطلاع بالتحديثات المهمة مع تقليل الإزعاج غير الضروري.",
+    "notificationTypes": "أنواع الإشعارات",
+    "pushNotificationStatus": "حالة الإشعارات الفورية",
+    "advancedSettings": "الإعدادات المتقدمة",
+    "maintenanceRequests": {
+      "title": "طلبات الصيانة",
+      "description": "احصل على إشعار عند تقديم طلبات صيانة جديدة"
+    },
+    "paymentReminders": {
+      "title": "تذكير المدفوعات",
+      "description": "تلقى تنبيهات للمدفوعات القادمة أو المتأخرة"
+    },
+    "contractExpirations": {
+      "title": "انتهاء العقود",
+      "description": "احصل على إشعار عندما تكون العقود على وشك الانتهاء"
+    },
+    "systemUpdates": {
+      "title": "تحديثات النظام",
+      "description": "تلقى إشعارات حول تحديثات التطبيق والميزات الجديدة"
+    },
+    "pushEnabled": "الإشعارات الفورية مفعلة",
+    "pushDisabled": "الإشعارات الفورية معطلة",
+    "pushDescription": "ستتلقى إشعارات فورية على جهازك لأنواع الإشعارات المفعلة. لتعطيل جميع الإشعارات الفورية، قم بتغيير إعدادات جهازك.",
+    "notificationPreferences": {
+      "title": "تفضيلات الإشعارات",
+      "description": "تكوين إعدادات الإشعارات المتقدمة والتوقيت والأولويات"
+    },
+    "notificationCenter": {
+      "title": "مركز الإشعارات",
+      "description": "عرض وإدارة جميع إشعاراتك"
+    }
+  },
+  "language": {
+    "title": "اللغة",
+    "description": "تغيير لغتك المفضلة والإعدادات الإقليمية",
+    "choose": "اختر لغتك",
+    "available": "اللغات المتاحة",
+    "confirmChange": {
+      "title": "تغيير اللغة",
+      "message": "هل أنت متأكد من أنك تريد تغيير اللغة إلى {{language}}؟ سيتم إعادة تشغيل التطبيق لتطبيق التغييرات."
+    },
+    "changeError": "فشل في تغيير اللغة. يرجى المحاولة مرة أخرى."
+  },
+  "theme": {
+    "title": "المظهر",
+    "description": "تخصيص مظهر التطبيق",
+    "choose": "اختر المظهر",
+    "appearanceOptions": "خيارات المظهر",
+    "currentTheme": "المظهر الحالي",
+    "themeBenefits": "فوائد المظاهر",
+    "implementationStatus": "حالة التنفيذ",
+    "lightTheme": {
+      "title": "المظهر الفاتح",
+      "description": "واجهة نظيفة ومشرقة للاستخدام النهاري",
+      "benefit": "رؤية أفضل في البيئات المضيئة، يقلل إجهاد العين أثناء النهار"
+    },
+    "darkTheme": {
+      "title": "المظهر الداكن",
+      "description": "مريح للعينين في الليل أو البيئات منخفضة الإضاءة",
+      "benefit": "يقلل إجهاد العين في الإضاءة المنخفضة، يوفر البطارية في شاشات OLED"
+    },
+    "systemTheme": {
+      "title": "تتبع إعدادات الجهاز",
+      "description": "التبديل التلقائي بين الفاتح والداكن حسب إعدادات جهازك",
+      "benefit": "يتكيف بسلاسة مع إعدادات مظهر جهازك"
+    },
+    "selectPreferred": "اختر وضع المظهر المفضل لديك. سيتم تطبيق المظهر فوراً وحفظه لإطلاق التطبيق في المستقبل.",
+    "implementationNote": "يتم حالياً تنفيذ المظهر الداكن عبر جميع شاشات التطبيق. قد تظل بعض الشاشات تعرض في المظهر الفاتح أثناء اكتمال التنفيذ."
+  },
+  "currency": {
+    "title": "العملة",
+    "description": "تعيين العملة المفضلة لعرض البيانات المالية",
+    "regionalSetting": "إعداد العملة الإقليمية",
+    "regionalDescription": "يتم تعيين العملة تلقائياً بناءً على موقعك الإقليمي. هذا يضمن الامتثال للوائح المالية والمعايير المحلية.",
+    "currentCurrency": "العملة الحالية",
+    "locked": "مقفل",
+    "saudiRiyal": "الريال السعودي",
+    "currencyCode": "ر.س (SAR)",
+    "currencyRegion": "المملكة العربية السعودية",
+    "regionalInformation": "المعلومات الإقليمية",
+    "country": "البلد:",
+    "saudiArabia": "المملكة العربية السعودية (SA)",
+    "currencyCodeLabel": "رمز العملة:",
+    "currencySymbolLabel": "رمز العملة:",
+    "currencySymbolValue": "﷼ / ر.س",
+    "decimalPlaces": "الأماكن العشرية:",
+    "formatExample": "مثال التنسيق:",
+    "formatExampleValue": "﷼ 1,250.50",
+    "whyLocked": "لماذا العملة مقفلة",
+    "lockedExplanation": "إعداد العملة مقفل لضمان:",
+    "complianceRegulations": "• الامتثال للوائح المالية السعودية",
+    "consistencyValuations": "• الاتساق في تقييمات العقارات والعقود",
+    "taxCalculations": "• حسابات الضرائب والتقارير الصحيحة",
+    "financialStatements": "• البيانات المالية والسجلات الدقيقة",
+    "bankingIntegration": "• التكامل مع الأنظمة المصرفية المحلية",
+    "currencyFeatures": "ميزات العملة",
+    "automaticFormatting": {
+      "title": "التنسيق التلقائي",
+      "description": "يتم تنسيق جميع المبالغ تلقائياً وفقاً للمعايير السعودية"
+    },
+    "vatIntegration": {
+      "title": "تكامل ضريبة القيمة المضافة",
+      "description": "دعم مدمج لحسابات وتقارير ضريبة القيمة المضافة السعودية"
+    },
+    "numberFormatting": {
+      "title": "تنسيق الأرقام",
+      "description": "فواصل الآلاف وترقيم الأعشار الصحيح"
+    }
+  },
+  "support": {
+    "title": "اتصل بالدعم",
+    "description": "احصل على المساعدة والدعم التقني",
+    "getHelp": "احصل على المساعدة والدعم",
+    "helpDescription": "هل تحتاج مساعدة؟ أرسل لنا رسالة وسيقوم فريق الدعم بالرد عليك في أسرع وقت ممكن. نحن هنا لمساعدتك!",
+    "commonTopics": "مواضيع الدعم الشائعة",
+    "technicalIssues": {
+      "title": "المشاكل التقنية",
+      "description": "أخطاء التطبيق، مشاكل تسجيل الدخول، مشاكل المزامنة"
+    },
+    "accountSupport": {
+      "title": "دعم الحساب",
+      "description": "الملف الشخصي، الإعدادات، أسئلة الاشتراك"
+    },
+    "featureRequests": {
+      "title": "طلبات الميزات",
+      "description": "اقتراحات لميزات جديدة أو تحسينات"
+    },
+    "sendMessage": "إرسال رسالة",
+    "supportEmail": "بريد الدعم:",
+    "subject": "الموضوع",
+    "subjectPlaceholder": "عن ماذا تتحدث؟",
+    "message": "الرسالة",
+    "messagePlaceholder": "اوصف مشكلتك أو سؤالك بالتفصيل...",
+    "characters": "حرف",
+    "sendMessageButton": "إرسال الرسالة",
+    "missingInfo": "معلومات مفقودة",
+    "missingInfoMessage": "يرجى إدخال الموضوع والرسالة قبل الإرسال.",
+    "emailNotAvailable": "البريد الإلكتروني غير متاح",
+    "emailNotConfigured": "البريد الإلكتروني غير مُعد على هذا الجهاز. يرجى إعداد تطبيق البريد الإلكتروني أولاً.",
+    "emailSent": "تم إرسال البريد الإلكتروني",
+    "emailSentMessage": "تم إرسال رسالتك بنجاح!",
+    "error": "خطأ",
+    "sendError": "فشل في إرسال البريد الإلكتروني. يرجى المحاولة مرة أخرى لاحقاً.",
+    "responseTime": "وقت الاستجابة",
+    "responseDescription": "نحن عادة نرد على طلبات الدعم خلال 24-48 ساعة خلال أيام العمل. للمسائل العاجلة، يرجى وضع علامة \"[عاجل]\" في عنوان رسالتك.",
+    "businessHours": "ساعات العمل",
+    "businessHoursText": "الأحد - الخميس: 9:00 ص - 6:00 م (AST)\nالجمعة - السبت: مغلق",
+    "alternativeContact": "طرق الاتصال البديلة",
+    "phoneSupport": "دعم هاتفي متاح للحسابات المميزة",
+    "liveChat": "دردشة مباشرة خلال ساعات العمل"
+  },
+  "privacy": {
+    "title": "سياسة الخصوصية", 
+    "description": "اقرأ سياسة الخصوصية وممارسات التعامل مع البيانات"
+  },
+  "terms": {
+    "title": "شروط الخدمة",
+    "description": "اقرأ شروط الخدمة واتفاقية المستخدم"
+  },
+  "about": {
+    "title": "حول التطبيق",
+    "description": "معلومات التطبيق وتفاصيل الإصدار"
+  },
+  "version": "الإصدار",
+  "logout": "تسجيل الخروج",
+  "logoutConfirm": "هل أنت متأكد من أنك تريد تسجيل الخروج؟",
+  "accountSettings": "إعدادات الحساب",
+  "appSettings": "إعدادات التطبيق",
+  "legal": "قانوني",
+  "languageSettings": {
+    "currentLanguage": "اللغة الحالية",
+    "selectLanguage": "اختر اللغة",
+    "languageChanged": "تم تغيير اللغة بنجاح",
+    "availableLanguages": {
+      "en": "English",
+      "ar": "العربية"
+    }
+  },
+  "helpSection": "المساعدة والدعم",
+  "people": "الأشخاص",
+  "peopleDesc": "إدارة المستأجرين والملاك والمتصلين",
+  "maintenance": "الصيانة",
+  "maintenanceDesc": "أوامر العمل وطلبات الصيانة",
+  "finance": "المالية",
+  "financeDesc": "القسائم والفواتير والحسابات",
+  "myProfile": "ملفي الشخصي",
+  "myProfileDesc": "إعداد ملفك الشخصي",
+  "notificationsDesc": "تكوين تفضيلات الإشعارات",
+  "languageDesc": "العربية",
+  "themeDesc": {
+    "light": "فاتح",
+    "dark": "داكن",
+    "system": "النظام"
+  },
+  "currencyDesc": "الريال السعودي (ر.س) - افتراضي",
+  "contactSupport": "اتصل بالدعم",
+  "contactSupportDesc": "احصل على المساعدة عبر البريد الإلكتروني",
+  "termsOfServiceDesc": "اقرأ الشروط والأحكام",
+  "privacyPolicyDesc": "كيف نحمي بياناتك",
+  "versionDesc": "1.0.0 (تجريبي)",
+  "lastUpdated": "آخر تحديث",
+  "lastUpdatedDesc": "21 ديسمبر 2024",
+  "signOut": "تسجيل الخروج",
+  "signOutConfirmTitle": "تسجيل الخروج",
+  "signOutConfirmMessage": "هل أنت متأكد من أنك تريد تسجيل الخروج؟",
+  "cancel": "إلغاء",
+  "help": {
+    "title": "مركز المساعدة",
+    "description": "احصل على المساعدة وتعلم كيفية استخدام التطبيق",
+    "quickActions": "الإجراءات السريعة",
+    "downloadManual": "تحميل دليل المستخدم",
+    "videoTutorials": "فيديوهات تعليمية",
+    "contactSupport": "اتصل بالدعم",
+    "gettingStarted": "البدء",
+    "quickStartGuide": "دليل البدء السريع",
+    "settingUpAccount": "إعداد حسابك",
+    "addingFirstProperty": "إضافة عقارك الأول",
+    "invitingTenants": "دعوة المستأجرين",
+    "propertyManagement": "إدارة العقارات",
+    "managingProperties": "إدارة العقارات",
+    "handlingMaintenance": "التعامل مع طلبات الصيانة",
+    "rentCollection": "تحصيل الإيجار",
+    "tenantCommunication": "التواصل مع المستأجرين",
+    "financialManagement": "الإدارة المالية",
+    "creatingVouchers": "إنشاء القسائم",
+    "generatingReports": "إنشاء التقارير",
+    "managingInvoices": "إدارة الفواتير",
+    "taxPreparation": "إعداد الضرائب",
+    "troubleshooting": "استكشاف الأخطاء وإصلاحها",
+    "commonIssues": "المشاكل الشائعة",
+    "errorMessages": "رسائل الخطأ",
+    "performanceTips": "نصائح الأداء",
+    "browserCompatibility": "توافق المتصفح",
+    "supportOptions": "اتصل بالدعم",
+    "supportDescription": "هل تحتاج مساعدة إضافية؟ فريق الدعم لدينا هنا لمساعدتك.",
+    "liveChat": "الدردشة المباشرة",
+    "liveChatDescription": "تحدث مع فريق الدعم لدينا",
+    "phoneSupport": "الدعم الهاتفي",
+    "phoneSupportDescription": "اتصل بنا على +1 (555) 123-4567",
+    "emailSupport": "دعم البريد الإلكتروني",
+    "emailSupportDescription": "أرسل لنا بريد إلكتروني",
+    "communityForum": "منتدى المجتمع",
+    "communityForumDescription": "اسأل المجتمع",
+    "available": "متاح",
+    "offline": "غير متصل",
+    "appInformation": "معلومات التطبيق",
+    "version": "الإصدار:",
+    "lastUpdated": "آخر تحديث:",
+    "platform": "المنصة:",
+    "webApplication": "تطبيق ويب"
+  }
+} 

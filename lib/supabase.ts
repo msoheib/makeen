@@ -5,9 +5,12 @@ import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
 
 // Get Supabase URL and anon key from environment variables
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || 
-                   Constants.expoConfig?.extra?.EXPO_PUBLIC_SUPABASE_URL || 
-                   'https://fbabpaorcvatejkrelrf.supabase.co';
+const originalSupabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || 
+                           Constants.expoConfig?.extra?.EXPO_PUBLIC_SUPABASE_URL || 
+                           'https://fbabpaorcvatejkrelrf.supabase.co';
+
+// Directly use Supabase URL (CORS must be enabled in Supabase dashboard)
+const supabaseUrl = originalSupabaseUrl;
 
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 
                        Constants.expoConfig?.extra?.EXPO_PUBLIC_SUPABASE_ANON_KEY || 
@@ -58,6 +61,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: Platform.OS === 'web' && typeof window !== 'undefined',
+  },
+  global: {
+    headers: {
+      'X-Client-Info': 'real-estate-mg',
+    },
   },
 });
 

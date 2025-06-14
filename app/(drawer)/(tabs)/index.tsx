@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Platform } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { theme, spacing } from '@/lib/theme';
+import { theme, spacing, rtlStyles } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
 import { propertiesApi, vouchersApi, contractsApi, maintenanceApi } from '@/lib/api';
 import { useApi } from '@/hooks/useApi';
+import { useTranslation } from '@/lib/useTranslation';
 import ModernHeader from '@/components/ModernHeader';
 import RentCard from '@/components/RentCard';
 import CashflowCard from '@/components/CashflowCard';
@@ -13,6 +14,7 @@ import CashflowCard from '@/components/CashflowCard';
 export default function DashboardScreen() {
   const router = useRouter();
   const user = useAppStore(state => state.user);
+  const { t } = useTranslation('dashboard');
 
   // Fetch dashboard data using our API layer
   const { data: propertySummary, loading: propertiesLoading } = useApi(
@@ -63,7 +65,9 @@ export default function DashboardScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.greetingContainer}>
-          <Text style={styles.greeting}>Hello {user?.first_name || 'User'},</Text>
+          <Text style={[styles.greeting, rtlStyles.textLeft]}>
+            {t('greetings.hello', { name: user?.first_name || t('common:user') })}
+          </Text>
         </View>
         
         <RentCard

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text, ActivityIndicator } from 'react-native-paper';
-import { theme, spacing, shadows } from '@/lib/theme';
+import { theme, spacing, shadows, rtlStyles, rtlLayout } from '@/lib/theme';
 import ModernCard from './ModernCard';
 
 interface StatCardProps {
@@ -78,10 +78,10 @@ export default function StatCard({
 const styles = StyleSheet.create({
   container: {
     minWidth: 160,
-    marginRight: spacing.m,
+    ...rtlStyles.marginEnd(spacing.m),
   },
   header: {
-    flexDirection: 'row',
+    ...rtlStyles.row,
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: spacing.s,
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 12,
-    alignSelf: 'flex-start',
+    alignSelf: rtlLayout.justify.start,
   },
   trendText: {
     fontSize: 12,
@@ -123,6 +123,6 @@ const styles = StyleSheet.create({
   loadingContainer: {
     height: 32,
     justifyContent: 'center',
-    alignItems: 'flex-start',
+    alignItems: rtlLayout.justify.start,
   },
 });

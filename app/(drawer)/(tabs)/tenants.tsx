@@ -9,9 +9,11 @@ import { Users, UserPlus, Phone, Mail } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import StatCard from '@/components/StatCard';
+import { useTranslation } from '@/lib/useTranslation';
 
 export default function TenantsScreen() {
   const router = useRouter();
+  const { t } = useTranslation('tenants');
   const [searchQuery, setSearchQuery] = useState('');
   
   // Use the API hook for fetching tenants
@@ -94,7 +96,7 @@ export default function TenantsScreen() {
                       : theme.colors.warning 
                   }
                 ]}>
-                  {item.status === 'active' ? 'Active' : 'Pending'}
+                  {item.status === 'active' ? t('activeStatus') : t('pendingStatus')}
                 </Text>
               </View>
             </View>
@@ -116,16 +118,16 @@ export default function TenantsScreen() {
   const renderLoadingState = () => (
     <View style={styles.loadingContainer}>
       <ActivityIndicator size="large" color={theme.colors.primary} />
-      <Text style={styles.loadingText}>Loading tenants...</Text>
+      <Text style={styles.loadingText}>{t('common:loading')}</Text>
     </View>
   );
 
   const renderErrorState = () => (
     <ModernCard style={styles.errorState}>
-      <Text style={styles.errorTitle}>Unable to load tenants</Text>
+      <Text style={styles.errorTitle}>{t('common:error')}</Text>
       <Text style={styles.errorSubtitle}>{error}</Text>
       <Button mode="contained" onPress={refetch} style={styles.retryButton}>
-        Try Again
+        {t('common:tryAgain')}
       </Button>
     </ModernCard>
   );
@@ -133,11 +135,11 @@ export default function TenantsScreen() {
   const renderEmptyState = () => (
     <ModernCard style={styles.emptyState}>
       <UserPlus size={48} color={theme.colors.onSurfaceVariant} />
-      <Text style={styles.emptyStateTitle}>No tenants found</Text>
+      <Text style={styles.emptyStateTitle}>{t('noTenantsFound')}</Text>
       <Text style={styles.emptyStateSubtitle}>
         {searchQuery 
-          ? 'Try adjusting your search' 
-          : 'Add your first tenant to get started'}
+          ? t('adjustSearch') 
+          : t('addFirstTenant')}
       </Text>
     </ModernCard>
   );
@@ -145,8 +147,8 @@ export default function TenantsScreen() {
   return (
     <View style={styles.container}>
       <ModernHeader
-        title="Tenants"
-        subtitle="Manage your tenants"
+        title={t('title')}
+        subtitle={t('subtitle')}
         variant="dark"
         showNotifications
         isHomepage={false}
@@ -160,25 +162,25 @@ export default function TenantsScreen() {
             showsHorizontalScrollIndicator={false}
             data={[
               {
-                title: 'Total Tenants',
+                title: t('totalTenants'),
                 value: stats.total.toString(),
                 color: theme.colors.primary,
                 icon: <Users size={20} color={theme.colors.primary} />,
               },
               {
-                title: 'Active',
+                title: t('activeTenants'),
                 value: stats.active.toString(),
                 color: theme.colors.success,
                 icon: <Users size={20} color={theme.colors.success} />,
               },
               {
-                title: 'Pending',
+                title: t('pendingTenants'),
                 value: stats.pending.toString(),
                 color: theme.colors.warning,
                 icon: <Users size={20} color={theme.colors.warning} />,
               },
               {
-                title: 'Late Payments',
+                title: t('latePayments'),
                 value: stats.late.toString(),
                 color: theme.colors.error,
                 icon: <Users size={20} color={theme.colors.error} />,
@@ -202,7 +204,7 @@ export default function TenantsScreen() {
       {!loading && (
         <View style={styles.filtersSection}>
           <Searchbar
-            placeholder="Search tenants..."
+            placeholder={t('searchPlaceholder')}
             onChangeText={setSearchQuery}
             value={searchQuery}
             style={styles.searchbar}

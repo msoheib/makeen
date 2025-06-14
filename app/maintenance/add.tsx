@@ -9,6 +9,7 @@ import { Tables, TablesInsert } from '@/lib/database.types';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import { Wrench, AlertTriangle, Building, Search, Check } from 'lucide-react-native';
+import { useTranslation } from '@/lib/useTranslation';
 
 type MaintenanceRequest = TablesInsert<'maintenance_requests'>;
 type Property = Tables<'properties'>;
@@ -23,6 +24,7 @@ interface FormData {
 
 export default function AddMaintenanceRequestScreen() {
   const router = useRouter();
+  const { t } = useTranslation('maintenance');
   const [loading, setLoading] = useState(false);
   const [showPropertyModal, setShowPropertyModal] = useState(false);
   const [propertySearch, setPropertySearch] = useState('');
@@ -57,19 +59,19 @@ export default function AddMaintenanceRequestScreen() {
     const newErrors: Record<string, string> = {};
 
     if (!formData.title.trim()) {
-      newErrors.title = 'Title is required';
+      newErrors.title = t('common:required');
     } else if (formData.title.trim().length < 5) {
-      newErrors.title = 'Title must be at least 5 characters';
+      newErrors.title = t('common:minLength', { length: 5 });
     }
 
     if (!formData.description.trim()) {
-      newErrors.description = 'Description is required';
+      newErrors.description = t('common:required');
     } else if (formData.description.trim().length < 10) {
-      newErrors.description = 'Description must be at least 10 characters';
+      newErrors.description = t('common:minLength', { length: 10 });
     }
 
     if (!formData.property_id) {
-      newErrors.property_id = 'Property selection is required';
+      newErrors.property_id = t('selectProperty') + ' ' + t('common:required');
     }
 
     setErrors(newErrors);
@@ -100,18 +102,18 @@ export default function AddMaintenanceRequestScreen() {
       }
 
       Alert.alert(
-        'Success',
-        'Maintenance request submitted successfully!',
+        t('common:success'),
+        t('requestCreated'),
         [
           {
-            text: 'OK',
+            text: t('common:ok'),
             onPress: () => router.replace('/maintenance'),
           },
         ]
       );
     } catch (error: any) {
       console.error('Error submitting maintenance request:', error);
-      Alert.alert('Error', error.message || 'Failed to submit maintenance request');
+      Alert.alert(t('common:error'), error.message || t('common:tryAgain'));
     } finally {
       setLoading(false);
     }
@@ -139,24 +141,19 @@ export default function AddMaintenanceRequestScreen() {
   };
 
   const getPriorityDescription = (priority: string) => {
-    switch (priority) {
-      case 'low': 
-        return 'Non-urgent issues that can be addressed during regular maintenance.';
-      case 'medium': 
-        return 'Standard maintenance issues that should be addressed within a few days.';
-      case 'high': 
-        return 'Important issues that need attention within 24-48 hours.';
-      case 'urgent': 
-        return 'Emergency issues requiring immediate attention (safety hazards, water leaks, etc.).';
-      default: 
-        return '';
-    }
+    const descriptions: Record<string, string> = {
+      low: t('priorityDescriptions.low'),
+      medium: t('priorityDescriptions.medium'),
+      high: t('priorityDescriptions.high'),
+      urgent: t('priorityDescriptions.urgent'),
+    };
+    return descriptions[priority] || '';
   };
 
   return (
     <View style={styles.container}>
       <ModernHeader 
-        title="New Maintenance Request"
+        title={t('addRequest')}
         showBack={true}
         onBack={() => router.back()}
       />
@@ -166,11 +163,11 @@ export default function AddMaintenanceRequestScreen() {
         <ModernCard style={styles.section}>
           <View style={styles.sectionHeader}>
             <Wrench size={20} color={theme.colors.primary} />
-            <Text style={styles.sectionTitle}>Request Details</Text>
+            <Text style={styles.sectionTitle}>{t('requestDetails')}</Text>
           </View>
 
           <TextInput
-            label="Title *"
+            label={`${t('common:title')} *`}
             value={formData.title}
             onChangeText={(text) => {
               setFormData({ ...formData, title: text });
@@ -181,13 +178,13 @@ export default function AddMaintenanceRequestScreen() {
             mode="outlined"
             style={styles.input}
             error={!!errors.title}
-            placeholder="Brief description of the issue"
+            placeholder={t('common:enterTitle')}
             maxLength={100}
           />
           {errors.title && <Text style={styles.errorText}>{errors.title}</Text>}
 
           <TextInput
-            label="Description *"
+            label={`${t('description')} *`}
             value={formData.description}
             onChangeText={(text) => {
               setFormData({ ...formData, description: text });
@@ -200,13 +197,13 @@ export default function AddMaintenanceRequestScreen() {
             numberOfLines={4}
             style={styles.input}
             error={!!errors.description}
-            placeholder="Detailed description of the maintenance issue..."
+            placeholder={t('enterDescription')}
             maxLength={500}
           />
           {errors.description && <Text style={styles.errorText}>{errors.description}</Text>}
           
           <Text style={styles.characterCount}>
-            {formData.description.length}/500 characters
+            {formData.description.length}/500 {t('common:characters')}
           </Text>
         </ModernCard>
 
@@ -214,7 +211,7 @@ export default function AddMaintenanceRequestScreen() {
         <ModernCard style={styles.section}>
           <View style={styles.sectionHeader}>
             <AlertTriangle size={20} color={getPriorityColor(formData.priority)} />
-            <Text style={styles.sectionTitle}>Priority Level</Text>
+            <Text style={styles.sectionTitle}>{t('priorities.title')}</Text>
           </View>
 
           <SegmentedButtons
@@ -223,22 +220,22 @@ export default function AddMaintenanceRequestScreen() {
             buttons={[
               { 
                 value: 'low', 
-                label: 'Low',
+                label: t('priorities.low'),
                 style: formData.priority === 'low' ? { backgroundColor: theme.colors.primaryContainer } : {}
               },
               { 
                 value: 'medium', 
-                label: 'Medium',
+                label: t('priorities.medium'),
                 style: formData.priority === 'medium' ? { backgroundColor: theme.colors.primaryContainer } : {}
               },
               { 
                 value: 'high', 
-                label: 'High',
+                label: t('priorities.high'),
                 style: formData.priority === 'high' ? { backgroundColor: theme.colors.errorContainer } : {}
               },
               { 
                 value: 'urgent', 
-                label: 'Urgent',
+                label: t('priorities.urgent'),
                 style: formData.priority === 'urgent' ? { backgroundColor: theme.colors.errorContainer } : {}
               },
             ]}
@@ -256,7 +253,7 @@ export default function AddMaintenanceRequestScreen() {
         <ModernCard style={styles.section}>
           <View style={styles.sectionHeader}>
             <Building size={20} color={theme.colors.secondary} />
-            <Text style={styles.sectionTitle}>Property Selection</Text>
+            <Text style={styles.sectionTitle}>{t('selectProperty')}</Text>
           </View>
 
           <TouchableOpacity
@@ -277,13 +274,13 @@ export default function AddMaintenanceRequestScreen() {
                     </Chip>
                   )}
                 </View>
-                                 <Check size={20} color={theme.colors.primary} />
+                <Check size={20} color={theme.colors.primary} />
               </View>
             ) : (
-                             <View style={styles.emptyPropertySelector}>
-                 <Building size={24} color={theme.colors.onSurfaceVariant} />
-                 <Text style={styles.placeholderText}>Tap to select property</Text>
-               </View>
+              <View style={styles.emptyPropertySelector}>
+                <Building size={24} color={theme.colors.onSurfaceVariant} />
+                <Text style={styles.placeholderText}>{t('tapToSelect')}</Text>
+              </View>
             )}
           </TouchableOpacity>
           {errors.property_id && <Text style={styles.errorText}>{errors.property_id}</Text>}
@@ -299,7 +296,7 @@ export default function AddMaintenanceRequestScreen() {
             style={styles.submitButton}
             contentStyle={styles.submitButtonContent}
           >
-            {loading ? 'Submitting...' : 'Submit Request'}
+            {loading ? t('common:submitting') : t('submitRequest')}
           </Button>
         </View>
       </ScrollView>
@@ -312,12 +309,12 @@ export default function AddMaintenanceRequestScreen() {
           contentContainerStyle={styles.modalContainer}
         >
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Select Property</Text>
-            <Button onPress={() => setShowPropertyModal(false)}>Cancel</Button>
+            <Text style={styles.modalTitle}>{t('selectProperty')}</Text>
+            <Button onPress={() => setShowPropertyModal(false)}>{t('common:cancel')}</Button>
           </View>
 
           <Searchbar
-            placeholder="Search properties..."
+            placeholder={t('searchProperties')}
             onChangeText={setPropertySearch}
             value={propertySearch}
             style={styles.searchBar}
@@ -328,20 +325,20 @@ export default function AddMaintenanceRequestScreen() {
             {propertiesLoading ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={theme.colors.primary} />
-                <Text style={styles.loadingText}>Loading properties...</Text>
+                <Text style={styles.loadingText}>{t('common:loading')}</Text>
               </View>
             ) : propertiesError ? (
               <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>Error loading properties</Text>
-                <Button onPress={refetchProperties}>Retry</Button>
+                <Text style={styles.errorText}>{t('common:error')}</Text>
+                <Button onPress={refetchProperties}>{t('common:retry')}</Button>
               </View>
-                         ) : filteredProperties.length === 0 ? (
-               <View style={styles.emptyContainer}>
-                 <Building size={48} color={theme.colors.onSurfaceVariant} />
-                 <Text style={styles.emptyText}>
-                   {propertySearch ? 'No properties match your search' : 'No properties available'}
-                 </Text>
-               </View>
+            ) : filteredProperties.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Building size={48} color={theme.colors.onSurfaceVariant} />
+                <Text style={styles.emptyText}>
+                  {propertySearch ? t('noPropertiesMatch') : t('noPropertiesAvailable')}
+                </Text>
+              </View>
             ) : (
               filteredProperties.map((property) => (
                 <TouchableOpacity

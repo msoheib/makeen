@@ -4,12 +4,14 @@ import { Text, IconButton, Button, TextInput, Avatar } from 'react-native-paper'
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
+import { useTranslation } from '@/lib/useTranslation';
 import { ArrowLeft, User, Mail, Phone, MapPin, Edit3, Save, X, Camera, Shield } from 'lucide-react-native';
 import ModernCard from '@/components/ModernCard';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { settings, updateSettings } = useAppStore();
+  const { t } = useTranslation('settings');
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState({
     name: settings.userProfile?.name || '',
@@ -23,7 +25,7 @@ export default function ProfileScreen() {
 
   const handleSave = () => {
     if (!editedProfile.name.trim() || !editedProfile.email.trim()) {
-      Alert.alert('Missing Information', 'Name and email are required fields.');
+      Alert.alert(t('profile.missingInformation'), t('profile.nameEmailRequired'));
       return;
     }
 
@@ -36,7 +38,7 @@ export default function ProfileScreen() {
     });
     
     setIsEditing(false);
-    Alert.alert('Success', 'Profile updated successfully!');
+    Alert.alert(t('profile.success'), t('profile.profileUpdateSuccess'));
   };
 
   const handleCancel = () => {
@@ -54,9 +56,9 @@ export default function ProfileScreen() {
 
   const handleChangePhoto = () => {
     Alert.alert(
-      'Change Profile Photo',
-      'Photo upload functionality will be available in a future update.',
-      [{ text: 'OK' }]
+      t('profile.changeProfilePhoto'),
+      t('profile.photoUploadComingSoon'),
+      [{ text: t('common:ok') }]
     );
   };
 
@@ -70,9 +72,9 @@ export default function ProfileScreen() {
   };
 
   const profileStats = [
-    { label: 'Properties Managed', value: '0', icon: MapPin },
-    { label: 'Active Tenants', value: '0', icon: User },
-    { label: 'Account Type', value: 'Standard', icon: Shield },
+    { label: t('profile.propertiesManaged'), value: '0', icon: MapPin },
+    { label: t('profile.activeTenants'), value: '0', icon: User },
+    { label: t('profile.accountType'), value: t('profile.standard'), icon: Shield },
   ];
 
   return (
@@ -83,7 +85,7 @@ export default function ProfileScreen() {
           onPress={() => router.back()}
           style={styles.backButton}
         />
-        <Text style={styles.headerTitle}>My Profile</Text>
+        <Text style={styles.headerTitle}>{t('profile.myProfile')}</Text>
         <IconButton
           icon={() => isEditing ? <X size={24} color={theme.colors.error} /> : <Edit3 size={24} color={theme.colors.primary} />}
           onPress={isEditing ? handleCancel : () => setIsEditing(true)}
@@ -111,13 +113,13 @@ export default function ProfileScreen() {
             </View>
             <View style={styles.profileInfo}>
               <Text style={styles.profileName}>
-                {editedProfile.name || 'User Name'}
+                {editedProfile.name || t('common:user')}
               </Text>
               <Text style={styles.profileEmail}>
                 {editedProfile.email || 'user@example.com'}
               </Text>
               <Text style={styles.profileCompany}>
-                {editedProfile.company || 'Real Estate Professional'}
+                {editedProfile.company || t('profile.realEstateProfessional')}
               </Text>
             </View>
           </View>
@@ -125,7 +127,7 @@ export default function ProfileScreen() {
 
         {/* Profile Stats */}
         <ModernCard style={styles.statsCard}>
-          <Text style={styles.statsTitle}>Account Overview</Text>
+          <Text style={styles.statsTitle}>{t('profile.accountOverview')}</Text>
           <View style={styles.statsContainer}>
             {profileStats.map((stat, index) => (
               <View key={index} style={styles.statItem}>
@@ -142,7 +144,7 @@ export default function ProfileScreen() {
         {/* Profile Details */}
         <ModernCard style={styles.detailsCard}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Personal Information</Text>
+            <Text style={styles.sectionTitle}>{t('profile.personalInformation')}</Text>
             {isEditing && (
               <Button
                 mode="contained"
@@ -152,7 +154,7 @@ export default function ProfileScreen() {
                 icon={() => <Save size={16} color="white" />}
                 compact
               >
-                Save
+                {t('profile.save')}
               </Button>
             )}
           </View>
@@ -163,19 +165,19 @@ export default function ProfileScreen() {
                 <User size={20} color={theme.colors.onSurfaceVariant} />
               </View>
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Full Name</Text>
+                <Text style={styles.detailLabel}>{t('profile.fullName')}</Text>
                 {isEditing ? (
                   <TextInput
                     mode="outlined"
                     value={editedProfile.name}
                     onChangeText={(text) => setEditedProfile(prev => ({ ...prev, name: text }))}
-                    placeholder="Enter your full name"
+                    placeholder={t('profile.enterFullName')}
                     style={styles.textInput}
                     outlineColor={theme.colors.outline}
                     activeOutlineColor={theme.colors.primary}
                   />
                 ) : (
-                  <Text style={styles.detailValue}>{editedProfile.name || 'Not set'}</Text>
+                  <Text style={styles.detailValue}>{editedProfile.name || t('profile.notSet')}</Text>
                 )}
               </View>
             </View>
@@ -185,20 +187,20 @@ export default function ProfileScreen() {
                 <Mail size={20} color={theme.colors.onSurfaceVariant} />
               </View>
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Email Address</Text>
+                <Text style={styles.detailLabel}>{t('profile.emailAddress')}</Text>
                 {isEditing ? (
                   <TextInput
                     mode="outlined"
                     value={editedProfile.email}
                     onChangeText={(text) => setEditedProfile(prev => ({ ...prev, email: text }))}
-                    placeholder="Enter your email"
+                    placeholder={t('profile.enterEmail')}
                     keyboardType="email-address"
                     style={styles.textInput}
                     outlineColor={theme.colors.outline}
                     activeOutlineColor={theme.colors.primary}
                   />
                 ) : (
-                  <Text style={styles.detailValue}>{editedProfile.email || 'Not set'}</Text>
+                  <Text style={styles.detailValue}>{editedProfile.email || t('profile.notSet')}</Text>
                 )}
               </View>
             </View>
@@ -208,20 +210,20 @@ export default function ProfileScreen() {
                 <Phone size={20} color={theme.colors.onSurfaceVariant} />
               </View>
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Phone Number</Text>
+                <Text style={styles.detailLabel}>{t('profile.phoneNumber')}</Text>
                 {isEditing ? (
                   <TextInput
                     mode="outlined"
                     value={editedProfile.phone}
                     onChangeText={(text) => setEditedProfile(prev => ({ ...prev, phone: text }))}
-                    placeholder="Enter your phone number"
+                    placeholder={t('profile.enterPhone')}
                     keyboardType="phone-pad"
                     style={styles.textInput}
                     outlineColor={theme.colors.outline}
                     activeOutlineColor={theme.colors.primary}
                   />
                 ) : (
-                  <Text style={styles.detailValue}>{editedProfile.phone || 'Not set'}</Text>
+                  <Text style={styles.detailValue}>{editedProfile.phone || t('profile.notSet')}</Text>
                 )}
               </View>
             </View>
@@ -231,19 +233,19 @@ export default function ProfileScreen() {
                 <MapPin size={20} color={theme.colors.onSurfaceVariant} />
               </View>
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Company/Business</Text>
+                <Text style={styles.detailLabel}>{t('profile.company')}</Text>
                 {isEditing ? (
                   <TextInput
                     mode="outlined"
                     value={editedProfile.company}
                     onChangeText={(text) => setEditedProfile(prev => ({ ...prev, company: text }))}
-                    placeholder="Enter your company name"
+                    placeholder={t('profile.enterCompany')}
                     style={styles.textInput}
                     outlineColor={theme.colors.outline}
                     activeOutlineColor={theme.colors.primary}
                   />
                 ) : (
-                  <Text style={styles.detailValue}>{editedProfile.company || 'Not set'}</Text>
+                  <Text style={styles.detailValue}>{editedProfile.company || t('profile.notSet')}</Text>
                 )}
               </View>
             </View>
@@ -252,7 +254,7 @@ export default function ProfileScreen() {
 
         {/* Address Information */}
         <ModernCard style={styles.addressCard}>
-          <Text style={styles.sectionTitle}>Address Information</Text>
+          <Text style={styles.sectionTitle}>{t('profile.addressInformation')}</Text>
           
           <View style={styles.detailsContainer}>
             <View style={styles.detailRow}>
@@ -260,13 +262,13 @@ export default function ProfileScreen() {
                 <MapPin size={20} color={theme.colors.onSurfaceVariant} />
               </View>
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Street Address</Text>
+                <Text style={styles.detailLabel}>{t('profile.streetAddress')}</Text>
                 {isEditing ? (
                   <TextInput
                     mode="outlined"
                     value={editedProfile.address}
                     onChangeText={(text) => setEditedProfile(prev => ({ ...prev, address: text }))}
-                    placeholder="Enter your address"
+                    placeholder={t('profile.enterAddress')}
                     multiline
                     numberOfLines={2}
                     style={styles.textInput}
@@ -274,37 +276,37 @@ export default function ProfileScreen() {
                     activeOutlineColor={theme.colors.primary}
                   />
                 ) : (
-                  <Text style={styles.detailValue}>{editedProfile.address || 'Not set'}</Text>
+                  <Text style={styles.detailValue}>{editedProfile.address || t('profile.notSet')}</Text>
                 )}
               </View>
             </View>
 
             <View style={styles.addressRow}>
               <View style={styles.addressColumn}>
-                <Text style={styles.detailLabel}>City</Text>
+                <Text style={styles.detailLabel}>{t('profile.city')}</Text>
                 {isEditing ? (
                   <TextInput
                     mode="outlined"
                     value={editedProfile.city}
                     onChangeText={(text) => setEditedProfile(prev => ({ ...prev, city: text }))}
-                    placeholder="City"
+                    placeholder={t('profile.enterCity')}
                     style={styles.smallTextInput}
                     outlineColor={theme.colors.outline}
                     activeOutlineColor={theme.colors.primary}
                   />
                 ) : (
-                  <Text style={styles.detailValue}>{editedProfile.city || 'Not set'}</Text>
+                  <Text style={styles.detailValue}>{editedProfile.city || t('profile.notSet')}</Text>
                 )}
               </View>
 
               <View style={styles.addressColumn}>
-                <Text style={styles.detailLabel}>Country</Text>
+                <Text style={styles.detailLabel}>{t('profile.country')}</Text>
                 {isEditing ? (
                   <TextInput
                     mode="outlined"
                     value={editedProfile.country}
                     onChangeText={(text) => setEditedProfile(prev => ({ ...prev, country: text }))}
-                    placeholder="Country"
+                    placeholder={t('profile.selectCountry')}
                     style={styles.smallTextInput}
                     outlineColor={theme.colors.outline}
                     activeOutlineColor={theme.colors.primary}
@@ -319,15 +321,15 @@ export default function ProfileScreen() {
 
         {/* Account Actions */}
         <ModernCard style={styles.actionsCard}>
-          <Text style={styles.sectionTitle}>Account Actions</Text>
+          <Text style={styles.sectionTitle}>{t('profile.accountActions')}</Text>
           
           <Button
             mode="outlined"
-            onPress={() => Alert.alert('Change Password', 'Password change functionality will be available in a future update.')}
+            onPress={() => Alert.alert(t('profile.changePassword'), t('profile.changePasswordDesc'), [{ text: t('common:ok') }])}
             style={styles.actionButton}
             icon={() => <Shield size={20} color={theme.colors.primary} />}
           >
-            Change Password
+            {t('profile.changePassword')}
           </Button>
 
           <Button
@@ -336,20 +338,20 @@ export default function ProfileScreen() {
             style={styles.actionButton}
             icon={() => <Shield size={20} color={theme.colors.onSurfaceVariant} />}
           >
-            Privacy Settings
+            {t('profile.privacySettings')}
           </Button>
 
           <Button
             mode="text"
             onPress={() => Alert.alert(
-              'Delete Account',
-              'Account deletion functionality will be available in a future update. Please contact support for assistance.',
-              [{ text: 'OK' }]
+              t('profile.deleteAccount'),
+              t('profile.deleteAccountDesc'),
+              [{ text: t('common:ok') }]
             )}
             style={styles.deleteButton}
             textColor={theme.colors.error}
           >
-            Delete Account
+            {t('profile.deleteAccount')}
           </Button>
         </ModernCard>
       </ScrollView>

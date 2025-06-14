@@ -152,6 +152,15 @@ class NotificationService {
       console.log('📱 Push token obtained:', token);
       return { success: true, pushToken: token };
     } catch (error) {
+      // Special handling for web VAPID key errors - these are not critical for testing
+      if (error instanceof Error && error.message.includes('notification.vapidPublicKey')) {
+        console.warn('🌐 Web push notifications require VAPID key configuration. Skipping for development.');
+        return { 
+          success: false, 
+          error: 'Web push requires VAPID configuration (development mode)' 
+        };
+      }
+      
       console.error('Error getting push token:', error);
       return { 
         success: false, 

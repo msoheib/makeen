@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import { NotificationEvent } from './realtime';
 import { PushNotificationData } from './notifications';
 
@@ -6,6 +7,34 @@ import { PushNotificationData } from './notifications';
 const NOTIFICATIONS_STORAGE_KEY = 'app_notifications';
 const MAX_NOTIFICATIONS = 100; // Keep only the latest 100 notifications
 const RETENTION_DAYS = 30; // Keep notifications for 30 days
+
+// Safe storage wrapper for web compatibility
+const safeStorage = {
+  async getItem(key: string): Promise<string | null> {
+    try {
+      if (Platform.OS === 'web' && typeof window === 'undefined') {
+        console.warn('Window not available, using memory storage fallback');
+        return null;
+      }
+      return await AsyncStorage.getItem(key);
+    } catch (error) {
+      console.warn('AsyncStorage getItem failed, using fallback:', error);
+      return null;
+    }
+  },
+  
+  async setItem(key: string, value: string): Promise<void> {
+    try {
+      if (Platform.OS === 'web' && typeof window === 'undefined') {
+        console.warn('Window not available, skipping storage save');
+        return;
+      }
+      await AsyncStorage.setItem(key, value);
+    } catch (error) {
+      console.warn('AsyncStorage setItem failed:', error);
+    }
+  }
+};
 
 // Enhanced notification interface for storage
 export interface StoredNotification {
@@ -55,7 +84,7 @@ class NotificationStorage {
         return this.cache;
       }
 
-      const stored = await AsyncStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
+      const stored = await safeStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
       let notifications: StoredNotification[] = [];
 
       if (stored) {
@@ -83,7 +112,7 @@ class NotificationStorage {
         .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
         .slice(0, MAX_NOTIFICATIONS);
 
-      await AsyncStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(limitedNotifications));
+      await safeStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(limitedNotifications));
       this.cache = limitedNotifications;
     } catch (error) {
       console.error('Error saving notifications:', error);

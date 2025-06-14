@@ -4,12 +4,14 @@ import { Text, IconButton, Chip } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
+import { useTranslation } from '@/lib/useTranslation';
 import { ArrowLeft, DollarSign, MapPin, Lock, Info } from 'lucide-react-native';
 import ModernCard from '@/components/ModernCard';
 
 export default function CurrencyScreen() {
   const router = useRouter();
   const { settings } = useAppStore();
+  const { t } = useTranslation('settings');
 
   return (
     <View style={styles.container}>
@@ -19,7 +21,7 @@ export default function CurrencyScreen() {
           onPress={() => router.back()}
           style={styles.backButton}
         />
-        <Text style={styles.headerTitle}>Currency</Text>
+        <Text style={styles.headerTitle}>{t('currency.title')}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -28,25 +30,24 @@ export default function CurrencyScreen() {
         <ModernCard style={styles.infoCard}>
           <View style={styles.infoHeader}>
             <DollarSign size={24} color={theme.colors.primary} />
-            <Text style={styles.infoTitle}>Regional Currency Setting</Text>
+            <Text style={styles.infoTitle}>{t('currency.regionalSetting')}</Text>
           </View>
           <Text style={styles.infoDescription}>
-            The currency is automatically set based on your regional location. 
-            This ensures compliance with local financial regulations and standards.
+            {t('currency.regionalDescription')}
           </Text>
         </ModernCard>
 
         {/* Current Currency */}
         <ModernCard style={styles.currencyCard}>
           <View style={styles.currencyHeader}>
-            <Text style={styles.sectionTitle}>Current Currency</Text>
+            <Text style={styles.sectionTitle}>{t('currency.currentCurrency')}</Text>
             <Chip
               mode="flat"
               style={styles.lockedChip}
               textStyle={styles.lockedChipText}
               icon={() => <Lock size={14} color={theme.colors.onSurfaceVariant} />}
             >
-              Locked
+              {t('currency.locked')}
             </Chip>
           </View>
           
@@ -55,9 +56,9 @@ export default function CurrencyScreen() {
               <Text style={styles.currencySymbol}>﷼</Text>
             </View>
             <View style={styles.currencyDetails}>
-              <Text style={styles.currencyName}>Saudi Riyal</Text>
-              <Text style={styles.currencyCode}>SAR (SR)</Text>
-              <Text style={styles.currencyRegion}>Kingdom of Saudi Arabia</Text>
+              <Text style={styles.currencyName}>{t('currency.saudiRiyal')}</Text>
+              <Text style={styles.currencyCode}>{t('currency.currencyCode')}</Text>
+              <Text style={styles.currencyRegion}>{t('currency.currencyRegion')}</Text>
             </View>
           </View>
         </ModernCard>
@@ -66,29 +67,29 @@ export default function CurrencyScreen() {
         <ModernCard style={styles.regionCard}>
           <View style={styles.regionHeader}>
             <MapPin size={20} color={theme.colors.secondary} />
-            <Text style={styles.regionTitle}>Regional Information</Text>
+            <Text style={styles.regionTitle}>{t('currency.regionalInformation')}</Text>
           </View>
           
           <View style={styles.regionDetails}>
             <View style={styles.regionItem}>
-              <Text style={styles.regionLabel}>Country:</Text>
-              <Text style={styles.regionValue}>Saudi Arabia (SA)</Text>
+              <Text style={styles.regionLabel}>{t('currency.country')}</Text>
+              <Text style={styles.regionValue}>{t('currency.saudiArabia')}</Text>
             </View>
             <View style={styles.regionItem}>
-              <Text style={styles.regionLabel}>Currency Code:</Text>
+              <Text style={styles.regionLabel}>{t('currency.currencyCodeLabel')}</Text>
               <Text style={styles.regionValue}>SAR</Text>
             </View>
             <View style={styles.regionItem}>
-              <Text style={styles.regionLabel}>Currency Symbol:</Text>
-              <Text style={styles.regionValue}>﷼ / SR</Text>
+              <Text style={styles.regionLabel}>{t('currency.currencySymbolLabel')}</Text>
+              <Text style={styles.regionValue}>{t('currency.currencySymbolValue')}</Text>
             </View>
             <View style={styles.regionItem}>
-              <Text style={styles.regionLabel}>Decimal Places:</Text>
+              <Text style={styles.regionLabel}>{t('currency.decimalPlaces')}</Text>
               <Text style={styles.regionValue}>2</Text>
             </View>
             <View style={styles.regionItem}>
-              <Text style={styles.regionLabel}>Format Example:</Text>
-              <Text style={styles.regionValue}>﷼ 1,250.50</Text>
+              <Text style={styles.regionLabel}>{t('currency.formatExample')}</Text>
+              <Text style={styles.regionValue}>{t('currency.formatExampleValue')}</Text>
             </View>
           </View>
         </ModernCard>
@@ -97,28 +98,28 @@ export default function CurrencyScreen() {
         <ModernCard style={styles.explanationCard}>
           <View style={styles.explanationHeader}>
             <Info size={20} color={theme.colors.warning} />
-            <Text style={styles.explanationTitle}>Why Currency is Locked</Text>
+            <Text style={styles.explanationTitle}>{t('currency.whyLocked')}</Text>
           </View>
           
           <View style={styles.explanationContent}>
             <Text style={styles.explanationText}>
-              The currency setting is locked to ensure:
+              {t('currency.lockedExplanation')}
             </Text>
             <View style={styles.explanationList}>
               <Text style={styles.explanationItem}>
-                • Compliance with Saudi financial regulations
+                {t('currency.complianceRegulations')}
               </Text>
               <Text style={styles.explanationItem}>
-                • Consistency in property valuations and contracts
+                {t('currency.consistencyValuations')}
               </Text>
               <Text style={styles.explanationItem}>
-                • Proper tax calculations and reporting
+                {t('currency.taxCalculations')}
               </Text>
               <Text style={styles.explanationItem}>
-                • Accurate financial statements and records
+                {t('currency.financialStatements')}
               </Text>
               <Text style={styles.explanationItem}>
-                • Integration with local banking systems
+                {t('currency.bankingIntegration')}
               </Text>
             </View>
           </View>
@@ -126,7 +127,7 @@ export default function CurrencyScreen() {
 
         {/* Currency Features */}
         <ModernCard style={styles.featuresCard}>
-          <Text style={styles.featuresTitle}>Currency Features</Text>
+          <Text style={styles.featuresTitle}>{t('currency.currencyFeatures')}</Text>
           
           <View style={styles.featuresList}>
             <View style={styles.featureItem}>
@@ -134,9 +135,9 @@ export default function CurrencyScreen() {
                 <Text style={styles.featureCheck}>✓</Text>
               </View>
               <View style={styles.featureContent}>
-                <Text style={styles.featureTitle}>Automatic Formatting</Text>
+                <Text style={styles.featureTitle}>{t('currency.automaticFormatting.title')}</Text>
                 <Text style={styles.featureDescription}>
-                  All amounts are automatically formatted according to Saudi standards
+                  {t('currency.automaticFormatting.description')}
                 </Text>
               </View>
             </View>
@@ -146,9 +147,9 @@ export default function CurrencyScreen() {
                 <Text style={styles.featureCheck}>✓</Text>
               </View>
               <View style={styles.featureContent}>
-                <Text style={styles.featureTitle}>VAT Integration</Text>
+                <Text style={styles.featureTitle}>{t('currency.vatIntegration.title')}</Text>
                 <Text style={styles.featureDescription}>
-                  Built-in support for Saudi VAT calculations and reporting
+                  {t('currency.vatIntegration.description')}
                 </Text>
               </View>
             </View>
@@ -158,9 +159,9 @@ export default function CurrencyScreen() {
                 <Text style={styles.featureCheck}>✓</Text>
               </View>
               <View style={styles.featureContent}>
-                <Text style={styles.featureTitle}>Number Formatting</Text>
+                <Text style={styles.featureTitle}>{t('currency.numberFormatting.title')}</Text>
                 <Text style={styles.featureDescription}>
-                  Proper thousand separators and decimal notation
+                  {t('currency.numberFormatting.description')}
                 </Text>
               </View>
             </View>

@@ -3,6 +3,7 @@ import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, List, IconButton } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
+import { useTranslation } from '@/lib/useTranslation';
 import { 
   ArrowLeft, 
   BookOpen, 
@@ -20,71 +21,72 @@ import ModernCard from '@/components/ModernCard';
 
 export default function HelpScreen() {
   const router = useRouter();
+  const { t } = useTranslation('settings');
 
   const helpSections = [
     {
-      title: 'Getting Started',
+      title: t('help.gettingStarted'),
       items: [
-        { title: 'Quick Start Guide', icon: BookOpen, action: () => console.log('Quick start') },
-        { title: 'Setting Up Your Account', icon: FileText, action: () => console.log('Account setup') },
-        { title: 'Adding Your First Property', icon: Video, action: () => console.log('First property') },
-        { title: 'Inviting Tenants', icon: Video, action: () => console.log('Invite tenants') },
+        { title: t('help.quickStartGuide'), icon: BookOpen, action: () => console.log('Quick start') },
+        { title: t('help.settingUpAccount'), icon: FileText, action: () => console.log('Account setup') },
+        { title: t('help.addingFirstProperty'), icon: Video, action: () => console.log('First property') },
+        { title: t('help.invitingTenants'), icon: Video, action: () => console.log('Invite tenants') },
       ]
     },
     {
-      title: 'Property Management',
+      title: t('help.propertyManagement'),
       items: [
-        { title: 'Managing Properties', icon: BookOpen, action: () => console.log('Manage properties') },
-        { title: 'Handling Maintenance Requests', icon: FileText, action: () => console.log('Maintenance') },
-        { title: 'Rent Collection', icon: Video, action: () => console.log('Rent collection') },
-        { title: 'Tenant Communication', icon: Video, action: () => console.log('Communication') },
+        { title: t('help.managingProperties'), icon: BookOpen, action: () => console.log('Manage properties') },
+        { title: t('help.handlingMaintenance'), icon: FileText, action: () => console.log('Maintenance') },
+        { title: t('help.rentCollection'), icon: Video, action: () => console.log('Rent collection') },
+        { title: t('help.tenantCommunication'), icon: Video, action: () => console.log('Communication') },
       ]
     },
     {
-      title: 'Financial Management',
+      title: t('help.financialManagement'),
       items: [
-        { title: 'Creating Vouchers', icon: BookOpen, action: () => console.log('Vouchers') },
-        { title: 'Generating Reports', icon: FileText, action: () => console.log('Reports') },
-        { title: 'Managing Invoices', icon: Video, action: () => console.log('Invoices') },
-        { title: 'Tax Preparation', icon: Video, action: () => console.log('Tax prep') },
+        { title: t('help.creatingVouchers'), icon: BookOpen, action: () => console.log('Vouchers') },
+        { title: t('help.generatingReports'), icon: FileText, action: () => console.log('Reports') },
+        { title: t('help.managingInvoices'), icon: Video, action: () => console.log('Invoices') },
+        { title: t('help.taxPreparation'), icon: Video, action: () => console.log('Tax prep') },
       ]
     },
     {
-      title: 'Troubleshooting',
+      title: t('help.troubleshooting'),
       items: [
-        { title: 'Common Issues', icon: HelpCircle, action: () => console.log('Common issues') },
-        { title: 'Error Messages', icon: FileText, action: () => console.log('Error messages') },
-        { title: 'Performance Tips', icon: BookOpen, action: () => console.log('Performance') },
-        { title: 'Browser Compatibility', icon: Video, action: () => console.log('Browser') },
+        { title: t('help.commonIssues'), icon: HelpCircle, action: () => console.log('Common issues') },
+        { title: t('help.errorMessages'), icon: FileText, action: () => console.log('Error messages') },
+        { title: t('help.performanceTips'), icon: BookOpen, action: () => console.log('Performance') },
+        { title: t('help.browserCompatibility'), icon: Video, action: () => console.log('Browser') },
       ]
     }
   ];
 
   const contactOptions = [
     {
-      title: 'Live Chat',
-      description: 'Chat with our support team',
+      title: t('help.liveChat'),
+      description: t('help.liveChatDescription'),
       icon: MessageSquare,
       action: () => console.log('Live chat'),
       available: true,
     },
     {
-      title: 'Phone Support',
-      description: 'Call us at +1 (555) 123-4567',
+      title: t('help.phoneSupport'),
+      description: t('help.phoneSupportDescription'),
       icon: Phone,
       action: () => console.log('Phone support'),
       available: true,
     },
     {
-      title: 'Email Support',
-      description: 'Send us an email',
+      title: t('help.emailSupport'),
+      description: t('help.emailSupportDescription'),
       icon: Mail,
       action: () => console.log('Email support'),
       available: true,
     },
     {
-      title: 'Community Forum',
-      description: 'Ask the community',
+      title: t('help.communityForum'),
+      description: t('help.communityForumDescription'),
       icon: ExternalLink,
       action: () => console.log('Community forum'),
       available: true,
@@ -99,32 +101,32 @@ export default function HelpScreen() {
           onPress={() => router.back()}
           style={styles.backButton}
         />
-        <Text style={styles.headerTitle}>Help Center</Text>
+        <Text style={styles.headerTitle}>{t('help.title')}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Quick Actions */}
         <ModernCard style={styles.quickActionsCard}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <Text style={styles.sectionTitle}>{t('help.quickActions')}</Text>
           <View style={styles.quickActions}>
             <View style={styles.quickAction}>
               <View style={[styles.quickActionIcon, { backgroundColor: `${theme.colors.primary}15` }]}>
                 <Download size={24} color={theme.colors.primary} />
               </View>
-              <Text style={styles.quickActionText}>Download User Manual</Text>
+              <Text style={styles.quickActionText}>{t('help.downloadManual')}</Text>
             </View>
             <View style={styles.quickAction}>
               <View style={[styles.quickActionIcon, { backgroundColor: `${theme.colors.secondary}15` }]}>
                 <Video size={24} color={theme.colors.secondary} />
               </View>
-              <Text style={styles.quickActionText}>Video Tutorials</Text>
+              <Text style={styles.quickActionText}>{t('help.videoTutorials')}</Text>
             </View>
             <View style={styles.quickAction}>
               <View style={[styles.quickActionIcon, { backgroundColor: `${theme.colors.tertiary}15` }]}>
                 <MessageSquare size={24} color={theme.colors.tertiary} />
               </View>
-              <Text style={styles.quickActionText}>Contact Support</Text>
+              <Text style={styles.quickActionText}>{t('help.contactSupport')}</Text>
             </View>
           </View>
         </ModernCard>
@@ -152,9 +154,9 @@ export default function HelpScreen() {
 
         {/* Contact Support */}
         <ModernCard style={styles.section}>
-          <Text style={styles.sectionTitle}>Contact Support</Text>
+          <Text style={styles.sectionTitle}>{t('help.supportOptions')}</Text>
           <Text style={styles.sectionDescription}>
-            Need more help? Our support team is here to assist you.
+            {t('help.supportDescription')}
           </Text>
           
           {contactOptions.map((option, index) => (
@@ -170,7 +172,7 @@ export default function HelpScreen() {
               right={() => (
                 <View style={styles.availabilityBadge}>
                   <Text style={styles.availabilityText}>
-                    {option.available ? 'Available' : 'Offline'}
+                    {option.available ? t('help.available') : t('help.offline')}
                   </Text>
                 </View>
               )}
@@ -182,19 +184,19 @@ export default function HelpScreen() {
 
         {/* App Information */}
         <ModernCard style={styles.section}>
-          <Text style={styles.sectionTitle}>App Information</Text>
+          <Text style={styles.sectionTitle}>{t('help.appInformation')}</Text>
           <View style={styles.appInfo}>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Version:</Text>
+              <Text style={styles.infoLabel}>{t('help.version')}</Text>
               <Text style={styles.infoValue}>1.0.0</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Last Updated:</Text>
+              <Text style={styles.infoLabel}>{t('help.lastUpdated')}</Text>
               <Text style={styles.infoValue}>January 2024</Text>
             </View>
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Platform:</Text>
-              <Text style={styles.infoValue}>Web Application</Text>
+              <Text style={styles.infoLabel}>{t('help.platform')}</Text>
+              <Text style={styles.infoValue}>{t('help.webApplication')}</Text>
             </View>
           </View>
         </ModernCard>

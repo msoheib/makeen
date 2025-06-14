@@ -12,9 +12,11 @@ import { Building2, Plus } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import StatCard from '@/components/StatCard';
+import { useTranslation } from '@/lib/useTranslation';
 
 export default function PropertiesScreen() {
   const router = useRouter();
+  const { t } = useTranslation('properties');
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   
@@ -61,25 +63,25 @@ export default function PropertiesScreen() {
 
   const stats = dashboardSummary ? [
     {
-      title: 'Total Properties',
+      title: t('totalProperties'),
       value: dashboardSummary.total_properties?.toString() || '0',
       color: theme.colors.primary,
       icon: <Building2 size={20} color={theme.colors.primary} />,
     },
     {
-      title: 'Available',
+      title: t('available'),
       value: dashboardSummary.available?.toString() || '0',
       color: theme.colors.secondary,
       icon: <Building2 size={20} color={theme.colors.secondary} />,
     },
     {
-      title: 'Occupied',
+      title: t('occupied'),
       value: dashboardSummary.occupied?.toString() || '0',
       color: theme.colors.tertiary,
       icon: <Building2 size={20} color={theme.colors.tertiary} />,
     },
     {
-      title: 'Maintenance',
+      title: t('maintenance'),
       value: dashboardSummary.maintenance?.toString() || '0',
       color: theme.colors.error,
       icon: <Building2 size={20} color={theme.colors.error} />,
@@ -90,15 +92,15 @@ export default function PropertiesScreen() {
     return (
       <View style={styles.container}>
         <ModernHeader
-          title="Properties"
-          subtitle="Properties and units"
+          title={t('title')}
+          subtitle={t('subtitle')}
           variant="dark"
           showNotifications
           isHomepage={false}
         />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Loading properties...</Text>
+          <Text style={styles.loadingText}>{t('loadingProperties')}</Text>
         </View>
       </View>
     );
@@ -108,14 +110,14 @@ export default function PropertiesScreen() {
     return (
       <View style={styles.container}>
         <ModernHeader
-          title="Properties"
-          subtitle="Properties and units"
+          title={t('title')}
+          subtitle={t('subtitle')}
           variant="dark"
           showNotifications
           isHomepage={false}
         />
         <ModernCard style={styles.errorContainer}>
-          <Text style={styles.errorText}>Error loading properties</Text>
+          <Text style={styles.errorText}>{t('errorLoadingProperties')}</Text>
           <Text style={styles.errorSubtext}>{error}</Text>
         </ModernCard>
       </View>
@@ -125,8 +127,8 @@ export default function PropertiesScreen() {
   return (
     <View style={styles.container}>
       <ModernHeader
-        title="Properties"
-        subtitle="Properties and units"
+        title={t('title')}
+        subtitle={t('subtitle')}
         variant="dark"
         showNotifications
         isHomepage={false}
@@ -156,7 +158,7 @@ export default function PropertiesScreen() {
       {/* Search */}
       <View style={styles.filtersSection}>
         <Searchbar
-          placeholder="Search properties..."
+          placeholder={t('searchPlaceholder')}
           onChangeText={setSearchQuery}
           value={searchQuery}
           style={styles.searchbar}
@@ -182,11 +184,11 @@ export default function PropertiesScreen() {
       ) : (
         <ModernCard style={styles.emptyStateContainer}>
           <Plus size={48} color={theme.colors.onSurfaceVariant} />
-          <Text style={styles.emptyStateTitle}>No properties found</Text>
+          <Text style={styles.emptyStateTitle}>{t('noPropertiesFound')}</Text>
           <Text style={styles.emptyStateSubtitle}>
             {properties && properties.length > 0 
-              ? 'Try adjusting your search to see more results' 
-              : 'Add your first property to get started'}
+              ? t('adjustSearch')
+              : t('addFirstProperty')}
           </Text>
         </ModernCard>
       )}

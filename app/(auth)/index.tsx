@@ -182,6 +182,58 @@ export default function SignInScreen() {
           >
             Create Account
           </Button>
+          
+          {/* EMERGENCY DEMO BYPASS */}
+          <Button
+            mode="contained"
+            onPress={() => {
+              console.log('🚨 EMERGENCY DEMO BYPASS');
+              setUser({ 
+                id: 'demo-user', 
+                email: 'demo@realestatemg.com', 
+                role: 'admin',
+                first_name: 'Demo',
+                last_name: 'User',
+                created_at: new Date().toISOString(),
+                phone: null,
+                address: null,
+                city: null,
+                country: null,
+                nationality: null,
+                id_number: null,
+                is_foreign: false,
+                profile_type: 'admin',
+                status: 'active',
+                updated_at: new Date().toISOString()
+              });
+              setAuthenticated(true);
+              router.replace('/(drawer)');
+            }}
+            style={[styles.signUpButton, { backgroundColor: '#ff4444', marginTop: 10 }]}
+            labelStyle={{ color: 'white' }}
+          >
+            🚨 EMERGENCY DEMO LOGIN
+          </Button>
+          
+          {/* TEST PROXY BUTTON */}
+          <Button
+            mode="outlined"
+            onPress={async () => {
+              console.log('🧪 Testing CORS proxy...');
+              try {
+                const response = await fetch('http://localhost:3001/health');
+                const data = await response.json();
+                console.log('✅ Proxy health check:', data);
+                alert('✅ Proxy is working! ' + JSON.stringify(data));
+              } catch (error) {
+                console.error('❌ Proxy test failed:', error);
+                alert('❌ Proxy test failed: ' + error.message);
+              }
+            }}
+            style={[styles.signUpButton, { marginTop: 10 }]}
+          >
+            🧪 Test CORS Proxy
+          </Button>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

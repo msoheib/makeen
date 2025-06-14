@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text, Button, ActivityIndicator } from 'react-native-paper';
-import { theme, spacing } from '@/lib/theme';
+import { theme, spacing, rtlStyles, rtlLayout } from '@/lib/theme';
 import { Plus, Home, Users, AlertTriangle, Calendar } from 'lucide-react-native';
+import { useTranslation } from '@/lib/useTranslation';
 import ModernCard from './ModernCard';
 
 interface CashflowCardProps {
@@ -20,13 +21,14 @@ export default function CashflowCard({
   expiringContracts = 0,
   pendingMaintenance = 0
 }: CashflowCardProps) {
+  const { t } = useTranslation('dashboard');
   if (loading) {
     return (
       <ModernCard style={styles.container}>
-        <Text style={styles.title}>System Overview</Text>
+        <Text style={[styles.title, rtlStyles.textLeft]}>{t('systemOverview')}</Text>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Loading dashboard...</Text>
+          <Text style={[styles.loadingText, rtlStyles.textLeft]}>{t('common:loading')}...</Text>
         </View>
       </ModernCard>
     );
@@ -34,7 +36,7 @@ export default function CashflowCard({
 
   return (
     <ModernCard style={styles.container}>
-      <Text style={styles.title}>System Overview</Text>
+      <Text style={[styles.title, rtlStyles.textLeft]}>{t('systemOverview')}</Text>
       
       <View style={styles.content}>
         {/* Properties Overview */}
@@ -45,7 +47,7 @@ export default function CashflowCard({
               <Text style={styles.metricValue}>
                 {propertySummary?.total_properties || 0}
               </Text>
-              <Text style={styles.metricLabel}>Total Properties</Text>
+              <Text style={[styles.metricLabel, rtlStyles.textLeft]}>{t('totalProperties')}</Text>
             </View>
           </View>
           
@@ -55,7 +57,7 @@ export default function CashflowCard({
               <Text style={styles.metricValue}>
                 {propertySummary?.active_contracts || 0}
               </Text>
-              <Text style={styles.metricLabel}>Active Tenants</Text>
+              <Text style={[styles.metricLabel, rtlStyles.textLeft]}>{t('activeTenants')}</Text>
             </View>
           </View>
         </View>
@@ -68,7 +70,7 @@ export default function CashflowCard({
               <Text style={styles.metricValue}>
                 {propertySummary?.occupied || 0}
               </Text>
-              <Text style={styles.metricLabel}>Occupied</Text>
+              <Text style={[styles.metricLabel, rtlStyles.textLeft]}>{t('occupied')}</Text>
             </View>
           </View>
           
@@ -78,7 +80,7 @@ export default function CashflowCard({
               <Text style={styles.metricValue}>
                 {propertySummary?.available || 0}
               </Text>
-              <Text style={styles.metricLabel}>Available</Text>
+              <Text style={[styles.metricLabel, rtlStyles.textLeft]}>{t('available')}</Text>
             </View>
           </View>
         </View>
@@ -86,13 +88,13 @@ export default function CashflowCard({
         {/* Alerts */}
         {(expiringContracts > 0 || pendingMaintenance > 0) && (
           <View style={styles.alertsSection}>
-            <Text style={styles.alertsTitle}>Attention Required</Text>
+            <Text style={[styles.alertsTitle, rtlStyles.textLeft]}>{t('attentionRequired')}</Text>
             
             {expiringContracts > 0 && (
               <View style={styles.alertItem}>
                 <Calendar size={20} color={theme.colors.error} />
-                <Text style={styles.alertText}>
-                  {expiringContracts} contract(s) expiring soon
+                <Text style={[styles.alertText, rtlStyles.textLeft]}>
+                  {expiringContracts} {t('contractsExpiring')}
                 </Text>
               </View>
             )}
@@ -100,8 +102,8 @@ export default function CashflowCard({
             {pendingMaintenance > 0 && (
               <View style={styles.alertItem}>
                 <AlertTriangle size={20} color={theme.colors.error} />
-                <Text style={styles.alertText}>
-                  {pendingMaintenance} pending maintenance request(s)
+                <Text style={[styles.alertText, rtlStyles.textLeft]}>
+                  {pendingMaintenance} {t('pendingMaintenance')}
                 </Text>
               </View>
             )}
@@ -116,7 +118,7 @@ export default function CashflowCard({
         contentStyle={styles.addButtonContent}
         icon={() => <Plus size={20} color="white" />}
       >
-        Add
+        {t('add')}
       </Button>
     </ModernCard>
   );
@@ -145,18 +147,18 @@ const styles = StyleSheet.create({
     marginTop: spacing.m,
   },
   metricRow: {
-    flexDirection: 'row',
+    ...rtlStyles.row,
     justifyContent: 'space-between',
     marginBottom: spacing.l,
   },
   metric: {
-    flexDirection: 'row',
+    ...rtlStyles.row,
     alignItems: 'center',
     flex: 1,
     paddingHorizontal: spacing.s,
   },
   metricContent: {
-    marginLeft: spacing.s,
+    ...rtlStyles.marginStart(spacing.s),
   },
   metricValue: {
     fontSize: 20,
@@ -185,14 +187,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.s,
   },
   alertItem: {
-    flexDirection: 'row',
+    ...rtlStyles.row,
     alignItems: 'center',
     marginBottom: spacing.xs,
   },
   alertText: {
     fontSize: 12,
     color: theme.colors.onErrorContainer,
-    marginLeft: spacing.s,
+    ...rtlStyles.marginStart(spacing.s),
   },
   addButton: {
     backgroundColor: theme.colors.primary,

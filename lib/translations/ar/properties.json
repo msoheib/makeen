@@ -1,0 +1,37 @@
+{
+  "title": "العقارات",
+  "subtitle": "العقارات والوحدات",
+  "myProperties": "عقاراتي",
+  "addProperty": "إضافة عقار",
+  "propertyDetails": "تفاصيل العقار",
+  "totalProperties": "إجمالي العقارات",
+  "available": "متاح",
+  "rented": "مؤجر",
+  "occupied": "مشغول",
+  "maintenance": "صيانة",
+  "reserved": "محجوز",
+  "searchPlaceholder": "البحث في العقارات...",
+  "noPropertiesFound": "لا توجد عقارات",
+  "adjustSearch": "جرب تعديل البحث لرؤية المزيد من النتائج",
+  "addFirstProperty": "أضف أول عقار للبدء",
+  "loadingProperties": "جارٍ تحميل العقارات...",
+  "errorLoadingProperties": "خطأ في تحميل العقارات",
+  "propertyType": {
+    "villa": "فيلا",
+    "apartment": "شقة",
+    "office": "مكتب",
+    "retail": "تجاري",
+    "warehouse": "مستودع"
+  },
+  "propertyInfo": {
+    "address": "العنوان",
+    "city": "المدينة",
+    "neighborhood": "الحي",
+    "area": "المساحة (متر مربع)",
+    "bedrooms": "غرف النوم",
+    "bathrooms": "دورات المياه",
+    "price": "السعر",
+    "owner": "المالك",
+    "amenities": "المرافق"
+  }
+} 

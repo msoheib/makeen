@@ -7,8 +7,13 @@ import { useNavigation } from '@react-navigation/native';
 import { DrawerActions } from '@react-navigation/native';
 import { NotificationBadge } from './NotificationBadge';
 import { useTabBadgeCount } from '@/hooks/useNotificationBadges';
+import { useTranslation } from '@/lib/useTranslation';
+import { rtlStyles, rtlLayout } from '@/lib/theme';
+import { isRTL } from '@/lib/rtl';
 
 const SideBar = () => {
+    const { t } = useTranslation('navigation');
+    
     // Badge counts for different sections
     const tenantBadges = useTabBadgeCount('tenant');
     const propertyBadges = useTabBadgeCount('property');
@@ -17,85 +22,85 @@ const SideBar = () => {
     const totalBadges = useTabBadgeCount();
 
     const menuItems = [
-        { title: 'Home', icon: Home, href: '/(drawer)/(tabs)/', badgeCount: totalBadges.count },
+        { title: t('home'), icon: Home, href: '/(drawer)/(tabs)/', badgeCount: totalBadges.count },
         { 
-            title: 'Owners and Customers', 
+            title: t('ownersAndCustomers'), 
             icon: Users,
             badgeCount: tenantBadges.count,
             subItems: [
-                { title: 'Owner or Property Manager', href: '/(drawer)/(tabs)/people' },
-                { title: 'Tenant', href: '/(drawer)/(tabs)/tenants', badgeCount: tenantBadges.count },
-                { title: 'Buyer', href: '/not-created-yet' },
-                { title: 'Foreign Tenants', href: '/not-created-yet' },
+                { title: t('ownerOrPropertyManager'), href: '/(drawer)/(tabs)/people' },
+                { title: t('tenant'), href: '/(drawer)/(tabs)/tenants', badgeCount: tenantBadges.count },
+                { title: t('buyer'), href: '/not-created-yet' },
+                { title: t('foreignTenants'), href: '/not-created-yet' },
                 { 
-                    title: 'Customers and suppliers', 
+                    title: t('customersAndSuppliers'), 
                     subItems: [
-                        { title: 'Client', href: '/not-created-yet' },
-                        { title: 'Suplier', href: '/not-created-yet' },
+                        { title: t('client'), href: '/not-created-yet' },
+                        { title: t('supplier'), href: '/not-created-yet' },
                     ]
                 },
             ]
         },
         {
-            title: 'Property Management',
+            title: t('propertyManagement'),
             icon: Building,
             badgeCount: propertyBadges.count + maintenanceBadges.count,
             subItems: [
-                { title: 'Properties List', href: '/(drawer)/(tabs)/properties', badgeCount: propertyBadges.count },
-                { title: 'Rent a property', href: '/not-created-yet' },
-                { title: 'Foreign Tenant Contracts', href: '/not-created-yet' },
-                { title: 'List cash property', href: '/not-created-yet' },
-                { title: 'List installment property', href: '/not-created-yet' },
-                { title: 'Property Reservation List', href: '/not-created-yet' },
+                { title: t('propertiesList'), href: '/(drawer)/(tabs)/properties', badgeCount: propertyBadges.count },
+                { title: t('rentProperty'), href: '/not-created-yet' },
+                { title: t('foreignTenantContracts'), href: '/not-created-yet' },
+                { title: t('listCashProperty'), href: '/not-created-yet' },
+                { title: t('listInstallmentProperty'), href: '/not-created-yet' },
+                { title: t('propertyReservationList'), href: '/not-created-yet' },
             ]
         },
         {
-            title: 'Accounting & Voucher',
+            title: t('accountingAndVoucher'),
             icon: DollarSign,
             badgeCount: paymentBadges.count,
             subItems: [
-                { title: 'Receipt Voucher', href: '/not-created-yet' },
-                { title: 'Payment Voucher', href: '/not-created-yet' },
-                { title: 'Entry voucher', href: '/not-created-yet' },
-                { title: 'Credit notification', href: '/not-created-yet' },
-                { title: 'Debit notification', href: '/not-created-yet' },
-                { title: 'VAT invoices', href: '/not-created-yet' },
+                { title: t('receiptVoucher'), href: '/not-created-yet' },
+                { title: t('paymentVoucher'), href: '/not-created-yet' },
+                { title: t('entryVoucher'), href: '/not-created-yet' },
+                { title: t('creditNotification'), href: '/not-created-yet' },
+                { title: t('debitNotification'), href: '/not-created-yet' },
+                { title: t('vatInvoices'), href: '/not-created-yet' },
             ]
         },
         {
-            title: 'Reports',
+            title: t('reports'),
             icon: BarChart2,
             subItems: [
-                 { title: 'Summary of Reports', href: '/(drawer)/(tabs)/reports' },
-                 { title: 'Invoices Report', href: '/not-created-yet' },
+                 { title: t('summaryOfReports'), href: '/(drawer)/(tabs)/reports' },
+                 { title: t('invoicesReport'), href: '/not-created-yet' },
             ]
         },
         {
-            title: 'Maintenance, letters, issues',
+            title: t('maintenanceLettersIssues'),
             icon: Briefcase,
             badgeCount: maintenanceBadges.count,
             subItems: [
-                { title: 'Maintenance Requests', href: '/maintenance', badgeCount: maintenanceBadges.count },
-                { title: 'Add a maintenance report', href: '/maintenance/add' },
-                { title: 'List Letters', href: '/not-created-yet' },
-                { title: 'Add a Letter', href: '/not-created-yet' },
-                { title: 'List Issues', href: '/not-created-yet' },
-                { title: 'Add issue', href: '/not-created-yet' },
-                { title: 'Archive documents', href: '/(drawer)/(tabs)/documents' },
+                { title: t('maintenanceRequests'), href: '/maintenance', badgeCount: maintenanceBadges.count },
+                { title: t('addMaintenanceReport'), href: '/maintenance/add' },
+                { title: t('listLetters'), href: '/not-created-yet' },
+                { title: t('addLetter'), href: '/not-created-yet' },
+                { title: t('listIssues'), href: '/not-created-yet' },
+                { title: t('addIssue'), href: '/not-created-yet' },
+                { title: t('archiveDocuments'), href: '/(drawer)/(tabs)/documents' },
             ]
         },
         {
-            title: 'Settings',
+            title: t('settings'),
             icon: Settings,
             href: '/(drawer)/(tabs)/settings'
         },
         {
-            title: 'Users',
+            title: t('users'),
             icon: UserPlus,
             subItems: [
-                { title: 'Add', href: '/not-created-yet' },
-                { title: 'List', href: '/not-created-yet' },
-                { title: 'User Transaction Report', href: '/not-created-yet' },
+                { title: t('add'), href: '/not-created-yet' },
+                { title: t('list'), href: '/not-created-yet' },
+                { title: t('userTransactionReport'), href: '/not-created-yet' },
             ]
         }
     ];
@@ -116,9 +121,9 @@ const SideBar = () => {
         };
         
         const content = (
-            <View style={[styles.menuItem, { paddingLeft: 10 + level * 15 }]}>
+            <View style={[styles.menuItem, rtlStyles.paddingStart(10 + level * 15)]}>
                 {item.icon && <item.icon color="#333" size={20} />}
-                <Text style={styles.menuItemText}>{item.title}</Text>
+                <Text style={[styles.menuItemText, rtlStyles.textLeft]}>{item.title}</Text>
                 {badgeCount > 0 && (
                     <NotificationBadge 
                         count={badgeCount} 
@@ -156,9 +161,12 @@ const SideBar = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['right', 'bottom', 'left']}>
+        <SafeAreaView 
+            style={[styles.container, isRTL() && styles.rtlContainer]} 
+            edges={['top', 'bottom']}
+        >
             <View style={styles.header}>
-                <Text style={styles.headerText}>Real Estate MG</Text>
+                <Text style={[styles.headerText, rtlStyles.textLeft]}>{t('appTitle')}</Text>
             </View>
             <ScrollView style={styles.menuContainer}>
                 {menuItems.map((item, index) => (
@@ -173,6 +181,13 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#f4f4f4',
+        width: 280,
+    },
+    rtlContainer: {
+        borderTopLeftRadius: 0,
+        borderBottomLeftRadius: 0,
+        borderTopRightRadius: 15,
+        borderBottomRightRadius: 15,
     },
     header: {
         padding: 20,
@@ -189,7 +204,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     menuItem: {
-        flexDirection: 'row',
+        ...rtlStyles.row,
         alignItems: 'center',
         paddingVertical: 15,
         paddingHorizontal: 20,
@@ -198,7 +213,7 @@ const styles = StyleSheet.create({
     },
     menuItemText: {
         fontSize: 16,
-        marginLeft: 15,
+        ...rtlStyles.marginStart(15),
         flex: 1,
         color: '#333',
     },

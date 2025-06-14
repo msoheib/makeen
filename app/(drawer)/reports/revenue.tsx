@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { Text, Card, useTheme, ActivityIndicator, Button } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Stack, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { CustomLineChart, CustomBarChart } from '../../../components/charts';
 import { reportsApi } from '../../../lib/api';
 import { useApi } from '../../../hooks/useApi';
+import ModernHeader from '../../../components/ModernHeader';
 
 interface RevenueData {
   totalRevenue: number;
@@ -79,12 +80,11 @@ export default function RevenueReportScreen() {
   if (loading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <Stack.Screen 
-          options={{ 
-            title: 'Revenue Report',
-            headerStyle: { backgroundColor: theme.colors.surface },
-            headerTintColor: theme.colors.onSurface,
-          }} 
+        <ModernHeader
+          title="Revenue Report"
+          subtitle="Loading revenue data..."
+          showNotifications={false}
+          showSearch={false}
         />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -99,12 +99,11 @@ export default function RevenueReportScreen() {
   if (error) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <Stack.Screen 
-          options={{ 
-            title: 'Revenue Report',
-            headerStyle: { backgroundColor: theme.colors.surface },
-            headerTintColor: theme.colors.onSurface,
-          }} 
+        <ModernHeader
+          title="Revenue Report"
+          subtitle="Failed to load data"
+          showNotifications={false}
+          showSearch={false}
         />
         <View style={styles.errorContainer}>
           <Text style={[styles.errorText, { color: theme.colors.error }]}>
@@ -120,12 +119,11 @@ export default function RevenueReportScreen() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <Stack.Screen 
-        options={{ 
-          title: 'Revenue Report',
-          headerStyle: { backgroundColor: theme.colors.surface },
-          headerTintColor: theme.colors.onSurface,
-        }} 
+      <ModernHeader
+        title="Revenue Report"
+        subtitle="Financial performance analysis"
+        showNotifications={false}
+        showSearch={false}
       />
       
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>

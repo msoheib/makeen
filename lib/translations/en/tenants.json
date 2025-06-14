@@ -1,0 +1,45 @@
+{
+  "currentTenant": "Current Tenant",
+  "formerTenant": "Former Tenant",
+  "potentialTenant": "Potential Tenant",
+  "title": "Tenants",
+  "subtitle": "Manage your tenants",
+  "totalTenants": "Total Tenants",
+  "activeTenants": "Active",
+  "pendingTenants": "Pending",
+  "latePayments": "Late Payments",
+  "noTenantsFound": "No tenants found",
+  "adjustSearch": "Try adjusting your search",
+  "addFirstTenant": "Add your first tenant to get started",
+  "activeStatus": "Active",
+  "pendingStatus": "Pending",
+  "searchPlaceholder": "Search tenants...",
+  "balance": "Balance",
+  "details": {
+    "title": "Tenant Details",
+    "loading": "Loading...",
+    "error": "Error",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "nationality": "Nationality",
+    "monthlyRent": "Monthly Rent",
+    "contractPeriod": "Contract Period",
+    "tenantId": "Tenant ID",
+    "idNumber": "ID Number",
+    "joinDate": "Join Date",
+    "contractInfo": "Contract Information",
+    "personalInfo": "Personal Information"
+  },
+  "edit": {
+    "title": "Edit Tenant",
+    "loading": "Loading...",
+    "error": "Error",
+    "savingChanges": "Saving changes..."
+  },
+  "add": {
+    "title": "Add New Tenant",
+    "subtitle": "Create a new tenant profile",
+    "createProfile": "Create a new tenant profile"
+  }
+} 
