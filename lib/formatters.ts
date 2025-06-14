@@ -8,78 +8,63 @@ const locales = {
   ar: ar,
 };
 
+// Arabic-Indic numerals mapping
+const arabicNumerals = {
+  '0': '٠',
+  '1': '١',
+  '2': '٢',
+  '3': '٣',
+  '4': '٤',
+  '5': '٥',
+  '6': '٦',
+  '7': '٧',
+  '8': '٨',
+  '9': '٩'
+};
+
+// Convert English numerals to Arabic numerals
+export const toArabicNumerals = (text: string): string => {
+  if (!isRTL()) return text;
+  
+  return text.toString().replace(/[0-9]/g, (digit) => arabicNumerals[digit] || digit);
+};
+
 export const formatDate = (date: Date | string, formatString: string = 'PPP'): string => {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   const locale = isRTL() ? locales.ar : locales.en;
-  return format(dateObj, formatString, { locale });
+  const formatted = format(dateObj, formatString, { locale });
+  return toArabicNumerals(formatted);
 };
 
 export const formatCurrency = (amount: number, currency: string = 'SAR'): string => {
-  const isArabic = isRTL();
+  const formattedAmount = new Intl.NumberFormat('ar-SA', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
   
-  if (isArabic) {
-    // Arabic number formatting with Arabic-Indic numerals
-    const formatter = new Intl.NumberFormat('ar-SA', {
-      style: 'currency',
-      currency: currency,
-      currencyDisplay: 'symbol',
-    });
-    return formatter.format(amount);
-  } else {
-    // English formatting
-    const formatter = new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-      currencyDisplay: 'symbol',
-    });
-    return formatter.format(amount);
-  }
+  const localizedAmount = toArabicNumerals(formattedAmount);
+  return isRTL() ? `${localizedAmount} ${currency}` : `${formattedAmount} ${currency}`;
 };
 
-export const formatNumber = (number: number): string => {
-  const isArabic = isRTL();
-  
-  if (isArabic) {
-    return new Intl.NumberFormat('ar-SA').format(number);
-  } else {
-    return new Intl.NumberFormat('en-US').format(number);
-  }
+export const formatNumber = (num: number | string): string => {
+  const numStr = num.toString();
+  return isRTL() ? toArabicNumerals(numStr) : numStr;
 };
 
 export const formatPercentage = (value: number, decimals: number = 1): string => {
-  const isArabic = isRTL();
-  
-  if (isArabic) {
-    return new Intl.NumberFormat('ar-SA', {
-      style: 'percent',
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    }).format(value / 100);
-  } else {
-    return new Intl.NumberFormat('en-US', {
-      style: 'percent',
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals,
-    }).format(value / 100);
-  }
+  const percentage = `${value.toFixed(decimals)}%`;
+  return toArabicNumerals(percentage);
 };
 
 export const formatFileSize = (bytes: number): string => {
-  const isArabic = isRTL();
-  const sizes = isArabic 
-    ? ['بايت', 'ك.ب', 'م.ب', 'ج.ب', 'ت.ب']
-    : ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  if (bytes === 0) return toArabicNumerals('0 Bytes');
   
-  if (bytes === 0) return `0 ${sizes[0]}`;
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  const size = parseFloat((bytes / Math.pow(k, i)).toFixed(2));
   
-  const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  const size = bytes / Math.pow(1024, i);
-  
-  if (isArabic) {
-    return `${formatNumber(Math.round(size * 100) / 100)} ${sizes[i]}`;
-  } else {
-    return `${(Math.round(size * 100) / 100)} ${sizes[i]}`;
-  }
+  return toArabicNumerals(`${size} ${sizes[i]}`);
 };
 
 export const formatPhoneNumber = (phone: string): string => {
@@ -100,4 +85,27 @@ export const formatPhoneNumber = (phone: string): string => {
   }
   
   return phone;
+};
+
+export const formatLargeNumber = (num: number): string => {
+  if (num >= 1000000000) {
+    const formatted = (num / 1000000000).toFixed(1) + 'B';
+    return toArabicNumerals(formatted);
+  } else if (num >= 1000000) {
+    const formatted = (num / 1000000).toFixed(1) + 'M';
+    return toArabicNumerals(formatted);
+  } else if (num >= 1000) {
+    const formatted = (num / 1000).toFixed(1) + 'K';
+    return toArabicNumerals(formatted);
+  }
+  return formatNumber(num);
+};
+
+export const formatTime = (date: Date | string): string => {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const formatted = dateObj.toLocaleTimeString(isRTL() ? 'ar-SA' : 'en-US', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+  return toArabicNumerals(formatted);
 }; 

@@ -1,104 +1,171 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Text, Button } from 'react-native-paper';
-import { theme, spacing, rtlStyles } from '@/lib/theme';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { lightTheme, darkTheme } from '@/lib/theme';
+import { useAppStore } from '@/lib/store';
 import { useTranslation } from '@/lib/useTranslation';
-import ModernCard from './ModernCard';
+import { formatCurrency } from '@/lib/formatters';
 
 interface RentCardProps {
-  onRentPress?: () => void;
+  totalRent: string;
+  collected: string;
+  outstanding: string;
   loading?: boolean;
-  financialSummary?: any;
 }
 
 export default function RentCard({ 
-  onRentPress,
-  loading = false,
-  financialSummary
+  totalRent, 
+  collected, 
+  outstanding, 
+  loading = false 
 }: RentCardProps) {
-  const { t } = useTranslation('dashboard');
-  
-  // Calculate financial metrics from real data
-  const totalDue = financialSummary?.total_due || 0;
-  const outstandingPayments = financialSummary?.outstanding_payments || 0;
-  const collectedThisMonth = financialSummary?.collected_this_month || 0;
+  const { isDarkMode } = useAppStore();
+  const theme = isDarkMode ? darkTheme : lightTheme;
+  const { t } = useTranslation();
 
-  return (
-    <ModernCard style={styles.container}>
-      <Text style={[styles.title, rtlStyles.textLeft]}>{t('finance.overview')}</Text>
-      
-      <View style={styles.content}>
-        <View style={styles.metricRow}>
-          <View style={styles.metric}>
-            <Text style={styles.value}>{totalDue.toLocaleString()} SAR</Text>
-            <Text style={[styles.label, rtlStyles.textLeft]}>{t('finance.totalDue')}</Text>
-          </View>
-          
-          <View style={styles.metric}>
-            <Text style={[styles.value, { color: theme.colors.error }]}>
-              {outstandingPayments.toLocaleString()} SAR
-            </Text>
-            <Text style={[styles.label, rtlStyles.textLeft]}>{t('finance.outstandingPayments')}</Text>
-          </View>
-        </View>
-
-        <View style={styles.metricRow}>
-          <View style={styles.metric}>
-            <Text style={[styles.value, { color: theme.colors.success }]}>
-              {collectedThisMonth.toLocaleString()} SAR
-            </Text>
-            <Text style={[styles.label, rtlStyles.textLeft]}>{t('finance.collectedThisMonth')}</Text>
-          </View>
+  if (loading) {
+    return (
+      <View style={[
+        styles.container, 
+        { 
+          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.outline,
+          minHeight: theme.components.card.minHeight * 2,
+          padding: theme.spacing.md,
+          borderRadius: theme.borderRadius.md,
+          ...theme.shadows.sm,
+        }
+      ]}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={[
+            styles.loadingText, 
+            { 
+              color: theme.colors.onSurfaceVariant,
+              fontSize: theme.fontSize.sm,
+              marginTop: theme.spacing.sm,
+            }
+          ]}>
+            {t('common.loading')}
+          </Text>
         </View>
       </View>
+    );
+  }
+
+  return (
+    <View style={[
+      styles.container, 
+      { 
+        backgroundColor: theme.colors.surface,
+        borderColor: theme.colors.outline,
+        minHeight: theme.components.card.minHeight * 2,
+        padding: theme.spacing.md,
+        borderRadius: theme.borderRadius.md,
+        ...theme.shadows.sm,
+      }
+    ]}>
+      <Text style={[
+        styles.title, 
+        { 
+          color: theme.colors.onSurface,
+          fontSize: theme.fontSize.lg,
+          marginBottom: theme.spacing.md,
+        }
+      ]}>
+        {t('dashboard.rentOverview')}
+      </Text>
       
-      <Button
-        mode="contained"
-        onPress={onRentPress}
-        style={styles.rentButton}
-        contentStyle={styles.rentButtonContent}
-        loading={loading}
-      >
-        {t('finance.rent')}
-      </Button>
-    </ModernCard>
+      <View style={[styles.row, { marginBottom: theme.spacing.sm }]}>
+        <Text style={[
+          styles.label, 
+          { 
+            color: theme.colors.onSurfaceVariant,
+            fontSize: theme.fontSize.sm,
+          }
+        ]}>
+          {t('dashboard.totalRent')}
+        </Text>
+        <Text style={[
+          styles.value, 
+          { 
+            color: theme.colors.primary,
+            fontSize: theme.fontSize.lg,
+          }
+        ]}>
+          {totalRent}
+        </Text>
+      </View>
+
+      <View style={[styles.row, { marginBottom: theme.spacing.sm }]}>
+        <Text style={[
+          styles.label, 
+          { 
+            color: theme.colors.onSurfaceVariant,
+            fontSize: theme.fontSize.sm,
+          }
+        ]}>
+          {t('dashboard.collected')}
+        </Text>
+        <Text style={[
+          styles.value, 
+          { 
+            color: theme.colors.success,
+            fontSize: theme.fontSize.lg,
+          }
+        ]}>
+          {collected}
+        </Text>
+      </View>
+
+      <View style={styles.row}>
+        <Text style={[
+          styles.label, 
+          { 
+            color: theme.colors.onSurfaceVariant,
+            fontSize: theme.fontSize.sm,
+          }
+        ]}>
+          {t('dashboard.outstanding')}
+        </Text>
+        <Text style={[
+          styles.value, 
+          { 
+            color: theme.colors.error,
+            fontSize: theme.fontSize.lg,
+          }
+        ]}>
+          {outstanding}
+        </Text>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: spacing.m,
+    flex: 1,
+    borderWidth: 1,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.l,
+    fontWeight: '600',
   },
-  content: {
-    gap: spacing.l,
-  },
-  metricRow: {
+  row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-  },
-  metric: {
-    flex: 1,
-  },
-  value: {
-    fontSize: 32,
-    fontWeight: '700',
-    marginBottom: 4,
+    alignItems: 'center',
   },
   label: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
     fontWeight: '400',
   },
-  rentButton: {
-    marginTop: spacing.m,
+  value: {
+    fontWeight: '600',
   },
-  rentButtonContent: {
-    padding: spacing.m,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    textAlign: 'center',
   },
 });

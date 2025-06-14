@@ -43,73 +43,189 @@ export const fonts = configureFonts({
   },
 });
 
-// Theme configuration function
-export const createTheme = (mode: 'light' | 'dark') => {
-  const baseTheme = mode === 'dark' ? MD3DarkTheme : MD3LightTheme;
-  
-  return {
-    ...baseTheme,
-    fonts: fonts,
-    colors: {
-      ...baseTheme.colors,
-      // Primary brand colors - consistent across themes
-      primary: '#2B5CE6', // Blue from the logo and active elements
-      primaryContainer: mode === 'dark' ? '#1A3B8F' : '#E8F0FF',
-      secondary: '#4ECDC4', // Teal from the logo
-      secondaryContainer: mode === 'dark' ? '#2A7A72' : '#E0FFF8',
-      tertiary: '#FF6B6B', // Red for outstanding amounts
-      tertiaryContainer: mode === 'dark' ? '#8B2635' : '#FFE8E8',
-      error: '#FF4757',
-      errorContainer: mode === 'dark' ? '#8B2635' : '#FFE8EA',
-      success: '#2ED573',
-      successContainer: mode === 'dark' ? '#1A5D3F' : '#E8F8F0',
-      warning: '#FFA726',
-      warningContainer: mode === 'dark' ? '#7A4A1A' : '#FFF3E0',
-      
-      // Background colors for light/dark modes
-      background: mode === 'dark' ? '#121212' : '#F8FAFC',
-      surface: mode === 'dark' ? '#1E1E1E' : '#FFFFFF',
-      surfaceVariant: mode === 'dark' ? '#2A2A2A' : '#F1F5F9',
-      onSurface: mode === 'dark' ? '#E1E1E1' : '#1E293B',
-      onSurfaceVariant: mode === 'dark' ? '#B0B0B0' : '#64748B',
-      outline: mode === 'dark' ? '#3A3A3A' : '#E2E8F0',
-      outlineVariant: mode === 'dark' ? '#2A2A2A' : '#F1F5F9',
-      
-      // Custom colors for the modern design
-      cardBackground: mode === 'dark' ? '#1E1E1E' : '#FFFFFF',
-      gradientStart: '#2B5CE6',
-      gradientEnd: '#4ECDC4',
-      income: '#2ED573',
-      expense: '#FF6B6B',
-      neutral: mode === 'dark' ? '#B0B0B0' : '#64748B',
-      
-      // Tab bar colors
-      tabBarActive: '#2B5CE6',
-      tabBarInactive: mode === 'dark' ? '#B0B0B0' : '#64748B',
-      tabBarBackground: mode === 'dark' ? '#1E1E1E' : '#1E293B',
-      
-      // Chart colors
-      chartPrimary: '#2B5CE6',
-      chartSecondary: '#4ECDC4',
-      chartSuccess: '#2ED573',
-      chartWarning: '#FFA726',
-      chartError: '#FF6B6B',
-      chartNeutral: mode === 'dark' ? '#B0B0B0' : '#64748B',
-      chartGrid: mode === 'dark' ? '#3A3A3A' : '#E2E8F0',
-      chartText: mode === 'dark' ? '#E1E1E1' : '#1E293B',
-    },
-    roundness: 16,
-    animation: {
-      scale: 1.0,
-    },
-  };
+// Compact sizing scale (reduced from original sizes)
+const compactSpacing = {
+  xs: 2,    // reduced from 4
+  sm: 4,    // reduced from 8
+  md: 8,    // reduced from 12
+  lg: 12,   // reduced from 16
+  xl: 16,   // reduced from 24
+  '2xl': 20, // reduced from 32
+  '3xl': 24, // reduced from 40
+  '4xl': 28, // reduced from 48
 };
 
-// Default light theme (for backwards compatibility)
-export const theme = createTheme('light');
+const compactFontSizes = {
+  xs: 10,   // reduced from 12
+  sm: 12,   // reduced from 14
+  md: 14,   // reduced from 16
+  lg: 16,   // reduced from 18
+  xl: 18,   // reduced from 20
+  '2xl': 20, // reduced from 24
+  '3xl': 22, // reduced from 28
+  '4xl': 24, // reduced from 32
+  '5xl': 26, // reduced from 36
+};
 
-// Dark theme
-export const darkTheme = createTheme('dark');
+const compactIconSizes = {
+  xs: 12,   // reduced from 16
+  sm: 16,   // reduced from 20
+  md: 20,   // reduced from 24
+  lg: 22,   // reduced from 28
+  xl: 24,   // reduced from 32
+};
+
+// Extended theme with compact sizing
+const lightTheme = {
+  ...MD3LightTheme,
+  colors: {
+    ...MD3LightTheme.colors,
+    primary: '#1976D2',
+    primaryContainer: '#E3F2FD',
+    secondary: '#424242',
+    secondaryContainer: '#F5F5F5',
+    surface: '#FFFFFF',
+    surfaceVariant: '#F8F9FA',
+    background: '#FAFAFA',
+    error: '#D32F2F',
+    errorContainer: '#FFEBEE',
+    onPrimary: '#FFFFFF',
+    onSecondary: '#FFFFFF',
+    onSurface: '#212121',
+    onSurfaceVariant: '#757575',
+    onBackground: '#212121',
+    outline: '#E0E0E0',
+    success: '#4CAF50',
+    warning: '#FF9800',
+    info: '#2196F3',
+  },
+  spacing: compactSpacing,
+  fontSize: compactFontSizes,
+  iconSize: compactIconSizes,
+  borderRadius: {
+    xs: 2,    // reduced from 4
+    sm: 4,    // reduced from 6
+    md: 6,    // reduced from 8
+    lg: 8,    // reduced from 12
+    xl: 12,   // reduced from 16
+    full: 9999,
+  },
+  shadows: {
+    sm: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05, // reduced from 0.1
+      shadowRadius: 2,     // reduced from 3
+      elevation: 1,        // reduced from 2
+    },
+    md: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08, // reduced from 0.15
+      shadowRadius: 3,     // reduced from 5
+      elevation: 2,        // reduced from 4
+    },
+    lg: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,  // reduced from 0.2
+      shadowRadius: 6,     // reduced from 10
+      elevation: 4,        // reduced from 8
+    },
+  },
+  components: {
+    card: {
+      minHeight: 60,       // reduced from 80
+      padding: compactSpacing.md,
+      borderRadius: 6,     // reduced from 8
+    },
+    button: {
+      height: 36,          // reduced from 44
+      paddingHorizontal: compactSpacing.md,
+      borderRadius: 6,     // reduced from 8
+    },
+    input: {
+      height: 40,          // reduced from 48
+      paddingHorizontal: compactSpacing.md,
+      fontSize: compactFontSizes.md,
+      borderRadius: 6,     // reduced from 8
+    },
+    header: {
+      height: 50,          // reduced from 60
+      paddingHorizontal: compactSpacing.md,
+    },
+    listItem: {
+      minHeight: 48,       // reduced from 56
+      paddingVertical: compactSpacing.sm,
+      paddingHorizontal: compactSpacing.md,
+    },
+    fab: {
+      size: 48,            // reduced from 56
+      iconSize: compactIconSizes.lg,
+    },
+  },
+};
+
+const darkTheme = {
+  ...MD3DarkTheme,
+  colors: {
+    ...MD3DarkTheme.colors,
+    primary: '#90CAF9',
+    primaryContainer: '#1565C0',
+    secondary: '#BDBDBD',
+    secondaryContainer: '#424242',
+    surface: '#1E1E1E',
+    surfaceVariant: '#2C2C2C',
+    background: '#121212',
+    error: '#EF5350',
+    errorContainer: '#B71C1C',
+    onPrimary: '#000000',
+    onSecondary: '#000000',
+    onSurface: '#FFFFFF',
+    onSurfaceVariant: '#BDBDBD',
+    onBackground: '#FFFFFF',
+    outline: '#424242',
+    success: '#66BB6A',
+    warning: '#FFB74D',
+    info: '#64B5F6',
+  },
+  spacing: compactSpacing,
+  fontSize: compactFontSizes,
+  iconSize: compactIconSizes,
+  borderRadius: lightTheme.borderRadius,
+  shadows: lightTheme.shadows,
+  components: lightTheme.components,
+};
+
+export { lightTheme, darkTheme };
+
+// RTL-aware styling utilities
+export const rtlStyles = {
+  row: (isRtl: boolean = isRTL()) => ({
+    flexDirection: isRtl ? 'row-reverse' : 'row' as const,
+  }),
+  textAlign: (isRtl: boolean = isRTL()) => ({
+    textAlign: isRtl ? 'right' : 'left' as const,
+  }),
+  marginStart: (value: number, isRtl: boolean = isRTL()) => ({
+    [isRtl ? 'marginRight' : 'marginLeft']: value,
+  }),
+  marginEnd: (value: number, isRtl: boolean = isRTL()) => ({
+    [isRtl ? 'marginLeft' : 'marginRight']: value,
+  }),
+  paddingStart: (value: number, isRtl: boolean = isRTL()) => ({
+    [isRtl ? 'paddingRight' : 'paddingLeft']: value,
+  }),
+  paddingEnd: (value: number, isRtl: boolean = isRTL()) => ({
+    [isRtl ? 'paddingLeft' : 'paddingRight']: value,
+  }),
+};
+
+export const rtlLayout = {
+  row: isRTL() ? 'row-reverse' : 'row',
+  textAlign: isRTL() ? 'right' : 'left',
+  alignItems: isRTL() ? 'flex-end' : 'flex-start',
+} as const;
 
 // Spacing system
 export const spacing = {
@@ -210,70 +326,6 @@ export const typography = {
     fontWeight: '600' as const,
     lineHeight: 20,
   },
-};
-
-// RTL-aware styling utilities
-export const rtlStyles = {
-  // Flexbox direction utilities
-  row: {
-    flexDirection: getFlexDirection('row'),
-  },
-  rowReverse: {
-    flexDirection: getFlexDirection('row') === 'row' ? 'row-reverse' : 'row',
-  },
-  
-  // Text alignment utilities
-  textLeft: {
-    textAlign: getTextAlign('left'),
-  },
-  textRight: {
-    textAlign: getTextAlign('right'),
-  },
-  textCenter: {
-    textAlign: 'center' as const,
-  },
-  
-  // Positioning utilities
-  alignStart: {
-    alignSelf: 'flex-start' as const,
-  },
-  alignEnd: {
-    alignSelf: 'flex-end' as const,
-  },
-  
-  // Margin utilities (RTL-aware)
-  marginStart: (value: number) => ({
-    [isRTL() ? 'marginRight' : 'marginLeft']: value,
-  }),
-  marginEnd: (value: number) => ({
-    [isRTL() ? 'marginLeft' : 'marginRight']: value,
-  }),
-  
-  // Padding utilities (RTL-aware)
-  paddingStart: (value: number) => ({
-    [isRTL() ? 'paddingRight' : 'paddingLeft']: value,
-  }),
-  paddingEnd: (value: number) => ({
-    [isRTL() ? 'paddingLeft' : 'paddingRight']: value,
-  }),
-  
-  // Border utilities (RTL-aware)
-  borderStart: (width: number, color: string) => ({
-    [isRTL() ? 'borderRightWidth' : 'borderLeftWidth']: width,
-    [isRTL() ? 'borderRightColor' : 'borderLeftColor']: color,
-  }),
-  borderEnd: (width: number, color: string) => ({
-    [isRTL() ? 'borderLeftWidth' : 'borderRightWidth']: width,
-    [isRTL() ? 'borderLeftColor' : 'borderRightColor']: color,
-  }),
-  
-  // Position utilities (RTL-aware)
-  positionStart: (value: number) => ({
-    [isRTL() ? 'right' : 'left']: value,
-  }),
-  positionEnd: (value: number) => ({
-    [isRTL() ? 'left' : 'right']: value,
-  }),
 };
 
 // RTL layout utilities
