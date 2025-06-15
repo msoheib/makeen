@@ -21,7 +21,7 @@ import CashflowCard from '@/components/CashflowCard';
 import StatCard from '@/components/StatCard';
 import { useApi } from '@/hooks/useApi';
 import { propertiesApi, profilesApi, contractsApi } from '@/lib/api';
-import { useScreenAccess } from '@/lib/permissions';
+import { useScreenAccess, SCREEN_PERMISSIONS } from '@/lib/permissions';
 
 // Static data to prevent loading issues
 const staticData = {
@@ -139,8 +139,20 @@ export default function DashboardScreen() {
     userContext: userContext,
     isAuthenticated: userContext?.isAuthenticated,
     role: userContext?.role,
-    userId: userContext?.userId
+    userId: userContext?.userId,
+    permissionLoading: permissionLoading,
+    screenPermissionCheck: SCREEN_PERMISSIONS.find(p => p.screen === 'dashboard')
   });
+
+  // More detailed debug for dashboard access
+  if (!canAccessDashboard && !permissionLoading) {
+    console.log('[Dashboard Debug] Access Denied Details:', {
+      screenExists: SCREEN_PERMISSIONS.some(p => p.screen === 'dashboard'),
+      userHasRole: userContext?.role,
+      allowedRoles: SCREEN_PERMISSIONS.find(p => p.screen === 'dashboard')?.roles,
+      isAuthenticated: userContext?.isAuthenticated
+    });
+  }
 
   // If user doesn't have dashboard access, show access denied
   if (!canAccessDashboard) {
@@ -155,12 +167,21 @@ export default function DashboardScreen() {
           <Text style={[styles.accessDeniedSubtext, { color: theme.colors.onSurfaceVariant }]}>
             You don't have permission to view the dashboard
           </Text>
-          {/* DEBUG: Show role information */}
+          {/* DEBUG: Show detailed diagnostic information */}
           <Text style={[styles.accessDeniedSubtext, { color: theme.colors.onSurfaceVariant, marginTop: 16 }]}>
             Current Role: {userContext?.role || 'None'}
           </Text>
           <Text style={[styles.accessDeniedSubtext, { color: theme.colors.onSurfaceVariant }]}>
             Authenticated: {userContext?.isAuthenticated ? 'Yes' : 'No'}
+          </Text>
+          <Text style={[styles.accessDeniedSubtext, { color: theme.colors.onSurfaceVariant }]}>
+            User ID: {userContext?.userId || 'None'}
+          </Text>
+          <Text style={[styles.accessDeniedSubtext, { color: theme.colors.onSurfaceVariant }]}>
+            Permission Check: {canAccessDashboard ? 'Passed' : 'Failed'}
+          </Text>
+          <Text style={[styles.accessDeniedSubtext, { color: theme.colors.onSurfaceVariant }]}>
+            Dashboard Allowed For: {SCREEN_PERMISSIONS.find(p => p.screen === 'dashboard')?.roles.join(', ') || 'None'}
           </Text>
         </View>
       </SafeAreaView>
