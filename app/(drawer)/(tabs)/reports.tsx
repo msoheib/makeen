@@ -292,7 +292,9 @@ export default function ReportsScreen() {
       <ModernHeader 
         title="التقارير" 
         showNotifications={true}
-        showProfile={true}
+        showBackButton={false}
+        showMenu={true}
+        variant="dark"
       />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

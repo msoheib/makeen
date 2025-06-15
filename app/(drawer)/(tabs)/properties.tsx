@@ -160,7 +160,8 @@ export default function PropertiesScreen() {
       <ModernHeader 
         title="العقارات" 
         showNotifications={true}
-        showProfile={true}
+        showMenu={true}
+        variant="dark"
       />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

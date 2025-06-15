@@ -238,7 +238,8 @@ export default function DashboardScreen() {
         title="لوحة التحكم" 
         subtitle="مرحباً بك في نظام إدارة العقارات"
         showNotifications={true}
-        showProfile={true}
+        showMenu={true}
+        variant="dark"
       />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

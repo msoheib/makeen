@@ -174,7 +174,8 @@ export default function TenantsScreen() {
       <ModernHeader 
         title="المستأجرين" 
         showNotifications={true}
-        showProfile={true}
+        showMenu={true}
+        variant="dark"
       />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

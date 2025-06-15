@@ -1,16 +1,12 @@
 import React from 'react';
-import { View, StyleSheet, Image, Platform } from 'react-native';
+import { View, StyleSheet, Platform, StatusBar } from 'react-native';
 import { Text, IconButton } from 'react-native-paper';
-import { theme, spacing, rtlStyles, rtlLayout } from '@/lib/theme';
-import { Bell, Search, Menu, ArrowLeft } from 'lucide-react-native';
+import { lightTheme, darkTheme, spacing } from '@/lib/theme';
+import { Bell, Search, Menu, ArrowRight, ArrowLeft } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { DrawerActions } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import { NotificationBadge } from './NotificationBadge';
-import { useTotalBadgeCount } from '@/hooks/useNotificationBadges';
-import { useBadgeNavigation } from '@/hooks/useNotificationNavigation';
-import { useRouteContext } from '@/hooks/useRouteContext';
-import { useTranslation } from '@/lib/useTranslation';
+import { useAppStore } from '@/lib/store';
 
 interface ModernHeaderProps {
   title?: string;
@@ -18,14 +14,11 @@ interface ModernHeaderProps {
   showNotifications?: boolean;
   showSearch?: boolean;
   showMenu?: boolean;
+  showBackButton?: boolean;
   onNotificationPress?: () => void;
   onSearchPress?: () => void;
   onMenuPress?: () => void;
-  userAvatar?: string;
-  userName?: string;
-  showLogo?: boolean;
   variant?: 'light' | 'dark';
-  isHomepage?: boolean;
 }
 
 export default function ModernHeader({
@@ -34,216 +27,175 @@ export default function ModernHeader({
   showNotifications = true,
   showSearch = false,
   showMenu = true,
+  showBackButton = false,
   onNotificationPress,
   onSearchPress,
   onMenuPress,
-  userAvatar,
-  userName,
-  showLogo = false,
-  variant = 'dark',
-  isHomepage = false
+  variant = 'dark'
 }: ModernHeaderProps) {
   const navigation = useNavigation();
   const router = useRouter();
-  const { count: totalNotifications } = useTotalBadgeCount();
-  const { navigateFromBadge, isNavigating } = useBadgeNavigation();
-  const { shouldShowHamburger, shouldShowBackButton } = useRouteContext();
-  const { t } = useTranslation('common');
+  const { isDarkMode } = useAppStore();
   
+  const theme = isDarkMode ? darkTheme : lightTheme;
   const isDark = variant === 'dark';
   const textColor = isDark ? '#FFFFFF' : theme.colors.onSurface;
   const iconColor = isDark ? '#FFFFFF' : theme.colors.onSurfaceVariant;
-  const backgroundColor = isDark ? '#1E293B' : theme.colors.background;
+  const backgroundColor = isDark ? '#1E293B' : theme.colors.surface;
 
   const handleMenuPress = () => {
     if (onMenuPress) {
       onMenuPress();
     } else {
-      // Open the drawer
       navigation.dispatch(DrawerActions.openDrawer());
     }
   };
 
   const handleBackPress = () => {
-    // Try to go back, fallback to home if no back history
     if (router.canGoBack()) {
       router.back();
     } else {
-      // Navigate to the main dashboard/home
       router.push('/(drawer)/(tabs)/');
     }
   };
 
-  const handleNotificationPress = async () => {
+  const handleNotificationPress = () => {
     if (onNotificationPress) {
       onNotificationPress();
-    } else {
-      // Navigate to notification center via badge navigation
-      try {
-        await navigateFromBadge();
-      } catch (error) {
-        console.warn('Failed to navigate from badge:', error);
-      }
     }
   };
 
+  // Determine if we should show back button based on navigation state
+  const shouldShowBackButton = showBackButton || (router.canGoBack() && !showMenu);
+
   return (
-    <View style={[styles.container, { backgroundColor }]}>
-      <View style={styles.topRow}>
-        {showMenu && shouldShowHamburger && (
-          <IconButton
-            icon={() => <Menu size={24} color={iconColor} />}
-            onPress={handleMenuPress}
-            style={styles.menuButton}
-            accessibilityLabel={t('navigation.openMenu')}
-            accessibilityHint={t('navigation.openMenuHint')}
-          />
-        )}
-        {showMenu && shouldShowBackButton && (
-          <IconButton
-            icon={() => <ArrowLeft size={24} color={iconColor} />}
-            onPress={handleBackPress}
-            style={styles.menuButton}
-            accessibilityLabel={t('navigation.goBack')}
-            accessibilityHint={t('navigation.goBackHint')}
-          />
-        )}
-        
-        <View style={styles.centerContent}>
-          {isHomepage && showLogo ? (
-            <View style={styles.logoContainer}>
-              <View style={styles.logo}>
-                <View style={[styles.logoSquare, { backgroundColor: theme.colors.primary }]} />
-                <View style={[styles.logoSquare, { backgroundColor: theme.colors.secondary }]} />
-              </View>
-              <Text style={[styles.logoText, { color: textColor }]}>LandlordStudio</Text>
-            </View>
-          ) : (
-            title && (
-              <View style={styles.pageTitleContainer}>
-                <Text style={[styles.pageTitle, { color: textColor }]} numberOfLines={1}>
+    <>
+      <StatusBar 
+        backgroundColor={backgroundColor} 
+        barStyle={isDark ? 'light-content' : 'dark-content'} 
+      />
+      <View style={[styles.container, { backgroundColor }]}>
+        <View style={styles.content}>
+          {/* Right side - Navigation (Back/Menu) */}
+          <View style={styles.navigationSection}>
+            {shouldShowBackButton ? (
+              <IconButton
+                icon={() => <ArrowRight size={24} color={iconColor} />}
+                onPress={handleBackPress}
+                style={styles.navButton}
+                accessibilityLabel="العودة"
+              />
+            ) : showMenu ? (
+              <IconButton
+                icon={() => <Menu size={24} color={iconColor} />}
+                onPress={handleMenuPress}
+                style={styles.navButton}
+                accessibilityLabel="القائمة"
+              />
+            ) : null}
+          </View>
+
+          {/* Center - Title */}
+          <View style={styles.titleSection}>
+            {title && (
+              <View style={styles.titleContainer}>
+                <Text style={[styles.title, { color: textColor }]} numberOfLines={1}>
                   {title}
                 </Text>
                 {subtitle && (
-                  <Text style={[styles.pageSubtitle, { color: isDark ? '#94A3B8' : theme.colors.onSurfaceVariant }]} numberOfLines={1}>
+                  <Text style={[styles.subtitle, { color: isDark ? '#94A3B8' : theme.colors.onSurfaceVariant }]} numberOfLines={1}>
                     {subtitle}
                   </Text>
                 )}
               </View>
-            )
-          )}
-        </View>
-        
-        <View style={styles.rightSection}>
-          {showSearch && (
-            <IconButton
-              icon={() => <Search size={24} color={iconColor} />}
-              onPress={onSearchPress}
-              style={styles.iconButton}
-            />
-          )}
-          {showNotifications && (
-            <NotificationBadge count={totalNotifications} size="small" position="top-right">
+            )}
+          </View>
+
+          {/* Left side - Actions */}
+          <View style={styles.actionsSection}>
+            {showSearch && (
+              <IconButton
+                icon={() => <Search size={24} color={iconColor} />}
+                onPress={onSearchPress}
+                style={styles.actionButton}
+                accessibilityLabel="البحث"
+              />
+            )}
+            {showNotifications && (
               <IconButton
                 icon={() => <Bell size={24} color={iconColor} />}
                 onPress={handleNotificationPress}
-                style={styles.iconButton}
+                style={styles.actionButton}
+                accessibilityLabel="الإشعارات"
               />
-            </NotificationBadge>
-          )}
-          {userAvatar && (
-            <Image
-              source={{ uri: userAvatar }}
-              style={styles.avatar}
-            />
-          )}
+            )}
+          </View>
         </View>
       </View>
-      
-      {isHomepage && userName && (
-        <View style={styles.greetingSection}>
-          <Text style={[styles.greeting, { color: textColor, ...rtlStyles.textLeft }]}>
-            {t('greetings.hello', { name: userName })}
-          </Text>
-        </View>
-      )}
-    </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: Platform.OS === 'ios' ? spacing.xl : spacing.m,
-    paddingHorizontal: spacing.m,
+    paddingTop: Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 0,
+    paddingHorizontal: spacing.l, // Increased padding from spacing.m to spacing.l
     paddingBottom: spacing.m,
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  topRow: {
-    ...rtlStyles.row,
-    justifyContent: 'space-between',
+  content: {
+    flexDirection: 'row-reverse', // RTL layout
     alignItems: 'center',
-    minHeight: 40,
+    justifyContent: 'space-between',
+    minHeight: 56, // Standard app bar height
+    paddingVertical: spacing.s, // Additional vertical padding
   },
-  menuButton: {
-    margin: 0,
+  navigationSection: {
+    width: 48,
+    alignItems: 'flex-end', // Align to right for RTL
   },
-  centerContent: {
+  titleSection: {
     flex: 1,
     alignItems: 'center',
-    marginHorizontal: spacing.m,
+    paddingHorizontal: spacing.m, // Padding around title
   },
-  logoContainer: {
-    ...rtlStyles.row,
+  actionsSection: {
+    flexDirection: 'row-reverse', // RTL for action buttons
     alignItems: 'center',
+    width: 'auto',
+    minWidth: 48,
   },
-  logo: {
-    ...rtlStyles.row,
-    ...rtlStyles.marginEnd(spacing.s),
+  navButton: {
+    margin: 0,
+    width: 40,
+    height: 40,
   },
-  logoSquare: {
-    width: 12,
-    height: 12,
-    marginRight: 2,
-    borderRadius: 2,
+  actionButton: {
+    margin: 0,
+    marginHorizontal: spacing.xs, // Small margin between action buttons
+    width: 40,
+    height: 40,
   },
-  logoText: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  pageTitleContainer: {
+  titleContainer: {
     alignItems: 'center',
     maxWidth: '100%',
   },
-  pageTitle: {
-    fontSize: 18,
+  title: {
+    fontSize: 20, // Slightly larger for better readability
     fontWeight: '600',
     textAlign: 'center',
+    writingDirection: 'rtl', // Ensure RTL text direction
   },
-  pageSubtitle: {
+  subtitle: {
     fontSize: 14,
     textAlign: 'center',
     marginTop: 2,
-  },
-  rightSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  greetingSection: {
-    marginTop: spacing.m,
-  },
-  greeting: {
-    fontSize: 32,
-    fontWeight: '700',
-  },
-  iconButton: {
-    margin: 0,
-    marginHorizontal: 4,
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginLeft: spacing.s,
+    writingDirection: 'rtl',
   },
 });
