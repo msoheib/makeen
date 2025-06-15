@@ -8,7 +8,7 @@ import { BarChart3, FileText, TrendingUp, PieChart, Calendar, Download, Lock, Sh
 import ModernHeader from '@/components/ModernHeader';
 import StatCard from '@/components/StatCard';
 import { pdfApi, PDFRequest } from '@/lib/pdfApi';
-import { hasScreenAccess } from '@/lib/permissions';
+import { useScreenAccess } from '@/lib/permissions';
 import { useApi } from '@/hooks/useApi';
 import { reportsApi } from '@/lib/api';
 
@@ -83,7 +83,7 @@ export default function ReportsScreen() {
   const [generatingPDF, setGeneratingPDF] = useState<string | null>(null);
 
   // Check if user has access to reports
-  const canAccessReports = hasScreenAccess('reports');
+  const { hasAccess: canAccessReports, loading: permissionLoading, userContext } = useScreenAccess('reports');
 
   // Load real statistics from database
   const { 
@@ -95,6 +95,27 @@ export default function ReportsScreen() {
 
   // Generate dynamic reports based on available data
   const availableReports = generateReports(!!stats && stats.totalReports > 0);
+
+  // Show loading while checking permissions
+  if (permissionLoading) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <ModernHeader 
+          title="التقارير" 
+          subtitle="تقارير شاملة للأداء والإحصائيات"
+          showNotifications={true}
+          showMenu={true}
+          variant="default"
+        />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={[styles.loadingText, { color: theme.colors.onSurfaceVariant }]}>
+            Loading reports...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   // If user doesn't have reports access, show access denied
   if (!canAccessReports) {
@@ -114,6 +135,16 @@ export default function ReportsScreen() {
           </Text>
           <Text style={[styles.accessDeniedSubtext, { color: theme.colors.onSurfaceVariant }]}>
             You don't have permission to view reports. Only property owners and administrators can access financial reports.
+          </Text>
+          {/* DEBUG: Show user context for troubleshooting */}
+          <Text style={[styles.accessDeniedSubtext, { color: theme.colors.onSurfaceVariant, marginTop: 16 }]}>
+            Current Role: {userContext?.role || 'None'}
+          </Text>
+          <Text style={[styles.accessDeniedSubtext, { color: theme.colors.onSurfaceVariant }]}>
+            Authenticated: {userContext?.isAuthenticated ? 'Yes' : 'No'}
+          </Text>
+          <Text style={[styles.accessDeniedSubtext, { color: theme.colors.onSurfaceVariant }]}>
+            User ID: {userContext?.userId || 'None'}
           </Text>
         </View>
       </SafeAreaView>
@@ -548,6 +579,17 @@ const styles = StyleSheet.create({
   },
   reportTime: {
     fontSize: 12,
+    textAlign: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  loadingText: {
+    fontSize: 16,
+    marginTop: 16,
     textAlign: 'center',
   },
 });
