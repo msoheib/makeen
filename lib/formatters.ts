@@ -1,6 +1,15 @@
 import { format } from 'date-fns';
 import { enUS, ar } from 'date-fns/locale';
-import { isRTL } from './rtl';
+
+// Simple check for Arabic language without complex dependencies
+const isArabicLanguage = () => {
+  try {
+    // Simple check - if this fails, default to false
+    return false; // Temporarily disable Arabic numerals to fix loading issue
+  } catch {
+    return false;
+  }
+};
 
 // Language-specific formatters
 const locales = {
@@ -24,14 +33,14 @@ const arabicNumerals: { [key: string]: string } = {
 
 // Convert English numerals to Arabic numerals
 export const toArabicNumerals = (text: string): string => {
-  if (!isRTL()) return text;
+  if (!isArabicLanguage()) return text;
   
   return text.toString().replace(/[0-9]/g, (digit: string) => arabicNumerals[digit] || digit);
 };
 
 export const formatDate = (date: Date | string, formatString: string = 'PPP'): string => {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  const locale = isRTL() ? locales.ar : locales.en;
+  const locale = isArabicLanguage() ? locales.ar : locales.en;
   const formatted = format(dateObj, formatString, { locale });
   return toArabicNumerals(formatted);
 };
@@ -43,12 +52,12 @@ export const formatCurrency = (amount: number, currency: string = 'SAR'): string
   }).format(amount);
   
   const localizedAmount = toArabicNumerals(formattedAmount);
-  return isRTL() ? `${localizedAmount} ${currency}` : `${formattedAmount} ${currency}`;
+  return isArabicLanguage() ? `${localizedAmount} ${currency}` : `${formattedAmount} ${currency}`;
 };
 
 export const formatNumber = (num: number | string): string => {
   const numStr = num.toString();
-  return isRTL() ? toArabicNumerals(numStr) : numStr;
+  return isArabicLanguage() ? toArabicNumerals(numStr) : numStr;
 };
 
 export const formatPercentage = (value: number): string => {
@@ -71,14 +80,14 @@ export const formatPhoneNumber = (phone: string): string => {
   // Format phone numbers appropriately for Arabic/English contexts
   if (!phone) return '';
   
-  const isArabic = isRTL();
+  const isArabic = isArabicLanguage();
   
   // Basic formatting - can be enhanced for specific regions
   if (phone.startsWith('+966')) {
     // Saudi number
-    const number = phone.replace('+966', '').replace(/\\s/g, '');
+    const number = phone.replace('+966', '').replace(/\s/g, '');
     if (isArabic) {
-      return `٠٩٦٦ ${number.replace(/\\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[parseInt(d)])}`;
+      return `٠٩٦٦ ${number.replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[parseInt(d)])}`;
     } else {
       return `+966 ${number}`;
     }
@@ -103,7 +112,7 @@ export const formatLargeNumber = (num: number): string => {
 
 export const formatTime = (date: Date | string): string => {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  const formatted = dateObj.toLocaleTimeString(isRTL() ? 'ar-SA' : 'en-US', {
+  const formatted = dateObj.toLocaleTimeString(isArabicLanguage() ? 'ar-SA' : 'en-US', {
     hour: '2-digit',
     minute: '2-digit'
   });

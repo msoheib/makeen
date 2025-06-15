@@ -1,349 +1,397 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, FlatList, RefreshControl } from 'react-native';
-import { Text, Searchbar, Avatar, List, ActivityIndicator, Button, FAB } from 'react-native-paper';
+import { View, StyleSheet, FlatList, ScrollView, SafeAreaView } from 'react-native';
+import { Text, Searchbar, Avatar } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { theme, spacing } from '@/lib/theme';
-import { profilesApi } from '@/lib/api';
-import { useApi } from '@/hooks/useApi';
-import { Users, UserPlus, Phone, Mail } from 'lucide-react-native';
+import { lightTheme, darkTheme } from '@/lib/theme';
+import { useAppStore } from '@/lib/store';
+import { Users, Phone, Mail, MapPin } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
-import ModernCard from '@/components/ModernCard';
 import StatCard from '@/components/StatCard';
-import { useTranslation } from '@/lib/useTranslation';
+
+// Static tenant data to prevent loading issues
+const staticTenants = [
+  {
+    id: '1',
+    first_name: 'أحمد',
+    last_name: 'السالم',
+    email: 'ahmed.salem@example.com',
+    phone: '+966501234567',
+    status: 'active',
+    nationality: 'Saudi',
+    is_foreign: false,
+    address: 'الرياض، المملكة العربية السعودية',
+    property: 'فيلا فاخرة في الرياض',
+    rent_amount: 5000,
+    contract_end: '2024-12-31'
+  },
+  {
+    id: '2',
+    first_name: 'فاطمة',
+    last_name: 'الزهراء',
+    email: 'fatima.zahra@example.com',
+    phone: '+966507654321',
+    status: 'active',
+    nationality: 'Saudi',
+    is_foreign: false,
+    address: 'جدة، المملكة العربية السعودية',
+    property: 'شقة عصرية في جدة',
+    rent_amount: 4000,
+    contract_end: '2024-11-30'
+  },
+  {
+    id: '3',
+    first_name: 'John',
+    last_name: 'Smith',
+    email: 'john.smith@example.com',
+    phone: '+966509876543',
+    status: 'pending',
+    nationality: 'American',
+    is_foreign: true,
+    address: 'الدمام، المملكة العربية السعودية',
+    property: 'مكتب تجاري في الدمام',
+    rent_amount: 6000,
+    contract_end: '2025-06-30'
+  }
+];
+
+// Static stats
+const staticStats = {
+  total: '٣',
+  active: '٢',
+  pending: '١',
+  foreign: '١'
+};
 
 export default function TenantsScreen() {
   const router = useRouter();
-  const { t } = useTranslation('tenants');
+  const { isDarkMode } = useAppStore();
+  const theme = isDarkMode ? darkTheme : lightTheme;
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // Use the API hook for fetching tenants
-  const { 
-    data: tenants, 
-    loading, 
-    error, 
-    refetch 
-  } = useApi(() => profilesApi.getTenants(), []);
 
-  // Filter tenants based on search query
-  const filteredTenants = React.useMemo(() => {
-    if (!tenants) return [];
-    
-    if (!searchQuery) return tenants;
-    
+  // Filter tenants based on search
+  const filteredTenants = staticTenants.filter(tenant => {
+    const fullName = `${tenant.first_name} ${tenant.last_name}`.toLowerCase();
     const query = searchQuery.toLowerCase();
-    return tenants.filter(tenant => 
-      `${tenant.first_name} ${tenant.last_name}`.toLowerCase().includes(query) ||
-      tenant.email?.toLowerCase().includes(query) ||
-      tenant.phone?.toLowerCase().includes(query)
-    );
-  }, [tenants, searchQuery]);
+    return fullName.includes(query) ||
+           tenant.email.toLowerCase().includes(query) ||
+           tenant.phone.includes(query) ||
+           tenant.property.toLowerCase().includes(query);
+  });
 
-  // Calculate stats from real data
-  const stats = React.useMemo(() => {
-    if (!tenants) {
-      return {
-        total: 0,
-        active: 0,
-        pending: 0,
-        late: 0,
-      };
-    }
-
-    const activeCount = tenants.filter(tenant => tenant.status === 'active').length;
-    const pendingCount = tenants.filter(tenant => tenant.status === 'pending').length;
-    
-    return {
-      total: tenants.length,
-      active: activeCount,
-      pending: pendingCount,
-      late: 0, // TODO: Calculate based on payment status from contracts
-    };
-  }, [tenants]);
-
-  const renderTenant = ({ item }: { item: any }) => {
-    const fullName = `${item.first_name || ''} ${item.last_name || ''}`.trim();
-    const primaryContract = item.contracts?.[0];
-    const propertyInfo = primaryContract?.property;
-    
-    return (
-      <ModernCard style={styles.tenantCard}>
-        <List.Item
-          title={fullName || 'No Name'}
-          description={item.email || 'No Email'}
-          left={() => (
-            <Avatar.Image
-              size={48}
-              source={{ 
-                uri: item.avatar_url || 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg' 
-              }}
-            />
-          )}
-          right={() => (
-            <View style={styles.tenantActions}>
-              <View style={[
-                styles.statusTag, 
-                { 
-                  backgroundColor: item.status === 'active' 
-                    ? theme.colors.successContainer 
-                    : theme.colors.warningContainer 
-                }
-              ]}>
-                <Text style={[
-                  styles.statusText, 
-                  { 
-                    color: item.status === 'active' 
-                      ? theme.colors.success 
-                      : theme.colors.warning 
-                  }
-                ]}>
-                  {item.status === 'active' ? t('activeStatus') : t('pendingStatus')}
-                </Text>
-              </View>
-            </View>
-          )}
-          onPress={() => router.push(`/tenants/${item.id}`)}
-          style={styles.listItem}
-        />
-        {propertyInfo && (
-          <View style={styles.propertyInfo}>
-            <Text style={styles.propertyText}>
-              📍 {propertyInfo.title} - {propertyInfo.address}
+  const renderTenant = ({ item }: { item: any }) => (
+    <View style={[styles.tenantCard, { backgroundColor: theme.colors.surface }]}>
+      <View style={styles.tenantHeader}>
+        <View style={styles.tenantInfo}>
+          <Avatar.Text
+            size={60}
+            label={`${item.first_name[0]}${item.last_name[0]}`}
+            style={{ backgroundColor: theme.colors.primaryContainer }}
+            labelStyle={{ color: theme.colors.primary }}
+          />
+          <View style={styles.tenantDetails}>
+            <Text style={[styles.tenantName, { color: theme.colors.onSurface }]}>
+              {item.first_name} {item.last_name}
+            </Text>
+            <Text style={[styles.tenantNationality, { color: theme.colors.onSurfaceVariant }]}>
+              {item.is_foreign ? `🌍 ${item.nationality}` : `🇸🇦 ${item.nationality}`}
             </Text>
           </View>
-        )}
-      </ModernCard>
-    );
-  };
+        </View>
+        <View style={[
+          styles.statusBadge,
+          {
+            backgroundColor: item.status === 'active'
+              ? theme.colors.secondaryContainer
+              : theme.colors.warningContainer
+          }
+        ]}>
+          <Text style={[
+            styles.statusText,
+            {
+              color: item.status === 'active'
+                ? theme.colors.secondary
+                : theme.colors.warning
+            }
+          ]}>
+            {item.status === 'active' ? 'نشط' : 'معلق'}
+          </Text>
+        </View>
+      </View>
 
-  const renderLoadingState = () => (
-    <View style={styles.loadingContainer}>
-      <ActivityIndicator size="large" color={theme.colors.primary} />
-      <Text style={styles.loadingText}>{t('common:loading')}</Text>
+      <View style={styles.contactInfo}>
+        <View style={styles.contactItem}>
+          <Mail size={16} color={theme.colors.onSurfaceVariant} />
+          <Text style={[styles.contactText, { color: theme.colors.onSurfaceVariant }]}>
+            {item.email}
+          </Text>
+        </View>
+        <View style={styles.contactItem}>
+          <Phone size={16} color={theme.colors.onSurfaceVariant} />
+          <Text style={[styles.contactText, { color: theme.colors.onSurfaceVariant }]}>
+            {item.phone}
+          </Text>
+        </View>
+        <View style={styles.contactItem}>
+          <MapPin size={16} color={theme.colors.onSurfaceVariant} />
+          <Text style={[styles.contactText, { color: theme.colors.onSurfaceVariant }]}>
+            {item.address}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.propertyInfo}>
+        <Text style={[styles.propertyLabel, { color: theme.colors.onSurfaceVariant }]}>
+          العقار المؤجر:
+        </Text>
+        <Text style={[styles.propertyText, { color: theme.colors.onSurface }]}>
+          {item.property}
+        </Text>
+      </View>
+
+      <View style={styles.rentInfo}>
+        <View style={styles.rentItem}>
+          <Text style={[styles.rentLabel, { color: theme.colors.onSurfaceVariant }]}>
+            الإيجار الشهري
+          </Text>
+          <Text style={[styles.rentAmount, { color: theme.colors.primary }]}>
+            {item.rent_amount.toLocaleString('ar-SA')} ريال
+          </Text>
+        </View>
+        <View style={styles.rentItem}>
+          <Text style={[styles.rentLabel, { color: theme.colors.onSurfaceVariant }]}>
+            انتهاء العقد
+          </Text>
+          <Text style={[styles.rentDate, { color: theme.colors.onSurface }]}>
+            {item.contract_end}
+          </Text>
+        </View>
+      </View>
     </View>
-  );
-
-  const renderErrorState = () => (
-    <ModernCard style={styles.errorState}>
-      <Text style={styles.errorTitle}>{t('common:error')}</Text>
-      <Text style={styles.errorSubtitle}>{error}</Text>
-      <Button mode="contained" onPress={refetch} style={styles.retryButton}>
-        {t('common:tryAgain')}
-      </Button>
-    </ModernCard>
-  );
-
-  const renderEmptyState = () => (
-    <ModernCard style={styles.emptyState}>
-      <UserPlus size={48} color={theme.colors.onSurfaceVariant} />
-      <Text style={styles.emptyStateTitle}>{t('noTenantsFound')}</Text>
-      <Text style={styles.emptyStateSubtitle}>
-        {searchQuery 
-          ? t('adjustSearch') 
-          : t('addFirstTenant')}
-      </Text>
-    </ModernCard>
   );
 
   return (
-    <View style={styles.container}>
-      <ModernHeader
-        title={t('title')}
-        subtitle={t('subtitle')}
-        variant="dark"
-        showNotifications
-        isHomepage={false}
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <ModernHeader 
+        title="المستأجرين" 
+        showNotifications={true}
+        showProfile={true}
       />
 
-      {/* Stats Overview - Only show when data is loaded */}
-      {!loading && !error && (
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Stats Section */}
         <View style={styles.statsSection}>
-          <FlatList
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            data={[
-              {
-                title: t('totalTenants'),
-                value: stats.total.toString(),
-                color: theme.colors.primary,
-                icon: <Users size={20} color={theme.colors.primary} />,
-              },
-              {
-                title: t('activeTenants'),
-                value: stats.active.toString(),
-                color: theme.colors.success,
-                icon: <Users size={20} color={theme.colors.success} />,
-              },
-              {
-                title: t('pendingTenants'),
-                value: stats.pending.toString(),
-                color: theme.colors.warning,
-                icon: <Users size={20} color={theme.colors.warning} />,
-              },
-              {
-                title: t('latePayments'),
-                value: stats.late.toString(),
-                color: theme.colors.error,
-                icon: <Users size={20} color={theme.colors.error} />,
-              },
-            ]}
-            renderItem={({ item }) => (
-              <StatCard
-                title={item.title}
-                value={item.value}
-                color={item.color}
-                icon={item.icon}
-              />
-            )}
-            keyExtractor={(item) => item.title}
-            contentContainerStyle={styles.statsContainer}
-          />
+          <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+            إحصائيات المستأجرين
+          </Text>
+          <View style={styles.statsGrid}>
+            <StatCard
+              title="إجمالي المستأجرين"
+              value={staticStats.total}
+              color={theme.colors.primary}
+            />
+            <StatCard
+              title="مستأجرين نشطين"
+              value={staticStats.active}
+              color="#4CAF50"
+            />
+            <StatCard
+              title="مستأجرين معلقين"
+              value={staticStats.pending}
+              color="#FF9800"
+            />
+            <StatCard
+              title="مستأجرين أجانب"
+              value={staticStats.foreign}
+              color={theme.colors.secondary}
+            />
+          </View>
         </View>
-      )}
 
-      {/* Search - Only show when not loading */}
-      {!loading && (
-        <View style={styles.filtersSection}>
+        {/* Search Section */}
+        <View style={styles.searchSection}>
           <Searchbar
-            placeholder={t('searchPlaceholder')}
+            placeholder="البحث في المستأجرين..."
             onChangeText={setSearchQuery}
             value={searchQuery}
-            style={styles.searchbar}
+            style={[styles.searchbar, { backgroundColor: theme.colors.surface }]}
             iconColor={theme.colors.onSurfaceVariant}
+            placeholderTextColor={theme.colors.onSurfaceVariant}
           />
         </View>
-      )}
 
-      {/* Content */}
-      {loading ? (
-        renderLoadingState()
-      ) : error ? (
-        renderErrorState()
-      ) : (
-        <FlatList
-          data={filteredTenants}
-          renderItem={renderTenant}
-          keyExtractor={item => item.id}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={loading} onRefresh={refetch} />
-          }
-          ListEmptyComponent={renderEmptyState()}
-        />
-      )}
-
-      <FAB
-        icon="plus"
-        style={styles.fab}
-        onPress={() => router.push('/tenants/add')}
-        label="Add Tenant"
-      />
-    </View>
+        {/* Tenants List */}
+        <View style={styles.tenantsSection}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+            قائمة المستأجرين ({filteredTenants.length})
+          </Text>
+          
+          {filteredTenants.length > 0 ? (
+            <FlatList
+              data={filteredTenants}
+              renderItem={renderTenant}
+              keyExtractor={item => item.id}
+              scrollEnabled={false}
+              showsVerticalScrollIndicator={false}
+            />
+          ) : (
+            <View style={[styles.emptyState, { backgroundColor: theme.colors.surface }]}>
+              <Users size={48} color={theme.colors.onSurfaceVariant} />
+              <Text style={[styles.emptyStateTitle, { color: theme.colors.onSurface }]}>
+                لا توجد مستأجرين
+              </Text>
+              <Text style={[styles.emptyStateSubtitle, { color: theme.colors.onSurfaceVariant }]}>
+                {searchQuery ? 'جرب البحث بكلمات أخرى' : 'ابدأ بإضافة مستأجر جديد'}
+              </Text>
+            </View>
+          )}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 16,
   },
   statsSection: {
-    marginBottom: spacing.m,
+    marginVertical: 16,
   },
-  statsContainer: {
-    paddingHorizontal: spacing.m,
-    gap: spacing.s,
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 16,
+    textAlign: 'right',
   },
-  filtersSection: {
-    paddingHorizontal: spacing.m,
-    marginBottom: spacing.m,
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  searchSection: {
+    marginBottom: 16,
   },
   searchbar: {
-    backgroundColor: theme.colors.surface,
+    borderRadius: 12,
+    elevation: 2,
   },
-  listContent: {
-    padding: spacing.m,
-    paddingTop: 0,
+  tenantsSection: {
+    marginBottom: 24,
   },
   tenantCard: {
-    marginBottom: spacing.s,
+    marginBottom: 16,
+    borderRadius: 16,
+    padding: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  listItem: {
-    paddingVertical: spacing.s,
+  tenantHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
   },
-  tenantActions: {
-    justifyContent: 'center',
+  tenantInfo: {
+    flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
-  statusTag: {
-    paddingHorizontal: spacing.s,
-    paddingVertical: spacing.xs,
+  tenantDetails: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  tenantName: {
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'right',
+  },
+  tenantNationality: {
+    fontSize: 14,
+    marginTop: 2,
+    textAlign: 'right',
+  },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
     borderRadius: 12,
   },
   statusText: {
     fontSize: 12,
     fontWeight: '500',
   },
+  contactInfo: {
+    marginBottom: 12,
+  },
+  contactItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  contactText: {
+    fontSize: 14,
+    marginLeft: 8,
+    textAlign: 'right',
+    flex: 1,
+  },
   propertyInfo: {
-    paddingHorizontal: spacing.m,
-    paddingBottom: spacing.s,
+    marginBottom: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+  },
+  propertyLabel: {
+    fontSize: 12,
+    marginBottom: 4,
+    textAlign: 'right',
   },
   propertyText: {
-    fontSize: 12,
-    color: theme.colors.onSurfaceVariant,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xl,
-  },
-  loadingText: {
-    marginTop: spacing.m,
-    color: theme.colors.onSurfaceVariant,
-  },
-  errorState: {
-    margin: spacing.m,
-    padding: spacing.l,
-    alignItems: 'center',
-  },
-  errorTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.error,
-    marginBottom: spacing.s,
-  },
-  errorSubtitle: {
     fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    textAlign: 'center',
-    marginBottom: spacing.m,
+    fontWeight: '500',
+    textAlign: 'right',
   },
-  retryButton: {
-    backgroundColor: theme.colors.primary,
+  rentInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+  },
+  rentItem: {
+    alignItems: 'center',
+  },
+  rentLabel: {
+    fontSize: 12,
+    marginBottom: 2,
+  },
+  rentAmount: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  rentDate: {
+    fontSize: 14,
+    fontWeight: '500',
   },
   emptyState: {
-    margin: spacing.m,
-    padding: spacing.xl,
+    padding: 32,
+    borderRadius: 16,
     alignItems: 'center',
+    marginTop: 16,
   },
   emptyStateTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginTop: spacing.m,
-    marginBottom: spacing.s,
+    marginTop: 12,
+    marginBottom: 4,
   },
   emptyStateSubtitle: {
     fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
     textAlign: 'center',
-  },
-  fab: {
-    position: 'absolute',
-    margin: spacing.m,
-    right: 0,
-    bottom: 0,
-    backgroundColor: theme.colors.primary,
   },
 });

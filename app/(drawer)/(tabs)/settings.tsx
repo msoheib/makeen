@@ -1,366 +1,328 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { List, Surface, Text } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
+import { Text, List, Switch, Divider } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { theme, spacing } from '@/lib/theme';
-import { Settings, User, Bell, Globe, Moon, DollarSign, MessageSquare, FileText, ShieldCheck, LogOut, Building2, Users, CreditCard, ChartBar as BarChart3, PenTool as Tool, Settings2, Palette, HelpCircle, Shield, ArrowRight } from 'lucide-react-native';
-import { supabase } from '@/lib/supabase';
+import { lightTheme, darkTheme } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
+import { 
+  User, 
+  Bell, 
+  Globe, 
+  Palette, 
+  DollarSign, 
+  HelpCircle, 
+  Shield, 
+  FileText,
+  ChevronRight
+} from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
-import ModernCard from '@/components/ModernCard';
-import { useTranslation } from '@/lib/useTranslation';
 
-export default function MoreScreen() {
+export default function SettingsScreen() {
   const router = useRouter();
-  const { t, language, isRTL } = useTranslation('settings');
-  const { settings, setUser, setAuthenticated } = useAppStore();
+  const { isDarkMode, toggleDarkMode, language, setLanguage } = useAppStore();
+  const theme = isDarkMode ? darkTheme : lightTheme;
 
-  const handleSignOut = async () => {
-    try {
-      await supabase.auth.signOut();
-      router.replace('/(auth)');
-    } catch (error) {
-      console.error('Logout error:', error);
-      alert('Logout failed: ' + error.message);
-    }
-  };
-
-  const getThemeDisplayName = (themeMode: string) => {
-    switch (themeMode) {
-      case 'light': return t('themeDesc.light');
-      case 'dark': return t('themeDesc.dark');
-      case 'system': return t('themeDesc.system');
-      default: return t('themeDesc.light');
-    }
-  };
-
-  const getLanguageDisplayName = (languageCode: string) => {
-    switch (languageCode) {
-      case 'en': return t('language.languages.en');
-      case 'ar': return t('language.languages.ar');
-      default: return t('language.languages.en');
-    }
-  };
-
-  // Debug function to test translations
-  const testTranslation = () => {
-    try {
-      console.log('=== Translation Test Started ===');
-      console.log('Current language:', language);
-      console.log('Is RTL:', isRTL);
-      
-      // Test cross-namespace translations
-      const commonUserTranslation = t('common:user');
-      console.log('common:user ->', commonUserTranslation);
-      
-      // Test current namespace translations  
-      const settingsTitleTranslation = t('title');
-      console.log('settings:title ->', settingsTitleTranslation);
-      
-      // Test if i18n is working
-      const basicTest = t('language.title');
-      console.log('language.title ->', basicTest);
-      
-      const currentTranslations = [
-        `Language: ${language}`,
-        `RTL: ${isRTL}`,
-        `common:user -> "${commonUserTranslation}"`,
-        `settings.title -> "${settingsTitleTranslation}"`,
-        `language.title -> "${basicTest}"`
-      ];
-      
-      console.log('Translation results:', currentTranslations);
-      
-      Alert.alert(
-        'Translation Test Results',
-        currentTranslations.join('\n'),
-        [{ text: 'OK' }]
-      );
-    } catch (error) {
-      console.error('Translation test error:', error);
-      Alert.alert(
-        'Translation Test Error',
-        `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        [{ text: 'OK' }]
-      );
-    }
-  };
-
-  const settingsSections = [
+  const settingsItems = [
     {
-      title: t('sections.account'),
-      items: [
-        {
-          title: t('profile.title'),
-          icon: <User size={24} color={theme.colors.primary} />,
-          onPress: () => router.push('/profile'),
-        },
-        {
-          title: t('notifications.title'),
-          icon: <Bell size={24} color={theme.colors.primary} />,
-          onPress: () => router.push('/notifications'),
-        },
-      ],
+      title: 'الملف الشخصي',
+      description: 'إدارة معلوماتك الشخصية',
+      icon: User,
+      onPress: () => console.log('Navigate to profile'),
+      showSwitch: false
     },
     {
-      title: t('sections.preferences'),
-      items: [
-        {
-          title: t('language.title'),
-          icon: <Globe size={24} color={theme.colors.primary} />,
-          onPress: () => router.push('/language'),
-        },
-        {
-          title: t('theme.title'),
-          icon: <Palette size={24} color={theme.colors.primary} />,
-          onPress: () => router.push('/theme'),
-        },
-        {
-          title: t('currency.title'),
-          icon: <DollarSign size={24} color={theme.colors.primary} />,
-          onPress: () => router.push('/currency'),
-        },
-      ],
+      title: 'الإشعارات',
+      description: 'إعدادات التنبيهات والإشعارات',
+      icon: Bell,
+      onPress: () => console.log('Navigate to notifications'),
+      showSwitch: false
     },
     {
-      title: t('sections.helpAndSupport'),
-      items: [
-        {
-          title: t('help.title'),
-          icon: <HelpCircle size={24} color={theme.colors.primary} />,
-          onPress: () => router.push('/help'),
-        },
-        {
-          title: t('support.title'),
-          icon: <MessageSquare size={24} color={theme.colors.primary} />,
-          onPress: () => router.push('/support'),
-        },
-      ],
+      title: 'اللغة',
+      description: 'العربية',
+      icon: Globe,
+      onPress: () => console.log('Navigate to language'),
+      showSwitch: false
     },
     {
-      title: t('sections.legal'),
-      items: [
-        {
-          title: t('privacy.title'),
-          icon: <Shield size={24} color={theme.colors.primary} />,
-          onPress: () => router.push('/privacy'),
-        },
-        {
-          title: t('terms.title'),
-          icon: <FileText size={24} color={theme.colors.primary} />,
-          onPress: () => router.push('/terms'),
-        },
-      ],
+      title: 'المظهر الداكن',
+      description: isDarkMode ? 'مفعل' : 'معطل',
+      icon: Palette,
+      onPress: toggleDarkMode,
+      showSwitch: true,
+      switchValue: isDarkMode
     },
+    {
+      title: 'العملة',
+      description: 'ريال سعودي (SAR)',
+      icon: DollarSign,
+      onPress: () => console.log('Navigate to currency'),
+      showSwitch: false
+    }
   ];
 
+  const supportItems = [
+    {
+      title: 'المساعدة والدعم',
+      description: 'الحصول على المساعدة',
+      icon: HelpCircle,
+      onPress: () => console.log('Navigate to support')
+    },
+    {
+      title: 'الخصوصية',
+      description: 'سياسة الخصوصية',
+      icon: Shield,
+      onPress: () => console.log('Navigate to privacy')
+    },
+    {
+      title: 'الشروط والأحكام',
+      description: 'شروط الاستخدام',
+      icon: FileText,
+      onPress: () => console.log('Navigate to terms')
+    }
+  ];
+
+  const renderSettingItem = (item: any, index: number) => {
+    const IconComponent = item.icon;
+    
+    return (
+      <List.Item
+        key={index}
+        title={item.title}
+        description={item.description}
+        titleStyle={[styles.itemTitle, { color: theme.colors.onSurface }]}
+        descriptionStyle={[styles.itemDescription, { color: theme.colors.onSurfaceVariant }]}
+        left={() => (
+          <View style={[styles.iconContainer, { backgroundColor: `${theme.colors.primary}20` }]}>
+            <IconComponent size={24} color={theme.colors.primary} />
+          </View>
+        )}
+        right={() => (
+          item.showSwitch ? (
+            <Switch
+              value={item.switchValue}
+              onValueChange={item.onPress}
+              color={theme.colors.primary}
+            />
+          ) : (
+            <ChevronRight size={20} color={theme.colors.onSurfaceVariant} />
+          )
+        )}
+        onPress={!item.showSwitch ? item.onPress : undefined}
+        style={[styles.listItem, { backgroundColor: theme.colors.surface }]}
+      />
+    );
+  };
+
   return (
-    <View style={styles.container}>
-      <ModernHeader
-        title={t('title')}
-        subtitle={t('subtitle')}
-        variant="dark"
-        showNotifications
-        isHomepage={false}
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <ModernHeader 
+        title="الإعدادات" 
+        showNotifications={true}
+        showProfile={true}
       />
 
-      <ScrollView style={styles.content}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* User Profile Section */}
+        <View style={styles.profileSection}>
+          <View style={[styles.profileCard, { backgroundColor: theme.colors.surface }]}>
+            <View style={styles.profileInfo}>
+              <View style={[styles.profileAvatar, { backgroundColor: theme.colors.primaryContainer }]}>
+                <User size={32} color={theme.colors.primary} />
+              </View>
+              <View style={styles.profileDetails}>
+                <Text style={[styles.profileName, { color: theme.colors.onSurface }]}>
+                  مدير النظام
+                </Text>
+                <Text style={[styles.profileEmail, { color: theme.colors.onSurfaceVariant }]}>
+                  admin@realestate.com
+                </Text>
+              </View>
+            </View>
+            <ChevronRight size={20} color={theme.colors.onSurfaceVariant} />
+          </View>
+        </View>
 
-
-        {settingsSections.map((section, sectionIndex) => (
-          <ModernCard
-            key={sectionIndex}
-            title={section.title}
-          >
-            {section.items.map((item, itemIndex) => (
-              <List.Item
-                key={itemIndex}
-                title={item.title}
-                left={() => item.icon}
-                right={() => <ArrowRight size={20} color={theme.colors.primary} />}
-                onPress={item.onPress}
-                style={styles.listItem}
-              />
+        {/* General Settings */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+            الإعدادات العامة
+          </Text>
+          <View style={[styles.sectionCard, { backgroundColor: theme.colors.surface }]}>
+            {settingsItems.map((item, index) => (
+              <View key={index}>
+                {renderSettingItem(item, index)}
+                {index < settingsItems.length - 1 && (
+                  <Divider style={styles.divider} />
+                )}
+              </View>
             ))}
-          </ModernCard>
-        ))}
+          </View>
+        </View>
 
-        {/* Quick Access */}
-        <ModernCard style={styles.section}>
-          <List.Section>
-            <List.Subheader>{t('quickAccess')}</List.Subheader>
-            <List.Item
-              title={t('people')}
-              description={t('peopleDesc')}
-              left={props => <Users {...props} size={24} />}
-              right={props => <List.Icon {...props} icon="chevron-right" />}
-              onPress={() => router.push('/people')}
-            />
-            <List.Item
-              title={t('maintenance')}
-              description={t('maintenanceDesc')}
-              left={props => <Tool {...props} size={24} />}
-              right={props => <List.Icon {...props} icon="chevron-right" />}
-              onPress={() => router.push('/maintenance')}
-            />
-            <List.Item
-              title={t('finance')}
-              description={t('financeDesc')}
-              left={props => <CreditCard {...props} size={24} />}
-              right={props => <List.Icon {...props} icon="chevron-right" />}
-              onPress={() => router.push('/finance')}
-            />
-          </List.Section>
-        </ModernCard>
+        {/* Support Section */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+            الدعم والمساعدة
+          </Text>
+          <View style={[styles.sectionCard, { backgroundColor: theme.colors.surface }]}>
+            {supportItems.map((item, index) => (
+              <View key={index}>
+                <List.Item
+                  title={item.title}
+                  description={item.description}
+                  titleStyle={[styles.itemTitle, { color: theme.colors.onSurface }]}
+                  descriptionStyle={[styles.itemDescription, { color: theme.colors.onSurfaceVariant }]}
+                  left={() => (
+                    <View style={[styles.iconContainer, { backgroundColor: `${theme.colors.secondary}20` }]}>
+                      <item.icon size={24} color={theme.colors.secondary} />
+                    </View>
+                  )}
+                  right={() => <ChevronRight size={20} color={theme.colors.onSurfaceVariant} />}
+                  onPress={item.onPress}
+                  style={[styles.listItem, { backgroundColor: theme.colors.surface }]}
+                />
+                {index < supportItems.length - 1 && (
+                  <Divider style={styles.divider} />
+                )}
+              </View>
+            ))}
+          </View>
+        </View>
 
-        {/* Account Settings */}
-        <ModernCard style={styles.section}>
-          <List.Section>
-            <List.Subheader>{t('accountSettings')}</List.Subheader>
-            <List.Item
-              title={t('myProfile')}
-              description={settings.userProfile?.name || t('myProfileDesc')}
-              left={props => <User {...props} size={24} />}
-              right={props => <List.Icon {...props} icon="chevron-right" />}
-              onPress={() => router.push('/profile')}
-            />
-            <List.Item
-              title={t('notifications')}
-              description={
-                settings.notifications?.enabled
-                  ? `${Object.values(settings.notifications).filter(Boolean).length - 1} enabled`
-                  : t('notificationsDesc')
-              }
-              left={props => <Bell {...props} size={24} />}
-              right={props => <List.Icon {...props} icon="chevron-right" />}
-              onPress={() => router.push('/notifications')}
-            />
-          </List.Section>
-        </ModernCard>
-
-        {/* App Settings */}
-        <ModernCard style={styles.section}>
-          <List.Section>
-            <List.Subheader>{t('appSettings')}</List.Subheader>
-            <List.Item
-              title={t('language')}
-              description={getLanguageDisplayName(settings.language)}
-              left={props => <Globe {...props} size={24} />}
-              right={props => <List.Icon {...props} icon="chevron-right" />}
-              onPress={() => router.push('/language')}
-            />
-            <List.Item
-              title={t('theme')}
-              description={getThemeDisplayName(settings.theme)}
-              left={props => <Moon {...props} size={24} />}
-              right={props => <List.Icon {...props} icon="chevron-right" />}
-              onPress={() => router.push('/theme')}
-            />
-            <List.Item
-              title={t('currency')}
-              description={t('currencyDesc')}
-              left={props => <DollarSign {...props} size={24} />}
-              right={props => <List.Icon {...props} icon="chevron-right" />}
-              onPress={() => router.push('/currency')}
-            />
-          </List.Section>
-        </ModernCard>
-
-        {/* Support & Legal */}
-        <ModernCard style={styles.section}>
-          <List.Section>
-            <List.Subheader>{t('supportAndLegal')}</List.Subheader>
-            <List.Item
-              title={t('contactSupport')}
-              description={t('contactSupportDesc')}
-              left={props => <MessageSquare {...props} size={24} />}
-              right={props => <List.Icon {...props} icon="chevron-right" />}
-              onPress={() => router.push('/support')}
-            />
-            <List.Item
-              title={t('termsOfService')}
-              description={t('termsOfServiceDesc')}
-              left={props => <FileText {...props} size={24} />}
-              right={props => <List.Icon {...props} icon="chevron-right" />}
-              onPress={() => router.push('/terms')}
-            />
-            <List.Item
-              title={t('privacyPolicy')}
-              description={t('privacyPolicyDesc')}
-              left={props => <ShieldCheck {...props} size={24} />}
-              right={props => <List.Icon {...props} icon="chevron-right" />}
-              onPress={() => router.push('/privacy')}
-            />
-          </List.Section>
-        </ModernCard>
-
-        {/* App Information */}
-        <ModernCard style={styles.section}>
-          <List.Section>
-            <List.Subheader>{t('appInformation')}</List.Subheader>
-            <List.Item
-              title={t('version')}
-              description={t('versionDesc')}
-              left={props => <Settings {...props} size={24} />}
-            />
-            <List.Item
-              title={t('lastUpdated')}
-              description={t('lastUpdatedDesc')}
-              left={props => <FileText {...props} size={24} />}
-            />
-          </List.Section>
-        </ModernCard>
-
-        {/* Danger Zone */}
-        <ModernCard style={[styles.section, styles.dangerZone]}>
-          <List.Section>
-            <List.Subheader style={styles.dangerZoneHeader}>{t('account')}</List.Subheader>
-            <List.Item
-              title={t('logout')}
-              description="End your current session"
-              left={props => <LogOut {...props} size={24} color={theme.colors.error} />}
-              right={props => <List.Icon {...props} icon="chevron-right" />}
-              onPress={async () => {
-                try {
-                  const { error } = await supabase.auth.signOut();
-                  if (error) throw error;
-                  router.replace('/(auth)');
-                } catch (error) {
-                  console.error('Emergency logout error:', error);
-                  alert('Emergency logout failed: ' + error.message);
-                }
-              }}
-              titleStyle={styles.dangerText}
-            />
-          </List.Section>
-        </ModernCard>
+        {/* App Info */}
+        <View style={styles.section}>
+          <View style={[styles.appInfoCard, { backgroundColor: theme.colors.surface }]}>
+            <Text style={[styles.appName, { color: theme.colors.onSurface }]}>
+              نظام إدارة العقارات
+            </Text>
+            <Text style={[styles.appVersion, { color: theme.colors.onSurfaceVariant }]}>
+              الإصدار 1.0.0
+            </Text>
+            <Text style={[styles.appDescription, { color: theme.colors.onSurfaceVariant }]}>
+              تطبيق شامل لإدارة العقارات والمستأجرين والمالية
+            </Text>
+          </View>
+        </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
   },
   content: {
     flex: 1,
+    paddingHorizontal: 16,
+  },
+  profileSection: {
+    marginVertical: 16,
+  },
+  profileCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  profileInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  profileAvatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  profileDetails: {
+    flex: 1,
+  },
+  profileName: {
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'right',
+    marginBottom: 4,
+  },
+  profileEmail: {
+    fontSize: 14,
+    textAlign: 'right',
   },
   section: {
-    margin: spacing.m,
-    marginBottom: spacing.s,
+    marginBottom: 24,
   },
-  dangerZone: {
-    marginBottom: spacing.xl,
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 12,
+    textAlign: 'right',
   },
-  dangerZoneHeader: {
-    color: theme.colors.onSurface,
-  },
-  dangerText: {
-    color: theme.colors.error,
+  sectionCard: {
+    borderRadius: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   listItem: {
-    paddingVertical: spacing.s,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  itemTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    textAlign: 'right',
+  },
+  itemDescription: {
+    fontSize: 14,
+    textAlign: 'right',
+  },
+  divider: {
+    marginLeft: 80,
+  },
+  appInfoCard: {
+    padding: 20,
+    borderRadius: 16,
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  appName: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  appVersion: {
+    fontSize: 14,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  appDescription: {
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 18,
   },
 });
