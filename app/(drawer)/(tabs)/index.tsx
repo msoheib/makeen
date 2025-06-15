@@ -273,28 +273,6 @@ export default function DashboardScreen() {
           </View>
         </View>
       </View>
-
-      {/* Quick Actions for Tenant */}
-      <View style={styles.quickActionsGrid}>
-        <View style={[styles.actionCard, { backgroundColor: theme.colors.surface }]}>
-          <FileText size={20} color={theme.colors.primary} />
-          <Text style={[styles.actionText, { color: theme.colors.onSurface }]}>
-            طلب صيانة
-          </Text>
-        </View>
-        <View style={[styles.actionCard, { backgroundColor: theme.colors.surface }]}>
-          <DollarSign size={20} color="#4CAF50" />
-          <Text style={[styles.actionText, { color: theme.colors.onSurface }]}>
-            سجل المدفوعات
-          </Text>
-        </View>
-        <View style={[styles.actionCard, { backgroundColor: theme.colors.surface }]}>
-          <Calendar size={20} color="#FF9800" />
-          <Text style={[styles.actionText, { color: theme.colors.onSurface }]}>
-            تفاصيل العقد
-          </Text>
-        </View>
-      </View>
     </View>
   );
 
@@ -766,27 +744,5 @@ const styles = StyleSheet.create({
   propertySpecs: {
     fontSize: 12,
     textAlign: 'right',
-  },
-  quickActionsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  actionCard: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  actionText: {
-    fontSize: 12,
-    fontWeight: '500',
-    marginTop: 8,
-    textAlign: 'center',
   },
 });
