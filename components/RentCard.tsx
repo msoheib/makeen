@@ -1,26 +1,26 @@
 import React from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { lightTheme, darkTheme } from '@/lib/theme';
+import { lightTheme, darkTheme, spacing, borderRadius, shadows } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
-import { useTranslation } from '@/lib/useTranslation';
 import { formatCurrency } from '@/lib/formatters';
 
 interface RentCardProps {
-  totalRent: string;
-  collected: string;
-  outstanding: string;
+  totalRent: number;
+  collectedRent: number;
+  pendingRent: number;
   loading?: boolean;
+  theme?: any;
 }
 
 export default function RentCard({ 
   totalRent, 
-  collected, 
-  outstanding, 
-  loading = false 
+  collectedRent, 
+  pendingRent, 
+  loading = false,
+  theme: propTheme
 }: RentCardProps) {
   const { isDarkMode } = useAppStore();
-  const theme = isDarkMode ? darkTheme : lightTheme;
-  const { t } = useTranslation();
+  const theme = propTheme || (isDarkMode ? darkTheme : lightTheme);
 
   if (loading) {
     return (
@@ -29,10 +29,10 @@ export default function RentCard({
         { 
           backgroundColor: theme.colors.surface,
           borderColor: theme.colors.outline,
-          minHeight: theme.components.card.minHeight * 2,
-          padding: theme.spacing.md,
-          borderRadius: theme.borderRadius.md,
-          ...theme.shadows.sm,
+          minHeight: 200,
+          padding: spacing.m,
+          borderRadius: borderRadius.medium,
+          ...shadows.small,
         }
       ]}>
         <View style={styles.loadingContainer}>
@@ -41,11 +41,11 @@ export default function RentCard({
             styles.loadingText, 
             { 
               color: theme.colors.onSurfaceVariant,
-              fontSize: theme.fontSize.sm,
-              marginTop: theme.spacing.sm,
+              fontSize: 14,
+              marginTop: spacing.s,
             }
           ]}>
-            {t('common.loading')}
+            جاري التحميل...
           </Text>
         </View>
       </View>
@@ -58,62 +58,62 @@ export default function RentCard({
       { 
         backgroundColor: theme.colors.surface,
         borderColor: theme.colors.outline,
-        minHeight: theme.components.card.minHeight * 2,
-        padding: theme.spacing.md,
-        borderRadius: theme.borderRadius.md,
-        ...theme.shadows.sm,
+        minHeight: 200,
+        padding: spacing.m,
+        borderRadius: borderRadius.medium,
+        ...shadows.small,
       }
     ]}>
       <Text style={[
         styles.title, 
         { 
           color: theme.colors.onSurface,
-          fontSize: theme.fontSize.lg,
-          marginBottom: theme.spacing.md,
+          fontSize: 18,
+          marginBottom: spacing.m,
         }
       ]}>
-        {t('dashboard.rentOverview')}
+        نظرة عامة على الإيجارات
       </Text>
       
-      <View style={[styles.row, { marginBottom: theme.spacing.sm }]}>
+      <View style={[styles.row, { marginBottom: spacing.s }]}>
         <Text style={[
           styles.label, 
           { 
             color: theme.colors.onSurfaceVariant,
-            fontSize: theme.fontSize.sm,
+            fontSize: 14,
           }
         ]}>
-          {t('dashboard.totalRent')}
+          إجمالي الإيجار
         </Text>
         <Text style={[
           styles.value, 
           { 
             color: theme.colors.primary,
-            fontSize: theme.fontSize.lg,
+            fontSize: 18,
           }
         ]}>
-          {totalRent}
+          {formatCurrency(totalRent)} ريال
         </Text>
       </View>
 
-      <View style={[styles.row, { marginBottom: theme.spacing.sm }]}>
+      <View style={[styles.row, { marginBottom: spacing.s }]}>
         <Text style={[
           styles.label, 
           { 
             color: theme.colors.onSurfaceVariant,
-            fontSize: theme.fontSize.sm,
+            fontSize: 14,
           }
         ]}>
-          {t('dashboard.collected')}
+          المحصل
         </Text>
         <Text style={[
           styles.value, 
           { 
-            color: theme.colors.success,
-            fontSize: theme.fontSize.lg,
+            color: '#4CAF50',
+            fontSize: 18,
           }
         ]}>
-          {collected}
+          {formatCurrency(collectedRent)} ريال
         </Text>
       </View>
 
@@ -122,19 +122,19 @@ export default function RentCard({
           styles.label, 
           { 
             color: theme.colors.onSurfaceVariant,
-            fontSize: theme.fontSize.sm,
+            fontSize: 14,
           }
         ]}>
-          {t('dashboard.outstanding')}
+          المعلق
         </Text>
         <Text style={[
           styles.value, 
           { 
             color: theme.colors.error,
-            fontSize: theme.fontSize.lg,
+            fontSize: 18,
           }
         ]}>
-          {outstanding}
+          {formatCurrency(pendingRent)} ريال
         </Text>
       </View>
     </View>
@@ -145,9 +145,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     borderWidth: 1,
+    marginVertical: 8,
   },
   title: {
     fontWeight: '600',
+    textAlign: 'right',
   },
   row: {
     flexDirection: 'row',
@@ -156,9 +158,12 @@ const styles = StyleSheet.create({
   },
   label: {
     fontWeight: '400',
+    textAlign: 'right',
+    flex: 1,
   },
   value: {
     fontWeight: '600',
+    textAlign: 'left',
   },
   loadingContainer: {
     flex: 1,

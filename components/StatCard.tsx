@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { lightTheme, darkTheme } from '@/lib/theme';
+import { lightTheme, darkTheme, spacing, borderRadius, shadows } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
 import { formatNumber } from '@/lib/formatters';
 
@@ -10,6 +10,7 @@ interface StatCardProps {
   subtitle?: string;
   color: string;
   loading?: boolean;
+  icon?: React.ReactNode;
 }
 
 export default function StatCard({ 
@@ -17,7 +18,8 @@ export default function StatCard({
   value, 
   subtitle, 
   color, 
-  loading = false 
+  loading = false,
+  icon
 }: StatCardProps) {
   const { isDarkMode } = useAppStore();
   const theme = isDarkMode ? darkTheme : lightTheme;
@@ -28,25 +30,32 @@ export default function StatCard({
       { 
         backgroundColor: theme.colors.surface,
         borderColor: theme.colors.outline,
-        minHeight: theme.components.card.minHeight,
-        padding: theme.spacing.md,
-        borderRadius: theme.borderRadius.md,
-        ...theme.shadows.sm,
+        minHeight: 100,
+        padding: spacing.m,
+        borderRadius: borderRadius.medium,
+        ...shadows.small,
       }
     ]}>
-      <Text style={[
-        styles.title, 
-        { 
-          color: theme.colors.onSurfaceVariant,
-          fontSize: theme.fontSize.sm,
-          marginBottom: theme.spacing.xs,
-        }
-      ]}>
-        {title}
-      </Text>
+      <View style={styles.header}>
+        {icon && (
+          <View style={styles.iconContainer}>
+            {icon}
+          </View>
+        )}
+        <Text style={[
+          styles.title, 
+          { 
+            color: theme.colors.onSurfaceVariant,
+            fontSize: 14,
+            marginBottom: spacing.xs,
+          }
+        ]}>
+          {title}
+        </Text>
+      </View>
       
       {loading ? (
-        <View style={[styles.loadingContainer, { minHeight: theme.fontSize['2xl'] + 8 }]}>
+        <View style={[styles.loadingContainer, { minHeight: 32 }]}>
           <ActivityIndicator size="small" color={color} />
         </View>
       ) : (
@@ -55,9 +64,9 @@ export default function StatCard({
             styles.value, 
             { 
               color, 
-              fontSize: theme.fontSize['2xl'],
-              lineHeight: theme.fontSize['2xl'] + 4,
-              marginBottom: theme.spacing.xs,
+              fontSize: 24,
+              lineHeight: 28,
+              marginBottom: spacing.xs,
             }
           ]}>
             {typeof value === 'number' ? formatNumber(value) : value}
@@ -67,7 +76,7 @@ export default function StatCard({
               styles.subtitle, 
               { 
                 color: theme.colors.onSurfaceVariant,
-                fontSize: theme.fontSize.xs,
+                fontSize: 12,
               }
             ]}>
               {subtitle}
@@ -83,16 +92,30 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     borderWidth: 1,
+    marginHorizontal: 4,
+    marginVertical: 8,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  iconContainer: {
+    marginRight: 8,
   },
   title: {
     fontWeight: '500',
+    textAlign: 'right',
+    flex: 1,
   },
   value: {
     fontWeight: '700',
+    textAlign: 'center',
   },
   subtitle: {
     fontWeight: '400',
-    lineHeight: 14, // compact line height
+    lineHeight: 14,
+    textAlign: 'center',
   },
   loadingContainer: {
     justifyContent: 'center',

@@ -116,14 +116,14 @@ export default function DashboardScreen() {
       <View style={styles.financialCards}>
         <RentCard 
           totalRent={staticData.financialSummary.totalIncome}
-          collectedRent={staticData.financialSummary.totalIncome * 0.9}
-          pendingRent={staticData.financialSummary.totalIncome * 0.1}
+          collectedRent={Math.floor(staticData.financialSummary.totalIncome * 0.9)}
+          pendingRent={Math.floor(staticData.financialSummary.totalIncome * 0.1)}
           theme={theme}
         />
         <CashflowCard
           income={staticData.financialSummary.totalIncome}
           expenses={staticData.financialSummary.totalExpenses}
-          netCashflow={staticData.financialSummary.netProfit}
+          netIncome={staticData.financialSummary.netProfit}
           theme={theme}
         />
       </View>

@@ -1,26 +1,26 @@
 import React from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { lightTheme, darkTheme } from '@/lib/theme';
+import { lightTheme, darkTheme, spacing, borderRadius, shadows } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
-import { useTranslation } from '@/lib/useTranslation';
 import { formatCurrency } from '@/lib/formatters';
 
 interface CashflowCardProps {
-  income: string;
-  expenses: string;
-  netIncome: string;
+  income: number;
+  expenses: number;
+  netIncome: number;
   loading?: boolean;
+  theme?: any;
 }
 
 export default function CashflowCard({ 
   income, 
   expenses, 
   netIncome, 
-  loading = false 
+  loading = false,
+  theme: propTheme
 }: CashflowCardProps) {
   const { isDarkMode } = useAppStore();
-  const theme = isDarkMode ? darkTheme : lightTheme;
-  const { t } = useTranslation();
+  const theme = propTheme || (isDarkMode ? darkTheme : lightTheme);
 
   if (loading) {
     return (
@@ -29,10 +29,10 @@ export default function CashflowCard({
         { 
           backgroundColor: theme.colors.surface,
           borderColor: theme.colors.outline,
-          minHeight: theme.components.card.minHeight * 2,
-          padding: theme.spacing.md,
-          borderRadius: theme.borderRadius.md,
-          ...theme.shadows.sm,
+          minHeight: 200,
+          padding: spacing.m,
+          borderRadius: borderRadius.medium,
+          ...shadows.small,
         }
       ]}>
         <View style={styles.loadingContainer}>
@@ -41,11 +41,11 @@ export default function CashflowCard({
             styles.loadingText, 
             { 
               color: theme.colors.onSurfaceVariant,
-              fontSize: theme.fontSize.sm,
-              marginTop: theme.spacing.sm,
+              fontSize: 14,
+              marginTop: spacing.s,
             }
           ]}>
-            {t('common.loading')}
+            جاري التحميل...
           </Text>
         </View>
       </View>
@@ -58,68 +58,68 @@ export default function CashflowCard({
       { 
         backgroundColor: theme.colors.surface,
         borderColor: theme.colors.outline,
-        minHeight: theme.components.card.minHeight * 2,
-        padding: theme.spacing.md,
-        borderRadius: theme.borderRadius.md,
-        ...theme.shadows.sm,
+        minHeight: 200,
+        padding: spacing.m,
+        borderRadius: borderRadius.medium,
+        ...shadows.small,
       }
     ]}>
       <Text style={[
         styles.title, 
         { 
           color: theme.colors.onSurface,
-          fontSize: theme.fontSize.lg,
-          marginBottom: theme.spacing.md,
+          fontSize: 18,
+          marginBottom: spacing.m,
         }
       ]}>
-        {t('dashboard.cashFlow')}
+        التدفق النقدي
       </Text>
       
-      <View style={[styles.row, { marginBottom: theme.spacing.sm }]}>
+      <View style={[styles.row, { marginBottom: spacing.s }]}>
         <Text style={[
           styles.label, 
           { 
             color: theme.colors.onSurfaceVariant,
-            fontSize: theme.fontSize.sm,
+            fontSize: 14,
           }
         ]}>
-          {t('dashboard.income')}
+          الدخل
         </Text>
         <Text style={[
           styles.value, 
           { 
-            color: theme.colors.success,
-            fontSize: theme.fontSize.lg,
+            color: '#4CAF50',
+            fontSize: 18,
           }
         ]}>
-          {income}
+          {formatCurrency(income)} ريال
         </Text>
       </View>
 
-      <View style={[styles.row, { marginBottom: theme.spacing.sm }]}>
+      <View style={[styles.row, { marginBottom: spacing.s }]}>
         <Text style={[
           styles.label, 
           { 
             color: theme.colors.onSurfaceVariant,
-            fontSize: theme.fontSize.sm,
+            fontSize: 14,
           }
         ]}>
-          {t('dashboard.expenses')}
+          المصروفات
         </Text>
         <Text style={[
           styles.value, 
           { 
             color: theme.colors.error,
-            fontSize: theme.fontSize.lg,
+            fontSize: 18,
           }
         ]}>
-          {expenses}
+          {formatCurrency(expenses)} ريال
         </Text>
       </View>
 
       <View style={[styles.separator, { 
         backgroundColor: theme.colors.outline,
-        marginVertical: theme.spacing.sm,
+        marginVertical: spacing.s,
       }]} />
 
       <View style={styles.row}>
@@ -127,21 +127,21 @@ export default function CashflowCard({
           styles.label, 
           { 
             color: theme.colors.onSurface,
-            fontSize: theme.fontSize.md,
+            fontSize: 16,
             fontWeight: '600',
           }
         ]}>
-          {t('dashboard.netIncome')}
+          صافي الدخل
         </Text>
         <Text style={[
           styles.value, 
           { 
             color: theme.colors.primary,
-            fontSize: theme.fontSize.xl,
+            fontSize: 20,
             fontWeight: '700',
           }
         ]}>
-          {netIncome}
+          {formatCurrency(netIncome)} ريال
         </Text>
       </View>
     </View>
@@ -152,9 +152,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     borderWidth: 1,
+    marginVertical: 8,
   },
   title: {
     fontWeight: '600',
+    textAlign: 'right',
   },
   row: {
     flexDirection: 'row',
@@ -163,9 +165,12 @@ const styles = StyleSheet.create({
   },
   label: {
     fontWeight: '400',
+    textAlign: 'right',
+    flex: 1,
   },
   value: {
     fontWeight: '600',
+    textAlign: 'left',
   },
   separator: {
     height: 1,
