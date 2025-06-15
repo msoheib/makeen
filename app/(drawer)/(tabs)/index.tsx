@@ -133,6 +133,15 @@ export default function DashboardScreen() {
     );
   }
 
+  // DEBUG: Show user context for troubleshooting
+  console.log('[Dashboard Debug] User Context:', {
+    hasAccess: canAccessDashboard,
+    userContext: userContext,
+    isAuthenticated: userContext?.isAuthenticated,
+    role: userContext?.role,
+    userId: userContext?.userId
+  });
+
   // If user doesn't have dashboard access, show access denied
   if (!canAccessDashboard) {
     return (
@@ -145,6 +154,13 @@ export default function DashboardScreen() {
           </Text>
           <Text style={[styles.accessDeniedSubtext, { color: theme.colors.onSurfaceVariant }]}>
             You don't have permission to view the dashboard
+          </Text>
+          {/* DEBUG: Show role information */}
+          <Text style={[styles.accessDeniedSubtext, { color: theme.colors.onSurfaceVariant, marginTop: 16 }]}>
+            Current Role: {userContext?.role || 'None'}
+          </Text>
+          <Text style={[styles.accessDeniedSubtext, { color: theme.colors.onSurfaceVariant }]}>
+            Authenticated: {userContext?.isAuthenticated ? 'Yes' : 'No'}
           </Text>
         </View>
       </SafeAreaView>

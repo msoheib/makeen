@@ -169,7 +169,7 @@ export default function AddPropertyScreen() {
       <View style={styles.header}>
         <IconButton
           icon={() => <ArrowLeft size={24} color={theme.colors.onSurface} />}
-          onPress={() => router.back()}
+          onPress={() => router.push('/(drawer)/(tabs)/properties')}
           style={styles.backButton}
         />
         <Text style={styles.headerTitle}>إضافة عقار</Text>

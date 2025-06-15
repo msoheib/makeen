@@ -176,7 +176,7 @@ export default function AssignTenantScreen() {
         [
           {
             text: 'موافق',
-            onPress: () => router.back()
+            onPress: () => router.push('/(drawer)/(tabs)/tenants')
           }
         ]
       );
@@ -197,7 +197,7 @@ export default function AssignTenantScreen() {
       <ModernHeader
         title="تخصيص مستأجر لعقار"
         showBackButton
-        onBackPress={() => router.back()}
+        onBackPress={() => router.push('/(drawer)/(tabs)/tenants')}
       />
 
       <View style={styles.content}>
