@@ -21,7 +21,7 @@ import CashflowCard from '@/components/CashflowCard';
 import StatCard from '@/components/StatCard';
 import { useApi } from '@/hooks/useApi';
 import { propertiesApi, profilesApi, contractsApi } from '@/lib/api';
-import { hasScreenAccess } from '@/lib/permissions';
+import { useScreenAccess } from '@/lib/permissions';
 
 // Static data to prevent loading issues
 const staticData = {
@@ -80,7 +80,7 @@ export default function DashboardScreen() {
   const theme = isDarkMode ? darkTheme : lightTheme;
 
   // Check if user has access to dashboard
-  const canAccessDashboard = hasScreenAccess('dashboard');
+  const { hasAccess: canAccessDashboard, loading: permissionLoading, userContext } = useScreenAccess('dashboard');
 
   // API calls for real-time data (with role-based filtering)
   const { 
@@ -103,7 +103,7 @@ export default function DashboardScreen() {
   } = useApi(() => profilesApi.getTenants(), []);
 
   // Loading state
-  const isLoading = summaryLoading || propertiesLoading || tenantsLoading;
+  const isLoading = permissionLoading || summaryLoading || propertiesLoading || tenantsLoading;
 
   // Handle refresh
   const [refreshing, setRefreshing] = React.useState(false);
@@ -117,6 +117,21 @@ export default function DashboardScreen() {
     ]);
     setRefreshing(false);
   }, [refetchSummary, refetchProperties, refetchTenants]);
+
+  // Show loading state while checking permissions
+  if (permissionLoading) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <ModernHeader title="لوحة التحكم" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={[styles.loadingText, { color: theme.colors.onSurfaceVariant }]}>
+            Loading dashboard...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   // If user doesn't have dashboard access, show access denied
   if (!canAccessDashboard) {
@@ -505,6 +520,17 @@ const styles = StyleSheet.create({
   statCardWrapper: {
     width: '48%',
     minHeight: 120,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  loadingText: {
+    fontSize: 16,
+    marginTop: 16,
+    textAlign: 'center',
   },
   accessDeniedContainer: {
     flex: 1,
