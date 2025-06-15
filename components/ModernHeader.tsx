@@ -4,7 +4,6 @@ import { Text, IconButton } from 'react-native-paper';
 import { lightTheme, darkTheme, spacing } from '@/lib/theme';
 import { Bell, Search, Menu, ArrowRight, ArrowLeft } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
-import { DrawerActions } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { useAppStore } from '@/lib/store';
 
@@ -47,7 +46,8 @@ export default function ModernHeader({
     if (onMenuPress) {
       onMenuPress();
     } else {
-      navigation.dispatch(DrawerActions.openDrawer());
+      const { setSidebarOpen } = useAppStore.getState();
+      setSidebarOpen(true);
     }
   };
 

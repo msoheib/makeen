@@ -1,17 +1,19 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Home, Users, Settings, BarChart2, Briefcase, FileText, UserPlus, Building, DollarSign, List, Edit, ChevronDown, ChevronUp } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
 import { DrawerActions } from '@react-navigation/native';
 import { NotificationBadge } from './NotificationBadge';
 import { useTabBadgeCount } from '@/hooks/useNotificationBadges';
 import { useTranslation } from '@/lib/useTranslation';
 import { rtlStyles, rtlLayout } from '@/lib/theme';
 import { isRTL } from '@/lib/rtl';
+import { DrawerContentComponentProps } from '@react-navigation/drawer';
 
-const SideBar = () => {
+const SideBar = (props: DrawerContentComponentProps) => {
+    const { navigation } = props;
+    const router = useRouter();
     const { t } = useTranslation('navigation');
     
     // Badge counts for different sections
@@ -107,7 +109,6 @@ const SideBar = () => {
 
     const SubMenuItem = ({ item, level = 1 }) => {
         const [isExpanded, setIsExpanded] = React.useState(false);
-        const navigation = useNavigation();
         const hasSubItems = item.subItems && item.subItems.length > 0;
         const badgeCount = item.badgeCount || 0;
 
@@ -115,8 +116,8 @@ const SideBar = () => {
             if (hasSubItems) {
                 setIsExpanded(!isExpanded);
             } else if (item.href) {
-                // Close the drawer when navigating to a screen
                 navigation.dispatch(DrawerActions.closeDrawer());
+                router.push(item.href);
             }
         };
         
@@ -137,17 +138,9 @@ const SideBar = () => {
 
         return (
             <View>
-                {item.href ? (
-                     <Link href={item.href} asChild>
-                        <TouchableOpacity onPress={handlePress}>
-                            {content}
-                        </TouchableOpacity>
-                    </Link>
-                ) : (
-                    <TouchableOpacity onPress={handlePress}>
-                        {content}
-                    </TouchableOpacity>
-                )}
+                <TouchableOpacity onPress={handlePress}>
+                    {content}
+                </TouchableOpacity>
 
                 {isExpanded && hasSubItems && (
                     <View>

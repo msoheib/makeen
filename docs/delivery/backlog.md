@@ -15,6 +15,7 @@ This document contains all PBIs (Product Backlog Items) for the Real Estate Mana
 | 7 | Property Manager | As a property manager, I want to access and manage all property-related documents so that I can organize and retrieve important files efficiently [View Details](mdc:7/prd.md) | Done | - ✅ Document listing screen with database integration<br>- ✅ Document type filtering and categorization<br>- ✅ Search functionality across document metadata<br>- ✅ File size and upload date display<br>- ✅ Document statistics and usage tracking<br>- ✅ Integration with properties and tenant data<br>- Document upload functionality (future enhancement) |
 | 8 | All Users | As a user, I want improved navigation with context-aware header buttons so that I can easily navigate between screens with appropriate back/menu buttons based on the current page context [View Details](mdc:8/prd.md) | Done | - ✅ Conditional header button display (hamburger vs back button)<br>- ✅ Route detection logic for pages with/without bottom navbar<br>- ✅ Back navigation functionality to previous page or home<br>- ✅ Enhanced user experience for non-tab pages<br>- ✅ Consistent navigation patterns across the app |
 | 9 | All Users | As an Arabic-speaking user, I want the app to support RTL (Right-to-Left) layout and full Arabic translation so that I can use the application in my native language with proper text direction and cultural considerations [View Details](mdc:9/prd.md) | InProgress | - ✅ Complete i18n infrastructure implementation<br>- ✅ Full Arabic translation file creation<br>- ✅ RTL layout support across all screens<br>- ✅ Language switching functionality<br>- ✅ Cultural adaptations for Arabic users<br>- ✅ Testing in Arabic/RTL mode<br>- ✅ Performance optimization for RTL layouts |
+| 10 | All Users | As a user, I want the drawer to open without dimming or fading the underlying content so that the screen remains fully visible and readable when the sidebar is expanded [View Details](mdc:10/prd.md) | Agreed | - The drawer opens with no overlay/fade effect<br>- The main screen remains fully interactive where appropriate<br>- No residual fading occurs after closing the drawer |
 
 ## PBI History Log
 
@@ -50,4 +51,6 @@ This document contains all PBIs (Product Backlog Items) for the Real Estate Mana
 | 2024-12-24 16:00:00 | 9 | create_pbi | Created PBI for RTL support and Arabic translation | User |
 | 2024-12-24 16:10:00 | 9 | propose_for_backlog | PBI 9 approved and moved to Agreed status | User |
 | 2024-12-24 16:10:00 | 9 | start_implementation | PBI 9 moved to InProgress status - starting i18n infrastructure implementation | AI_Agent |
-| 2024-12-24 16:10:00 | 9 | significant_update | Reopened PBI 9 to complete missing translations and loader fixes; status set to InProgress | AI_Agent | 
+| 2024-12-24 16:10:00 | 9 | significant_update | Reopened PBI 9 to complete missing translations and loader fixes; status set to InProgress | AI_Agent |
+| 2025-06-15 10:00:00 | 10 | create_pbi | Created PBI to remove the drawer overlay/fading effect | User |
+| 2025-06-15 10:02:00 | 10 | propose_for_backlog | PBI 10 approved and moved to Agreed status | User | 

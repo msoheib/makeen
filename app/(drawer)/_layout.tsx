@@ -1,15 +1,15 @@
-import { useEffect } from 'react';
-import { Drawer } from 'expo-router/drawer';
+import { useEffect, useState } from 'react';
+import { Stack } from 'expo-router';
 import { useRouter } from 'expo-router';
+import { Modal, View, StyleSheet } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/lib/store';
 import { realTimeService } from '@/lib/realtime';
 import SideBar from '../../components/SideBar';
-import { isRTL } from '@/lib/rtl';
 
 export default function DrawerLayout() {
   const router = useRouter();
-  const { user, setUser, setAuthenticated, setLoading } = useAppStore();
+  const { user, setUser, setAuthenticated, setLoading, sidebarOpen, setSidebarOpen } = useAppStore();
 
   useEffect(() => {
     // Check if user is authenticated on app start
@@ -100,27 +100,43 @@ export default function DrawerLayout() {
   }, []);
 
   return (
-    <Drawer 
-      id="main-drawer" 
-      drawerContent={(props) => <SideBar {...props} />}
-      screenOptions={{
-        drawerPosition: isRTL() ? 'right' : 'left',
-        drawerType: 'slide',
-        drawerStyle: {
-          width: 280,
-          backgroundColor: 'transparent',
-        },
-        overlayColor: 'rgba(0,0,0,0.5)',
-        drawerActiveTintColor: '#2196F3',
-        drawerInactiveTintColor: '#666',
-        sceneContainerStyle: {
-          backgroundColor: 'white',
-        },
-      }}
-    >
-      <Drawer.Screen name="(tabs)" options={{ headerShown: false, title: 'Home' }} />
-      <Drawer.Screen name="reports" options={{ headerShown: false, title: 'Reports' }} />
-      <Drawer.Screen name="documents" options={{ headerShown: false, title: 'Documents' }} />
-    </Drawer>
+    <>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="reports" options={{ headerShown: false }} />
+        <Stack.Screen name="documents" options={{ headerShown: false }} />
+      </Stack>
+      
+      <Modal
+        visible={sidebarOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setSidebarOpen(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.overlay} onTouchEnd={() => setSidebarOpen(false)} />
+          <View style={styles.sidebarContainer}>
+            <SideBar navigation={{ closeDrawer: () => setSidebarOpen(false) }} />
+          </View>
+        </View>
+      </Modal>
+    </>
   );
-} 
+}
+
+const styles = StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  sidebarContainer: {
+    width: 280,
+    backgroundColor: '#f4f4f4',
+    borderTopLeftRadius: 0,
+    borderBottomLeftRadius: 0,
+  },
+}); 

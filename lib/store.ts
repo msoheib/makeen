@@ -76,6 +76,36 @@ interface AppState {
   theme: 'light' | 'dark';
   setLocale: (locale: string) => void;
   setTheme: (theme: 'light' | 'dark') => void;
+  
+  // User authentication
+  authenticated: boolean;
+  loading: boolean;
+  
+  // Theme and preferences
+  isDarkMode: boolean;
+  language: string;
+  currency: string;
+  
+  // Notifications
+  notificationsEnabled: boolean;
+  emailNotifications: boolean;
+  pushNotifications: boolean;
+  maintenanceNotifications: boolean;
+  financialNotifications: boolean;
+  
+  // Sidebar state for modal implementation
+  sidebarOpen: boolean;
+  
+  // Actions
+  toggleDarkMode: () => void;
+  setLanguage: (language: string) => void;
+  setCurrency: (currency: string) => void;
+  setNotificationsEnabled: (enabled: boolean) => void;
+  setEmailNotifications: (enabled: boolean) => void;
+  setPushNotifications: (enabled: boolean) => void;
+  setMaintenanceNotifications: (enabled: boolean) => void;
+  setFinancialNotifications: (enabled: boolean) => void;
+  setSidebarOpen: (open: boolean) => void;
 }
 
 // Create the store with persistence
@@ -240,6 +270,36 @@ export const useAppStore = create<AppState>()(
         const state = get();
         state.updateSettings({ theme });
       },
+      
+      // User authentication
+      authenticated: false,
+      loading: false,
+      
+      // Theme and preferences
+      isDarkMode: false,
+      language: 'ar',
+      currency: 'SAR',
+      
+      // Notifications
+      notificationsEnabled: true,
+      emailNotifications: true,
+      pushNotifications: true,
+      maintenanceNotifications: true,
+      financialNotifications: true,
+      
+      // Sidebar state
+      sidebarOpen: false,
+      
+      // Actions
+      toggleDarkMode: () => set((state) => ({ isDarkMode: !state.isDarkMode })),
+      setLanguage: (language) => set({ language }),
+      setCurrency: (currency) => set({ currency }),
+      setNotificationsEnabled: (enabled) => set({ notificationsEnabled: enabled }),
+      setEmailNotifications: (enabled) => set({ emailNotifications: enabled }),
+      setPushNotifications: (enabled) => set({ pushNotifications: enabled }),
+      setMaintenanceNotifications: (enabled) => set({ maintenanceNotifications: enabled }),
+      setFinancialNotifications: (enabled) => set({ financialNotifications: enabled }),
+      setSidebarOpen: (open) => set({ sidebarOpen: open }),
     }),
     {
       name: 'real-estate-app-storage',
