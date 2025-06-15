@@ -8,63 +8,9 @@ import { Users, Phone, Mail, MapPin, Plus, Lock, Shield } from 'lucide-react-nat
 import ModernHeader from '@/components/ModernHeader';
 import StatCard from '@/components/StatCard';
 import ModernCard from '@/components/ModernCard';
-import { hasScreenAccess } from '@/lib/permissions';
+import { useScreenAccess } from '@/lib/permissions';
 import { useApi } from '@/hooks/useApi';
 import { profilesApi } from '@/lib/api';
-
-// Static tenant data to prevent loading issues
-const staticTenants = [
-  {
-    id: '1',
-    first_name: 'أحمد',
-    last_name: 'السالم',
-    email: 'ahmed.salem@example.com',
-    phone: '+966501234567',
-    status: 'active',
-    nationality: 'Saudi',
-    is_foreign: false,
-    address: 'الرياض، المملكة العربية السعودية',
-    property: 'فيلا فاخرة في الرياض',
-    rent_amount: 5000,
-    contract_end: '2024-12-31'
-  },
-  {
-    id: '2',
-    first_name: 'فاطمة',
-    last_name: 'الزهراء',
-    email: 'fatima.zahra@example.com',
-    phone: '+966507654321',
-    status: 'active',
-    nationality: 'Saudi',
-    is_foreign: false,
-    address: 'جدة، المملكة العربية السعودية',
-    property: 'شقة عصرية في جدة',
-    rent_amount: 4000,
-    contract_end: '2024-11-30'
-  },
-  {
-    id: '3',
-    first_name: 'John',
-    last_name: 'Smith',
-    email: 'john.smith@example.com',
-    phone: '+966509876543',
-    status: 'pending',
-    nationality: 'American',
-    is_foreign: true,
-    address: 'الدمام، المملكة العربية السعودية',
-    property: 'مكتب تجاري في الدمام',
-    rent_amount: 6000,
-    contract_end: '2025-06-30'
-  }
-];
-
-// Static stats
-const staticStats = {
-  total: '٣',
-  active: '٢',
-  pending: '١',
-  foreign: '١'
-};
 
 export default function TenantsScreen() {
   const router = useRouter();
@@ -73,7 +19,7 @@ export default function TenantsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Check if user has access to tenants data
-  const canAccessTenants = hasScreenAccess('tenants');
+  const { hasAccess: canAccessTenants, loading: permissionLoading, userContext } = useScreenAccess('tenants');
 
   // API call for tenants (with role-based filtering)
   const { 
@@ -92,6 +38,26 @@ export default function TenantsScreen() {
     setRefreshing(false);
   }, [refetchTenants]);
 
+  // Show loading while checking permissions
+  if (permissionLoading) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <ModernHeader 
+          title="المستأجرين" 
+          showNotifications={true}
+          showMenu={true}
+          variant="default"
+        />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={[styles.loadingText, { color: theme.colors.onSurfaceVariant }]}>
+            Loading tenants...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   // If user doesn't have tenants access, show access denied
   if (!canAccessTenants) {
     return (
@@ -100,7 +66,7 @@ export default function TenantsScreen() {
           title="المستأجرين" 
           showNotifications={true}
           showMenu={true}
-          variant="dark"
+          variant="default"
         />
         <View style={styles.accessDeniedContainer}>
           <Lock size={64} color="#ccc" />
@@ -141,7 +107,7 @@ export default function TenantsScreen() {
         <View style={styles.tenantInfo}>
           <Avatar.Text
             size={60}
-            label={`${item.first_name[0]}${item.last_name[0]}`}
+            label={`${item.first_name?.[0] || ''}${item.last_name?.[0] || ''}`}
             style={{ backgroundColor: theme.colors.primaryContainer }}
             labelStyle={{ color: theme.colors.primary }}
           />
@@ -150,7 +116,7 @@ export default function TenantsScreen() {
               {item.first_name} {item.last_name}
             </Text>
             <Text style={[styles.tenantNationality, { color: theme.colors.onSurfaceVariant }]}>
-              {item.is_foreign ? `🌍 ${item.nationality}` : `🇸🇦 ${item.nationality}`}
+              {item.is_foreign ? `🌍 ${item.nationality || 'Foreign'}` : `🇸🇦 ${item.nationality || 'Saudi'}`}
             </Text>
           </View>
         </View>
@@ -179,49 +145,32 @@ export default function TenantsScreen() {
         <View style={styles.contactItem}>
           <Mail size={16} color={theme.colors.onSurfaceVariant} />
           <Text style={[styles.contactText, { color: theme.colors.onSurfaceVariant }]}>
-            {item.email}
+            {item.email || 'No email'}
           </Text>
         </View>
         <View style={styles.contactItem}>
           <Phone size={16} color={theme.colors.onSurfaceVariant} />
           <Text style={[styles.contactText, { color: theme.colors.onSurfaceVariant }]}>
-            {item.phone}
+            {item.phone || 'No phone'}
           </Text>
         </View>
         <View style={styles.contactItem}>
           <MapPin size={16} color={theme.colors.onSurfaceVariant} />
           <Text style={[styles.contactText, { color: theme.colors.onSurfaceVariant }]}>
-            {item.address}
+            {item.address || 'No address'}
           </Text>
         </View>
       </View>
 
+      {/* Property info - will be enhanced when contract integration is added */}
       <View style={styles.propertyInfo}>
         <Text style={[styles.propertyLabel, { color: theme.colors.onSurfaceVariant }]}>
-          العقار المؤجر:
+          معلومات العقد:
         </Text>
         <Text style={[styles.propertyText, { color: theme.colors.onSurface }]}>
-          {item.property}
+          {/* TODO: Add contract/property relationship data from API */}
+          معلومات العقد ستكون متوفرة قريباً
         </Text>
-      </View>
-
-      <View style={styles.rentInfo}>
-        <View style={styles.rentItem}>
-          <Text style={[styles.rentLabel, { color: theme.colors.onSurfaceVariant }]}>
-            الإيجار الشهري
-          </Text>
-          <Text style={[styles.rentAmount, { color: theme.colors.primary }]}>
-            {item.rent_amount.toLocaleString('ar-SA')} ريال
-          </Text>
-        </View>
-        <View style={styles.rentItem}>
-          <Text style={[styles.rentLabel, { color: theme.colors.onSurfaceVariant }]}>
-            انتهاء العقد
-          </Text>
-          <Text style={[styles.rentDate, { color: theme.colors.onSurface }]}>
-            {item.contract_end}
-          </Text>
-        </View>
       </View>
     </View>
   );
@@ -232,7 +181,7 @@ export default function TenantsScreen() {
         title="المستأجرين" 
         showNotifications={true}
         showMenu={true}
-        variant="dark"
+        variant="default"
       />
 
       <ScrollView 
@@ -306,7 +255,23 @@ export default function TenantsScreen() {
             قائمة المستأجرين ({filteredTenants.length})
           </Text>
           
-          {filteredTenants.length > 0 ? (
+          {tenantsLoading ? (
+            <View style={[styles.loadingState, { backgroundColor: theme.colors.surface }]}>
+              <ActivityIndicator size="large" color={theme.colors.primary} />
+              <Text style={[styles.loadingText, { color: theme.colors.onSurfaceVariant }]}>
+                جاري تحميل المستأجرين...
+              </Text>
+            </View>
+          ) : tenantsError ? (
+            <View style={[styles.errorState, { backgroundColor: theme.colors.surface }]}>
+              <Text style={[styles.errorText, { color: theme.colors.error }]}>
+                خطأ في تحميل البيانات
+              </Text>
+              <Text style={[styles.errorSubtext, { color: theme.colors.onSurfaceVariant }]}>
+                {tenantsError.message || 'حدث خطأ غير متوقع'}
+              </Text>
+            </View>
+          ) : filteredTenants.length > 0 ? (
             <FlatList
               data={filteredTenants}
               renderItem={renderTenant}
@@ -328,14 +293,16 @@ export default function TenantsScreen() {
         </View>
       </ScrollView>
 
-      {/* Assign Tenant FAB */}
-      <FAB
-        icon="home-account"
-        style={[styles.fab, { backgroundColor: theme.colors.primary }]}
-        size="medium"
-        onPress={() => router.push('/tenants/add')}
-        label="تخصيص مستأجر"
-      />
+      {/* Add Tenant FAB - only show if user can access tenants */}
+      {canAccessTenants && (
+        <FAB
+          icon="home-account"
+          style={[styles.fab, { backgroundColor: theme.colors.primary }]}
+          size="medium"
+          onPress={() => router.push('/tenants/add')}
+          label="إضافة مستأجر"
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -347,6 +314,35 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  accessDeniedContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  accessDeniedText: {
+    fontSize: 24,
+    fontWeight: '600',
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  accessDeniedSubtext: {
+    fontSize: 16,
+    marginTop: 8,
+    textAlign: 'center',
+    lineHeight: 24,
   },
   statsSection: {
     marginVertical: 16,
@@ -363,6 +359,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 12,
   },
+  statCardWrapper: {
+    flex: 1,
+    minWidth: '45%',
+  },
   searchSection: {
     marginBottom: 16,
   },
@@ -372,6 +372,28 @@ const styles = StyleSheet.create({
   },
   tenantsSection: {
     marginBottom: 24,
+  },
+  loadingState: {
+    padding: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  errorState: {
+    padding: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  errorText: {
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  errorSubtext: {
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center',
   },
   tenantCard: {
     marginBottom: 16,
@@ -447,70 +469,26 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'right',
   },
-  rentInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-  },
-  rentItem: {
-    alignItems: 'center',
-  },
-  rentLabel: {
-    fontSize: 12,
-    marginBottom: 2,
-  },
-  rentAmount: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  rentDate: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
   emptyState: {
     padding: 32,
     borderRadius: 16,
     alignItems: 'center',
-    marginTop: 16,
+    marginBottom: 16,
   },
   emptyStateTitle: {
     fontSize: 18,
     fontWeight: '600',
-    marginTop: 12,
-    marginBottom: 4,
-  },
-  emptyStateSubtitle: {
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  statCardWrapper: {
-    width: '48%',
-    minHeight: 120,
-  },
-  fab: {
-    position: 'absolute',
-    margin: 16,
-    right: 0,
-    bottom: 0,
-  },
-  accessDeniedContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-  },
-  accessDeniedText: {
-    fontSize: 18,
-    fontWeight: '600',
     marginTop: 16,
     textAlign: 'center',
   },
-  accessDeniedSubtext: {
+  emptyStateSubtitle: {
     fontSize: 14,
     marginTop: 8,
     textAlign: 'center',
-    lineHeight: 20,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
   },
 });
