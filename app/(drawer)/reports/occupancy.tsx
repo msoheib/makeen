@@ -45,33 +45,7 @@ export default function OccupancyAnalyticsScreen() {
     refetch 
   } = useApi<OccupancyData>(() => reportsApi.getPropertyPerformanceReport(dateRange.startDate.toISOString(), dateRange.endDate.toISOString()), [dateRange]);
 
-  // Prepare chart data with mock structure for now
-  const mockOccupancyData = {
-    portfolioStats: {
-      totalUnits: 20,
-      occupiedUnits: 17,
-      vacantUnits: 3,
-      occupancyRate: 85,
-      avgVacancyDuration: 45,
-      revenuePerOccupiedUnit: 4500,
-    },
-    occupancyTrend: [
-      { month: 'Jan', occupancyRate: 82, occupiedUnits: 16, vacantUnits: 4 },
-      { month: 'Feb', occupancyRate: 85, occupiedUnits: 17, vacantUnits: 3 },
-      { month: 'Mar', occupancyRate: 88, occupiedUnits: 18, vacantUnits: 2 },
-      { month: 'Apr', occupancyRate: 85, occupiedUnits: 17, vacantUnits: 3 },
-      { month: 'May', occupancyRate: 90, occupiedUnits: 18, vacantUnits: 2 },
-      { month: 'Jun', occupancyRate: 85, occupiedUnits: 17, vacantUnits: 3 },
-    ],
-    propertyOccupancy: [
-      { propertyName: 'Villa Riyadh', totalUnits: 1, occupiedUnits: 1, occupancyRate: 100, monthlyRevenue: 6000 },
-      { propertyName: 'Apartment Jeddah', totalUnits: 1, occupiedUnits: 1, occupancyRate: 100, monthlyRevenue: 5000 },
-      { propertyName: 'Office Dammam', totalUnits: 1, occupiedUnits: 0, occupancyRate: 0, monthlyRevenue: 0 },
-      { propertyName: 'Studio Jeddah', totalUnits: 1, occupiedUnits: 0, occupancyRate: 0, monthlyRevenue: 0 },
-    ],
-  };
-
-  const dataToUse = occupancyData || mockOccupancyData;
+  const dataToUse = occupancyData;
 
   const occupancyTrendData = {
     labels: dataToUse.occupancyTrend?.map(item => item.month.substring(0, 3)) || [],

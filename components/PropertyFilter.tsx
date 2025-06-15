@@ -68,8 +68,8 @@ export default function PropertyFilter({ onFilter }: PropertyFilterProps) {
     setIsExpanded(false);
   };
 
-  // Sample locations (would typically come from API)
-  const locations = ['New York', 'Chicago', 'Los Angeles', 'Miami', 'Seattle'];
+  // TODO: Load locations from database/API
+  const locations = ['الرياض', 'جدة', 'الدمام', 'المدينة المنورة', 'مكة المكرمة'];
 
   return (
     <Surface style={styles.container}>

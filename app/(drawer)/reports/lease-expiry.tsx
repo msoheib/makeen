@@ -54,51 +54,7 @@ export default function LeaseExpiryReportScreen() {
     dateRange.endDate.toISOString()
   ), [dateRange]);
 
-  // Mock data for demonstration
-  const mockLeaseData: LeaseExpiryData = {
-    summary: {
-      totalActiveLeases: 3,
-      expiringThisMonth: 0,
-      expiringNext3Months: 1,
-      avgLeaseDuration: 12,
-      renewalRate: 85,
-      avgDaysNotice: 45,
-    },
-    expiryTrends: [
-      { month: 'Jan', expiringLeases: 1, renewedLeases: 1, newLeases: 0 },
-      { month: 'Feb', expiringLeases: 0, renewedLeases: 0, newLeases: 1 },
-      { month: 'Mar', expiringLeases: 2, renewedLeases: 1, newLeases: 0 },
-      { month: 'Apr', expiringLeases: 1, renewedLeases: 1, newLeases: 1 },
-      { month: 'May', expiringLeases: 0, renewedLeases: 0, newLeases: 0 },
-      { month: 'Jun', expiringLeases: 1, renewedLeases: 0, newLeases: 1 },
-    ],
-    upcomingExpiries: [
-      {
-        tenantName: 'John Smith',
-        propertyName: 'Modern Apartment Jeddah',
-        expiryDate: '2024-12-31',
-        daysUntilExpiry: 9,
-        leaseDuration: 12,
-        monthlyRent: 5000,
-        renewalStatus: 'undecided',
-      },
-      {
-        tenantName: 'Sarah Al-Mansouri',
-        propertyName: 'Villa Riyadh',
-        expiryDate: '2025-03-15',
-        daysUntilExpiry: 84,
-        leaseDuration: 12,
-        monthlyRent: 6000,
-        renewalStatus: 'pending',
-      },
-    ],
-    leaseDurationDistribution: [
-      { duration: '6 months', count: 1 },
-      { duration: '12 months', count: 2 },
-    ],
-  };
-
-  const dataToUse = leaseData || mockLeaseData;
+  const dataToUse = leaseData;
 
   // Prepare chart data
   const expiryTrendData = {

@@ -134,7 +134,7 @@ export default function AddPropertyScreen() {
         [
           {
             text: 'موافق',
-            onPress: () => router.replace('/(drawer)/(tabs)/properties'),
+            onPress: () => router.push('/(drawer)/(tabs)/properties'),
           },
         ]
       );

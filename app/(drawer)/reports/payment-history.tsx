@@ -50,55 +50,7 @@ export default function PaymentHistoryReportScreen() {
     refetch 
   } = useApi<PaymentHistoryData>(() => reportsApi.getTenantReport(dateRange.startDate.toISOString(), dateRange.endDate.toISOString()), [dateRange]);
 
-  // Mock data for demonstration
-  const mockPaymentData: PaymentHistoryData = {
-    summary: {
-      totalTenants: 3,
-      onTimePayers: 2,
-      latePayers: 1,
-      totalReceived: 22000,
-      totalOutstanding: 3000,
-      avgPaymentDelay: 12,
-    },
-    paymentTrends: [
-      { month: 'Jan', onTimePayments: 2, latePayments: 1, totalAmount: 11000 },
-      { month: 'Feb', onTimePayments: 1, latePayments: 2, totalAmount: 10500 },
-      { month: 'Mar', onTimePayments: 3, latePayments: 0, totalAmount: 11000 },
-      { month: 'Apr', onTimePayments: 2, latePayments: 1, totalAmount: 10000 },
-      { month: 'May', onTimePayments: 2, latePayments: 1, totalAmount: 11000 },
-      { month: 'Jun', onTimePayments: 3, latePayments: 0, totalAmount: 11000 },
-    ],
-    paymentMethods: [
-      { method: 'Bank Transfer', count: 15, amount: 18000 },
-      { method: 'Cash', count: 3, amount: 3000 },
-      { method: 'Cheque', count: 2, amount: 4000 },
-    ],
-    tenantPayments: [
-      {
-        tenantName: 'John Smith',
-        paymentStatus: 'current',
-        lastPaymentDate: '2024-12-01',
-        amountDue: 5000,
-        daysSincePayment: 21,
-      },
-      {
-        tenantName: 'Sarah Al-Mansouri',
-        paymentStatus: 'late',
-        lastPaymentDate: '2024-11-15',
-        amountDue: 6000,
-        daysSincePayment: 37,
-      },
-      {
-        tenantName: 'Aisha Al-Zahra',
-        paymentStatus: 'current',
-        lastPaymentDate: '2024-12-05',
-        amountDue: 4500,
-        daysSincePayment: 17,
-      },
-    ],
-  };
-
-  const dataToUse = paymentData || mockPaymentData;
+  const dataToUse = paymentData;
 
   // Prepare chart data
   const paymentTrendData = {

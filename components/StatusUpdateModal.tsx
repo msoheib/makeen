@@ -6,9 +6,8 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
-import { Button, Portal, Modal, RadioButton, TextInput, Chip } from 'react-native-paper';
+import { Button, Portal, Modal, RadioButton, TextInput, Chip, useTheme } from 'react-native-paper';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useTheme } from '../lib/theme';
 
 interface StatusUpdateModalProps {
   visible: boolean;
@@ -60,7 +59,7 @@ export default function StatusUpdateModal({
   title,
   loading = false,
 }: StatusUpdateModalProps) {
-  const { theme } = useTheme();
+  const theme = useTheme();
   const [selectedStatus, setSelectedStatus] = useState(currentStatus);
   const [notes, setNotes] = useState('');
   const [actualCost, setActualCost] = useState('');
@@ -69,7 +68,7 @@ export default function StatusUpdateModal({
     ? MAINTENANCE_REQUEST_STATUSES 
     : WORK_ORDER_STATUSES;
 
-  const allowedTransitions = STATUS_TRANSITIONS[itemType][currentStatus] || [];
+  const allowedTransitions = STATUS_TRANSITIONS[itemType]?.[currentStatus] || [];
 
   const getStatusInfo = (status: string) => {
     return statusOptions.find(s => s.value === status);

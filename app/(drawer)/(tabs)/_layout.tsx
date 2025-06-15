@@ -2,7 +2,7 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { useTheme } from 'react-native-paper';
 import { Platform, View, ActivityIndicator } from 'react-native';
-import { Chrome as Home, FileText, Users, Building2, MoveHorizontal as MoreHorizontal, Shield, Lock } from 'lucide-react-native';
+import { Chrome as Home, FileText, Users, Building2, Settings as SettingsIcon, Shield, Lock, Wrench } from 'lucide-react-native';
 import { useAppStore } from '@/lib/store';
 import { theme } from '@/lib/theme';
 import { NotificationBadge } from '@/components/NotificationBadge';
@@ -147,10 +147,31 @@ export default function TabLayout() {
           tabBarIcon: ({ size, color }) => (
             <TabIconWithBadge 
               Icon={Building2} 
-              badgeCount={propertyBadges.count + maintenanceBadges.count} 
+              badgeCount={propertyBadges.count} 
               size={size} 
               color={color} 
             />
+          ),
+        }}
+      />
+      
+      {/* Maintenance - All roles have access */}
+      <Tabs.Screen
+        name="maintenance"
+        options={{
+          title: t('maintenance'),
+          href: hasTabAccess('maintenance') ? undefined : null,
+          tabBarIcon: ({ size, color }) => (
+            hasTabAccess('maintenance') ? (
+              <TabIconWithBadge 
+                Icon={Wrench} 
+                badgeCount={maintenanceBadges.count} 
+                size={size} 
+                color={color} 
+              />
+            ) : (
+              <Lock size={size} color="#ccc" />
+            )
           ),
         }}
       />
@@ -161,17 +182,16 @@ export default function TabLayout() {
         options={{
           title: t('settings'),
           tabBarIcon: ({ size, color }) => (
-            <MoreHorizontal size={size} color={color} />
+            <SettingsIcon size={size} color={color} />
           ),
         }}
       />
       
-      {/* Hide screens based on role permissions */}
-      <Tabs.Screen name="people" options={{ href: hasTabAccess('people') ? undefined : null }} />
-      <Tabs.Screen name="maintenance" options={{ href: hasTabAccess('maintenance') ? undefined : null }} />
-      <Tabs.Screen name="finance" options={{ href: hasTabAccess('finance') ? undefined : null }} />
-      <Tabs.Screen name="payments" options={{ href: hasTabAccess('payments') ? undefined : null }} />
-      <Tabs.Screen name="documents" options={{ href: hasTabAccess('documents') ? undefined : null }} />
+      {/* Hide screens - temporarily disabled for all users */}
+      <Tabs.Screen name="people" options={{ href: null }} />
+      <Tabs.Screen name="finance" options={{ href: null }} />
+      <Tabs.Screen name="payments" options={{ href: null }} />
+      <Tabs.Screen name="documents" options={{ href: null }} />
     </Tabs>
   );
 }

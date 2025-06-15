@@ -70,60 +70,19 @@ export default function MaintenanceCostsScreen() {
     setRefreshing(false);
   };
 
-  // Mock data for demonstration (in real implementation, this would come from API)
+  // TODO: Integrate with maintenance API when available
   const costSummary: MaintenanceCostSummary = {
-    totalCosts: 45750,
-    avgCostPerProperty: 9150,
-    totalRequests: 12,
-    avgCostPerRequest: 3812.50,
-    monthlyChange: 15.5,
+    totalCosts: 0,
+    avgCostPerProperty: 0,
+    totalRequests: 0,
+    avgCostPerRequest: 0,
+    monthlyChange: 0,
     lastUpdated: new Date().toISOString()
   };
 
-  const propertyMaintenanceCosts: PropertyMaintenanceCost[] = [
-    {
-      id: '1',
-      propertyName: 'Luxury Villa in Riyadh',
-      totalCost: 18500,
-      requestCount: 4,
-      avgCostPerRequest: 4625,
-      costPerSqm: 7.4,
-      lastMaintenanceDate: '2024-12-15'
-    },
-    {
-      id: '2', 
-      propertyName: 'Modern Apartment Jeddah',
-      totalCost: 12250,
-      requestCount: 3,
-      avgCostPerRequest: 4083.33,
-      costPerSqm: 10.2,
-      lastMaintenanceDate: '2024-12-10'
-    },
-    {
-      id: '3',
-      propertyName: 'Commercial Office Dammam',
-      totalCost: 15000,
-      requestCount: 5,
-      avgCostPerRequest: 3000,
-      costPerSqm: 5.5,
-      lastMaintenanceDate: '2024-12-05'
-    }
-  ];
-
-  const monthlyTrends: MaintenanceTrendData[] = [
-    { month: 'Aug', totalCost: 28500, requestCount: 8 },
-    { month: 'Sep', totalCost: 32200, requestCount: 10 },
-    { month: 'Oct', totalCost: 29800, requestCount: 7 },
-    { month: 'Nov', totalCost: 38400, requestCount: 9 },
-    { month: 'Dec', totalCost: 45750, requestCount: 12 }
-  ];
-
-  const priorityDistribution: PriorityDistribution[] = [
-    { priority: 'Urgent', cost: 18300, percentage: 40, color: '#EF4444' },
-    { priority: 'High', cost: 13725, percentage: 30, color: '#F97316' },
-    { priority: 'Medium', cost: 9150, percentage: 20, color: '#EAB308' },
-    { priority: 'Low', cost: 4575, percentage: 10, color: '#22C55E' }
-  ];
+  const propertyMaintenanceCosts: PropertyMaintenanceCost[] = [];
+  const monthlyTrends: MaintenanceTrendData[] = [];
+  const priorityDistribution: PriorityDistribution[] = [];
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('ar-SA', {

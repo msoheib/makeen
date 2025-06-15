@@ -386,7 +386,7 @@ export default function MaintenanceRequestsScreen() {
           currentStatus={selectedRequestForUpdate?.status || 'pending'}
           loading={statusUpdateLoading}
           title={t('updateStatus')}
-          entityType="maintenance"
+          itemType="maintenance_request"
         />
       </View>
     </View>

@@ -194,6 +194,89 @@ export default function DashboardScreen() {
     profitMargin: 0
   };
 
+  // Role-based content rendering
+  const userRole = userContext?.role;
+  const isAdminOrManager = userRole === 'admin' || userRole === 'manager';
+  const isOwner = userRole === 'owner';
+  const isTenant = userRole === 'tenant';
+
+  // Tenant-specific dashboard content
+  const renderTenantDashboard = () => (
+    <View style={styles.tenantSection}>
+      <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+        المستأجر - المعلومات الشخصية
+      </Text>
+      
+      {/* Payment Due Section */}
+      <View style={[styles.paymentDueCard, { backgroundColor: theme.colors.surface }]}>
+        <View style={styles.paymentHeader}>
+          <View style={[styles.paymentIcon, { backgroundColor: '#FF980020' }]}>
+            <DollarSign size={24} color="#FF9800" />
+          </View>
+          <View style={styles.paymentInfo}>
+            <Text style={[styles.paymentTitle, { color: theme.colors.onSurface }]}>
+              الدفعة المستحقة
+            </Text>
+            <Text style={[styles.paymentAmount, { color: '#FF9800' }]}>
+              5,000 ريال
+            </Text>
+          </View>
+        </View>
+        <Text style={[styles.paymentDue, { color: theme.colors.onSurfaceVariant }]}>
+          تاريخ الاستحقاق: 30 يناير 2025
+        </Text>
+        <Text style={[styles.paymentDescription, { color: theme.colors.onSurfaceVariant }]}>
+          إيجار شهر يناير 2025
+        </Text>
+      </View>
+
+      {/* Current Property Section */}
+      <View style={[styles.currentPropertyCard, { backgroundColor: theme.colors.surface }]}>
+        <Text style={[styles.subsectionTitle, { color: theme.colors.onSurface }]}>
+          العقار الحالي
+        </Text>
+        <View style={styles.propertyDetails}>
+          <View style={[styles.propertyIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
+            <Building2 size={24} color={theme.colors.primary} />
+          </View>
+          <View style={styles.propertyInfo}>
+            <Text style={[styles.propertyName, { color: theme.colors.onSurface }]}>
+              شقة حديثة في جدة
+            </Text>
+            <Text style={[styles.propertyAddress, { color: theme.colors.onSurfaceVariant }]}>
+              الكورنيش الشمالي، جدة
+            </Text>
+            <Text style={[styles.propertySpecs, { color: theme.colors.onSurfaceVariant }]}>
+              3 غرف • 2 حمام • 150 م²
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Quick Actions for Tenant */}
+      <View style={styles.quickActionsGrid}>
+        <View style={[styles.actionCard, { backgroundColor: theme.colors.surface }]}>
+          <FileText size={20} color={theme.colors.primary} />
+          <Text style={[styles.actionText, { color: theme.colors.onSurface }]}>
+            طلب صيانة
+          </Text>
+        </View>
+        <View style={[styles.actionCard, { backgroundColor: theme.colors.surface }]}>
+          <DollarSign size={20} color="#4CAF50" />
+          <Text style={[styles.actionText, { color: theme.colors.onSurface }]}>
+            سجل المدفوعات
+          </Text>
+        </View>
+        <View style={[styles.actionCard, { backgroundColor: theme.colors.surface }]}>
+          <Calendar size={20} color="#FF9800" />
+          <Text style={[styles.actionText, { color: theme.colors.onSurface }]}>
+            تفاصيل العقد
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+
   const renderQuickStats = () => (
     <View style={styles.quickStatsSection}>
       <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
@@ -388,10 +471,19 @@ export default function DashboardScreen() {
           />
         }
       >
-        {renderQuickStats()}
-        {renderFinancialCards()}
-        {renderPropertyOverview()}
-        {renderRecentActivity()}
+        {/* Role-based Dashboard Content */}
+        {isTenant ? (
+          /* Tenant Dashboard - Only payment due and current property */
+          renderTenantDashboard()
+        ) : (
+          /* Admin/Manager/Owner Dashboard - Full view */
+          <>
+            {renderQuickStats()}
+            {renderFinancialCards()}
+            {renderPropertyOverview()}
+            {renderRecentActivity()}
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -562,6 +654,117 @@ const styles = StyleSheet.create({
   },
   accessDeniedSubtext: {
     fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  // Tenant-specific styles
+  tenantSection: {
+    marginVertical: 16,
+  },
+  paymentDueCard: {
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  paymentHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  paymentIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  paymentInfo: {
+    flex: 1,
+  },
+  paymentTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'right',
+    marginBottom: 4,
+  },
+  paymentAmount: {
+    fontSize: 24,
+    fontWeight: '700',
+    textAlign: 'right',
+  },
+  paymentDue: {
+    fontSize: 14,
+    marginBottom: 4,
+    textAlign: 'right',
+  },
+  paymentDescription: {
+    fontSize: 12,
+    textAlign: 'right',
+  },
+  currentPropertyCard: {
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  subsectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 12,
+    textAlign: 'right',
+  },
+  propertyDetails: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  propertyInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  propertyName: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'right',
+    marginBottom: 4,
+  },
+  propertyAddress: {
+    fontSize: 14,
+    textAlign: 'right',
+    marginBottom: 2,
+  },
+  propertySpecs: {
+    fontSize: 12,
+    textAlign: 'right',
+  },
+  quickActionsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  actionCard: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  actionText: {
+    fontSize: 12,
+    fontWeight: '500',
     marginTop: 8,
     textAlign: 'center',
   },

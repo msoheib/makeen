@@ -9,101 +9,69 @@ import ModernHeader from '@/components/ModernHeader';
 import StatCard from '@/components/StatCard';
 import { pdfApi, PDFRequest } from '@/lib/pdfApi';
 import { hasScreenAccess } from '@/lib/permissions';
+import { useApi } from '@/hooks/useApi';
+import { reportsApi } from '@/lib/api';
 
-// Static reports data to prevent loading issues
-const staticReports = [
-  {
-    id: '1',
-    title: 'تقرير الإيرادات الشهرية',
-    description: 'تقرير شامل للإيرادات والمدفوعات',
-    type: 'revenue',
-    lastGenerated: '2024-12-20',
-    icon: TrendingUp,
-    color: '#4CAF50',
-    data: {
-      totalRevenue: 125000,
-      monthlyGrowth: 12,
-      properties: 15
+// Generate reports based on database data
+const generateReports = (hasData: boolean) => {
+  if (!hasData) return [];
+  
+  return [
+    {
+      id: '1',
+      title: 'تقرير الإيرادات الشهرية',
+      description: 'تقرير شامل للإيرادات والمدفوعات',
+      type: 'revenue',
+      lastGenerated: new Date().toISOString(),
+      icon: TrendingUp,
+      color: '#4CAF50',
+    },
+    {
+      id: '2',
+      title: 'تقرير المصروفات',
+      description: 'تحليل المصروفات والنفقات التشغيلية',
+      type: 'expenses',
+      lastGenerated: new Date().toISOString(),
+      icon: PieChart,
+      color: '#F44336',
+    },
+    {
+      id: '3',
+      title: 'تقرير أداء العقارات',
+      description: 'معدل الإشغال والعائد على الاستثمار',
+      type: 'properties',
+      lastGenerated: new Date().toISOString(),
+      icon: BarChart3,
+      color: '#2196F3',
+    },
+    {
+      id: '4',
+      title: 'تقرير المستأجرين',
+      description: 'إحصائيات المستأجرين والعقود',
+      type: 'tenants',
+      lastGenerated: new Date().toISOString(),
+      icon: FileText,
+      color: '#FF9800',
+    },
+    {
+      id: '5',
+      title: 'تقرير الصيانة',
+      description: 'طلبات الصيانة والتكاليف',
+      type: 'maintenance',
+      lastGenerated: new Date().toISOString(),
+      icon: Calendar,
+      color: '#9C27B0',
+    },
+    {
+      id: '6',
+      title: 'التقرير المالي الشامل',
+      description: 'التقرير المالي الشامل للمؤسسة',
+      type: 'financial',
+      lastGenerated: new Date().toISOString(),
+      icon: TrendingUp,
+      color: '#607D8B',
     }
-  },
-  {
-    id: '2',
-    title: 'تقرير المصروفات',
-    description: 'تحليل المصروفات والنفقات التشغيلية',
-    type: 'expenses',
-    lastGenerated: '2024-12-19',
-    icon: PieChart,
-    color: '#F44336',
-    data: {
-      totalExpenses: 45000,
-      maintenanceExpenses: 25000,
-      operationalExpenses: 20000
-    }
-  },
-  {
-    id: '3',
-    title: 'تقرير أداء العقارات',
-    description: 'معدل الإشغال والعائد على الاستثمار',
-    type: 'properties',
-    lastGenerated: '2024-12-18',
-    icon: BarChart3,
-    color: '#2196F3',
-    data: {
-      occupancyRate: 85,
-      totalProperties: 20,
-      occupiedProperties: 17
-    }
-  },
-  {
-    id: '4',
-    title: 'تقرير المستأجرين',
-    description: 'إحصائيات المستأجرين والعقود',
-    type: 'tenants',
-    lastGenerated: '2024-12-17',
-    icon: FileText,
-    color: '#FF9800',
-    data: {
-      totalTenants: 17,
-      activeTenants: 15,
-      pendingRenewals: 3
-    }
-  },
-  {
-    id: '5',
-    title: 'تقرير الصيانة',
-    description: 'طلبات الصيانة والتكاليف',
-    type: 'maintenance',
-    lastGenerated: '2024-12-16',
-    icon: Calendar,
-    color: '#9C27B0',
-    data: {
-      totalRequests: 8,
-      completedRequests: 6,
-      pendingRequests: 2
-    }
-  },
-  {
-    id: '6',
-    title: 'التقرير المالي الشامل',
-    description: 'التقرير المالي الشامل للمؤسسة',
-    type: 'financial',
-    lastGenerated: '2024-12-15',
-    icon: TrendingUp,
-    color: '#607D8B',
-    data: {
-      netIncome: 80000,
-      profitMargin: 35,
-      roi: 18
-    }
-  }
-];
-
-// Static stats
-const staticStats = {
-  totalReports: '٦',
-  generatedThisMonth: '١٢',
-  scheduledReports: '٣',
-  avgGenerationTime: '٢.١ث'
+  ];
 };
 
 export default function ReportsScreen() {
@@ -116,6 +84,17 @@ export default function ReportsScreen() {
 
   // Check if user has access to reports
   const canAccessReports = hasScreenAccess('reports');
+
+  // Load real statistics from database
+  const { 
+    data: stats, 
+    loading: statsLoading, 
+    error: statsError, 
+    refetch: refetchStats 
+  } = useApi(() => reportsApi.getStats(), []);
+
+  // Generate dynamic reports based on available data
+  const availableReports = generateReports(!!stats && stats.totalReports > 0);
 
   // If user doesn't have reports access, show access denied
   if (!canAccessReports) {
@@ -142,8 +121,8 @@ export default function ReportsScreen() {
   }
 
   const filteredReports = selectedCategory === 'all' 
-    ? staticReports 
-    : staticReports.filter(report => report.type === selectedCategory);
+    ? availableReports 
+    : availableReports.filter(report => report.type === selectedCategory);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -247,131 +226,9 @@ export default function ReportsScreen() {
         </View>
 
         <View style={styles.reportData}>
-          {item.type === 'revenue' && (
-            <View style={styles.dataRow}>
-              <View style={styles.dataItem}>
-                <Text style={[styles.dataLabel, { color: theme.colors.onSurfaceVariant }]}>
-                  إجمالي الإيرادات
-                </Text>
-                <Text style={[styles.dataValue, { color: item.color }]}>
-                  {item.data.totalRevenue.toLocaleString('ar-SA')} ريال
-                </Text>
-              </View>
-              <View style={styles.dataItem}>
-                <Text style={[styles.dataLabel, { color: theme.colors.onSurfaceVariant }]}>
-                  النمو الشهري
-                </Text>
-                <Text style={[styles.dataValue, { color: item.color }]}>
-                  +{item.data.monthlyGrowth}%
-                </Text>
-              </View>
-            </View>
-          )}
-
-          {item.type === 'expenses' && (
-            <View style={styles.dataRow}>
-              <View style={styles.dataItem}>
-                <Text style={[styles.dataLabel, { color: theme.colors.onSurfaceVariant }]}>
-                  إجمالي المصروفات
-                </Text>
-                <Text style={[styles.dataValue, { color: item.color }]}>
-                  {item.data.totalExpenses.toLocaleString('ar-SA')} ريال
-                </Text>
-              </View>
-              <View style={styles.dataItem}>
-                <Text style={[styles.dataLabel, { color: theme.colors.onSurfaceVariant }]}>
-                  مصروفات الصيانة
-                </Text>
-                <Text style={[styles.dataValue, { color: item.color }]}>
-                  {item.data.maintenanceExpenses.toLocaleString('ar-SA')} ريال
-                </Text>
-              </View>
-            </View>
-          )}
-
-          {item.type === 'properties' && (
-            <View style={styles.dataRow}>
-              <View style={styles.dataItem}>
-                <Text style={[styles.dataLabel, { color: theme.colors.onSurfaceVariant }]}>
-                  معدل الإشغال
-                </Text>
-                <Text style={[styles.dataValue, { color: item.color }]}>
-                  {item.data.occupancyRate}%
-                </Text>
-              </View>
-              <View style={styles.dataItem}>
-                <Text style={[styles.dataLabel, { color: theme.colors.onSurfaceVariant }]}>
-                  العقارات المشغولة
-                </Text>
-                <Text style={[styles.dataValue, { color: item.color }]}>
-                  {item.data.occupiedProperties}/{item.data.totalProperties}
-                </Text>
-              </View>
-            </View>
-          )}
-
-          {item.type === 'tenants' && (
-            <View style={styles.dataRow}>
-              <View style={styles.dataItem}>
-                <Text style={[styles.dataLabel, { color: theme.colors.onSurfaceVariant }]}>
-                  إجمالي المستأجرين
-                </Text>
-                <Text style={[styles.dataValue, { color: item.color }]}>
-                  {item.data.totalTenants}
-                </Text>
-              </View>
-              <View style={styles.dataItem}>
-                <Text style={[styles.dataLabel, { color: theme.colors.onSurfaceVariant }]}>
-                  عقود معلقة للتجديد
-                </Text>
-                <Text style={[styles.dataValue, { color: item.color }]}>
-                  {item.data.pendingRenewals}
-                </Text>
-              </View>
-            </View>
-          )}
-
-          {item.type === 'maintenance' && (
-            <View style={styles.dataRow}>
-              <View style={styles.dataItem}>
-                <Text style={[styles.dataLabel, { color: theme.colors.onSurfaceVariant }]}>
-                  طلبات مكتملة
-                </Text>
-                <Text style={[styles.dataValue, { color: item.color }]}>
-                  {item.data.completedRequests}/{item.data.totalRequests}
-                </Text>
-              </View>
-              <View style={styles.dataItem}>
-                <Text style={[styles.dataLabel, { color: theme.colors.onSurfaceVariant }]}>
-                  طلبات معلقة
-                </Text>
-                <Text style={[styles.dataValue, { color: item.color }]}>
-                  {item.data.pendingRequests}
-                </Text>
-              </View>
-            </View>
-          )}
-
-          {item.type === 'financial' && (
-            <View style={styles.dataRow}>
-              <View style={styles.dataItem}>
-                <Text style={[styles.dataLabel, { color: theme.colors.onSurfaceVariant }]}>
-                  صافي الدخل
-                </Text>
-                <Text style={[styles.dataValue, { color: item.color }]}>
-                  {item.data.netIncome.toLocaleString('ar-SA')} ريال
-                </Text>
-              </View>
-              <View style={styles.dataItem}>
-                <Text style={[styles.dataLabel, { color: theme.colors.onSurfaceVariant }]}>
-                  العائد على الاستثمار
-                </Text>
-                <Text style={[styles.dataValue, { color: item.color }]}>
-                  {item.data.roi}%
-                </Text>
-              </View>
-            </View>
-          )}
+          <Text style={[styles.reportTime, { color: theme.colors.onSurfaceVariant }]}>
+            متاح للتحميل
+          </Text>
         </View>
 
         <View style={styles.reportFooter}>
@@ -383,10 +240,15 @@ export default function ReportsScreen() {
     );
   };
 
-  const onRefresh = () => {
+  const onRefresh = async () => {
     setRefreshing(true);
-    // Implement refresh logic here
-    setRefreshing(false);
+    try {
+      await refetchStats();
+    } catch (error) {
+      console.error('Error refreshing reports:', error);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   return (
@@ -420,29 +282,33 @@ export default function ReportsScreen() {
             <View style={styles.statCardWrapper}>
               <StatCard
                 title="إجمالي التقارير"
-                value={staticStats.totalReports}
+                value={stats?.totalReports?.toString() || '0'}
                 color={theme.colors.primary}
+                loading={statsLoading}
               />
             </View>
             <View style={styles.statCardWrapper}>
               <StatCard
                 title="مُولد هذا الشهر"
-                value={staticStats.generatedThisMonth}
+                value={stats?.generatedThisMonth?.toString() || '0'}
                 color="#4CAF50"
+                loading={statsLoading}
               />
             </View>
             <View style={styles.statCardWrapper}>
               <StatCard
                 title="تقارير مجدولة"
-                value={staticStats.scheduledReports}
+                value={stats?.scheduledReports?.toString() || '0'}
                 color={theme.colors.secondary}
+                loading={statsLoading}
               />
             </View>
             <View style={styles.statCardWrapper}>
               <StatCard
                 title="متوسط وقت التوليد"
-                value={staticStats.avgGenerationTime}
+                value={stats?.avgGenerationTime || '0ث'}
                 color="#FF9800"
+                loading={statsLoading}
               />
             </View>
           </View>
@@ -500,13 +366,24 @@ export default function ReportsScreen() {
             التقارير المتاحة ({filteredReports.length})
           </Text>
           
-          <FlatList
-            data={filteredReports}
-            renderItem={renderReport}
-            keyExtractor={item => item.id}
-            scrollEnabled={false}
-            showsVerticalScrollIndicator={false}
-          />
+          {filteredReports.length > 0 ? (
+            <FlatList
+              data={filteredReports}
+              renderItem={renderReport}
+              keyExtractor={item => item.id}
+              scrollEnabled={false}
+              showsVerticalScrollIndicator={false}
+            />
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={[styles.emptyStateText, { color: theme.colors.onSurfaceVariant }]}>
+                لا توجد تقارير متاحة
+              </Text>
+              <Text style={[styles.emptyStateSubtext, { color: theme.colors.onSurfaceVariant }]}>
+                {statsLoading ? 'جارٍ التحميل...' : 'لا توجد بيانات كافية لإنشاء التقارير'}
+              </Text>
+            </View>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -654,5 +531,23 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: 'center',
     lineHeight: 20,
+  },
+  emptyState: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  emptyStateText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptyStateSubtext: {
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  reportTime: {
+    fontSize: 12,
+    textAlign: 'center',
   },
 });
