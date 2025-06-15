@@ -171,26 +171,34 @@ export default function PropertiesScreen() {
             إحصائيات العقارات
           </Text>
           <View style={styles.statsGrid}>
-            <StatCard
-              title="إجمالي العقارات"
-              value={staticStats.total}
-              color={theme.colors.primary}
-            />
-            <StatCard
-              title="عقارات متاحة"
-              value={staticStats.available}
-              color="#4CAF50"
-            />
-            <StatCard
-              title="عقارات مؤجرة"
-              value={staticStats.rented}
-              color={theme.colors.secondary}
-            />
-            <StatCard
-              title="تحت الصيانة"
-              value={staticStats.maintenance}
-              color="#F44336"
-            />
+            <View style={styles.statCardWrapper}>
+              <StatCard
+                title="إجمالي العقارات"
+                value={staticStats.total}
+                color={theme.colors.primary}
+              />
+            </View>
+            <View style={styles.statCardWrapper}>
+              <StatCard
+                title="عقارات متاحة"
+                value={staticStats.available}
+                color="#4CAF50"
+              />
+            </View>
+            <View style={styles.statCardWrapper}>
+              <StatCard
+                title="عقارات مؤجرة"
+                value={staticStats.rented}
+                color={theme.colors.secondary}
+              />
+            </View>
+            <View style={styles.statCardWrapper}>
+              <StatCard
+                title="تحت الصيانة"
+                value={staticStats.maintenance}
+                color="#F44336"
+              />
+            </View>
           </View>
         </View>
 
@@ -258,6 +266,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    gap: 12,
   },
   searchSection: {
     marginBottom: 16,
@@ -364,5 +373,9 @@ const styles = StyleSheet.create({
   emptyStateSubtitle: {
     fontSize: 14,
     textAlign: 'center',
+  },
+  statCardWrapper: {
+    width: '48%',
+    minHeight: 120,
   },
 });

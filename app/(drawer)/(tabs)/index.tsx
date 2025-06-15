@@ -80,30 +80,38 @@ export default function DashboardScreen() {
         الإحصائيات السريعة
       </Text>
       <View style={styles.statsGrid}>
-        <StatCard
-          title="إجمالي العقارات"
-          value={staticData.propertyStats.totalProperties.toString()}
-          color={theme.colors.primary}
-          icon={<Building2 size={20} color={theme.colors.primary} />}
-        />
-        <StatCard
-          title="العقارات المشغولة"
-          value={staticData.propertyStats.occupied.toString()}
-          color="#4CAF50"
-          icon={<Home size={20} color="#4CAF50" />}
-        />
-        <StatCard
-          title="إجمالي المستأجرين"
-          value={staticData.tenantStats.totalTenants.toString()}
-          color={theme.colors.secondary}
-          icon={<Users size={20} color={theme.colors.secondary} />}
-        />
-        <StatCard
-          title="العقود المنتهية قريباً"
-          value={staticData.tenantStats.expiringContracts.toString()}
-          color="#FF9800"
-          icon={<AlertCircle size={20} color="#FF9800" />}
-        />
+        <View style={styles.statCardWrapper}>
+          <StatCard
+            title="إجمالي العقارات"
+            value={staticData.propertyStats.totalProperties.toString()}
+            color={theme.colors.primary}
+            icon={<Building2 size={20} color={theme.colors.primary} />}
+          />
+        </View>
+        <View style={styles.statCardWrapper}>
+          <StatCard
+            title="العقارات المشغولة"
+            value={staticData.propertyStats.occupied.toString()}
+            color="#4CAF50"
+            icon={<Home size={20} color="#4CAF50" />}
+          />
+        </View>
+        <View style={styles.statCardWrapper}>
+          <StatCard
+            title="إجمالي المستأجرين"
+            value={staticData.tenantStats.totalTenants.toString()}
+            color={theme.colors.secondary}
+            icon={<Users size={20} color={theme.colors.secondary} />}
+          />
+        </View>
+        <View style={styles.statCardWrapper}>
+          <StatCard
+            title="العقود المنتهية قريباً"
+            value={staticData.tenantStats.expiringContracts.toString()}
+            color="#FF9800"
+            icon={<AlertCircle size={20} color="#FF9800" />}
+          />
+        </View>
       </View>
     </View>
   );
@@ -273,6 +281,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    gap: 12,
   },
   financialSection: {
     marginBottom: 24,
@@ -386,5 +395,9 @@ const styles = StyleSheet.create({
   },
   activityDate: {
     fontSize: 11,
+  },
+  statCardWrapper: {
+    width: '48%',
+    minHeight: 120,
   },
 });

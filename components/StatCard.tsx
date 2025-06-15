@@ -30,7 +30,6 @@ export default function StatCard({
       { 
         backgroundColor: theme.colors.surface,
         borderColor: theme.colors.outline,
-        minHeight: 100,
         padding: spacing.m,
         borderRadius: borderRadius.medium,
         ...shadows.small,
@@ -46,44 +45,44 @@ export default function StatCard({
           styles.title, 
           { 
             color: theme.colors.onSurfaceVariant,
-            fontSize: 14,
-            marginBottom: spacing.xs,
+            fontSize: 13,
           }
-        ]}>
+        ]} numberOfLines={2}>
           {title}
         </Text>
       </View>
       
-      {loading ? (
-        <View style={[styles.loadingContainer, { minHeight: 32 }]}>
-          <ActivityIndicator size="small" color={color} />
-        </View>
-      ) : (
-        <>
-          <Text style={[
-            styles.value, 
-            { 
-              color, 
-              fontSize: 24,
-              lineHeight: 28,
-              marginBottom: spacing.xs,
-            }
-          ]}>
-            {typeof value === 'number' ? formatNumber(value) : value}
-          </Text>
-          {subtitle && (
+      <View style={styles.content}>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color={color} />
+          </View>
+        ) : (
+          <>
             <Text style={[
-              styles.subtitle, 
+              styles.value, 
               { 
-                color: theme.colors.onSurfaceVariant,
-                fontSize: 12,
+                color, 
+                fontSize: 28,
+                lineHeight: 32,
               }
             ]}>
-              {subtitle}
+              {typeof value === 'number' ? formatNumber(value) : value}
             </Text>
-          )}
-        </>
-      )}
+            {subtitle && (
+              <Text style={[
+                styles.subtitle, 
+                { 
+                  color: theme.colors.onSurfaceVariant,
+                  fontSize: 11,
+                }
+              ]} numberOfLines={1}>
+                {subtitle}
+              </Text>
+            )}
+          </>
+        )}
+      </View>
     </View>
   );
 }
@@ -92,25 +91,32 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     borderWidth: 1,
-    marginHorizontal: 4,
-    marginVertical: 8,
+    marginHorizontal: 0,
+    marginVertical: 0,
+    minHeight: 120,
+    justifyContent: 'space-between',
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 8,
+    minHeight: 24,
   },
   iconContainer: {
     marginRight: 8,
+    marginLeft: 4,
   },
   title: {
     fontWeight: '500',
     textAlign: 'right',
     flex: 1,
+    flexWrap: 'wrap',
+    lineHeight: 18,
   },
   value: {
     fontWeight: '700',
     textAlign: 'center',
+    marginVertical: 8,
   },
   subtitle: {
     fontWeight: '400',
@@ -118,6 +124,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    flex: 1,
+  },
+  content: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },

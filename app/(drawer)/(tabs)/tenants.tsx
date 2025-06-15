@@ -185,26 +185,34 @@ export default function TenantsScreen() {
             إحصائيات المستأجرين
           </Text>
           <View style={styles.statsGrid}>
-            <StatCard
-              title="إجمالي المستأجرين"
-              value={staticStats.total}
-              color={theme.colors.primary}
-            />
-            <StatCard
-              title="مستأجرين نشطين"
-              value={staticStats.active}
-              color="#4CAF50"
-            />
-            <StatCard
-              title="مستأجرين معلقين"
-              value={staticStats.pending}
-              color="#FF9800"
-            />
-            <StatCard
-              title="مستأجرين أجانب"
-              value={staticStats.foreign}
-              color={theme.colors.secondary}
-            />
+            <View style={styles.statCardWrapper}>
+              <StatCard
+                title="إجمالي المستأجرين"
+                value={staticStats.total}
+                color={theme.colors.primary}
+              />
+            </View>
+            <View style={styles.statCardWrapper}>
+              <StatCard
+                title="مستأجرين نشطين"
+                value={staticStats.active}
+                color="#4CAF50"
+              />
+            </View>
+            <View style={styles.statCardWrapper}>
+              <StatCard
+                title="مستأجرين معلقين"
+                value={staticStats.pending}
+                color="#FF9800"
+              />
+            </View>
+            <View style={styles.statCardWrapper}>
+              <StatCard
+                title="مستأجرين أجانب"
+                value={staticStats.foreign}
+                color={theme.colors.secondary}
+              />
+            </View>
           </View>
         </View>
 
@@ -272,6 +280,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    gap: 12,
   },
   searchSection: {
     marginBottom: 16,
@@ -394,5 +403,9 @@ const styles = StyleSheet.create({
   emptyStateSubtitle: {
     fontSize: 14,
     textAlign: 'center',
+  },
+  statCardWrapper: {
+    width: '48%',
+    minHeight: 120,
   },
 });

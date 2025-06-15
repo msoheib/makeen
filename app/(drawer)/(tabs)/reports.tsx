@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, SafeAreaView, FlatList } from 'react-native';
+import { View, StyleSheet, ScrollView, SafeAreaView, FlatList, RefreshControl } from 'react-native';
 import { Text, Card, IconButton } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { lightTheme, darkTheme } from '@/lib/theme';
@@ -109,6 +109,7 @@ export default function ReportsScreen() {
   const { isDarkMode } = useAppStore();
   const theme = isDarkMode ? darkTheme : lightTheme;
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [refreshing, setRefreshing] = useState(false);
 
   const filteredReports = selectedCategory === 'all' 
     ? staticReports 
@@ -287,6 +288,12 @@ export default function ReportsScreen() {
     );
   };
 
+  const onRefresh = () => {
+    setRefreshing(true);
+    // Implement refresh logic here
+    setRefreshing(false);
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ModernHeader 
@@ -297,33 +304,52 @@ export default function ReportsScreen() {
         variant="dark"
       />
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.content}
+        contentContainerStyle={{ paddingBottom: 120 }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[theme.colors.primary]}
+          />
+        }
+      >
         {/* Stats Section */}
         <View style={styles.statsSection}>
           <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
             إحصائيات التقارير
           </Text>
           <View style={styles.statsGrid}>
-            <StatCard
-              title="إجمالي التقارير"
-              value={staticStats.totalReports}
-              color={theme.colors.primary}
-            />
-            <StatCard
-              title="مُولد هذا الشهر"
-              value={staticStats.generatedThisMonth}
-              color="#4CAF50"
-            />
-            <StatCard
-              title="تقارير مجدولة"
-              value={staticStats.scheduledReports}
-              color={theme.colors.secondary}
-            />
-            <StatCard
-              title="متوسط وقت التوليد"
-              value={staticStats.avgGenerationTime}
-              color="#FF9800"
-            />
+            <View style={styles.statCardWrapper}>
+              <StatCard
+                title="إجمالي التقارير"
+                value={staticStats.totalReports}
+                color={theme.colors.primary}
+              />
+            </View>
+            <View style={styles.statCardWrapper}>
+              <StatCard
+                title="مُولد هذا الشهر"
+                value={staticStats.generatedThisMonth}
+                color="#4CAF50"
+              />
+            </View>
+            <View style={styles.statCardWrapper}>
+              <StatCard
+                title="تقارير مجدولة"
+                value={staticStats.scheduledReports}
+                color={theme.colors.secondary}
+              />
+            </View>
+            <View style={styles.statCardWrapper}>
+              <StatCard
+                title="متوسط وقت التوليد"
+                value={staticStats.avgGenerationTime}
+                color="#FF9800"
+              />
+            </View>
           </View>
         </View>
 
@@ -332,7 +358,11 @@ export default function ReportsScreen() {
           <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
             فئات التقارير
           </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingVertical: 8, paddingHorizontal: 16 }}
+          >
             <View style={styles.filterButtons}>
               {[
                 { key: 'all', label: 'الكل' },
@@ -409,6 +439,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    gap: 12,
+  },
+  statCardWrapper: {
+    width: '48%',
+    minHeight: 120,
   },
   filterSection: {
     marginBottom: 16,
@@ -416,11 +451,13 @@ const styles = StyleSheet.create({
   filterButtons: {
     flexDirection: 'row',
     paddingHorizontal: 4,
+    paddingVertical: 16,
   },
   filterButton: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 12,
     marginHorizontal: 4,
+    marginVertical: 8,
     borderRadius: 20,
   },
   filterButtonText: {

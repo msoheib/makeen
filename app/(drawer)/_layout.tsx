@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Stack } from 'expo-router';
 import { useRouter } from 'expo-router';
-import { Modal, View, StyleSheet } from 'react-native';
+import { Modal, View, StyleSheet, TouchableWithoutFeedback, Animated } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/lib/store';
 import { realTimeService } from '@/lib/realtime';
@@ -10,6 +10,24 @@ import SideBar from '../../components/SideBar';
 export default function DrawerLayout() {
   const router = useRouter();
   const { user, setUser, setAuthenticated, setLoading, sidebarOpen, setSidebarOpen } = useAppStore();
+  const slideAnim = useRef(new Animated.Value(-280)).current; // Start off-screen to the left
+
+  // Animate sidebar when sidebarOpen changes
+  useEffect(() => {
+    if (sidebarOpen) {
+      Animated.timing(slideAnim, {
+        toValue: 0, // Slide to visible position
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(slideAnim, {
+        toValue: -280, // Slide back off-screen
+        duration: 250,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [sidebarOpen, slideAnim]);
 
   useEffect(() => {
     // Check if user is authenticated on app start
@@ -110,14 +128,23 @@ export default function DrawerLayout() {
       <Modal
         visible={sidebarOpen}
         transparent
-        animationType="slide"
+        animationType="none"
         onRequestClose={() => setSidebarOpen(false)}
       >
         <View style={styles.modalContainer}>
-          <View style={styles.overlay} onTouchEnd={() => setSidebarOpen(false)} />
-          <View style={styles.sidebarContainer}>
+          <TouchableWithoutFeedback onPress={() => setSidebarOpen(false)}>
+            <View style={styles.overlay} />
+          </TouchableWithoutFeedback>
+          <Animated.View 
+            style={[
+              styles.sidebarContainer,
+              {
+                transform: [{ translateX: slideAnim }]
+              }
+            ]}
+          >
             <SideBar navigation={{ closeDrawer: () => setSidebarOpen(false) }} />
-          </View>
+          </Animated.View>
         </View>
       </Modal>
     </>
@@ -138,5 +165,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#f4f4f4',
     borderTopLeftRadius: 0,
     borderBottomLeftRadius: 0,
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
   },
 }); 
