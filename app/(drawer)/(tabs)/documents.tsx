@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, FlatList, Image } from 'react-native';
+import { View, StyleSheet, FlatList, Image, RefreshControl, Alert } from 'react-native';
 import { Text, Searchbar, SegmentedButtons, IconButton, Chip } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
@@ -14,7 +14,8 @@ import {
   Calendar,
   User,
   Building2,
-  Upload
+  Upload,
+  Plus
 } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
@@ -327,6 +328,18 @@ export default function DocumentsScreen() {
           </ModernCard>
         }
       />
+
+      {/* Upload Document FAB */}
+      <View style={styles.fabContainer}>
+        <ModernCard style={styles.fab}>
+          <Text
+            style={styles.fabText}
+            onPress={() => router.push('/documents/upload')}
+          >
+            <Plus size={24} color="white" />
+          </Text>
+        </ModernCard>
+      </View>
     </View>
   );
 }
@@ -464,5 +477,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: theme.colors.onSurfaceVariant,
     textAlign: 'center',
+  },
+  fabContainer: {
+    position: 'absolute',
+    bottom: spacing.m,
+    right: spacing.m,
+  },
+  fab: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: theme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 0,
+  },
+  fabText: {
+    color: 'white',
+    fontSize: 24,
+    fontWeight: '600',
   },
 });

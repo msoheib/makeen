@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, SafeAreaView, FlatList, RefreshControl, Alert, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, SafeAreaView, FlatList, RefreshControl, Alert, ActivityIndicator } from 'react-native';
 import { Text, Card, IconButton } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { lightTheme, darkTheme } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
-import { BarChart3, FileText, TrendingUp, PieChart, Calendar, Download } from 'lucide-react-native';
+import { BarChart3, FileText, TrendingUp, PieChart, Calendar, Download, Lock, Shield } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import StatCard from '@/components/StatCard';
 import { pdfApi, PDFRequest } from '@/lib/pdfApi';
+import { hasScreenAccess } from '@/lib/permissions';
 
 // Static reports data to prevent loading issues
 const staticReports = [
@@ -113,6 +114,33 @@ export default function ReportsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [generatingPDF, setGeneratingPDF] = useState<string | null>(null);
 
+  // Check if user has access to reports
+  const canAccessReports = hasScreenAccess('reports');
+
+  // If user doesn't have reports access, show access denied
+  if (!canAccessReports) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <ModernHeader 
+          title="التقارير" 
+          subtitle="تقارير شاملة للأداء والإحصائيات"
+          showNotifications={true}
+          showMenu={true}
+          variant="default"
+        />
+        <View style={styles.accessDeniedContainer}>
+          <Lock size={64} color="#ccc" />
+          <Text style={[styles.accessDeniedText, { color: theme.colors.onSurfaceVariant }]}>
+            Access Denied
+          </Text>
+          <Text style={[styles.accessDeniedSubtext, { color: theme.colors.onSurfaceVariant }]}>
+            You don't have permission to view reports. Only property owners and administrators can access financial reports.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   const filteredReports = selectedCategory === 'all' 
     ? staticReports 
     : staticReports.filter(report => report.type === selectedCategory);
@@ -126,25 +154,21 @@ export default function ReportsScreen() {
     });
   };
 
-  // Map report types to PDF API report types
-  const mapReportTypeToPDFType = (reportType: string): PDFRequest['reportType'] => {
-    switch (reportType) {
-      case 'revenue':
-        return 'revenue';
-      case 'expenses':
-        return 'expense';
-      case 'properties':
-        return 'property';
-      case 'tenants':
-        return 'tenant';
-      case 'maintenance':
-        return 'maintenance';
-      default:
-        return 'revenue'; // fallback
-    }
+  // Map report types to PDF types
+  const mapReportTypeToPDFType = (reportType: string): 'revenue' | 'expense' | 'property' | 'tenant' | 'maintenance' => {
+    const typeMap: Record<string, 'revenue' | 'expense' | 'property' | 'tenant' | 'maintenance'> = {
+      'revenue': 'revenue',
+      'expenses': 'expense',
+      'properties': 'property',
+      'tenants': 'tenant',
+      'maintenance': 'maintenance',
+      'financial': 'revenue' // Financial reports use revenue type for now
+    };
+    
+    return typeMap[reportType] || 'revenue';
   };
 
-  // Handle PDF generation
+  // Handle PDF generation and download
   const handleDownloadPDF = async (report: any) => {
     try {
       setGeneratingPDF(report.id);
@@ -162,56 +186,27 @@ export default function ReportsScreen() {
       console.log('PDF request:', pdfRequest);
 
       // Call PDF API
-      const response = await pdfApi.generatePDF(pdfRequest);
+      const response = await pdfApi.generateAndDownload(pdfRequest);
 
       if (response.success) {
-        // Handle actual PDF download if available
-        if (response.pdfUrl && response.filename) {
-          // For web platform, trigger download
-          if (Platform.OS === 'web') {
-            const link = document.createElement('a');
-            link.href = response.pdfUrl;
-            link.download = response.filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            // Clean up the object URL
-            URL.revokeObjectURL(response.pdfUrl);
-          }
-          
-          Alert.alert(
-            'تم إنشاء وتحميل التقرير',
-            `تم إنشاء وتحميل ${report.title} بنجاح!\n\nعدد السجلات: ${response.meta?.recordCount || 0}\nاسم الملف: ${response.filename}\nوقت الإنشاء: ${new Date(response.meta?.generatedAt || '').toLocaleString('ar-SA')}`,
-            [
-              {
-                text: 'موافق',
-                style: 'default'
-              }
-            ]
-          );
-        } else {
-          // Fallback message for simulation mode
-          Alert.alert(
-            'تم إنشاء التقرير',
-            `تم إنشاء ${report.title} بنجاح!\n\nعدد السجلات: ${response.meta?.recordCount || 0}\nوقت الإنشاء: ${new Date(response.meta?.generatedAt || '').toLocaleString('ar-SA')}\n\nملاحظة: يتم استخدام وضع المحاكاة حاليًا.`,
-            [
-              {
-                text: 'موافق',
-                style: 'default'
-              }
-            ]
-          );
-        }
+        Alert.alert(
+          'تم إنشاء التقرير',
+          `تم إنشاء ${report.title} بنجاح وتحميله على جهازك!`,
+          [{ text: 'حسناً', style: 'default' }]
+        );
       } else {
-        throw new Error(response.error || 'فشل في إنشاء التقرير');
+        Alert.alert(
+          'خطأ في إنشاء التقرير',
+          response.message || response.error || 'حدث خطأ غير متوقع',
+          [{ text: 'حسناً', style: 'default' }]
+        );
       }
     } catch (error) {
       console.error('PDF generation error:', error);
       Alert.alert(
         'خطأ في إنشاء التقرير',
-        error instanceof Error ? error.message : 'حدث خطأ غير متوقع',
-        [{ text: 'موافق', style: 'default' }]
+        'فشل في إنشاء ملف PDF. يرجى التحقق من الاتصال بالإنترنت والمحاولة مرة أخرى.',
+        [{ text: 'حسناً', style: 'default' }]
       );
     } finally {
       setGeneratingPDF(null);
@@ -237,13 +232,18 @@ export default function ReportsScreen() {
               </Text>
             </View>
           </View>
-          <IconButton
-            icon={generatingPDF === item.id ? "loading" : "download"}
-            size={20}
-            iconColor={theme.colors.primary}
-            disabled={generatingPDF === item.id}
-            onPress={() => handleDownloadPDF(item)}
-          />
+          {generatingPDF === item.id ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color={theme.colors.primary} />
+            </View>
+          ) : (
+            <IconButton
+              icon="download"
+              size={20}
+              iconColor={theme.colors.primary}
+              onPress={() => handleDownloadPDF(item)}
+            />
+          )}
         </View>
 
         <View style={styles.reportData}>
@@ -636,5 +636,23 @@ const styles = StyleSheet.create({
   lastGenerated: {
     fontSize: 12,
     textAlign: 'right',
+  },
+  accessDeniedContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  accessDeniedText: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  accessDeniedSubtext: {
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

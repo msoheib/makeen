@@ -6,6 +6,7 @@ import { Bell, Search, Menu, ArrowRight, ArrowLeft } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { useAppStore } from '@/lib/store';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface ModernHeaderProps {
   title?: string;
@@ -35,12 +36,17 @@ export default function ModernHeader({
   const navigation = useNavigation();
   const router = useRouter();
   const { isDarkMode } = useAppStore();
+  const insets = useSafeAreaInsets();
   
   const theme = isDarkMode ? darkTheme : lightTheme;
   const isDark = variant === 'dark';
   const textColor = isDark ? '#FFFFFF' : theme.colors.onSurface;
   const iconColor = isDark ? '#FFFFFF' : theme.colors.onSurfaceVariant;
   const backgroundColor = isDark ? '#1E293B' : theme.colors.surface;
+
+  // Calculate increased safe area padding
+  // Base: safe area top inset + Additional padding for better spacing  
+  const safeAreaPadding = Math.max(insets.top + 16, 24); // Minimum 24px, safe area + 16px extra for generous spacing
 
   const handleMenuPress = () => {
     if (onMenuPress) {
@@ -72,9 +78,10 @@ export default function ModernHeader({
     <>
       <StatusBar 
         backgroundColor={backgroundColor} 
-        barStyle={isDark ? 'light-content' : 'dark-content'} 
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        translucent={true}
       />
-      <View style={[styles.container, { backgroundColor }]}>
+      <View style={[styles.container, { backgroundColor, paddingTop: safeAreaPadding }]}>
         <View style={styles.content}>
           {/* Right side - Navigation (Back/Menu) */}
           <View style={styles.navigationSection}>
@@ -138,7 +145,7 @@ export default function ModernHeader({
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 0,
+    // paddingTop is now handled dynamically with safe area insets
     paddingHorizontal: spacing.l, // Increased padding from spacing.m to spacing.l
     paddingBottom: spacing.m,
     borderBottomLeftRadius: 16,

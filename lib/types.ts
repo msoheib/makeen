@@ -12,6 +12,22 @@ export interface User {
   avatar_url?: string;
 }
 
+// Security Context Types
+export interface UserContext {
+  userId: string;
+  role: UserRole;
+  profileType?: string;
+  isAuthenticated: boolean;
+  ownedPropertyIds?: string[];
+  rentedPropertyIds?: string[];
+}
+
+export interface SecurityConfig {
+  enableRoleBasedAccess: boolean;
+  bypassForAdmin: boolean;
+  logAccessAttempts: boolean;
+}
+
 // Property types
 export type PropertyStatus = 'available' | 'rented' | 'maintenance' | 'reserved';
 export type PropertyType = 'apartment' | 'villa' | 'office' | 'retail' | 'warehouse';

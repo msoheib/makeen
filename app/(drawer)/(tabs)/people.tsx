@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, FlatList } from 'react-native';
-import { Text, Searchbar, SegmentedButtons, Avatar, List } from 'react-native-paper';
+import { View, StyleSheet, FlatList, Alert } from 'react-native';
+import { Text, Searchbar, SegmentedButtons, Avatar, List, ActivityIndicator } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { User } from '@/lib/types';
-import { Users, UserPlus, Phone, Mail } from 'lucide-react-native';
+import { Users, UserPlus, Phone, Mail, Plus } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import StatCard from '@/components/StatCard';
@@ -228,6 +228,18 @@ export default function PeopleScreen() {
           </ModernCard>
         }
       />
+
+      {/* Add Person FAB */}
+      <View style={styles.fabContainer}>
+        <ModernCard style={styles.fab}>
+          <Text
+            style={styles.fabText}
+            onPress={() => router.push('/people/add')}
+          >
+            <Plus size={24} color="white" />
+          </Text>
+        </ModernCard>
+      </View>
     </View>
   );
 }
@@ -293,5 +305,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: theme.colors.onSurfaceVariant,
     textAlign: 'center',
+  },
+  fabContainer: {
+    position: 'absolute',
+    bottom: spacing.m,
+    right: spacing.m,
+  },
+  fab: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: theme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 0,
+  },
+  fabText: {
+    color: 'white',
+    fontSize: 24,
+    fontWeight: '600',
   },
 });

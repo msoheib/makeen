@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, I18nManager } from 'react-native';
 import { Text, TextInput, Button, SegmentedButtons, IconButton } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
@@ -35,28 +35,28 @@ export default function AddPropertyScreen() {
     const newErrors: Record<string, string> = {};
 
     if (!formData.title.trim()) {
-      newErrors.title = 'Property title is required';
+      newErrors.title = 'عنوان العقار مطلوب';
     }
     if (!formData.address.trim()) {
-      newErrors.address = 'Address is required';
+      newErrors.address = 'العنوان مطلوب';
     }
     if (!formData.city.trim()) {
-      newErrors.city = 'City is required';
+      newErrors.city = 'المدينة مطلوبة';
     }
     if (!formData.country.trim()) {
-      newErrors.country = 'Country is required';
+      newErrors.country = 'الدولة مطلوبة';
     }
     if (!formData.area_sqm || isNaN(Number(formData.area_sqm)) || Number(formData.area_sqm) <= 0) {
-      newErrors.area_sqm = 'Valid area is required';
+      newErrors.area_sqm = 'مساحة صحيحة مطلوبة';
     }
     if (!formData.price || isNaN(Number(formData.price)) || Number(formData.price) <= 0) {
-      newErrors.price = 'Valid price is required';
+      newErrors.price = 'سعر صحيح مطلوب';
     }
     if (formData.bedrooms && (isNaN(Number(formData.bedrooms)) || Number(formData.bedrooms) < 0)) {
-      newErrors.bedrooms = 'Valid number of bedrooms required';
+      newErrors.bedrooms = 'عدد صحيح لغرف النوم مطلوب';
     }
     if (formData.bathrooms && (isNaN(Number(formData.bathrooms)) || Number(formData.bathrooms) < 0)) {
-      newErrors.bathrooms = 'Valid number of bathrooms required';
+      newErrors.bathrooms = 'عدد صحيح للحمامات مطلوب';
     }
 
     setErrors(newErrors);
@@ -64,17 +64,35 @@ export default function AddPropertyScreen() {
   };
 
   const handleSubmit = async () => {
+    // Validate form first
     if (!validateForm()) {
       return;
     }
 
-    if (!user) {
-      Alert.alert('Error', 'You must be logged in to add a property');
+    // Check user authentication
+    if (!user || !user.id) {
+      console.error('User authentication issue:', user);
+      Alert.alert('خطأ', 'يجب أن تكون مسجل الدخول لإضافة عقار');
       return;
     }
 
+    console.log('User authenticated:', user.id);
+
     setLoading(true);
+    setErrors({}); // Clear previous errors
+
     try {
+      // Get all profiles to find a valid owner_id (temporary workaround)
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name')
+        .eq('role', 'owner')
+        .limit(1);
+
+      const ownerId = profiles && profiles.length > 0 ? profiles[0].id : user.id;
+      console.log('Using owner_id:', ownerId);
+
+      // Prepare property data
       const propertyData = {
         title: formData.title.trim(),
         description: formData.description.trim() || null,
@@ -89,31 +107,58 @@ export default function AddPropertyScreen() {
         bathrooms: formData.bathrooms ? Number(formData.bathrooms) : null,
         price: Number(formData.price),
         payment_method: formData.payment_method,
-        owner_id: user.id,
+        owner_id: ownerId,
         images: [], // Empty array for now
       };
 
+      console.log('Submitting property data:', propertyData);
+
+      // Insert into database
       const { data, error } = await supabase
         .from('properties')
         .insert([propertyData])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
+      console.log('Property added successfully:', data);
+
+      // Show success message and navigate back
       Alert.alert(
-        'Success',
-        'Property added successfully!',
+        'نجح',
+        'تم إضافة العقار بنجاح!',
         [
           {
-            text: 'OK',
-            onPress: () => router.replace('/properties'),
+            text: 'موافق',
+            onPress: () => router.replace('/(drawer)/(tabs)/properties'),
           },
         ]
       );
     } catch (error: any) {
       console.error('Error adding property:', error);
-      Alert.alert('Error', error.message || 'Failed to add property');
+      
+      // More detailed error handling
+      let errorMessage = 'فشل في إضافة العقار';
+      
+      if (error.message) {
+        if (error.message.includes('owner_id')) {
+          errorMessage = 'خطأ في معرف المالك';
+        } else if (error.message.includes('duplicate')) {
+          errorMessage = 'العقار موجود مسبقاً';
+        } else if (error.message.includes('constraint')) {
+          errorMessage = 'خطأ في البيانات المدخلة';
+        } else if (error.message.includes('network')) {
+          errorMessage = 'خطأ في الاتصال بالشبكة';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      Alert.alert('خطأ', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -127,7 +172,7 @@ export default function AddPropertyScreen() {
           onPress={() => router.back()}
           style={styles.backButton}
         />
-        <Text style={styles.headerTitle}>Add Property</Text>
+        <Text style={styles.headerTitle}>إضافة عقار</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -136,52 +181,54 @@ export default function AddPropertyScreen() {
         <ModernCard style={styles.section}>
           <View style={styles.sectionHeader}>
             <Building2 size={20} color={theme.colors.primary} />
-            <Text style={styles.sectionTitle}>Basic Information</Text>
+            <Text style={styles.sectionTitle}>المعلومات الأساسية</Text>
           </View>
 
           <TextInput
-            label="Property Title *"
+            label="عنوان العقار *"
             value={formData.title}
             onChangeText={(text) => setFormData({ ...formData, title: text })}
             mode="outlined"
             style={styles.input}
             error={!!errors.title}
+            textAlign="right"
           />
           {errors.title && <Text style={styles.errorText}>{errors.title}</Text>}
 
           <TextInput
-            label="Description"
+            label="الوصف"
             value={formData.description}
             onChangeText={(text) => setFormData({ ...formData, description: text })}
             mode="outlined"
             multiline
             numberOfLines={3}
             style={styles.input}
+            textAlign="right"
           />
 
-          <Text style={styles.fieldLabel}>Property Type *</Text>
+          <Text style={styles.fieldLabel}>نوع العقار *</Text>
           <SegmentedButtons
             value={formData.property_type}
             onValueChange={(value) => setFormData({ ...formData, property_type: value as PropertyType })}
             buttons={[
-              { value: 'apartment', label: 'Apartment' },
-              { value: 'villa', label: 'Villa' },
-              { value: 'office', label: 'Office' },
-              { value: 'retail', label: 'Retail' },
-              { value: 'warehouse', label: 'Warehouse' },
+              { value: 'apartment', label: 'شقة' },
+              { value: 'villa', label: 'فيلا' },
+              { value: 'office', label: 'مكتب' },
+              { value: 'retail', label: 'متجر' },
+              { value: 'warehouse', label: 'مستودع' },
             ]}
             style={styles.segmentedButtons}
           />
 
-          <Text style={styles.fieldLabel}>Status *</Text>
+          <Text style={styles.fieldLabel}>الحالة *</Text>
           <SegmentedButtons
             value={formData.status}
             onValueChange={(value) => setFormData({ ...formData, status: value as PropertyStatus })}
             buttons={[
-              { value: 'available', label: 'Available' },
-              { value: 'rented', label: 'Rented' },
-              { value: 'maintenance', label: 'Maintenance' },
-              { value: 'reserved', label: 'Reserved' },
+              { value: 'available', label: 'متاح' },
+              { value: 'rented', label: 'مؤجر' },
+              { value: 'maintenance', label: 'صيانة' },
+              { value: 'reserved', label: 'محجوز' },
             ]}
             style={styles.segmentedButtons}
           />
@@ -191,35 +238,38 @@ export default function AddPropertyScreen() {
         <ModernCard style={styles.section}>
           <View style={styles.sectionHeader}>
             <MapPin size={20} color={theme.colors.secondary} />
-            <Text style={styles.sectionTitle}>Location</Text>
+            <Text style={styles.sectionTitle}>الموقع</Text>
           </View>
 
           <TextInput
-            label="Address *"
+            label="العنوان *"
             value={formData.address}
             onChangeText={(text) => setFormData({ ...formData, address: text })}
             mode="outlined"
             style={styles.input}
             error={!!errors.address}
+            textAlign="right"
           />
           {errors.address && <Text style={styles.errorText}>{errors.address}</Text>}
 
           <View style={styles.row}>
             <TextInput
-              label="City *"
+              label="المدينة *"
               value={formData.city}
               onChangeText={(text) => setFormData({ ...formData, city: text })}
               mode="outlined"
               style={[styles.input, styles.halfInput]}
               error={!!errors.city}
+              textAlign="right"
             />
             <TextInput
-              label="Country *"
+              label="الدولة *"
               value={formData.country}
               onChangeText={(text) => setFormData({ ...formData, country: text })}
               mode="outlined"
               style={[styles.input, styles.halfInput]}
               error={!!errors.country}
+              textAlign="right"
             />
           </View>
           {(errors.city || errors.country) && (
@@ -227,11 +277,12 @@ export default function AddPropertyScreen() {
           )}
 
           <TextInput
-            label="Neighborhood"
+            label="الحي"
             value={formData.neighborhood}
             onChangeText={(text) => setFormData({ ...formData, neighborhood: text })}
             mode="outlined"
             style={styles.input}
+            textAlign="right"
           />
         </ModernCard>
 
@@ -239,38 +290,41 @@ export default function AddPropertyScreen() {
         <ModernCard style={styles.section}>
           <View style={styles.sectionHeader}>
             <Home size={20} color={theme.colors.tertiary} />
-            <Text style={styles.sectionTitle}>Property Details</Text>
+            <Text style={styles.sectionTitle}>تفاصيل العقار</Text>
           </View>
 
           <TextInput
-            label="Area (sqm) *"
+            label="المساحة (متر مربع) *"
             value={formData.area_sqm}
             onChangeText={(text) => setFormData({ ...formData, area_sqm: text })}
             mode="outlined"
             keyboardType="numeric"
             style={styles.input}
             error={!!errors.area_sqm}
+            textAlign="right"
           />
           {errors.area_sqm && <Text style={styles.errorText}>{errors.area_sqm}</Text>}
 
           <View style={styles.row}>
             <TextInput
-              label="Bedrooms"
+              label="غرف النوم"
               value={formData.bedrooms}
               onChangeText={(text) => setFormData({ ...formData, bedrooms: text })}
               mode="outlined"
               keyboardType="numeric"
               style={[styles.input, styles.halfInput]}
               error={!!errors.bedrooms}
+              textAlign="right"
             />
             <TextInput
-              label="Bathrooms"
+              label="الحمامات"
               value={formData.bathrooms}
               onChangeText={(text) => setFormData({ ...formData, bathrooms: text })}
               mode="outlined"
               keyboardType="numeric"
               style={[styles.input, styles.halfInput]}
               error={!!errors.bathrooms}
+              textAlign="right"
             />
           </View>
           {(errors.bedrooms || errors.bathrooms) && (
@@ -282,27 +336,28 @@ export default function AddPropertyScreen() {
         <ModernCard style={styles.section}>
           <View style={styles.sectionHeader}>
             <DollarSign size={20} color={theme.colors.success} />
-            <Text style={styles.sectionTitle}>Pricing</Text>
+            <Text style={styles.sectionTitle}>التسعير</Text>
           </View>
 
           <TextInput
-            label="Price *"
+            label="السعر (ريال سعودي) *"
             value={formData.price}
             onChangeText={(text) => setFormData({ ...formData, price: text })}
             mode="outlined"
             keyboardType="numeric"
             style={styles.input}
             error={!!errors.price}
+            textAlign="right"
           />
           {errors.price && <Text style={styles.errorText}>{errors.price}</Text>}
 
-          <Text style={styles.fieldLabel}>Payment Method *</Text>
+          <Text style={styles.fieldLabel}>طريقة الدفع *</Text>
           <SegmentedButtons
             value={formData.payment_method}
             onValueChange={(value) => setFormData({ ...formData, payment_method: value as PaymentMethod })}
             buttons={[
-              { value: 'cash', label: 'Cash' },
-              { value: 'installment', label: 'Installment' },
+              { value: 'cash', label: 'نقداً' },
+              { value: 'installment', label: 'أقساط' },
             ]}
             style={styles.segmentedButtons}
           />
@@ -318,7 +373,7 @@ export default function AddPropertyScreen() {
             style={styles.submitButton}
             contentStyle={styles.submitButtonContent}
           >
-            Add Property
+            إضافة العقار
           </Button>
         </View>
       </ScrollView>
@@ -332,7 +387,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   header: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     alignItems: 'center',
     paddingHorizontal: spacing.m,
     paddingTop: spacing.xl,
@@ -359,7 +414,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.m,
   },
   sectionHeader: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     alignItems: 'center',
     marginBottom: spacing.m,
   },
@@ -367,14 +422,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: theme.colors.onSurface,
-    marginLeft: spacing.s,
+    marginRight: spacing.s,
+    textAlign: 'right',
   },
   input: {
     marginBottom: spacing.m,
     backgroundColor: theme.colors.surface,
   },
   row: {
-    flexDirection: 'row',
+    flexDirection: 'row-reverse',
     justifyContent: 'space-between',
   },
   halfInput: {
@@ -386,6 +442,7 @@ const styles = StyleSheet.create({
     color: theme.colors.onSurface,
     marginBottom: spacing.s,
     marginTop: spacing.s,
+    textAlign: 'right',
   },
   segmentedButtons: {
     marginBottom: spacing.m,
@@ -395,6 +452,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: -spacing.s,
     marginBottom: spacing.s,
+    textAlign: 'right',
   },
   submitContainer: {
     padding: spacing.m,

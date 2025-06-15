@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
+import { View, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, RefreshControl } from 'react-native';
 import { Text } from 'react-native-paper';
 import { lightTheme, darkTheme } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
@@ -11,12 +11,17 @@ import {
   Home,
   AlertCircle,
   Calendar,
-  FileText
+  FileText,
+  Shield,
+  Lock
 } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import RentCard from '@/components/RentCard';
 import CashflowCard from '@/components/CashflowCard';
 import StatCard from '@/components/StatCard';
+import { useApi } from '@/hooks/useApi';
+import { propertiesApi, profilesApi, contractsApi } from '@/lib/api';
+import { hasScreenAccess } from '@/lib/permissions';
 
 // Static data to prevent loading issues
 const staticData = {
@@ -74,6 +79,90 @@ export default function DashboardScreen() {
   const { isDarkMode } = useAppStore();
   const theme = isDarkMode ? darkTheme : lightTheme;
 
+  // Check if user has access to dashboard
+  const canAccessDashboard = hasScreenAccess('dashboard');
+
+  // API calls for real-time data (with role-based filtering)
+  const { 
+    data: dashboardSummary, 
+    loading: summaryLoading, 
+    error: summaryError, 
+    refetch: refetchSummary 
+  } = useApi(() => propertiesApi.getDashboardSummary(), []);
+
+  const { 
+    data: properties, 
+    loading: propertiesLoading, 
+    refetch: refetchProperties 
+  } = useApi(() => propertiesApi.getAll(), []);
+
+  const { 
+    data: tenants, 
+    loading: tenantsLoading, 
+    refetch: refetchTenants 
+  } = useApi(() => profilesApi.getTenants(), []);
+
+  // Loading state
+  const isLoading = summaryLoading || propertiesLoading || tenantsLoading;
+
+  // Handle refresh
+  const [refreshing, setRefreshing] = React.useState(false);
+  
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([
+      refetchSummary(),
+      refetchProperties(),
+      refetchTenants()
+    ]);
+    setRefreshing(false);
+  }, [refetchSummary, refetchProperties, refetchTenants]);
+
+  // If user doesn't have dashboard access, show access denied
+  if (!canAccessDashboard) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <ModernHeader title="لوحة التحكم" />
+        <View style={styles.accessDeniedContainer}>
+          <Lock size={64} color="#ccc" />
+          <Text style={[styles.accessDeniedText, { color: theme.colors.onSurfaceVariant }]}>
+            Access Denied
+          </Text>
+          <Text style={[styles.accessDeniedSubtext, { color: theme.colors.onSurfaceVariant }]}>
+            You don't have permission to view the dashboard
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Calculate real-time statistics from API data
+  const propertiesData = properties?.data || [];
+  const tenantsData = tenants?.data || [];
+  
+  const propertyStats = {
+    totalProperties: propertiesData.length,
+    occupied: propertiesData.filter(p => p.status === 'rented').length,
+    vacant: propertiesData.filter(p => p.status === 'available').length,
+    maintenance: propertiesData.filter(p => p.status === 'maintenance').length,
+    occupancyRate: propertiesData.length > 0 ? Math.round((propertiesData.filter(p => p.status === 'rented').length / propertiesData.length) * 100) : 0
+  };
+  
+  const tenantStats = {
+    totalTenants: tenantsData.length,
+    activeTenants: tenantsData.filter(t => t.status === 'active').length,
+    pendingPayments: Math.floor(tenantsData.length * 0.2), // TODO: Calculate from actual payment data
+    expiringContracts: Math.floor(tenantsData.length * 0.1) // TODO: Calculate from actual contract data
+  };
+
+  // Use API data or fallback to summary data
+  const financialSummary = dashboardSummary?.data || {
+    totalIncome: 0,
+    totalExpenses: 0,
+    netProfit: 0,
+    profitMargin: 0
+  };
+
   const renderQuickStats = () => (
     <View style={styles.quickStatsSection}>
       <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
@@ -83,33 +172,37 @@ export default function DashboardScreen() {
         <View style={styles.statCardWrapper}>
           <StatCard
             title="إجمالي العقارات"
-            value={staticData.propertyStats.totalProperties.toString()}
+            value={propertyStats.totalProperties.toString()}
             color={theme.colors.primary}
             icon={<Building2 size={20} color={theme.colors.primary} />}
+            loading={isLoading}
           />
         </View>
         <View style={styles.statCardWrapper}>
           <StatCard
             title="العقارات المشغولة"
-            value={staticData.propertyStats.occupied.toString()}
+            value={propertyStats.occupied.toString()}
             color="#4CAF50"
             icon={<Home size={20} color="#4CAF50" />}
+            loading={isLoading}
           />
         </View>
         <View style={styles.statCardWrapper}>
           <StatCard
             title="إجمالي المستأجرين"
-            value={staticData.tenantStats.totalTenants.toString()}
+            value={tenantStats.totalTenants.toString()}
             color={theme.colors.secondary}
             icon={<Users size={20} color={theme.colors.secondary} />}
+            loading={isLoading}
           />
         </View>
         <View style={styles.statCardWrapper}>
           <StatCard
             title="العقود المنتهية قريباً"
-            value={staticData.tenantStats.expiringContracts.toString()}
+            value={tenantStats.expiringContracts.toString()}
             color="#FF9800"
             icon={<AlertCircle size={20} color="#FF9800" />}
+            loading={isLoading}
           />
         </View>
       </View>
@@ -123,16 +216,18 @@ export default function DashboardScreen() {
       </Text>
       <View style={styles.financialCards}>
         <RentCard 
-          totalRent={staticData.financialSummary.totalIncome}
-          collectedRent={Math.floor(staticData.financialSummary.totalIncome * 0.9)}
-          pendingRent={Math.floor(staticData.financialSummary.totalIncome * 0.1)}
+          totalRent={financialSummary.totalIncome}
+          collectedRent={Math.floor(financialSummary.totalIncome * 0.9)}
+          pendingRent={Math.floor(financialSummary.totalIncome * 0.1)}
           theme={theme}
+          loading={isLoading}
         />
         <CashflowCard
-          income={staticData.financialSummary.totalIncome}
-          expenses={staticData.financialSummary.totalExpenses}
-          netIncome={staticData.financialSummary.netProfit}
+          income={financialSummary.totalIncome}
+          expenses={financialSummary.totalExpenses}
+          netIncome={financialSummary.netProfit}
           theme={theme}
+          loading={isLoading}
         />
       </View>
     </View>
@@ -153,7 +248,7 @@ export default function DashboardScreen() {
               مشغولة
             </Text>
             <Text style={[styles.propertyValue, { color: theme.colors.onSurface }]}>
-              {staticData.propertyStats.occupied}
+              {isLoading ? '...' : propertyStats.occupied}
             </Text>
           </View>
           
@@ -165,7 +260,7 @@ export default function DashboardScreen() {
               شاغرة
             </Text>
             <Text style={[styles.propertyValue, { color: theme.colors.onSurface }]}>
-              {staticData.propertyStats.vacant}
+              {isLoading ? '...' : propertyStats.vacant}
             </Text>
           </View>
           
@@ -177,7 +272,7 @@ export default function DashboardScreen() {
               صيانة
             </Text>
             <Text style={[styles.propertyValue, { color: theme.colors.onSurface }]}>
-              {staticData.propertyStats.maintenance}
+              {isLoading ? '...' : propertyStats.maintenance}
             </Text>
           </View>
         </View>
@@ -187,7 +282,7 @@ export default function DashboardScreen() {
             معدل الإشغال
           </Text>
           <Text style={[styles.occupancyValue, { color: theme.colors.primary }]}>
-            {staticData.propertyStats.occupancyRate}%
+            {isLoading ? '...' : propertyStats.occupancyRate}%
           </Text>
         </View>
       </View>
@@ -250,7 +345,18 @@ export default function DashboardScreen() {
         variant="dark"
       />
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[theme.colors.primary]}
+            tintColor={theme.colors.primary}
+          />
+        }
+      >
         {renderQuickStats()}
         {renderFinancialCards()}
         {renderPropertyOverview()}
@@ -399,5 +505,22 @@ const styles = StyleSheet.create({
   statCardWrapper: {
     width: '48%',
     minHeight: 120,
+  },
+  accessDeniedContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  accessDeniedText: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  accessDeniedSubtext: {
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center',
   },
 });

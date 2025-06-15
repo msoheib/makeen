@@ -1,439 +1,499 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { Text, Button, TextInput, Switch, HelperText, Divider, SegmentedButtons } from 'react-native-paper';
+import { Text, TextInput, Button, SegmentedButtons, Card, Divider } from 'react-native-paper';
+import { Picker } from '@react-native-picker/picker';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
-import { profilesApi } from '@/lib/api';
-import { ArrowLeft, User, Mail, Phone, MapPin, FileText } from 'lucide-react-native';
+import { supabase } from '@/lib/supabase';
+import { useApi } from '@/hooks/useApi';
+import { profilesApi, propertiesApi, contractsApi } from '@/lib/api';
+import { ArrowLeft, UserPlus, Home, FileText } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
-import { useTranslation } from '@/lib/useTranslation';
 
-interface TenantFormData {
-  first_name: string;
-  last_name: string;
+interface TenantOption {
+  id: string;
+  name: string;
   email: string;
-  phone: string;
-  address: string;
-  city: string;
-  country: string;
-  nationality: string;
-  id_number: string;
-  status: 'active' | 'inactive' | 'suspended';
-  is_foreign: boolean;
-  role: string;
-  profile_type: string;
-}
-
-interface FormErrors {
-  first_name?: string;
-  last_name?: string;
-  email?: string;
   phone?: string;
-  address?: string;
-  city?: string;
-  country?: string;
-  nationality?: string;
-  id_number?: string;
 }
 
-export default function AddTenantScreen() {
+interface PropertyOption {
+  id: string;
+  title: string;
+  address: string;
+  price: number;
+  property_type: string;
+}
+
+export default function AssignTenantScreen() {
   const router = useRouter();
-  const { t } = useTranslation('tenants');
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState<TenantFormData>({
-    first_name: '',
-    last_name: '',
-    email: '',
-    phone: '',
-    address: '',
-    city: '',
-    country: 'Saudi Arabia',
-    nationality: 'Saudi',
-    id_number: '',
-    status: 'active',
-    is_foreign: false,
-    role: 'tenant',
-    profile_type: 'tenant',
+  const [selectedTenant, setSelectedTenant] = useState('');
+  const [selectedProperty, setSelectedProperty] = useState('');
+  
+  // Contract form data
+  const [contractData, setContractData] = useState({
+    start_date: '',
+    end_date: '',
+    rent_amount: '',
+    security_deposit: '',
+    payment_frequency: 'monthly',
+    contract_number: '',
+    auto_renewal: false,
+    notice_period_days: '30',
+    utilities_included: false,
   });
-  const [errors, setErrors] = useState<FormErrors>({});
 
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
+  // Fetch available tenants and properties
+  const { 
+    data: tenants, 
+    loading: tenantsLoading, 
+    error: tenantsError 
+  } = useApi(() => profilesApi.getTenants(), []);
 
-  const validatePhone = (phone: string) => {
-    const phoneRegex = /^[\+]?[\d\s\-\(\)]{8,}$/;
-    return phoneRegex.test(phone);
-  };
+  const { 
+    data: properties, 
+    loading: propertiesLoading, 
+    error: propertiesError 
+  } = useApi(() => propertiesApi.getAll(), []);
 
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
+  // Filter available properties (not rented)
+  const availableProperties = properties?.filter(p => p.status === 'available') || [];
 
-    // Required fields
-    if (!formData.first_name.trim()) {
-      newErrors.first_name = 'First name is required';
+  // Filter available tenants (those without active contracts)
+  const [availableTenants, setAvailableTenants] = useState<TenantOption[]>([]);
+
+  useEffect(() => {
+    const getAvailableTenants = async () => {
+      if (!tenants) return;
+      
+      try {
+        // Get all active contracts to find tenants who are already renting
+        const { data: activeContracts } = await supabase
+          .from('contracts')
+          .select('tenant_id')
+          .eq('status', 'active');
+
+        const rentedTenantIds = activeContracts?.map(c => c.tenant_id) || [];
+        
+        // Filter out tenants who already have active contracts
+        const available = tenants
+          .filter(tenant => !rentedTenantIds.includes(tenant.id))
+          .map(tenant => ({
+            id: tenant.id,
+            name: `${tenant.first_name} ${tenant.last_name}`.trim(),
+            email: tenant.email || '',
+            phone: tenant.phone || undefined,
+          }));
+        
+        setAvailableTenants(available);
+      } catch (error) {
+        console.error('Error fetching available tenants:', error);
+      }
+    };
+
+    getAvailableTenants();
+  }, [tenants]);
+
+  const validateForm = () => {
+    const errors: string[] = [];
+
+    if (!selectedTenant) errors.push('يرجى اختيار مستأجر');
+    if (!selectedProperty) errors.push('يرجى اختيار عقار');
+    if (!contractData.start_date) errors.push('يرجى إدخال تاريخ بداية العقد');
+    if (!contractData.end_date) errors.push('يرجى إدخال تاريخ نهاية العقد');
+    if (!contractData.rent_amount || Number(contractData.rent_amount) <= 0) errors.push('يرجى إدخال مبلغ الإيجار');
+    if (!contractData.security_deposit || Number(contractData.security_deposit) < 0) errors.push('يرجى إدخال مبلغ التأمين');
+
+    if (errors.length > 0) {
+      Alert.alert('خطأ في البيانات', errors.join('\n'));
+      return false;
     }
 
-    if (!formData.last_name.trim()) {
-      newErrors.last_name = 'Last name is required';
+    // Validate dates
+    const startDate = new Date(contractData.start_date);
+    const endDate = new Date(contractData.end_date);
+    
+    if (startDate >= endDate) {
+      Alert.alert('خطأ في التواريخ', 'تاريخ نهاية العقد يجب أن يكون بعد تاريخ البداية');
+      return false;
     }
 
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!validateEmail(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
-
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
-    } else if (!validatePhone(formData.phone)) {
-      newErrors.phone = 'Please enter a valid phone number';
-    }
-
-    if (!formData.address.trim()) {
-      newErrors.address = 'Address is required';
-    }
-
-    if (!formData.city.trim()) {
-      newErrors.city = 'City is required';
-    }
-
-    if (!formData.country.trim()) {
-      newErrors.country = 'Country is required';
-    }
-
-    if (formData.is_foreign && !formData.nationality.trim()) {
-      newErrors.nationality = 'Nationality is required for foreign tenants';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return true;
   };
 
   const handleSubmit = async () => {
-    if (!validateForm()) {
-      Alert.alert('Validation Error', 'Please correct the errors and try again.');
-      return;
-    }
+    if (!validateForm()) return;
 
     setLoading(true);
     try {
-      const response = await profilesApi.create(formData);
+      // Get selected property details for rent amount validation
+      const selectedPropertyData = availableProperties.find(p => p.id === selectedProperty);
       
-      if (response.success && response.data) {
-        Alert.alert(
-          'Success',
-          'Tenant created successfully!',
-          [
-            {
-              text: 'View Details',
-              onPress: () => router.push(`/tenants/${response.data.id}`),
-            },
-            {
-              text: 'Back to List',
-              onPress: () => router.push('/(drawer)/(tabs)/tenants'),
-            },
-          ]
-        );
-      } else {
-        throw new Error(response.error || 'Failed to create tenant');
+      const contractPayload = {
+        property_id: selectedProperty,
+        tenant_id: selectedTenant,
+        start_date: new Date(contractData.start_date).toISOString(),
+        end_date: new Date(contractData.end_date).toISOString(),
+        rent_amount: Number(contractData.rent_amount),
+        security_deposit: Number(contractData.security_deposit),
+        payment_frequency: contractData.payment_frequency,
+        contract_number: contractData.contract_number || `CTR-${Date.now()}`,
+        contract_type: 'rental',
+        status: 'active',
+        auto_renewal: contractData.auto_renewal,
+        notice_period_days: Number(contractData.notice_period_days),
+        utilities_included: contractData.utilities_included,
+      };
+
+      console.log('Creating contract:', contractPayload);
+
+      // Create the contract
+      const { data, error } = await supabase
+        .from('contracts')
+        .insert([contractPayload])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Contract creation error:', error);
+        Alert.alert('خطأ', `فشل في إنشاء العقد: ${error.message}`);
+        return;
       }
-    } catch (error) {
+
+      // Update property status to 'rented'
+      await supabase
+        .from('properties')
+        .update({ status: 'rented' })
+        .eq('id', selectedProperty);
+
+      console.log('Contract created successfully:', data);
+      
       Alert.alert(
-        'Error',
-        error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.'
+        'تم بنجاح',
+        'تم إنشاء عقد الإيجار بنجاح وتخصيص المستأجر للعقار',
+        [
+          {
+            text: 'موافق',
+            onPress: () => router.back()
+          }
+        ]
       );
+
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      Alert.alert('خطأ', 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.');
     } finally {
       setLoading(false);
     }
   };
 
-  const updateFormData = (field: keyof TenantFormData, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    
-    // Clear error when user starts typing
-    if (errors[field as keyof FormErrors]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
-    }
-  };
-
-  const handleForeignTenantToggle = (value: boolean) => {
-    updateFormData('is_foreign', value);
-    if (!value) {
-      updateFormData('nationality', 'Saudi');
-    }
-  };
+  const selectedPropertyData = availableProperties.find(p => p.id === selectedProperty);
+  const selectedTenantData = availableTenants.find(t => t.id === selectedTenant);
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ModernHeader
-        title={t('add.title')}
-        subtitle={t('add.subtitle')}
-        variant="dark"
-        showNotifications={false}
-        isHomepage={false}
-        leftIcon={<ArrowLeft size={24} color={theme.colors.onPrimary} />}
-        onLeftPress={() => router.back()}
+        title="تخصيص مستأجر لعقار"
+        showBackButton
+        onBackPress={() => router.back()}
       />
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Personal Information */}
-        <ModernCard style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>{t('details.personalInfo')}</Text>
+      <View style={styles.content}>
+        {/* Tenant Selection */}
+        <ModernCard style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <UserPlus size={24} color={theme.colors.primary} />
+            <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+              اختيار المستأجر
+            </Text>
+          </View>
           
-          <View style={styles.row}>
-            <View style={styles.halfWidth}>
-              <TextInput
-                label="First Name *"
-                value={formData.first_name}
-                onChangeText={(text) => updateFormData('first_name', text)}
-                error={!!errors.first_name}
-                mode="outlined"
-                left={<TextInput.Icon icon={() => <User size={20} color={theme.colors.onSurfaceVariant} />} />}
-              />
-              <HelperText type="error" visible={!!errors.first_name}>
-                {errors.first_name}
-              </HelperText>
-            </View>
-
-            <View style={styles.halfWidth}>
-              <TextInput
-                label="Last Name *"
-                value={formData.last_name}
-                onChangeText={(text) => updateFormData('last_name', text)}
-                error={!!errors.last_name}
-                mode="outlined"
-                left={<TextInput.Icon icon={() => <User size={20} color={theme.colors.onSurfaceVariant} />} />}
-              />
-              <HelperText type="error" visible={!!errors.last_name}>
-                {errors.last_name}
-              </HelperText>
-            </View>
-          </View>
-
-          <TextInput
-            label={`${t('details.email')} *`}
-            value={formData.email}
-            onChangeText={(text) => updateFormData('email', text)}
-            error={!!errors.email}
-            mode="outlined"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            left={<TextInput.Icon icon={() => <Mail size={20} color={theme.colors.onSurfaceVariant} />} />}
-          />
-          <HelperText type="error" visible={!!errors.email}>
-            {errors.email}
-          </HelperText>
-
-          <TextInput
-            label={`${t('details.phone')} *`}
-            value={formData.phone}
-            onChangeText={(text) => updateFormData('phone', text)}
-            error={!!errors.phone}
-            mode="outlined"
-            keyboardType="phone-pad"
-            left={<TextInput.Icon icon={() => <Phone size={20} color={theme.colors.onSurfaceVariant} />} />}
-          />
-          <HelperText type="error" visible={!!errors.phone}>
-            {errors.phone}
-          </HelperText>
-
-          <TextInput
-            label={`${t('details.address')} *`}
-            value={formData.address}
-            onChangeText={(text) => updateFormData('address', text)}
-            error={!!errors.address}
-            mode="outlined"
-            multiline
-            numberOfLines={2}
-            left={<TextInput.Icon icon={() => <MapPin size={20} color={theme.colors.onSurfaceVariant} />} />}
-          />
-          <HelperText type="error" visible={!!errors.address}>
-            {errors.address}
-          </HelperText>
-
-          <View style={styles.row}>
-            <View style={styles.halfWidth}>
-              <TextInput
-                label="City *"
-                value={formData.city}
-                onChangeText={(text) => updateFormData('city', text)}
-                error={!!errors.city}
-                mode="outlined"
-              />
-              <HelperText type="error" visible={!!errors.city}>
-                {errors.city}
-              </HelperText>
-            </View>
-
-            <View style={styles.halfWidth}>
-              <TextInput
-                label="Country *"
-                value={formData.country}
-                onChangeText={(text) => updateFormData('country', text)}
-                error={!!errors.country}
-                mode="outlined"
-              />
-              <HelperText type="error" visible={!!errors.country}>
-                {errors.country}
-              </HelperText>
-            </View>
-          </View>
-
-          <Divider style={styles.divider} />
-
-          <View style={styles.switchContainer}>
-            <Text style={styles.switchLabel}>Foreign Tenant</Text>
-            <Switch
-              value={formData.is_foreign}
-              onValueChange={handleForeignTenantToggle}
-            />
-          </View>
-
-          {formData.is_foreign && (
-            <View style={styles.foreignSection}>
-              <TextInput
-                label={`${t('details.nationality')} *`}
-                value={formData.nationality}
-                onChangeText={(text) => updateFormData('nationality', text)}
-                error={!!errors.nationality}
-                mode="outlined"
-              />
-              <HelperText type="error" visible={!!errors.nationality}>
-                {errors.nationality}
-              </HelperText>
+          {tenantsLoading ? (
+            <Text style={[styles.loadingText, { color: theme.colors.onSurfaceVariant }]}>
+              جاري تحميل المستأجرين...
+            </Text>
+          ) : availableTenants.length === 0 ? (
+            <Text style={[styles.emptyText, { color: theme.colors.error }]}>
+              لا توجد مستأجرين متاحين (جميع المستأجرين لديهم عقود نشطة)
+            </Text>
+          ) : (
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={selectedTenant}
+                onValueChange={setSelectedTenant}
+                style={[styles.picker, { color: theme.colors.onBackground }]}
+              >
+                <Picker.Item label="اختر مستأجر..." value="" />
+                {availableTenants.map((tenant) => (
+                  <Picker.Item 
+                    key={tenant.id} 
+                    label={`${tenant.name} (${tenant.email})`} 
+                    value={tenant.id} 
+                  />
+                ))}
+              </Picker>
             </View>
           )}
 
-          <TextInput
-            label={t('details.idNumber')}
-            value={formData.id_number}
-            onChangeText={(text) => updateFormData('id_number', text)}
-            mode="outlined"
-            left={<TextInput.Icon icon={() => <FileText size={20} color={theme.colors.onSurfaceVariant} />} />}
-          />
-
-          <Divider style={styles.divider} />
-
-          <Text style={styles.fieldLabel}>Status</Text>
-          <SegmentedButtons
-            value={formData.status}
-            onValueChange={(value) => updateFormData('status', value)}
-            buttons={[
-              { value: 'active', label: t('common:active') },
-              { value: 'inactive', label: t('common:inactive') },
-              { value: 'suspended', label: 'Suspended' },
-            ]}
-          />
+          {selectedTenantData && (
+            <View style={styles.selectedInfo}>
+              <Text style={[styles.selectedLabel, { color: theme.colors.primary }]}>
+                المستأجر المختار:
+              </Text>
+              <Text style={[styles.selectedValue, { color: theme.colors.onBackground }]}>
+                {selectedTenantData.name}
+              </Text>
+              <Text style={[styles.selectedDetail, { color: theme.colors.onSurfaceVariant }]}>
+                {selectedTenantData.email}
+              </Text>
+              {selectedTenantData.phone && (
+                <Text style={[styles.selectedDetail, { color: theme.colors.onSurfaceVariant }]}>
+                  {selectedTenantData.phone}
+                </Text>
+              )}
+            </View>
+          )}
         </ModernCard>
 
-        {/* Actions */}
-        <View style={styles.actionsContainer}>
-          <Button
-            mode="outlined"
-            onPress={() => router.back()}
-            style={styles.cancelButton}
-            disabled={loading}
-          >
-            {t('common:cancel')}
-          </Button>
+        {/* Property Selection */}
+        <ModernCard style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Home size={24} color={theme.colors.primary} />
+            <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+              اختيار العقار
+            </Text>
+          </View>
           
-          <Button
-            mode="contained"
-            onPress={handleSubmit}
-            style={styles.submitButton}
-            loading={loading}
-            disabled={loading}
-          >
-            {t('add.createProfile')}
-          </Button>
-        </View>
-      </ScrollView>
-    </View>
+          {propertiesLoading ? (
+            <Text style={[styles.loadingText, { color: theme.colors.onSurfaceVariant }]}>
+              جاري تحميل العقارات...
+            </Text>
+          ) : availableProperties.length === 0 ? (
+            <Text style={[styles.emptyText, { color: theme.colors.error }]}>
+              لا توجد عقارات متاحة للإيجار
+            </Text>
+          ) : (
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={selectedProperty}
+                onValueChange={setSelectedProperty}
+                style={[styles.picker, { color: theme.colors.onBackground }]}
+              >
+                <Picker.Item label="اختر عقار..." value="" />
+                {availableProperties.map((property) => (
+                  <Picker.Item 
+                    key={property.id} 
+                    label={`${property.title} - ${property.price.toLocaleString()} ريال`} 
+                    value={property.id} 
+                  />
+                ))}
+              </Picker>
+            </View>
+          )}
+
+          {selectedPropertyData && (
+            <View style={styles.selectedInfo}>
+              <Text style={[styles.selectedLabel, { color: theme.colors.primary }]}>
+                العقار المختار:
+              </Text>
+              <Text style={[styles.selectedValue, { color: theme.colors.onBackground }]}>
+                {selectedPropertyData.title}
+              </Text>
+              <Text style={[styles.selectedDetail, { color: theme.colors.onSurfaceVariant }]}>
+                {selectedPropertyData.address}
+              </Text>
+              <Text style={[styles.selectedDetail, { color: theme.colors.onSurfaceVariant }]}>
+                السعر: {selectedPropertyData.price.toLocaleString()} ريال
+              </Text>
+              <Text style={[styles.selectedDetail, { color: theme.colors.onSurfaceVariant }]}>
+                النوع: {selectedPropertyData.property_type === 'villa' ? 'فيلا' : 
+                       selectedPropertyData.property_type === 'apartment' ? 'شقة' : 
+                       selectedPropertyData.property_type === 'office' ? 'مكتب' : (selectedPropertyData.property_type || 'غير محدد')}
+              </Text>
+            </View>
+          )}
+        </ModernCard>
+
+        {/* Contract Details */}
+        {selectedTenant && selectedProperty && (
+          <ModernCard style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <FileText size={24} color={theme.colors.primary} />
+              <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+                تفاصيل العقد
+              </Text>
+            </View>
+
+            <TextInput
+              label="تاريخ بداية العقد *"
+              value={contractData.start_date}
+              onChangeText={(text) => setContractData(prev => ({ ...prev, start_date: text }))}
+              mode="outlined"
+              style={styles.input}
+              placeholder="YYYY-MM-DD"
+              right={<TextInput.Icon icon="calendar" />}
+            />
+
+            <TextInput
+              label="تاريخ نهاية العقد *"
+              value={contractData.end_date}
+              onChangeText={(text) => setContractData(prev => ({ ...prev, end_date: text }))}
+              mode="outlined"
+              style={styles.input}
+              placeholder="YYYY-MM-DD"
+              right={<TextInput.Icon icon="calendar" />}
+            />
+
+            <TextInput
+              label="مبلغ الإيجار الشهري (ريال) *"
+              value={contractData.rent_amount}
+              onChangeText={(text) => setContractData(prev => ({ ...prev, rent_amount: text }))}
+              mode="outlined"
+              style={styles.input}
+              keyboardType="numeric"
+              placeholder={selectedPropertyData ? selectedPropertyData.price.toString() : '0'}
+            />
+
+            <TextInput
+              label="مبلغ التأمين (ريال) *"
+              value={contractData.security_deposit}
+              onChangeText={(text) => setContractData(prev => ({ ...prev, security_deposit: text }))}
+              mode="outlined"
+              style={styles.input}
+              keyboardType="numeric"
+              placeholder="0"
+            />
+
+            <TextInput
+              label="رقم العقد"
+              value={contractData.contract_number}
+              onChangeText={(text) => setContractData(prev => ({ ...prev, contract_number: text }))}
+              mode="outlined"
+              style={styles.input}
+              placeholder="سيتم إنشاؤه تلقائياً إذا ترك فارغاً"
+            />
+
+            <Text style={[styles.inputLabel, { color: theme.colors.onBackground }]}>
+              تكرار الدفع
+            </Text>
+            <SegmentedButtons
+              value={contractData.payment_frequency}
+              onValueChange={(value) => setContractData(prev => ({ ...prev, payment_frequency: value }))}
+              buttons={[
+                { value: 'monthly', label: 'شهري' },
+                { value: 'quarterly', label: 'ربع سنوي' },
+                { value: 'annually', label: 'سنوي' },
+              ]}
+              style={styles.segmentedButtons}
+            />
+
+            <TextInput
+              label="فترة الإشعار (أيام)"
+              value={contractData.notice_period_days}
+              onChangeText={(text) => setContractData(prev => ({ ...prev, notice_period_days: text }))}
+              mode="outlined"
+              style={styles.input}
+              keyboardType="numeric"
+            />
+          </ModernCard>
+        )}
+
+        {/* Submit Button */}
+        <Button
+          mode="contained"
+          onPress={handleSubmit}
+          loading={loading}
+          disabled={loading || !selectedTenant || !selectedProperty || availableProperties.length === 0 || availableTenants.length === 0}
+          style={styles.submitButton}
+          contentStyle={styles.submitButtonContent}
+        >
+          إنشاء عقد الإيجار
+        </Button>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
   },
   content: {
-    flex: 1,
+    padding: spacing.m,
   },
-  sectionCard: {
-    margin: spacing.m,
-    padding: spacing.l,
+  section: {
+    marginBottom: spacing.m,
+    padding: spacing.m,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.m,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.l,
+    marginLeft: spacing.s,
   },
-  formInput: {
-    marginBottom: spacing.s,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: spacing.m,
-  },
-  halfWidth: {
-    flex: 1,
-  },
-  switchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.m,
-  },
-  switchContent: {
-    flex: 1,
-  },
-  switchLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: theme.colors.onSurface,
-  },
-  switchDescription: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    marginTop: spacing.xs,
-  },
-  divider: {
-    marginVertical: spacing.m,
-  },
-  fieldLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: theme.colors.onSurface,
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: theme.colors.outline,
+    borderRadius: 8,
     marginBottom: spacing.m,
+  },
+  picker: {
+    height: 50,
+  },
+  selectedInfo: {
+    backgroundColor: theme.colors.surfaceVariant,
+    padding: spacing.m,
+    borderRadius: 8,
+    marginTop: spacing.s,
+  },
+  selectedLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: spacing.xs,
+  },
+  selectedValue: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: spacing.xs,
+  },
+  selectedDetail: {
+    fontSize: 14,
+    marginBottom: spacing.xs,
+  },
+  input: {
+    marginBottom: spacing.m,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: spacing.s,
+    marginTop: spacing.s,
   },
   segmentedButtons: {
     marginBottom: spacing.m,
   },
-  actionsContainer: {
-    flexDirection: 'row',
-    gap: spacing.m,
+  loadingText: {
+    textAlign: 'center',
+    fontSize: 16,
     padding: spacing.l,
-    paddingBottom: spacing.xl,
   },
-  cancelButton: {
-    flex: 1,
-    borderColor: theme.colors.outline,
+  emptyText: {
+    textAlign: 'center',
+    fontSize: 16,
+    padding: spacing.l,
+    fontWeight: '500',
   },
   submitButton: {
-    flex: 1,
+    marginTop: spacing.l,
+    marginBottom: spacing.xl,
   },
-  switchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.m,
-  },
-  foreignSection: {
-    marginBottom: spacing.m,
+  submitButtonContent: {
+    paddingVertical: spacing.s,
   },
 }); 

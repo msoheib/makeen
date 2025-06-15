@@ -1,66 +1,15 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, FlatList, ScrollView, SafeAreaView } from 'react-native';
-import { Text, Searchbar } from 'react-native-paper';
+import { View, StyleSheet, FlatList, ScrollView, SafeAreaView, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
+import { Text, Searchbar, FAB } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { lightTheme, darkTheme } from '@/lib/theme';
+import { lightTheme, darkTheme, spacing } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
 import { Building2, Home, Search, Plus } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import StatCard from '@/components/StatCard';
-
-// Static property data to prevent loading issues
-const staticProperties = [
-  {
-    id: '1',
-    title: 'فيلا فاخرة في الرياض',
-    description: 'فيلا حديثة مع حديقة ومسبح',
-    address: 'الملقا، الرياض',
-    city: 'الرياض',
-    price: 1200000,
-    property_type: 'villa',
-    status: 'available',
-    bedrooms: 5,
-    bathrooms: 4,
-    area_sqm: 400,
-    images: []
-  },
-  {
-    id: '2', 
-    title: 'شقة عصرية في جدة',
-    description: 'شقة مطلة على البحر',
-    address: 'الكورنيش، جدة',
-    city: 'جدة',
-    price: 850000,
-    property_type: 'apartment',
-    status: 'rented',
-    bedrooms: 3,
-    bathrooms: 2,
-    area_sqm: 180,
-    images: []
-  },
-  {
-    id: '3',
-    title: 'مكتب تجاري في الدمام',
-    description: 'مكتب في المنطقة التجارية',
-    address: 'الأعمال، الدمام',
-    city: 'الدمام',
-    price: 1500000,
-    property_type: 'office',
-    status: 'available',
-    bedrooms: 0,
-    bathrooms: 2,
-    area_sqm: 250,
-    images: []
-  }
-];
-
-// Static stats
-const staticStats = {
-  total: '٣',
-  available: '٢',
-  rented: '١',
-  maintenance: '٠'
-};
+import ModernCard from '@/components/ModernCard';
+import { useApi } from '@/hooks/useApi';
+import { propertiesApi } from '@/lib/api';
 
 export default function PropertiesScreen() {
   const router = useRouter();
@@ -68,12 +17,99 @@ export default function PropertiesScreen() {
   const theme = isDarkMode ? darkTheme : lightTheme;
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Fetch properties from database
+  const { 
+    data: properties, 
+    loading: propertiesLoading, 
+    error: propertiesError, 
+    refetch: refetchProperties 
+  } = useApi(async () => {
+    console.log('[PropertiesScreen] Calling propertiesApi.getAll()...');
+    const result = await propertiesApi.getAll();
+    console.log('[PropertiesScreen] API result:', result);
+    return result;
+  }, []);
+
+  // Fetch dashboard summary for stats
+  const { 
+    data: dashboardStats, 
+    loading: statsLoading, 
+    error: statsError, 
+    refetch: refetchStats 
+  } = useApi(() => propertiesApi.getDashboardSummary(), []);
+
   // Filter properties based on search
-  const filteredProperties = staticProperties.filter(property =>
+  const filteredProperties = properties ? properties.filter((property: any) =>
     property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     property.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
     property.city.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  ) : [];
+
+  // Calculate stats from properties data
+  const stats = dashboardStats ? {
+    total: dashboardStats.total_properties.toString(),
+    available: dashboardStats.available.toString(), 
+    rented: (dashboardStats.occupied || 0).toString(),
+    maintenance: dashboardStats.maintenance.toString()
+  } : {
+    total: '٠',
+    available: '٠', 
+    rented: '٠',
+    maintenance: '٠'
+  };
+
+  // Handle refresh
+  const handleRefresh = () => {
+    refetchProperties();
+    refetchStats();
+  };
+
+  // Loading state
+  if (propertiesLoading || statsLoading) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <ModernHeader 
+          title="العقارات" 
+          showNotifications={true}
+          showMenu={true}
+          variant="dark"
+        />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={[styles.loadingText, { color: theme.colors.onBackground }]}>
+            جاري تحميل العقارات...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Error state
+  if (propertiesError || statsError) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <ModernHeader 
+          title="العقارات" 
+          showNotifications={true}
+          showMenu={true}
+          variant="dark"
+        />
+        <View style={styles.errorContainer}>
+          <Text style={[styles.errorText, { color: theme.colors.error }]}>
+            خطأ في تحميل البيانات: {propertiesError || statsError}
+          </Text>
+          <TouchableOpacity 
+            style={[styles.retryButton, { backgroundColor: theme.colors.primary }]}
+            onPress={handleRefresh}
+          >
+            <Text style={[styles.retryButtonText, { color: theme.colors.onPrimary }]}>
+              إعادة المحاولة
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const renderProperty = ({ item }: { item: any }) => (
     <View style={[styles.propertyCard, { backgroundColor: theme.colors.surface }]}>
@@ -142,13 +178,16 @@ export default function PropertiesScreen() {
       </View>
       
       <View style={styles.propertyFooter}>
-        <Text style={[styles.propertyPrice, { color: theme.colors.primary }]}>
-          {item.price.toLocaleString('ar-SA')} ريال
-        </Text>
+                  <Text style={[styles.propertyPrice, { color: theme.colors.primary }]}>
+            {Number(item.price).toLocaleString('ar-SA')} ريال
+          </Text>
         <View style={[styles.typeTag, { backgroundColor: theme.colors.surfaceVariant }]}>
           <Text style={[styles.typeText, { color: theme.colors.onSurfaceVariant }]}>
             {item.property_type === 'villa' ? 'فيلا' : 
-             item.property_type === 'apartment' ? 'شقة' : 'مكتب'}
+             item.property_type === 'apartment' ? 'شقة' : 
+             item.property_type === 'office' ? 'مكتب' :
+             item.property_type === 'retail' ? 'تجاري' :
+             item.property_type === 'warehouse' ? 'مستودع' : (item.property_type || 'غير محدد')}
           </Text>
         </View>
       </View>
@@ -164,7 +203,20 @@ export default function PropertiesScreen() {
         variant="dark"
       />
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={propertiesLoading || statsLoading}
+            onRefresh={handleRefresh}
+            colors={[theme.colors.primary]}
+            tintColor={theme.colors.primary}
+            title="سحب للتحديث"
+            titleColor={theme.colors.onBackground}
+          />
+        }
+      >
         {/* Stats Section */}
         <View style={styles.statsSection}>
           <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
@@ -174,28 +226,28 @@ export default function PropertiesScreen() {
             <View style={styles.statCardWrapper}>
               <StatCard
                 title="إجمالي العقارات"
-                value={staticStats.total}
+                value={stats.total}
                 color={theme.colors.primary}
               />
             </View>
             <View style={styles.statCardWrapper}>
               <StatCard
                 title="عقارات متاحة"
-                value={staticStats.available}
+                value={stats.available}
                 color="#4CAF50"
               />
             </View>
             <View style={styles.statCardWrapper}>
               <StatCard
                 title="عقارات مؤجرة"
-                value={staticStats.rented}
+                value={stats.rented}
                 color={theme.colors.secondary}
               />
             </View>
             <View style={styles.statCardWrapper}>
               <StatCard
                 title="تحت الصيانة"
-                value={staticStats.maintenance}
+                value={stats.maintenance}
                 color="#F44336"
               />
             </View>
@@ -241,6 +293,15 @@ export default function PropertiesScreen() {
           )}
         </View>
       </ScrollView>
+
+      {/* Add Property FAB */}
+      <FAB
+        icon="plus"
+        style={[styles.fab, { backgroundColor: theme.colors.primary }]}
+        size="medium"
+        onPress={() => router.push('/properties/add')}
+        label="إضافة عقار"
+      />
     </SafeAreaView>
   );
 }
@@ -377,5 +438,59 @@ const styles = StyleSheet.create({
   statCardWrapper: {
     width: '48%',
     minHeight: 120,
+  },
+  fab: {
+    position: 'absolute',
+    margin: 16,
+    right: 0,
+    bottom: 0,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.l,
+  },
+  loadingText: {
+    marginTop: spacing.m,
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.l,
+  },
+  errorText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: spacing.l,
+  },
+  retryButton: {
+    paddingHorizontal: spacing.l,
+    paddingVertical: spacing.m,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  emptyState: {
+    padding: spacing.xl,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginTop: spacing.m,
+  },
+  emptyStateTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: spacing.m,
+    textAlign: 'center',
+  },
+  emptyStateSubtitle: {
+    fontSize: 14,
+    marginTop: spacing.s,
+    textAlign: 'center',
   },
 });

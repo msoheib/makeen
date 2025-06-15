@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Home, Users, Settings, BarChart2, Briefcase, FileText, UserPlus, Building, DollarSign, List, Edit, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { Home, Users, Settings, BarChart2, Briefcase, FileText, UserPlus, Building, DollarSign, List, Edit, ChevronDown, ChevronUp, Shield, User } from 'lucide-react-native';
 import { DrawerActions } from '@react-navigation/native';
 import { NotificationBadge } from './NotificationBadge';
 import { useTabBadgeCount } from '@/hooks/useNotificationBadges';
@@ -10,11 +10,15 @@ import { useTranslation } from '@/lib/useTranslation';
 import { rtlStyles, rtlLayout } from '@/lib/theme';
 import { isRTL } from '@/lib/rtl';
 import { DrawerContentComponentProps } from '@react-navigation/drawer';
+import { useFilteredNavigation, getRoleDisplayName, SIDEBAR_PERMISSIONS } from '@/lib/permissions';
 
 const SideBar = (props: DrawerContentComponentProps) => {
     const { navigation } = props;
     const router = useRouter();
     const { t } = useTranslation('navigation');
+    
+    // Get filtered navigation items based on user role
+    const { sidebarItems, userContext, loading, hasNavigationAccess } = useFilteredNavigation();
     
     // Badge counts for different sections
     const tenantBadges = useTabBadgeCount('tenant');
@@ -23,89 +27,8 @@ const SideBar = (props: DrawerContentComponentProps) => {
     const paymentBadges = useTabBadgeCount('payment');
     const totalBadges = useTabBadgeCount();
 
-    const menuItems = [
-        { title: t('home'), icon: Home, href: '/(drawer)/(tabs)/', badgeCount: totalBadges.count },
-        { 
-            title: t('ownersAndCustomers'), 
-            icon: Users,
-            badgeCount: tenantBadges.count,
-            subItems: [
-                { title: t('ownerOrPropertyManager'), href: '/(drawer)/(tabs)/people' },
-                { title: t('tenant'), href: '/(drawer)/(tabs)/tenants', badgeCount: tenantBadges.count },
-                { title: t('buyer'), href: '/not-created-yet' },
-                { title: t('foreignTenants'), href: '/not-created-yet' },
-                { 
-                    title: t('customersAndSuppliers'), 
-                    subItems: [
-                        { title: t('client'), href: '/not-created-yet' },
-                        { title: t('supplier'), href: '/not-created-yet' },
-                    ]
-                },
-            ]
-        },
-        {
-            title: t('propertyManagement'),
-            icon: Building,
-            badgeCount: propertyBadges.count + maintenanceBadges.count,
-            subItems: [
-                { title: t('propertiesList'), href: '/(drawer)/(tabs)/properties', badgeCount: propertyBadges.count },
-                { title: t('rentProperty'), href: '/not-created-yet' },
-                { title: t('foreignTenantContracts'), href: '/not-created-yet' },
-                { title: t('listCashProperty'), href: '/not-created-yet' },
-                { title: t('listInstallmentProperty'), href: '/not-created-yet' },
-                { title: t('propertyReservationList'), href: '/not-created-yet' },
-            ]
-        },
-        {
-            title: t('accountingAndVoucher'),
-            icon: DollarSign,
-            badgeCount: paymentBadges.count,
-            subItems: [
-                { title: t('receiptVoucher'), href: '/not-created-yet' },
-                { title: t('paymentVoucher'), href: '/not-created-yet' },
-                { title: t('entryVoucher'), href: '/not-created-yet' },
-                { title: t('creditNotification'), href: '/not-created-yet' },
-                { title: t('debitNotification'), href: '/not-created-yet' },
-                { title: t('vatInvoices'), href: '/not-created-yet' },
-            ]
-        },
-        {
-            title: t('reports'),
-            icon: BarChart2,
-            subItems: [
-                 { title: t('summaryOfReports'), href: '/(drawer)/(tabs)/reports' },
-                 { title: t('invoicesReport'), href: '/not-created-yet' },
-            ]
-        },
-        {
-            title: t('maintenanceLettersIssues'),
-            icon: Briefcase,
-            badgeCount: maintenanceBadges.count,
-            subItems: [
-                { title: t('maintenanceRequests'), href: '/maintenance', badgeCount: maintenanceBadges.count },
-                { title: t('addMaintenanceReport'), href: '/maintenance/add' },
-                { title: t('listLetters'), href: '/not-created-yet' },
-                { title: t('addLetter'), href: '/not-created-yet' },
-                { title: t('listIssues'), href: '/not-created-yet' },
-                { title: t('addIssue'), href: '/not-created-yet' },
-                { title: t('archiveDocuments'), href: '/(drawer)/(tabs)/documents' },
-            ]
-        },
-        {
-            title: t('settings'),
-            icon: Settings,
-            href: '/(drawer)/(tabs)/settings'
-        },
-        {
-            title: t('users'),
-            icon: UserPlus,
-            subItems: [
-                { title: t('add'), href: '/not-created-yet' },
-                { title: t('list'), href: '/not-created-yet' },
-                { title: t('userTransactionReport'), href: '/not-created-yet' },
-            ]
-        }
-    ];
+    // Navigation items are now loaded from useFilteredNavigation hook
+    // which provides role-based filtering
 
     const SubMenuItem = ({ item, level = 1 }) => {
         const [isExpanded, setIsExpanded] = React.useState(false);
@@ -153,6 +76,24 @@ const SideBar = (props: DrawerContentComponentProps) => {
         );
     };
 
+    // Show loading while fetching user context
+    if (loading) {
+        return (
+            <SafeAreaView 
+                style={[styles.container, isRTL() && styles.rtlContainer]} 
+                edges={['top', 'bottom']}
+            >
+                <View style={styles.header}>
+                    <Text style={[styles.headerText, rtlStyles.textLeft]}>{t('appTitle')}</Text>
+                </View>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#0066CC" />
+                    <Text style={styles.loadingText}>Loading user permissions...</Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
+
     return (
         <SafeAreaView 
             style={[styles.container, isRTL() && styles.rtlContainer]} 
@@ -160,9 +101,28 @@ const SideBar = (props: DrawerContentComponentProps) => {
         >
             <View style={styles.header}>
                 <Text style={[styles.headerText, rtlStyles.textLeft]}>{t('appTitle')}</Text>
+                {userContext && (
+                    <View style={styles.userInfo}>
+                        <View style={styles.roleContainer}>
+                            {userContext.role === 'admin' ? (
+                                <Shield size={16} color="#0066CC" />
+                            ) : (
+                                <User size={16} color="#666" />
+                            )}
+                            <Text style={[styles.roleText, rtlStyles.textLeft]}>
+                                {getRoleDisplayName(userContext.role)}
+                            </Text>
+                        </View>
+                        {userContext.profile?.email && (
+                            <Text style={[styles.emailText, rtlStyles.textLeft]}>
+                                {userContext.profile.email}
+                            </Text>
+                        )}
+                    </View>
+                )}
             </View>
             <ScrollView style={styles.menuContainer}>
-                {menuItems.map((item, index) => (
+                {sidebarItems.map((item, index) => (
                     <SubMenuItem key={index} item={item} />
                 ))}
             </ScrollView>
@@ -192,6 +152,37 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         color: '#333',
+        marginBottom: 8,
+    },
+    userInfo: {
+        marginTop: 8,
+    },
+    roleContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 4,
+    },
+    roleText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#0066CC',
+        marginLeft: 6,
+    },
+    emailText: {
+        fontSize: 12,
+        color: '#666',
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 40,
+    },
+    loadingText: {
+        marginTop: 16,
+        fontSize: 14,
+        color: '#666',
+        textAlign: 'center',
     },
     menuContainer: {
         flex: 1,

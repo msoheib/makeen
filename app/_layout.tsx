@@ -12,6 +12,7 @@ import { Inter_400Regular, Inter_500Medium, Inter_700Bold } from '@expo-google-f
 import * as SplashScreen from 'expo-splash-screen';
 import i18n from '@/lib/i18n'; // Initialize i18n
 import { initializeRTL } from '@/lib/rtl';
+import CustomSplashScreen from '@/components/SplashScreen';
 
 // Initialize RTL support
 initializeRTL();
@@ -24,6 +25,7 @@ if (Platform.OS !== 'web') {
 export default function RootLayout() {
   const { ready: frameworkReady } = useFrameworkReady();
   const [i18nReady, setI18nReady] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
   
   // Load fonts
   const [fontsLoaded] = useFonts({
@@ -48,15 +50,23 @@ export default function RootLayout() {
   // Check if everything is ready
   const appReady = frameworkReady && fontsLoaded && i18nReady;
 
-  useEffect(() => {
-    if (appReady && Platform.OS !== 'web') {
-      SplashScreen.hideAsync();
-    }
-  }, [appReady]);
+  const handleSplashFinish = () => {
+    setShowSplash(false);
+  };
 
-  // Don't render the app until everything is ready
-  if (!appReady) {
-    return null;
+  // Show custom splash screen while app is initializing or when explicitly shown
+  if (!appReady || showSplash) {
+    return (
+      <SafeAreaProvider>
+        <PaperProvider theme={theme}>
+          <StatusBar style="light" />
+          <CustomSplashScreen 
+            onFinish={handleSplashFinish}
+            isInitialized={appReady}
+          />
+        </PaperProvider>
+      </SafeAreaProvider>
+    );
   }
 
   return (

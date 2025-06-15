@@ -1,7 +1,4 @@
-// PDF Generation API Integration
-// This will connect to the Supabase Edge Function once deployed
-
-import { supabase } from './supabase';
+// PDF Generation API Service
 
 export interface PDFRequest {
   reportType: 'revenue' | 'expense' | 'property' | 'tenant' | 'maintenance';
@@ -15,21 +12,20 @@ export interface PDFRequest {
 
 export interface PDFResponse {
   success: boolean;
-  message?: string;
-  reportData?: any;
-  pdfUrl?: string;
+  pdfBlob?: Blob;
   filename?: string;
-  meta?: {
-    recordCount: number;
-    generatedAt: string;
-    edgeFunctionVersion: string;
-  };
   error?: string;
-  timestamp?: string;
+  message?: string;
 }
 
-// PDF Generation API
-export const pdfApi = {
+class PDFGeneratorAPI {
+  private readonly edgeFunctionUrl: string;
+
+  constructor() {
+    const projectId = 'fbabpaorcvatejkrelrf';
+    this.edgeFunctionUrl = `https://${projectId}.supabase.co/functions/v1/pdf-generator`;
+  }
+
   /**
    * Generate PDF report using Supabase Edge Function
    */
@@ -37,320 +33,182 @@ export const pdfApi = {
     try {
       console.log('Generating PDF for request:', request);
       
-      // Call the actual Edge Function
-      const response = await this.callEdgeFunction(request);
-      
-      return response;
-    } catch (error) {
-      console.error('PDF generation failed:', error);
-      throw new Error(error instanceof Error ? error.message : 'PDF generation failed');
-    }
-  },
-
-  /**
-   * Simulate Edge Function call for testing
-   * This will be replaced with actual Edge Function URL once deployed
-   */
-  async simulateEdgeFunctionCall(request: PDFRequest): Promise<PDFResponse> {
-    // Simulate the data fetching that the Edge Function would do
-    console.log(`Simulating ${request.reportType} report generation...`);
-    
-    let reportData;
-    let recordCount = 0;
-
-    switch (request.reportType) {
-      case 'revenue':
-        reportData = await this.getRevenueData(request.dateRange);
-        recordCount = reportData.vouchers?.length || 0;
-        break;
-      case 'expense':
-        reportData = await this.getExpenseData(request.dateRange);
-        recordCount = reportData.vouchers?.length || 0;
-        break;
-      case 'property':
-        reportData = await this.getPropertyData(request.propertyId);
-        recordCount = reportData.properties?.length || 0;
-        break;
-      case 'tenant':
-        reportData = await this.getTenantData(request.tenantId);
-        recordCount = reportData.tenants?.length || 0;
-        break;
-      case 'maintenance':
-        reportData = await this.getMaintenanceData(request.dateRange);
-        recordCount = reportData.maintenanceRequests?.length || 0;
-        break;
-      default:
-        throw new Error(`Unsupported report type: ${request.reportType}`);
-    }
-
-    return {
-      success: true,
-      message: 'PDF generation infrastructure ready (simulated)',
-      reportData,
-      meta: {
-        recordCount,
-        generatedAt: new Date().toISOString(),
-        edgeFunctionVersion: '1.0.0-simulation'
-      }
-    };
-  },
-
-  /**
-   * Call actual Edge Function (for when deployed)
-   */
-  async callEdgeFunction(request: PDFRequest): Promise<PDFResponse> {
-    const projectId = 'fbabpaorcvatejkrelrf';
-    const edgeFunctionUrl = `https://${projectId}.supabase.co/functions/v1/pdf-generator`;
-    
-    console.log('Calling Edge Function at:', edgeFunctionUrl);
-    
-    try {
-      const response = await fetch(edgeFunctionUrl, {
+      const response = await fetch(this.edgeFunctionUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabase.supabaseAnonKey}`,
-          'apikey': supabase.supabaseAnonKey,
+          'Authorization': `Bearer ${process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY}`
         },
-        body: JSON.stringify(request),
+        body: JSON.stringify(request)
       });
-      
+
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Edge Function error response:', errorText);
-        throw new Error(`Edge Function failed: ${response.status} ${response.statusText}`);
+        // Try to get error message from response
+        try {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+        } catch {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
       }
-      
-      // Check if response is PDF
+
+      // Check if response is PDF or JSON error
       const contentType = response.headers.get('content-type');
+      
       if (contentType?.includes('application/pdf')) {
-        // Get PDF as blob
+        // Success: PDF response
         const pdfBlob = await response.blob();
-        const pdfUrl = URL.createObjectURL(pdfBlob);
+        const filename = this.extractFilenameFromHeaders(response.headers) || 
+                        `report-${request.reportType}-${new Date().toISOString().split('T')[0]}.pdf`;
         
-        console.log('PDF generated successfully:', pdfUrl);
+        console.log('PDF generated successfully:', filename);
         
         return {
           success: true,
-          message: 'PDF generated successfully',
-          pdfUrl,
-          filename: `${request.reportType}-report-${new Date().toISOString().split('T')[0]}.pdf`,
-          meta: {
-            recordCount: 0, // Will be populated by Edge Function
-            generatedAt: new Date().toISOString(),
-            edgeFunctionVersion: '1.0.0'
-          }
+          pdfBlob,
+          filename
         };
       } else {
-        // Parse JSON error response
+        // Error response in JSON format
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Unknown error from Edge Function');
+        throw new Error(errorData.error || 'PDF generation failed');
       }
+
     } catch (error) {
-      console.error('Edge Function call failed:', error);
-      // Fallback to simulation if Edge Function fails
-      console.log('Falling back to simulation...');
-      return await this.simulateEdgeFunctionCall(request);
+      console.error('PDF generation failed:', error);
+      
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'PDF generation failed',
+        message: 'فشل في إنشاء ملف PDF. يرجى المحاولة مرة أخرى.'
+      };
     }
-  },
-
-  // Data fetching methods (same as Edge Function)
-  async getRevenueData(dateRange?: PDFRequest['dateRange']) {
-    let query = supabase
-      .from('vouchers')
-      .select(`
-        id,
-        amount,
-        created_at,
-        description,
-        properties:property_id (title, address),
-        profiles:tenant_id (first_name, last_name)
-      `)
-      .eq('voucher_type', 'receipt')
-      .eq('status', 'posted');
-    
-    if (dateRange) {
-      query = query
-        .gte('created_at', dateRange.startDate)
-        .lte('created_at', dateRange.endDate);
-    }
-    
-    const { data, error } = await query.order('created_at', { ascending: false });
-    
-    if (error) {
-      throw new Error(`Failed to fetch revenue data: ${error.message}`);
-    }
-    
-    const totalRevenue = data?.reduce((sum, voucher) => sum + (voucher.amount || 0), 0) || 0;
-    
-    return {
-      vouchers: data || [],
-      totalRevenue,
-      reportType: 'revenue',
-      dateRange,
-      generatedAt: new Date().toISOString()
-    };
-  },
-
-  async getExpenseData(dateRange?: PDFRequest['dateRange']) {
-    let query = supabase
-      .from('vouchers')
-      .select(`
-        id,
-        amount,
-        created_at,
-        description,
-        properties:property_id (title, address),
-        accounts:account_id (account_name, account_type)
-      `)
-      .eq('voucher_type', 'payment')
-      .eq('status', 'posted');
-    
-    if (dateRange) {
-      query = query
-        .gte('created_at', dateRange.startDate)
-        .lte('created_at', dateRange.endDate);
-    }
-    
-    const { data, error } = await query.order('created_at', { ascending: false });
-    
-    if (error) {
-      throw new Error(`Failed to fetch expense data: ${error.message}`);
-    }
-    
-    const totalExpenses = data?.reduce((sum, voucher) => sum + (voucher.amount || 0), 0) || 0;
-    
-    return {
-      vouchers: data || [],
-      totalExpenses,
-      reportType: 'expense',
-      dateRange,
-      generatedAt: new Date().toISOString()
-    };
-  },
-
-  async getPropertyData(propertyId?: string) {
-    let query = supabase
-      .from('properties')
-      .select(`
-        *,
-        profiles:owner_id (first_name, last_name, email, phone),
-        contracts (
-          id,
-          rent_amount,
-          start_date,
-          end_date,
-          status,
-          profiles:tenant_id (first_name, last_name)
-        ),
-        maintenance_requests (
-          id,
-          title,
-          status,
-          priority,
-          created_at
-        )
-      `);
-    
-    if (propertyId) {
-      query = query.eq('id', propertyId);
-    }
-    
-    const { data, error } = await query;
-    
-    if (error) {
-      throw new Error(`Failed to fetch property data: ${error.message}`);
-    }
-    
-    return {
-      properties: data || [],
-      reportType: 'property',
-      propertyId,
-      generatedAt: new Date().toISOString()
-    };
-  },
-
-  async getTenantData(tenantId?: string) {
-    let query = supabase
-      .from('profiles')
-      .select(`
-        *,
-        contracts (
-          id,
-          rent_amount,
-          start_date,
-          end_date,
-          status,
-          properties:property_id (title, address)
-        ),
-        vouchers:tenant_id (
-          id,
-          amount,
-          voucher_type,
-          created_at,
-          status
-        )
-      `)
-      .eq('role', 'tenant');
-    
-    if (tenantId) {
-      query = query.eq('id', tenantId);
-    }
-    
-    const { data, error } = await query;
-    
-    if (error) {
-      throw new Error(`Failed to fetch tenant data: ${error.message}`);
-    }
-    
-    return {
-      tenants: data || [],
-      reportType: 'tenant',
-      tenantId,
-      generatedAt: new Date().toISOString()
-    };
-  },
-
-  async getMaintenanceData(dateRange?: PDFRequest['dateRange']) {
-    let query = supabase
-      .from('maintenance_requests')
-      .select(`
-        *,
-        properties:property_id (title, address),
-        profiles:tenant_id (first_name, last_name),
-        work_orders (
-          id,
-          estimated_cost,
-          actual_cost,
-          status,
-          completion_date
-        )
-      `);
-    
-    if (dateRange) {
-      query = query
-        .gte('created_at', dateRange.startDate)
-        .lte('created_at', dateRange.endDate);
-    }
-    
-    const { data, error } = await query.order('created_at', { ascending: false });
-    
-    if (error) {
-      throw new Error(`Failed to fetch maintenance data: ${error.message}`);
-    }
-    
-    const totalCosts = data?.reduce((sum, request) => {
-      const workOrderCosts = request.work_orders?.reduce((workSum: number, wo: any) => 
-        workSum + (wo.actual_cost || wo.estimated_cost || 0), 0) || 0;
-      return sum + workOrderCosts;
-    }, 0) || 0;
-    
-    return {
-      maintenanceRequests: data || [],
-      totalCosts,
-      reportType: 'maintenance',
-      dateRange,
-      generatedAt: new Date().toISOString()
-    };
   }
-}; 
+
+  /**
+   * Download PDF file to device
+   */
+  async downloadPDF(pdfBlob: Blob, filename: string): Promise<boolean> {
+    try {
+      // For web/Expo - create download link
+      if (typeof window !== 'undefined') {
+        const url = URL.createObjectURL(pdfBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        return true;
+      }
+      
+      // For React Native - would need file system API
+      console.log('PDF download not implemented for React Native yet');
+      return false;
+      
+    } catch (error) {
+      console.error('PDF download failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Share PDF file using native sharing
+   */
+  async sharePDF(pdfBlob: Blob, filename: string): Promise<boolean> {
+    try {
+      // For web - use Web Share API if available
+      if (typeof window !== 'undefined' && navigator.share) {
+        const file = new File([pdfBlob], filename, { type: 'application/pdf' });
+        await navigator.share({
+          title: 'تقرير PDF',
+          text: 'تقرير تم إنشاؤه من تطبيق إدارة العقارات',
+          files: [file]
+        });
+        return true;
+      }
+      
+      // Fallback to download
+      return await this.downloadPDF(pdfBlob, filename);
+      
+    } catch (error) {
+      console.error('PDF sharing failed:', error);
+      return await this.downloadPDF(pdfBlob, filename);
+    }
+  }
+
+  /**
+   * Extract filename from response headers
+   */
+  private extractFilenameFromHeaders(headers: Headers): string | null {
+    const contentDisposition = headers.get('content-disposition');
+    if (contentDisposition) {
+      const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+      if (match) {
+        return match[1].replace(/['"]/g, '');
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Map report type to Arabic filename
+   */
+  getArabicFilename(reportType: string): string {
+    const typeMap: Record<string, string> = {
+      'revenue': 'تقرير-الإيرادات',
+      'expense': 'تقرير-المصروفات',
+      'property': 'تقرير-العقارات',
+      'tenant': 'تقرير-المستأجرين',
+      'maintenance': 'تقرير-الصيانة'
+    };
+    
+    const arabicType = typeMap[reportType] || reportType;
+    const date = new Date().toISOString().split('T')[0];
+    
+    return `${arabicType}-${date}.pdf`;
+  }
+
+  /**
+   * Generate and download PDF in one operation
+   */
+  async generateAndDownload(request: PDFRequest): Promise<PDFResponse> {
+    const result = await this.generatePDF(request);
+    
+    if (result.success && result.pdfBlob && result.filename) {
+      const downloaded = await this.downloadPDF(result.pdfBlob, result.filename);
+      
+      if (!downloaded) {
+        return {
+          ...result,
+          success: false,
+          error: 'تم إنشاء PDF بنجاح ولكن فشل التحميل'
+        };
+      }
+    }
+    
+    return result;
+  }
+
+  /**
+   * Get report type mapping for different languages
+   */
+  getReportTypeLabel(reportType: string): string {
+    const labels: Record<string, string> = {
+      'revenue': 'تقرير الإيرادات الشهرية',
+      'expense': 'تقرير المصروفات الشهرية', 
+      'property': 'تقرير العقارات',
+      'tenant': 'تقرير المستأجرين',
+      'maintenance': 'تقرير الصيانة'
+    };
+    
+    return labels[reportType] || reportType;
+  }
+}
+
+// Create and export singleton instance
+export const pdfApi = new PDFGeneratorAPI();
+
+// Export default for convenience
+export default pdfApi; 

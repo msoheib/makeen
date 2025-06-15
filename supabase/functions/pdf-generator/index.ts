@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import puppeteer from "https://deno.land/x/puppeteer@16.2.0/mod.ts";
 
 console.log("PDF Generator Edge Function starting...");
 
@@ -20,382 +21,632 @@ interface PDFRequest {
   tenantId?: string;
 }
 
-interface DatabaseConfig {
-  url: string;
-  key: string;
-}
-
 // Database connection setup
-function createSupabaseClient(): ReturnType<typeof createClient> {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL');
-  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  
-  if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Missing Supabase environment variables');
-  }
+function createSupabaseClient() {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   
   return createClient(supabaseUrl, supabaseServiceKey);
 }
 
-// Validate PDF request data
-function validatePDFRequest(data: any): PDFRequest {
-  if (!data || typeof data !== 'object') {
-    throw new Error('Invalid request body');
-  }
-  
-  const { reportType, dateRange, propertyId, tenantId } = data;
-  
-  // Validate report type
-  const validReportTypes = ['revenue', 'expense', 'property', 'tenant', 'maintenance'];
-  if (!validReportTypes.includes(reportType)) {
-    throw new Error(`Invalid report type. Must be one of: ${validReportTypes.join(', ')}`);
-  }
-  
-  // Validate date range if provided
-  if (dateRange) {
-    if (!dateRange.startDate || !dateRange.endDate) {
-      throw new Error('Date range must include both startDate and endDate');
-    }
-    
-    const startDate = new Date(dateRange.startDate);
-    const endDate = new Date(dateRange.endDate);
-    
-    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-      throw new Error('Invalid date format in date range');
-    }
-    
-    if (startDate > endDate) {
-      throw new Error('Start date must be before end date');
-    }
-  }
-  
-  return { reportType, dateRange, propertyId, tenantId };
-}
-
-// Test database connectivity
-async function testDatabaseConnection(supabase: ReturnType<typeof createClient>) {
+// Data fetching functions
+async function fetchRevenueData(supabase: any, dateRange?: any) {
   try {
-    console.log('Testing database connection...');
-    
-    // Simple query to test connectivity
-    const { data, error } = await supabase
-      .from('properties')
-      .select('id')
-      .limit(1);
-    
-    if (error) {
-      console.error('Database connection test failed:', error);
-      throw new Error(`Database connection failed: ${error.message}`);
+    let query = supabase
+      .from('vouchers')
+      .select(`
+        *,
+        property:properties(title, address, city),
+        tenant:profiles!tenant_id(first_name, last_name, email)
+      `)
+      .eq('voucher_type', 'receipt')
+      .eq('status', 'posted');
+
+    if (dateRange) {
+      query = query
+        .gte('created_at', dateRange.startDate)
+        .lte('created_at', dateRange.endDate);
     }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
     
-    console.log('Database connection successful');
-    return true;
+    if (error) throw error;
+    
+    const totalRevenue = data?.reduce((sum: number, voucher: any) => sum + Number(voucher.amount), 0) || 0;
+    const recordCount = data?.length || 0;
+    
+    return {
+      vouchers: data || [],
+      summary: {
+        totalRevenue,
+        recordCount,
+        averageAmount: recordCount > 0 ? totalRevenue / recordCount : 0
+      }
+    };
   } catch (error) {
-    console.error('Database connection error:', error);
+    console.error('Error fetching revenue data:', error);
     throw error;
   }
 }
 
-// Get report data based on request type
-async function getReportData(
-  supabase: ReturnType<typeof createClient>, 
-  request: PDFRequest
-) {
-  console.log(`Fetching ${request.reportType} report data...`);
-  
-  switch (request.reportType) {
-    case 'revenue':
-      return await getRevenueData(supabase, request.dateRange);
-    case 'expense':
-      return await getExpenseData(supabase, request.dateRange);
-    case 'property':
-      return await getPropertyData(supabase, request.propertyId);
-    case 'tenant':
-      return await getTenantData(supabase, request.tenantId);
-    case 'maintenance':
-      return await getMaintenanceData(supabase, request.dateRange);
-    default:
-      throw new Error(`Unsupported report type: ${request.reportType}`);
+async function fetchExpenseData(supabase: any, dateRange?: any) {
+  try {
+    let query = supabase
+      .from('vouchers')
+      .select(`
+        *,
+        account:accounts(account_name, account_code),
+        property:properties(title, address, city)
+      `)
+      .eq('voucher_type', 'payment')
+      .eq('status', 'posted');
+
+    if (dateRange) {
+      query = query
+        .gte('created_at', dateRange.startDate)
+        .lte('created_at', dateRange.endDate);
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    const totalExpenses = data?.reduce((sum: number, voucher: any) => sum + Number(voucher.amount), 0) || 0;
+    const recordCount = data?.length || 0;
+    
+    return {
+      vouchers: data || [],
+      summary: {
+        totalExpenses,
+        recordCount,
+        averageAmount: recordCount > 0 ? totalExpenses / recordCount : 0
+      }
+    };
+  } catch (error) {
+    console.error('Error fetching expense data:', error);
+    throw error;
   }
 }
 
-// Revenue report data
-async function getRevenueData(supabase: ReturnType<typeof createClient>, dateRange?: PDFRequest['dateRange']) {
-  let query = supabase
-    .from('vouchers')
-    .select(`
-      id,
-      amount,
-      created_at,
-      description,
-      properties:property_id (title, address),
-      profiles:tenant_id (first_name, last_name)
-    `)
-    .eq('voucher_type', 'receipt')
-    .eq('status', 'posted');
-  
-  if (dateRange) {
-    query = query
-      .gte('created_at', dateRange.startDate)
-      .lte('created_at', dateRange.endDate);
+async function fetchPropertyData(supabase: any) {
+  try {
+    const { data, error } = await supabase
+      .from('properties')
+      .select(`
+        *,
+        owner:profiles!owner_id(first_name, last_name, email),
+        contracts(start_date, end_date, rent_amount, status)
+      `)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    const totalProperties = data?.length || 0;
+    const occupiedProperties = data?.filter((p: any) => p.status === 'rented').length || 0;
+    const occupancyRate = totalProperties > 0 ? (occupiedProperties / totalProperties) * 100 : 0;
+    
+    return {
+      properties: data || [],
+      summary: {
+        totalProperties,
+        occupiedProperties,
+        occupancyRate: Math.round(occupancyRate * 100) / 100
+      }
+    };
+  } catch (error) {
+    console.error('Error fetching property data:', error);
+    throw error;
   }
-  
-  const { data, error } = await query.order('created_at', { ascending: false });
-  
-  if (error) {
-    throw new Error(`Failed to fetch revenue data: ${error.message}`);
-  }
-  
-  const totalRevenue = data?.reduce((sum, voucher) => sum + (voucher.amount || 0), 0) || 0;
-  
-  return {
-    vouchers: data || [],
-    totalRevenue,
-    reportType: 'revenue',
-    dateRange,
-    generatedAt: new Date().toISOString()
-  };
 }
 
-// Expense report data
-async function getExpenseData(supabase: ReturnType<typeof createClient>, dateRange?: PDFRequest['dateRange']) {
-  let query = supabase
-    .from('vouchers')
-    .select(`
-      id,
-      amount,
-      created_at,
-      description,
-      properties:property_id (title, address),
-      accounts:account_id (account_name, account_type)
-    `)
-    .eq('voucher_type', 'payment')
-    .eq('status', 'posted');
-  
-  if (dateRange) {
-    query = query
-      .gte('created_at', dateRange.startDate)
-      .lte('created_at', dateRange.endDate);
+async function fetchTenantData(supabase: any) {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select(`
+        *,
+        contracts!tenant_id(
+          property:properties(title, address),
+          rent_amount,
+          start_date,
+          end_date,
+          status
+        )
+      `)
+      .eq('role', 'tenant')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    const totalTenants = data?.length || 0;
+    const activeTenants = data?.filter((t: any) => t.status === 'active').length || 0;
+    const foreignTenants = data?.filter((t: any) => t.is_foreign === true).length || 0;
+    
+    return {
+      tenants: data || [],
+      summary: {
+        totalTenants,
+        activeTenants,
+        foreignTenants,
+        domesticTenants: totalTenants - foreignTenants
+      }
+    };
+  } catch (error) {
+    console.error('Error fetching tenant data:', error);
+    throw error;
   }
-  
-  const { data, error } = await query.order('created_at', { ascending: false });
-  
-  if (error) {
-    throw new Error(`Failed to fetch expense data: ${error.message}`);
-  }
-  
-  const totalExpenses = data?.reduce((sum, voucher) => sum + (voucher.amount || 0), 0) || 0;
-  
-  return {
-    vouchers: data || [],
-    totalExpenses,
-    reportType: 'expense',
-    dateRange,
-    generatedAt: new Date().toISOString()
-  };
 }
 
-// Property report data
-async function getPropertyData(supabase: ReturnType<typeof createClient>, propertyId?: string) {
-  let query = supabase
-    .from('properties')
-    .select(`
-      *,
-      profiles:owner_id (first_name, last_name, email, phone),
-      contracts (
-        id,
-        rent_amount,
-        start_date,
-        end_date,
-        status,
-        profiles:tenant_id (first_name, last_name)
-      ),
-      maintenance_requests (
-        id,
-        title,
-        status,
-        priority,
-        created_at
-      )
-    `);
-  
-  if (propertyId) {
-    query = query.eq('id', propertyId);
+async function fetchMaintenanceData(supabase: any, dateRange?: any) {
+  try {
+    let query = supabase
+      .from('maintenance_requests')
+      .select(`
+        *,
+        property:properties(title, address, city),
+        tenant:profiles!tenant_id(first_name, last_name),
+        work_orders(estimated_cost, actual_cost, status)
+      `);
+
+    if (dateRange) {
+      query = query
+        .gte('created_at', dateRange.startDate)
+        .lte('created_at', dateRange.endDate);
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    const totalRequests = data?.length || 0;
+    const completedRequests = data?.filter((r: any) => r.status === 'completed').length || 0;
+    const totalCost = data?.reduce((sum: number, request: any) => {
+      const workOrderCost = request.work_orders?.reduce((wSum: number, wo: any) => 
+        wSum + Number(wo.actual_cost || wo.estimated_cost || 0), 0) || 0;
+      return sum + workOrderCost;
+    }, 0) || 0;
+    
+    return {
+      maintenanceRequests: data || [],
+      summary: {
+        totalRequests,
+        completedRequests,
+        pendingRequests: totalRequests - completedRequests,
+        totalCost,
+        averageCost: totalRequests > 0 ? totalCost / totalRequests : 0
+      }
+    };
+  } catch (error) {
+    console.error('Error fetching maintenance data:', error);
+    throw error;
   }
-  
-  const { data, error } = await query;
-  
-  if (error) {
-    throw new Error(`Failed to fetch property data: ${error.message}`);
-  }
-  
-  return {
-    properties: data || [],
-    reportType: 'property',
-    propertyId,
-    generatedAt: new Date().toISOString()
-  };
 }
 
-// Tenant report data
-async function getTenantData(supabase: ReturnType<typeof createClient>, tenantId?: string) {
-  let query = supabase
-    .from('profiles')
-    .select(`
-      *,
-      contracts (
-        id,
-        rent_amount,
-        start_date,
-        end_date,
-        status,
-        properties:property_id (title, address)
-      ),
-      vouchers:tenant_id (
-        id,
-        amount,
-        voucher_type,
-        created_at,
-        status
-      )
-    `)
-    .eq('role', 'tenant');
+// HTML template generation functions
+function generateRevenueHTML(data: any): string {
+  const { vouchers, summary } = data;
   
-  if (tenantId) {
-    query = query.eq('id', tenantId);
-  }
-  
-  const { data, error } = await query;
-  
-  if (error) {
-    throw new Error(`Failed to fetch tenant data: ${error.message}`);
-  }
-  
-  return {
-    tenants: data || [],
-    reportType: 'tenant',
-    tenantId,
-    generatedAt: new Date().toISOString()
-  };
+  return `
+    <!DOCTYPE html>
+    <html dir="rtl" lang="ar">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>تقرير الإيرادات الشهرية</title>
+      <style>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        body {
+          font-family: 'Arial', sans-serif;
+          line-height: 1.6;
+          color: #333;
+          background: #f8f9fa;
+          padding: 20px;
+        }
+        .container {
+          max-width: 800px;
+          margin: 0 auto;
+          background: white;
+          padding: 30px;
+          border-radius: 8px;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+          text-align: center;
+          border-bottom: 3px solid #2196F3;
+          padding-bottom: 20px;
+          margin-bottom: 30px;
+        }
+        .header h1 {
+          color: #2196F3;
+          font-size: 28px;
+          margin-bottom: 10px;
+        }
+        .header .subtitle {
+          color: #666;
+          font-size: 16px;
+        }
+        .summary {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 20px;
+          margin-bottom: 30px;
+        }
+        .summary-item {
+          background: #f8f9fa;
+          padding: 20px;
+          border-radius: 8px;
+          text-align: center;
+          border: 1px solid #e9ecef;
+        }
+        .summary-item h3 {
+          color: #2196F3;
+          font-size: 14px;
+          margin-bottom: 10px;
+        }
+        .summary-item .value {
+          font-size: 24px;
+          font-weight: bold;
+          color: #333;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 20px;
+        }
+        th, td {
+          padding: 12px;
+          text-align: right;
+          border-bottom: 1px solid #e9ecef;
+        }
+        th {
+          background: #f8f9fa;
+          font-weight: bold;
+          color: #2196F3;
+        }
+        .amount {
+          font-weight: bold;
+          color: #4CAF50;
+        }
+        .footer {
+          margin-top: 30px;
+          text-align: center;
+          color: #666;
+          font-size: 12px;
+          border-top: 1px solid #e9ecef;
+          padding-top: 20px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>تقرير الإيرادات الشهرية</h1>
+          <div class="subtitle">شركة إدارة العقارات MG</div>
+          <div class="subtitle">تاريخ التقرير: ${new Date().toLocaleDateString('ar-SA')}</div>
+        </div>
+        
+        <div class="summary">
+          <div class="summary-item">
+            <h3>إجمالي الإيرادات</h3>
+            <div class="value">${summary.totalRevenue.toLocaleString('ar-SA')} ريال</div>
+          </div>
+          <div class="summary-item">
+            <h3>عدد الإيصالات</h3>
+            <div class="value">${summary.recordCount}</div>
+          </div>
+          <div class="summary-item">
+            <h3>متوسط المبلغ</h3>
+            <div class="value">${Math.round(summary.averageAmount).toLocaleString('ar-SA')} ريال</div>
+          </div>
+        </div>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>رقم الإيصال</th>
+              <th>المبلغ</th>
+              <th>العقار</th>
+              <th>المستأجر</th>
+              <th>التاريخ</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${vouchers.map((voucher: any) => `
+              <tr>
+                <td>${voucher.voucher_number || '-'}</td>
+                <td class="amount">${Number(voucher.amount).toLocaleString('ar-SA')} ريال</td>
+                <td>${voucher.property?.title || '-'}</td>
+                <td>${voucher.tenant?.first_name || ''} ${voucher.tenant?.last_name || ''}</td>
+                <td>${new Date(voucher.created_at).toLocaleDateString('ar-SA')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        
+        <div class="footer">
+          تم إنشاء هذا التقرير تلقائياً في ${new Date().toLocaleString('ar-SA')}
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
 }
 
-// Maintenance report data
-async function getMaintenanceData(supabase: ReturnType<typeof createClient>, dateRange?: PDFRequest['dateRange']) {
-  let query = supabase
-    .from('maintenance_requests')
-    .select(`
-      *,
-      properties:property_id (title, address),
-      profiles:tenant_id (first_name, last_name),
-      work_orders (
-        id,
-        estimated_cost,
-        actual_cost,
-        status,
-        completion_date
-      )
-    `);
+function generateExpenseHTML(data: any): string {
+  const { vouchers, summary } = data;
   
-  if (dateRange) {
-    query = query
-      .gte('created_at', dateRange.startDate)
-      .lte('created_at', dateRange.endDate);
-  }
+  return `
+    <!DOCTYPE html>
+    <html dir="rtl" lang="ar">
+    <head>
+      <meta charset="UTF-8">
+      <title>تقرير المصروفات الشهرية</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Arial', sans-serif; line-height: 1.6; color: #333; background: #f8f9fa; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { text-align: center; border-bottom: 3px solid #FF9800; padding-bottom: 20px; margin-bottom: 30px; }
+        .header h1 { color: #FF9800; font-size: 28px; margin-bottom: 10px; }
+        .header .subtitle { color: #666; font-size: 16px; }
+        .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .summary-item { background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center; border: 1px solid #e9ecef; }
+        .summary-item h3 { color: #FF9800; font-size: 14px; margin-bottom: 10px; }
+        .summary-item .value { font-size: 24px; font-weight: bold; color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: right; border-bottom: 1px solid #e9ecef; }
+        th { background: #f8f9fa; font-weight: bold; color: #FF9800; }
+        .amount { font-weight: bold; color: #f44336; }
+        .footer { margin-top: 30px; text-align: center; color: #666; font-size: 12px; border-top: 1px solid #e9ecef; padding-top: 20px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>تقرير المصروفات الشهرية</h1>
+          <div class="subtitle">شركة إدارة العقارات MG</div>
+          <div class="subtitle">تاريخ التقرير: ${new Date().toLocaleDateString('ar-SA')}</div>
+        </div>
+        
+        <div class="summary">
+          <div class="summary-item">
+            <h3>إجمالي المصروفات</h3>
+            <div class="value">${summary.totalExpenses.toLocaleString('ar-SA')} ريال</div>
+          </div>
+          <div class="summary-item">
+            <h3>عدد المدفوعات</h3>
+            <div class="value">${summary.recordCount}</div>
+          </div>
+          <div class="summary-item">
+            <h3>متوسط المبلغ</h3>
+            <div class="value">${Math.round(summary.averageAmount).toLocaleString('ar-SA')} ريال</div>
+          </div>
+        </div>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>رقم الإيصال</th>
+              <th>المبلغ</th>
+              <th>الحساب</th>
+              <th>العقار</th>
+              <th>التاريخ</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${vouchers.map((voucher: any) => `
+              <tr>
+                <td>${voucher.voucher_number || '-'}</td>
+                <td class="amount">${Number(voucher.amount).toLocaleString('ar-SA')} ريال</td>
+                <td>${voucher.account?.account_name || '-'}</td>
+                <td>${voucher.property?.title || '-'}</td>
+                <td>${new Date(voucher.created_at).toLocaleDateString('ar-SA')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        
+        <div class="footer">
+          تم إنشاء هذا التقرير تلقائياً في ${new Date().toLocaleString('ar-SA')}
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+// Add other HTML generation functions for property, tenant, and maintenance reports...
+function generatePropertyHTML(data: any): string {
+  const { properties, summary } = data;
   
-  const { data, error } = await query.order('created_at', { ascending: false });
-  
-  if (error) {
-    throw new Error(`Failed to fetch maintenance data: ${error.message}`);
-  }
-  
-  const totalCosts = data?.reduce((sum, request) => {
-    const workOrderCosts = request.work_orders?.reduce((workSum: number, wo: any) => 
-      workSum + (wo.actual_cost || wo.estimated_cost || 0), 0) || 0;
-    return sum + workOrderCosts;
-  }, 0) || 0;
-  
-  return {
-    maintenanceRequests: data || [],
-    totalCosts,
-    reportType: 'maintenance',
-    dateRange,
-    generatedAt: new Date().toISOString()
-  };
+  return `
+    <!DOCTYPE html>
+    <html dir="rtl" lang="ar">
+    <head>
+      <meta charset="UTF-8">
+      <title>تقرير العقارات</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Arial', sans-serif; line-height: 1.6; color: #333; background: #f8f9fa; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { text-align: center; border-bottom: 3px solid #4CAF50; padding-bottom: 20px; margin-bottom: 30px; }
+        .header h1 { color: #4CAF50; font-size: 28px; margin-bottom: 10px; }
+        .header .subtitle { color: #666; font-size: 16px; }
+        .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .summary-item { background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center; border: 1px solid #e9ecef; }
+        .summary-item h3 { color: #4CAF50; font-size: 14px; margin-bottom: 10px; }
+        .summary-item .value { font-size: 24px; font-weight: bold; color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: right; border-bottom: 1px solid #e9ecef; }
+        th { background: #f8f9fa; font-weight: bold; color: #4CAF50; }
+        .price { font-weight: bold; color: #2196F3; }
+        .status { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+        .status.available { background: #e8f5e8; color: #4CAF50; }
+        .status.rented { background: #fff3e0; color: #FF9800; }
+        .status.maintenance { background: #ffebee; color: #f44336; }
+        .footer { margin-top: 30px; text-align: center; color: #666; font-size: 12px; border-top: 1px solid #e9ecef; padding-top: 20px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>تقرير العقارات</h1>
+          <div class="subtitle">شركة إدارة العقارات MG</div>
+          <div class="subtitle">تاريخ التقرير: ${new Date().toLocaleDateString('ar-SA')}</div>
+        </div>
+        
+        <div class="summary">
+          <div class="summary-item">
+            <h3>إجمالي العقارات</h3>
+            <div class="value">${summary.totalProperties}</div>
+          </div>
+          <div class="summary-item">
+            <h3>العقارات المؤجرة</h3>
+            <div class="value">${summary.occupiedProperties}</div>
+          </div>
+          <div class="summary-item">
+            <h3>معدل الإشغال</h3>
+            <div class="value">${summary.occupancyRate}%</div>
+          </div>
+        </div>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>العنوان</th>
+              <th>النوع</th>
+              <th>الحالة</th>
+              <th>السعر</th>
+              <th>المالك</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${properties.map((property: any) => `
+              <tr>
+                <td>${property.title}</td>
+                <td>${property.property_type}</td>
+                <td><span class="status ${property.status}">${property.status}</span></td>
+                <td class="price">${Number(property.price).toLocaleString('ar-SA')} ريال</td>
+                <td>${property.owner?.first_name || ''} ${property.owner?.last_name || ''}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        
+        <div class="footer">
+          تم إنشاء هذا التقرير تلقائياً في ${new Date().toLocaleString('ar-SA')}
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
 }
 
 // Main request handler
 serve(async (req) => {
-  console.log(`${req.method} ${req.url}`);
-  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
-  
-  // Only allow POST requests
-  if (req.method !== 'POST') {
-    return new Response(
-      JSON.stringify({ error: 'Method not allowed' }),
-      { 
-        status: 405,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
-  }
-  
+
   try {
-    // Initialize Supabase client
-    const supabase = createSupabaseClient();
-    
-    // Test database connection
-    await testDatabaseConnection(supabase);
-    
-    // Parse request body
-    const requestBody = await req.json();
-    console.log('Request body:', requestBody);
-    
+    if (req.method !== 'POST') {
+      throw new Error('Method not allowed');
+    }
+
+    const request: PDFRequest = await req.json();
+    console.log('Received PDF request:', request);
+
     // Validate request
-    const pdfRequest = validatePDFRequest(requestBody);
-    console.log('Validated PDF request:', pdfRequest);
+    if (!request.reportType || !['revenue', 'expense', 'property', 'tenant', 'maintenance'].includes(request.reportType)) {
+      throw new Error('Invalid report type');
+    }
+
+    // Create Supabase client
+    const supabase = createSupabaseClient();
+
+    // Fetch data based on report type
+    let data;
+    let html;
     
-    // Get report data
-    const reportData = await getReportData(supabase, pdfRequest);
-    console.log('Report data fetched successfully');
+    switch (request.reportType) {
+      case 'revenue':
+        data = await fetchRevenueData(supabase, request.dateRange);
+        html = generateRevenueHTML(data);
+        break;
+      case 'expense':
+        data = await fetchExpenseData(supabase, request.dateRange);
+        html = generateExpenseHTML(data);
+        break;
+      case 'property':
+        data = await fetchPropertyData(supabase);
+        html = generatePropertyHTML(data);
+        break;
+      case 'tenant':
+        data = await fetchTenantData(supabase);
+        html = generatePropertyHTML(data); // You'd implement generateTenantHTML
+        break;
+      case 'maintenance':
+        data = await fetchMaintenanceData(supabase, request.dateRange);
+        html = generatePropertyHTML(data); // You'd implement generateMaintenanceHTML
+        break;
+      default:
+        throw new Error('Unsupported report type');
+    }
+
+    console.log('Data fetched successfully, generating PDF...');
+
+    // Generate PDF using Puppeteer
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
     
-    // For now, return the report data as JSON
-    // In next tasks, this will be converted to PDF
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: 'PDF generation infrastructure ready',
-        reportData,
-        meta: {
-          recordCount: Array.isArray(reportData.vouchers) ? reportData.vouchers.length :
-                      Array.isArray(reportData.properties) ? reportData.properties.length :
-                      Array.isArray(reportData.tenants) ? reportData.tenants.length :
-                      Array.isArray(reportData.maintenanceRequests) ? reportData.maintenanceRequests.length : 0,
-          generatedAt: new Date().toISOString(),
-          edgeFunctionVersion: '1.0.0'
-        }
-      }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '1cm',
+        right: '1cm',
+        bottom: '1cm',
+        left: '1cm'
       }
-    );
+    });
     
+    await browser.close();
+
+    console.log('PDF generated successfully');
+
+    // Return PDF as response
+    return new Response(pdfBuffer, {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="report-${request.reportType}-${new Date().toISOString().split('T')[0]}.pdf"`
+      }
+    });
+
   } catch (error) {
-    console.error('Error in PDF generator:', error);
+    console.error('PDF generation error:', error);
     
     return new Response(
       JSON.stringify({
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        error: error.message,
         timestamp: new Date().toISOString()
       }),
       {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        status: 400,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
       }
     );
   }

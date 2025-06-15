@@ -1,5 +1,7 @@
 import { supabase } from './supabase';
 import { Database, Tables, TablesInsert, TablesUpdate } from './database.types';
+import { getCurrentUserContext, applySecurityFilter, validateUserAction, buildRoleBasedFilter } from './security';
+import { UserContext } from './types';
 
 // Type helpers
 type DatabaseError = {
@@ -35,13 +37,23 @@ async function handleApiCall<T>(
 
 // Properties API
 export const propertiesApi = {
-  // Get all properties with optional filters
+  // Get all properties with optional filters and role-based access control
   async getAll(filters?: {
     owner_id?: string;
     status?: string;
     property_type?: string;
     city?: string;
   }): Promise<ApiResponse<Tables<'properties'>[]>> {
+    // **SECURITY**: Get current user context for role-based filtering
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext) {
+      return {
+        data: null,
+        error: { message: 'Authentication required to access properties' }
+      };
+    }
+
     let query = supabase
       .from('properties')
       .select(`
@@ -50,16 +62,64 @@ export const propertiesApi = {
       `)
       .order('created_at', { ascending: false });
 
+    // **SECURITY**: Apply role-based filtering BEFORE other filters
+    const securityFilter = buildRoleBasedFilter(userContext, 'properties');
+    if (securityFilter) {
+      if (userContext.role === 'owner') {
+        // Owners see only their properties
+        query = query.eq('owner_id', userContext.userId);
+      } else if (userContext.role === 'tenant') {
+        // Tenants see their rented properties + available properties
+        const rentedPropertyIds = userContext.rentedPropertyIds || [];
+        if (rentedPropertyIds.length > 0) {
+          query = query.or(`status.eq.available,id.in.(${rentedPropertyIds.join(',')})`);
+        } else {
+          query = query.eq('status', 'available');
+        }
+      }
+    }
+
+    // Apply additional filters
     if (filters?.owner_id) query = query.eq('owner_id', filters.owner_id);
     if (filters?.status) query = query.eq('status', filters.status);
     if (filters?.property_type) query = query.eq('property_type', filters.property_type);
     if (filters?.city) query = query.ilike('city', `%${filters.city}%`);
 
+    console.log(`[Security] Properties query for user ${userContext.userId} (${userContext.role})`);
     return handleApiCall(() => query);
   },
 
-  // Get property by ID
+  // Get property by ID with role-based access control
   async getById(id: string): Promise<ApiResponse<Tables<'properties'>>> {
+    // **SECURITY**: Get current user context for access validation
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext) {
+      return {
+        data: null,
+        error: { message: 'Authentication required to access property details' }
+      };
+    }
+
+    // **SECURITY**: Check if user has access to this specific property
+    const hasAccess = userContext.role === 'admin' || 
+                     userContext.role === 'manager' ||
+                     (userContext.role === 'owner' && userContext.ownedPropertyIds?.includes(id)) ||
+                     (userContext.role === 'tenant' && (
+                       userContext.rentedPropertyIds?.includes(id) || 
+                       // Also allow viewing available properties for tenants
+                       await this.isPropertyAvailable(id)
+                     ));
+
+    if (!hasAccess) {
+      return {
+        data: null,
+        error: { message: 'Access denied: You do not have permission to view this property' }
+      };
+    }
+
+    console.log(`[Security] Property ${id} access granted for user ${userContext.userId} (${userContext.role})`);
+    
     return handleApiCall(() => 
       supabase
         .from('properties')
@@ -72,6 +132,17 @@ export const propertiesApi = {
         .eq('id', id)
         .single()
     );
+  },
+
+  // Helper function to check if property is available
+  async isPropertyAvailable(id: string): Promise<boolean> {
+    const { data } = await supabase
+      .from('properties')
+      .select('status')
+      .eq('id', id)
+      .single();
+    
+    return data?.status === 'available';
   },
 
   // Create property
@@ -107,12 +178,38 @@ export const propertiesApi = {
     );
   },
 
-  // Get properties for dashboard summary
+  // Get properties for dashboard summary with role-based filtering
   async getDashboardSummary(): Promise<ApiResponse<any>> {
+    // **SECURITY**: Get current user context for role-based data filtering
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext) {
+      return {
+        data: null,
+        error: { message: 'Authentication required to access dashboard data' }
+      };
+    }
+
     return handleApiCall(async () => {
+      let propertiesQuery = supabase.from('properties').select('status').neq('status', 'deleted');
+      let contractsQuery = supabase.from('contracts').select('status, rent_amount, property_id').eq('status', 'active');
+
+      // **SECURITY**: Apply role-based filtering
+      if (userContext.role === 'owner') {
+        // Owners see only their properties and related contracts
+        propertiesQuery = propertiesQuery.eq('owner_id', userContext.userId);
+        contractsQuery = contractsQuery.in('property_id', userContext.ownedPropertyIds || []);
+      } else if (userContext.role === 'tenant') {
+        // Tenants see limited data - only their rented properties
+        const rentedPropertyIds = userContext.rentedPropertyIds || [];
+        propertiesQuery = propertiesQuery.in('id', rentedPropertyIds);
+        contractsQuery = contractsQuery.eq('tenant_id', userContext.userId);
+      }
+      // Admins see everything (no additional filtering)
+
       const [propertiesResult, contractsResult] = await Promise.all([
-        supabase.from('properties').select('status').neq('status', 'deleted'),
-        supabase.from('contracts').select('status, rent_amount').eq('status', 'active')
+        propertiesQuery,
+        contractsQuery
       ]);
 
       if (propertiesResult.error || contractsResult.error) {
@@ -131,6 +228,7 @@ export const propertiesApi = {
         active_contracts: contracts.length
       };
 
+      console.log(`[Security] Dashboard summary for user ${userContext.userId} (${userContext.role}):`, summary);
       return { data: summary, error: null };
     });
   }
@@ -194,10 +292,20 @@ export const profilesApi = {
     );
   },
 
-  // Get tenants with their contracts
+  // Get tenants with their contracts - role-based access control
   async getTenants(): Promise<ApiResponse<any[]>> {
-    return handleApiCall(() => 
-      supabase
+    // **SECURITY**: Get current user context for role-based filtering
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext) {
+      return {
+        data: null,
+        error: { message: 'Authentication required to access tenant data' }
+      };
+    }
+
+    return handleApiCall(async () => {
+      let query = supabase
         .from('profiles')
         .select(`
           *,
@@ -207,8 +315,39 @@ export const profilesApi = {
           )
         `)
         .in('role', ['tenant'])
-        .eq('status', 'active')
-    );
+        .eq('status', 'active');
+
+      // **SECURITY**: Apply role-based filtering
+      if (userContext.role === 'owner') {
+        // Owners see only tenants of their properties
+        const ownedPropertyIds = userContext.ownedPropertyIds || [];
+        if (ownedPropertyIds.length > 0) {
+          // Get tenant IDs who have contracts with owner's properties
+          const { data: contracts } = await supabase
+            .from('contracts')
+            .select('tenant_id')
+            .in('property_id', ownedPropertyIds);
+          
+          const tenantIds = contracts?.map(c => c.tenant_id) || [];
+          if (tenantIds.length > 0) {
+            query = query.in('id', tenantIds);
+          } else {
+            // Owner has no tenants
+            return { data: [], error: null };
+          }
+        } else {
+          // Owner has no properties
+          return { data: [], error: null };
+        }
+      } else if (userContext.role === 'tenant') {
+        // Tenants see only their own profile
+        query = query.eq('id', userContext.userId);
+      }
+      // Admins see all tenants (no additional filtering)
+
+      console.log(`[Security] Tenants query for user ${userContext.userId} (${userContext.role})`);
+      return query;
+    });
   },
 
   // Get owners with their properties

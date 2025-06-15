@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, FlatList, ScrollView, SafeAreaView } from 'react-native';
-import { Text, Searchbar, Avatar } from 'react-native-paper';
+import { View, StyleSheet, FlatList, ScrollView, SafeAreaView, ActivityIndicator, RefreshControl } from 'react-native';
+import { Text, Searchbar, Avatar, FAB } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { lightTheme, darkTheme } from '@/lib/theme';
+import { lightTheme, darkTheme, spacing } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
-import { Users, Phone, Mail, MapPin } from 'lucide-react-native';
+import { Users, Phone, Mail, MapPin, Plus, Lock, Shield } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import StatCard from '@/components/StatCard';
+import ModernCard from '@/components/ModernCard';
+import { hasScreenAccess } from '@/lib/permissions';
+import { useApi } from '@/hooks/useApi';
+import { profilesApi } from '@/lib/api';
 
 // Static tenant data to prevent loading issues
 const staticTenants = [
@@ -68,15 +72,68 @@ export default function TenantsScreen() {
   const theme = isDarkMode ? darkTheme : lightTheme;
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Check if user has access to tenants data
+  const canAccessTenants = hasScreenAccess('tenants');
+
+  // API call for tenants (with role-based filtering)
+  const { 
+    data: tenants, 
+    loading: tenantsLoading, 
+    error: tenantsError, 
+    refetch: refetchTenants 
+  } = useApi(() => profilesApi.getTenants(), []);
+
+  // Handle refresh
+  const [refreshing, setRefreshing] = React.useState(false);
+  
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await refetchTenants();
+    setRefreshing(false);
+  }, [refetchTenants]);
+
+  // If user doesn't have tenants access, show access denied
+  if (!canAccessTenants) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <ModernHeader 
+          title="المستأجرين" 
+          showNotifications={true}
+          showMenu={true}
+          variant="dark"
+        />
+        <View style={styles.accessDeniedContainer}>
+          <Lock size={64} color="#ccc" />
+          <Text style={[styles.accessDeniedText, { color: theme.colors.onSurfaceVariant }]}>
+            Access Denied
+          </Text>
+          <Text style={[styles.accessDeniedSubtext, { color: theme.colors.onSurfaceVariant }]}>
+            You don't have permission to view tenant information. Tenants can only see their own profile, while owners can see tenants of their properties.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Use real data from API
+  const tenantsData = tenants?.data || [];
+
   // Filter tenants based on search
-  const filteredTenants = staticTenants.filter(tenant => {
-    const fullName = `${tenant.first_name} ${tenant.last_name}`.toLowerCase();
+  const filteredTenants = tenantsData.filter(tenant => {
+    const fullName = `${tenant.first_name || ''} ${tenant.last_name || ''}`.toLowerCase();
     const query = searchQuery.toLowerCase();
     return fullName.includes(query) ||
-           tenant.email.toLowerCase().includes(query) ||
-           tenant.phone.includes(query) ||
-           tenant.property.toLowerCase().includes(query);
+           (tenant.email && tenant.email.toLowerCase().includes(query)) ||
+           (tenant.phone && tenant.phone.includes(query));
   });
+
+  // Calculate real-time statistics
+  const tenantStats = {
+    total: tenantsData.length,
+    active: tenantsData.filter(t => t.status === 'active').length,
+    pending: tenantsData.filter(t => t.status === 'pending').length,
+    foreign: tenantsData.filter(t => t.is_foreign === true).length,
+  };
 
   const renderTenant = ({ item }: { item: any }) => (
     <View style={[styles.tenantCard, { backgroundColor: theme.colors.surface }]}>
@@ -178,7 +235,18 @@ export default function TenantsScreen() {
         variant="dark"
       />
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[theme.colors.primary]}
+            tintColor={theme.colors.primary}
+          />
+        }
+      >
         {/* Stats Section */}
         <View style={styles.statsSection}>
           <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
@@ -188,29 +256,33 @@ export default function TenantsScreen() {
             <View style={styles.statCardWrapper}>
               <StatCard
                 title="إجمالي المستأجرين"
-                value={staticStats.total}
+                value={tenantStats.total.toString()}
                 color={theme.colors.primary}
+                loading={tenantsLoading}
               />
             </View>
             <View style={styles.statCardWrapper}>
               <StatCard
                 title="مستأجرين نشطين"
-                value={staticStats.active}
+                value={tenantStats.active.toString()}
                 color="#4CAF50"
+                loading={tenantsLoading}
               />
             </View>
             <View style={styles.statCardWrapper}>
               <StatCard
                 title="مستأجرين معلقين"
-                value={staticStats.pending}
+                value={tenantStats.pending.toString()}
                 color="#FF9800"
+                loading={tenantsLoading}
               />
             </View>
             <View style={styles.statCardWrapper}>
               <StatCard
                 title="مستأجرين أجانب"
-                value={staticStats.foreign}
+                value={tenantStats.foreign.toString()}
                 color={theme.colors.secondary}
+                loading={tenantsLoading}
               />
             </View>
           </View>
@@ -255,6 +327,15 @@ export default function TenantsScreen() {
           )}
         </View>
       </ScrollView>
+
+      {/* Assign Tenant FAB */}
+      <FAB
+        icon="home-account"
+        style={[styles.fab, { backgroundColor: theme.colors.primary }]}
+        size="medium"
+        onPress={() => router.push('/tenants/add')}
+        label="تخصيص مستأجر"
+      />
     </SafeAreaView>
   );
 }
@@ -407,5 +488,29 @@ const styles = StyleSheet.create({
   statCardWrapper: {
     width: '48%',
     minHeight: 120,
+  },
+  fab: {
+    position: 'absolute',
+    margin: 16,
+    right: 0,
+    bottom: 0,
+  },
+  accessDeniedContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  accessDeniedText: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  accessDeniedSubtext: {
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
