@@ -32,20 +32,26 @@ export const SCREEN_PERMISSIONS: ScreenPermission[] = [
   // Properties Management
   { screen: 'properties', roles: ['admin', 'manager', 'owner', 'tenant'] },
   { screen: 'add-property', roles: ['admin', 'manager', 'owner'] },
-  { screen: 'edit-property', roles: ['admin', 'manager'], 
-    condition: (ctx) => ctx.role === 'owner' && !!ctx.ownedPropertyIds?.length },
+  { screen: 'edit-property', roles: ['admin', 'manager', 'owner'], 
+    condition: (ctx) => ctx.role === 'admin' || ctx.role === 'manager' || (ctx.role === 'owner' && !!ctx.ownedPropertyIds?.length) },
+  { screen: 'property-details', roles: ['admin', 'manager', 'owner', 'tenant'] },
   
   // People Management
   { screen: 'tenants', roles: ['admin', 'manager', 'owner'] },
   { screen: 'owners', roles: ['admin', 'manager'] },
   { screen: 'buyers', roles: ['admin', 'manager', 'owner'] },
   { screen: 'suppliers', roles: ['admin', 'manager'] },
+  { screen: 'clients', roles: ['admin', 'manager'] },
+  { screen: 'foreign-tenants', roles: ['admin', 'manager', 'owner'] },
   
   // Financial Management
   { screen: 'vouchers', roles: ['admin', 'manager'] },
   { screen: 'receipts', roles: ['admin', 'manager', 'owner'] },
   { screen: 'payments', roles: ['admin', 'manager'] },
   { screen: 'invoices', roles: ['admin', 'manager', 'owner'] },
+  { screen: 'accounts', roles: ['admin', 'manager'] },
+  { screen: 'cost-centers', roles: ['admin', 'manager'] },
+  { screen: 'fixed-assets', roles: ['admin', 'manager'] },
   
   // Maintenance
   { screen: 'maintenance-requests', roles: ['admin', 'manager', 'owner', 'tenant'] },
@@ -61,10 +67,15 @@ export const SCREEN_PERMISSIONS: ScreenPermission[] = [
   { screen: 'issues', roles: ['admin', 'manager', 'owner', 'tenant'] },
   { screen: 'documents', roles: ['admin', 'manager', 'owner', 'tenant'] },
   
+  // Reservations and Contracts
+  { screen: 'reservations', roles: ['admin', 'manager', 'owner'] },
+  { screen: 'contracts', roles: ['admin', 'manager', 'owner'] },
+  
   // Settings & Administration
   { screen: 'settings', roles: ['admin', 'manager', 'owner', 'tenant'] },
   { screen: 'users', roles: ['admin', 'manager'] },
-  { screen: 'accounts', roles: ['admin', 'manager'] },
+  { screen: 'user-management', roles: ['admin', 'manager'] },
+  { screen: 'system-settings', roles: ['admin', 'manager'] },
 ];
 
 // **SIDEBAR NAVIGATION PERMISSIONS**
@@ -130,16 +141,30 @@ export const TAB_PERMISSIONS: NavigationPermission[] = [
   { id: 'tenants', label: 'Tenants', roles: ['admin', 'manager', 'owner'] },
   { id: 'maintenance', label: 'Maintenance', roles: ['admin', 'manager', 'owner', 'tenant'] },
   { id: 'reports', label: 'Reports', roles: ['admin', 'manager', 'owner'] },
+  { id: 'finance', label: 'Finance', roles: ['admin', 'manager', 'owner'] },
+  { id: 'documents', label: 'Documents', roles: ['admin', 'manager', 'owner', 'tenant'] },
+  { id: 'people', label: 'People', roles: ['admin', 'manager', 'owner'] },
+  { id: 'payments', label: 'Payments', roles: ['admin', 'manager', 'owner'] },
   { id: 'settings', label: 'Settings', roles: ['admin', 'manager', 'owner', 'tenant'] },
 ];
 
 // **PERMISSION CHECK FUNCTIONS**
 
 /**
+ * Check if user is admin or manager (has full system access)
+ */
+export function isAdminOrManager(userContext: UserContext | null): boolean {
+  return userContext?.role === 'admin' || userContext?.role === 'manager';
+}
+
+/**
  * Check if user has permission to access a screen
  */
 export function hasScreenAccess(screen: string, userContext: UserContext | null): boolean {
   if (!userContext || !userContext.isAuthenticated) return false;
+  
+  // Admin and Manager have access to everything
+  if (isAdminOrManager(userContext)) return true;
   
   const permission = SCREEN_PERMISSIONS.find(p => p.screen === screen);
   if (!permission) return false;
@@ -161,6 +186,9 @@ export function hasScreenAccess(screen: string, userContext: UserContext | null)
  */
 export function hasNavigationAccess(itemId: string, userContext: UserContext | null, permissions: NavigationPermission[]): boolean {
   if (!userContext || !userContext.isAuthenticated) return false;
+  
+  // Admin and Manager have access to everything
+  if (isAdminOrManager(userContext)) return true;
   
   const permission = permissions.find(p => p.id === itemId);
   if (!permission) return false;
@@ -275,6 +303,9 @@ export function useFilteredNavigation() {
  */
 export function canUserAccess(screen: string, userRole: UserRole | undefined): boolean {
   if (!userRole) return false;
+  
+  // Admin and Manager have access to everything
+  if (userRole === 'admin' || userRole === 'manager') return true;
   
   const permission = SCREEN_PERMISSIONS.find(p => p.screen === screen);
   if (!permission) return false;
