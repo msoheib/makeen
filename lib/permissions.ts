@@ -252,13 +252,19 @@ export function useFilteredNavigation() {
   const sidebarItems = getFilteredSidebarItems(userContext);
   const tabItems = getFilteredTabItems(userContext);
   
+  // Helper function to check tab access specifically
+  const hasTabAccess = (tabId: string): boolean => {
+    return hasNavigationAccess(tabId, userContext, TAB_PERMISSIONS);
+  };
+  
   return { 
     sidebarItems, 
     tabItems, 
     userContext, 
     loading,
     hasNavigationAccess: (itemId: string, permissions: NavigationPermission[]) => 
-      hasNavigationAccess(itemId, userContext, permissions)
+      hasNavigationAccess(itemId, userContext, permissions),
+    hasTabAccess
   };
 }
 
