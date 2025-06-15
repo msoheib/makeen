@@ -76,6 +76,16 @@ export default function TenantsScreen() {
           <Text style={[styles.accessDeniedSubtext, { color: theme.colors.onSurfaceVariant }]}>
             You don't have permission to view tenant information. Tenants can only see their own profile, while owners can see tenants of their properties.
           </Text>
+          {/* DEBUG: Show user context for troubleshooting */}
+          <Text style={[styles.accessDeniedSubtext, { color: theme.colors.onSurfaceVariant, marginTop: 16 }]}>
+            Current Role: {userContext?.role || 'None'}
+          </Text>
+          <Text style={[styles.accessDeniedSubtext, { color: theme.colors.onSurfaceVariant }]}>
+            Authenticated: {userContext?.isAuthenticated ? 'Yes' : 'No'}
+          </Text>
+          <Text style={[styles.accessDeniedSubtext, { color: theme.colors.onSurfaceVariant }]}>
+            User ID: {userContext?.userId || 'None'}
+          </Text>
         </View>
       </SafeAreaView>
     );
