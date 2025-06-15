@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="90" fill="#1976D2" stroke="#E3F2FD" stroke-width="4"/>
+  
+  <!-- House/Building icon -->
+  <g transform="translate(100, 100)">
+    <!-- Main building -->
+    <rect x="-25" y="-15" width="50" height="35" fill="#FFFFFF" rx="2"/>
+    
+    <!-- Roof -->
+    <polygon points="-30,-15 0,-35 30,-15" fill="#FFFFFF"/>
+    
+    <!-- Windows -->
+    <rect x="-20" y="-10" width="8" height="8" fill="#1976D2" rx="1"/>
+    <rect x="-8" y="-10" width="8" height="8" fill="#1976D2" rx="1"/>
+    <rect x="4" y="-10" width="8" height="8" fill="#1976D2" rx="1"/>
+    <rect x="16" y="-10" width="8" height="8" fill="#1976D2" rx="1"/>
+    
+    <!-- Door -->
+    <rect x="-4" y="0" width="8" height="20" fill="#1976D2" rx="1"/>
+    <circle cx="2" cy="10" r="1" fill="#FFFFFF"/>
+    
+    <!-- Text - Real Estate -->
+    <text x="0" y="40" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#FFFFFF">Real Estate</text>
+    <text x="0" y="55" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#FFFFFF">MG</text>
+  </g>
+</svg> 

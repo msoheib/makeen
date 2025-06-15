@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, SafeAreaView, FlatList, RefreshControl } from 'react-native';
+import { View, StyleSheet, ScrollView, SafeAreaView, FlatList, RefreshControl, Alert, Platform } from 'react-native';
 import { Text, Card, IconButton } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { lightTheme, darkTheme } from '@/lib/theme';
@@ -7,6 +7,7 @@ import { useAppStore } from '@/lib/store';
 import { BarChart3, FileText, TrendingUp, PieChart, Calendar, Download } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import StatCard from '@/components/StatCard';
+import { pdfApi, PDFRequest } from '@/lib/pdfApi';
 
 // Static reports data to prevent loading issues
 const staticReports = [
@@ -110,6 +111,7 @@ export default function ReportsScreen() {
   const theme = isDarkMode ? darkTheme : lightTheme;
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
+  const [generatingPDF, setGeneratingPDF] = useState<string | null>(null);
 
   const filteredReports = selectedCategory === 'all' 
     ? staticReports 
@@ -122,6 +124,98 @@ export default function ReportsScreen() {
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  // Map report types to PDF API report types
+  const mapReportTypeToPDFType = (reportType: string): PDFRequest['reportType'] => {
+    switch (reportType) {
+      case 'revenue':
+        return 'revenue';
+      case 'expenses':
+        return 'expense';
+      case 'properties':
+        return 'property';
+      case 'tenants':
+        return 'tenant';
+      case 'maintenance':
+        return 'maintenance';
+      default:
+        return 'revenue'; // fallback
+    }
+  };
+
+  // Handle PDF generation
+  const handleDownloadPDF = async (report: any) => {
+    try {
+      setGeneratingPDF(report.id);
+      
+      // Create PDF request
+      const pdfRequest: PDFRequest = {
+        reportType: mapReportTypeToPDFType(report.type),
+        dateRange: {
+          startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString(),
+          endDate: new Date().toISOString()
+        }
+      };
+
+      console.log('Generating PDF for report:', report.title);
+      console.log('PDF request:', pdfRequest);
+
+      // Call PDF API
+      const response = await pdfApi.generatePDF(pdfRequest);
+
+      if (response.success) {
+        // Handle actual PDF download if available
+        if (response.pdfUrl && response.filename) {
+          // For web platform, trigger download
+          if (Platform.OS === 'web') {
+            const link = document.createElement('a');
+            link.href = response.pdfUrl;
+            link.download = response.filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up the object URL
+            URL.revokeObjectURL(response.pdfUrl);
+          }
+          
+          Alert.alert(
+            'تم إنشاء وتحميل التقرير',
+            `تم إنشاء وتحميل ${report.title} بنجاح!\n\nعدد السجلات: ${response.meta?.recordCount || 0}\nاسم الملف: ${response.filename}\nوقت الإنشاء: ${new Date(response.meta?.generatedAt || '').toLocaleString('ar-SA')}`,
+            [
+              {
+                text: 'موافق',
+                style: 'default'
+              }
+            ]
+          );
+        } else {
+          // Fallback message for simulation mode
+          Alert.alert(
+            'تم إنشاء التقرير',
+            `تم إنشاء ${report.title} بنجاح!\n\nعدد السجلات: ${response.meta?.recordCount || 0}\nوقت الإنشاء: ${new Date(response.meta?.generatedAt || '').toLocaleString('ar-SA')}\n\nملاحظة: يتم استخدام وضع المحاكاة حاليًا.`,
+            [
+              {
+                text: 'موافق',
+                style: 'default'
+              }
+            ]
+          );
+        }
+      } else {
+        throw new Error(response.error || 'فشل في إنشاء التقرير');
+      }
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      Alert.alert(
+        'خطأ في إنشاء التقرير',
+        error instanceof Error ? error.message : 'حدث خطأ غير متوقع',
+        [{ text: 'موافق', style: 'default' }]
+      );
+    } finally {
+      setGeneratingPDF(null);
+    }
   };
 
   const renderReport = ({ item }: { item: any }) => {
@@ -144,10 +238,11 @@ export default function ReportsScreen() {
             </View>
           </View>
           <IconButton
-            icon="download"
+            icon={generatingPDF === item.id ? "loading" : "download"}
             size={20}
             iconColor={theme.colors.primary}
-            onPress={() => console.log('Download report', item.id)}
+            disabled={generatingPDF === item.id}
+            onPress={() => handleDownloadPDF(item)}
           />
         </View>
 

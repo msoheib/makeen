@@ -5,6 +5,7 @@ import { Slot } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { Provider as PaperProvider } from 'react-native-paper';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { theme } from '@/lib/theme';
 import { useFonts } from 'expo-font';
 import { Inter_400Regular, Inter_500Medium, Inter_700Bold } from '@expo-google-fonts/inter';
@@ -59,9 +60,11 @@ export default function RootLayout() {
   }
 
   return (
-    <PaperProvider theme={theme}>
-      <StatusBar style="auto" />
-      <Slot />
-    </PaperProvider>
+    <SafeAreaProvider>
+      <PaperProvider theme={theme}>
+        <StatusBar style="auto" />
+        <Slot />
+      </PaperProvider>
+    </SafeAreaProvider>
   );
 }
