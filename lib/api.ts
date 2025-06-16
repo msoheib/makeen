@@ -3421,6 +3421,106 @@ export const buyerApi = {
   }
 };
 
+// Notifications API
+export const notificationsApi = {
+  // Get all notifications for current user
+  async getAll(filters?: {
+    is_read?: boolean;
+    notification_type?: string;
+    priority?: string;
+  }): Promise<ApiResponse<any[]>> {
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext) {
+      return {
+        data: null,
+        error: { message: 'Authentication required to fetch notifications' }
+      };
+    }
+
+    let query = supabase
+      .from('notifications')
+      .select(`
+        *,
+        sender:profiles!notifications_sender_id_fkey(id, first_name, last_name, email)
+      `)
+      .eq('recipient_id', userContext.userId)
+      .order('created_at', { ascending: false });
+
+    // Apply filters
+    if (filters?.is_read !== undefined) query = query.eq('is_read', filters.is_read);
+    if (filters?.notification_type) query = query.eq('notification_type', filters.notification_type);
+    if (filters?.priority) query = query.eq('priority', filters.priority);
+
+    return handleApiCall(() => query);
+  },
+
+  // Get unread notifications count
+  async getUnreadCount(): Promise<ApiResponse<number>> {
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext) {
+      return {
+        data: null,
+        error: { message: 'Authentication required to fetch notification count' }
+      };
+    }
+
+    return handleApiCall(async () => {
+      const { count, error } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('recipient_id', userContext.userId)
+        .eq('is_read', false);
+
+      if (error) throw error;
+      return { data: count || 0, error: null };
+    });
+  },
+
+  // Mark notification as read
+  async markAsRead(notificationId: string): Promise<ApiResponse<any>> {
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext) {
+      return {
+        data: null,
+        error: { message: 'Authentication required to update notification' }
+      };
+    }
+
+    return handleApiCall(() =>
+      supabase
+        .from('notifications')
+        .update({ is_read: true, updated_at: new Date().toISOString() })
+        .eq('id', notificationId)
+        .eq('recipient_id', userContext.userId)
+        .select()
+        .single()
+    );
+  },
+
+  // Mark all notifications as read
+  async markAllAsRead(): Promise<ApiResponse<any>> {
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext) {
+      return {
+        data: null,
+        error: { message: 'Authentication required to update notifications' }
+      };
+    }
+
+    return handleApiCall(() =>
+      supabase
+        .from('notifications')
+        .update({ is_read: true, updated_at: new Date().toISOString() })
+        .eq('recipient_id', userContext.userId)
+        .eq('is_read', false)
+    );
+  }
+};
+
 // Export all APIs
 export default {
   properties: propertiesApi,
@@ -3444,4 +3544,5 @@ export default {
   ownerProperty: ownerPropertyApi,
   approvals: approvalsApi,
   buyer: buyerApi,
+  notifications: notificationsApi,
 }; 

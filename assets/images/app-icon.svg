@@ -1,0 +1,38 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1024" height="1024" fill="#1976D2"/>
+  
+  <!-- Main Building -->
+  <rect x="200" y="350" width="300" height="450" fill="#FFF" stroke="#E3F2FD" stroke-width="4"/>
+  
+  <!-- Roof -->
+  <polygon points="180,350 350,200 520,350" fill="#FF7043"/>
+  
+  <!-- Door -->
+  <rect x="280" y="650" width="80" height="150" fill="#795548"/>
+  <circle cx="340" cy="720" r="8" fill="#FFC107"/>
+  
+  <!-- Windows First Floor -->
+  <rect x="230" y="450" width="60" height="60" fill="#81C784" stroke="#4CAF50" stroke-width="2"/>
+  <rect x="410" y="450" width="60" height="60" fill="#81C784" stroke="#4CAF50" stroke-width="2"/>
+  
+  <!-- Windows Second Floor -->
+  <rect x="230" y="570" width="60" height="60" fill="#81C784" stroke="#4CAF50" stroke-width="2"/>
+  <rect x="410" y="570" width="60" height="60" fill="#81C784" stroke="#4CAF50" stroke-width="2"/>
+  
+  <!-- Side Building -->
+  <rect x="520" y="400" width="200" height="400" fill="#F5F5F5" stroke="#E0E0E0" stroke-width="3"/>
+  
+  <!-- Side Building Windows -->
+  <rect x="550" y="450" width="50" height="50" fill="#81C784" stroke="#4CAF50" stroke-width="2"/>
+  <rect x="650" y="450" width="50" height="50" fill="#81C784" stroke="#4CAF50" stroke-width="2"/>
+  <rect x="550" y="550" width="50" height="50" fill="#81C784" stroke="#4CAF50" stroke-width="2"/>
+  <rect x="650" y="550" width="50" height="50" fill="#81C784" stroke="#4CAF50" stroke-width="2"/>
+  
+  <!-- Ground Line -->
+  <rect x="0" y="800" width="1024" height="224" fill="#4CAF50"/>
+  
+  <!-- App Title -->
+  <text x="512" y="900" text-anchor="middle" fill="#FFF" font-family="Arial, sans-serif" font-size="60" font-weight="bold">Real Estate</text>
+  <text x="512" y="960" text-anchor="middle" fill="#FFF" font-family="Arial, sans-serif" font-size="48">Management</text>
+</svg> 

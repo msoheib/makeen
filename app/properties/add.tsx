@@ -19,6 +19,7 @@ export default function AddPropertyScreen() {
     description: '',
     property_type: 'apartment' as PropertyType,
     status: 'available' as PropertyStatus,
+    listing_type: 'rent' as 'rent' | 'sale' | 'both',
     address: '',
     city: '',
     country: '',
@@ -27,7 +28,9 @@ export default function AddPropertyScreen() {
     bedrooms: '',
     bathrooms: '',
     price: '',
+    annual_rent: '',
     payment_method: 'cash' as PaymentMethod,
+    is_accepting_bids: true,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -98,6 +101,7 @@ export default function AddPropertyScreen() {
         description: formData.description.trim() || null,
         property_type: formData.property_type,
         status: formData.status,
+        listing_type: formData.listing_type,
         address: formData.address.trim(),
         city: formData.city.trim(),
         country: formData.country.trim(),
@@ -106,9 +110,11 @@ export default function AddPropertyScreen() {
         bedrooms: formData.bedrooms ? Number(formData.bedrooms) : null,
         bathrooms: formData.bathrooms ? Number(formData.bathrooms) : null,
         price: Number(formData.price),
+        annual_rent: formData.annual_rent ? Number(formData.annual_rent) : null,
         payment_method: formData.payment_method,
         owner_id: ownerId,
         images: [], // Empty array for now
+        is_accepting_bids: formData.is_accepting_bids,
       };
 
       console.log('Submitting property data:', propertyData);
@@ -127,7 +133,7 @@ export default function AddPropertyScreen() {
 
       console.log('Property added successfully:', data);
 
-      // Show success message and navigate back
+      // Show success message and automatically navigate back
       Alert.alert(
         'نجح',
         'تم إضافة العقار بنجاح!',
@@ -138,6 +144,11 @@ export default function AddPropertyScreen() {
           },
         ]
       );
+      
+      // Automatically navigate back after a short delay
+      setTimeout(() => {
+        router.replace('/(drawer)/(tabs)/properties');
+      }, 1500);
     } catch (error: any) {
       console.error('Error adding property:', error);
       
@@ -227,6 +238,18 @@ export default function AddPropertyScreen() {
               { value: 'rented', label: 'مؤجر' },
               { value: 'maintenance', label: 'صيانة' },
               { value: 'reserved', label: 'محجوز' },
+            ]}
+            style={styles.segmentedButtons}
+          />
+
+          <Text style={styles.fieldLabel}>نوع القائمة *</Text>
+          <SegmentedButtons
+            value={formData.listing_type}
+            onValueChange={(value) => setFormData({ ...formData, listing_type: value as 'rent' | 'sale' | 'both' })}
+            buttons={[
+              { value: 'rent', label: 'للإيجار' },
+              { value: 'sale', label: 'للبيع' },
+              { value: 'both', label: 'للإيجار والبيع' },
             ]}
             style={styles.segmentedButtons}
           />
@@ -338,7 +361,7 @@ export default function AddPropertyScreen() {
           </View>
 
           <TextInput
-            label="السعر (ريال سعودي) *"
+            label={formData.listing_type === 'rent' ? 'الإيجار السنوي (ريال سعودي) *' : 'السعر (ريال سعودي) *'}
             value={formData.price}
             onChangeText={(text) => setFormData({ ...formData, price: text })}
             mode="outlined"
@@ -348,6 +371,22 @@ export default function AddPropertyScreen() {
             textAlign="right"
           />
           {errors.price && <Text style={styles.errorText}>{errors.price}</Text>}
+
+          {/* Annual Rent field for rent/both listing types */}
+          {(formData.listing_type === 'rent' || formData.listing_type === 'both') && (
+            <>
+              <TextInput
+                label="الإيجار السنوي (ريال سعودي)"
+                value={formData.annual_rent}
+                onChangeText={(text) => setFormData({ ...formData, annual_rent: text })}
+                mode="outlined"
+                keyboardType="numeric"
+                style={styles.input}
+                textAlign="right"
+                placeholder="الإيجار المطلوب سنوياً"
+              />
+            </>
+          )}
 
           <Text style={styles.fieldLabel}>طريقة الدفع *</Text>
           <SegmentedButtons

@@ -135,6 +135,11 @@ export default function PlaceBidScreen() {
             }
           ]
         );
+        
+        // Automatically navigate back after a short delay
+        setTimeout(() => {
+          router.replace('/tenant/dashboard');
+        }, 1500);
       }
     } catch (error) {
       Alert.alert('خطأ', 'حدث خطأ غير متوقع أثناء تقديم العرض');

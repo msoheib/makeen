@@ -97,6 +97,11 @@ export default function AddVoucherScreen() {
           },
         ]
       );
+      
+      // Automatically navigate back after a short delay
+      setTimeout(() => {
+        router.replace('/(drawer)/(tabs)/payments');
+      }, 1500);
     } catch (error: any) {
       console.error('Error creating voucher:', error);
       if (error.code === '23505') {

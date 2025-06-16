@@ -1,11 +1,13 @@
 import React from 'react';
-import { View, StyleSheet, Platform, StatusBar } from 'react-native';
-import { Text, IconButton } from 'react-native-paper';
+import { View, StyleSheet, Platform, StatusBar, TouchableOpacity } from 'react-native';
+import { Text, IconButton, Badge } from 'react-native-paper';
 import { lightTheme, darkTheme, spacing } from '@/lib/theme';
 import { Bell, Search, Menu, ArrowRight, ArrowLeft } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { useAppStore } from '@/lib/store';
+import { useApi } from '@/hooks/useApi';
+import { notificationsApi } from '@/lib/api';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface ModernHeaderProps {
@@ -46,6 +48,9 @@ export default function ModernHeader({
   const iconColor = isDark ? '#FFFFFF' : theme.colors.onSurfaceVariant;
   const backgroundColor = isDark ? '#1E293B' : theme.colors.surface;
 
+  // Get unread notifications count
+  const { data: unreadCount } = useApi(() => notificationsApi.getUnreadCount(), []);
+
   // Calculate increased safe area padding
   // Base: safe area top inset + Additional padding for better spacing  
   const safeAreaPadding = Math.max(insets.top + 16, 24); // Minimum 24px, safe area + 16px extra for generous spacing
@@ -72,6 +77,8 @@ export default function ModernHeader({
   const handleNotificationPress = () => {
     if (onNotificationPress) {
       onNotificationPress();
+    } else {
+      router.push('/notifications');
     }
   };
 
@@ -133,12 +140,22 @@ export default function ModernHeader({
               />
             )}
             {showNotifications && (
-              <IconButton
-                icon={() => <Bell size={24} color={iconColor} />}
-                onPress={handleNotificationPress}
-                style={styles.actionButton}
-                accessibilityLabel="الإشعارات"
-              />
+              <View style={styles.notificationContainer}>
+                <IconButton
+                  icon={() => <Bell size={24} color={iconColor} />}
+                  onPress={handleNotificationPress}
+                  style={styles.actionButton}
+                  accessibilityLabel="الإشعارات"
+                />
+                {unreadCount && unreadCount > 0 && (
+                  <Badge
+                    style={[styles.notificationBadge, { backgroundColor: theme.colors.error }]}
+                    size={18}
+                  >
+                    {unreadCount > 99 ? '99+' : unreadCount.toString()}
+                  </Badge>
+                )}
+              </View>
             )}
           </View>
         </View>
@@ -208,5 +225,25 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 2,
     writingDirection: 'rtl',
+  },
+  notificationContainer: {
+    position: 'relative',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    fontSize: 10,
+    fontWeight: '600',
+    textAlign: 'center',
+    color: '#FFFFFF',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
 });

@@ -181,9 +181,9 @@ const VoucherCard: React.FC<VoucherCardProps> = ({
             <View style={styles.detailRow}>
               <MaterialIcons name="location-on" size={14} color={theme.colors.onSurfaceVariant} />
               <Text style={[styles.detailText, { color: theme.colors.onSurfaceVariant }]}>
-                {' '}{voucher.property.title}
-                {voucher.property.property_code && ` (${voucher.property.property_code})`}
-              </Text>
+              {' '}{voucher.property.title}
+              {voucher.property.property_code && ` (${voucher.property.property_code})`}
+            </Text>
             </View>
           )}
           
@@ -191,8 +191,8 @@ const VoucherCard: React.FC<VoucherCardProps> = ({
             <View style={styles.detailRow}>
               <MaterialIcons name="person" size={14} color={theme.colors.onSurfaceVariant} />
               <Text style={[styles.detailText, { color: theme.colors.onSurfaceVariant }]}>
-                {' '}{voucher.tenant.first_name} {voucher.tenant.last_name}
-              </Text>
+              {' '}{voucher.tenant.first_name} {voucher.tenant.last_name}
+            </Text>
             </View>
           )}
           
@@ -200,8 +200,8 @@ const VoucherCard: React.FC<VoucherCardProps> = ({
             <View style={styles.detailRow}>
               <MaterialIcons name="account-balance" size={14} color={theme.colors.onSurfaceVariant} />
               <Text style={[styles.detailText, { color: theme.colors.onSurfaceVariant }]}>
-                {' '}{voucher.account.account_code} - {voucher.account.account_name}
-              </Text>
+              {' '}{voucher.account.account_code} - {voucher.account.account_name}
+            </Text>
             </View>
           )}
         </View>

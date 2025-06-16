@@ -192,12 +192,22 @@ export default function DashboardScreen() {
   const propertiesData = properties?.data || [];
   const tenantsData = tenants?.data || [];
   
+  console.log('[Dashboard Debug] Properties Data:', {
+    propertiesCount: propertiesData.length,
+    tenantsCount: tenantsData.length,
+    propertiesData: propertiesData.slice(0, 2), // First 2 for debugging
+    summaryLoading: summaryLoading,
+    summaryData: dashboardSummary?.data,
+    summaryError: summaryError
+  });
+  
   const propertyStats = {
     totalProperties: propertiesData.length,
-    occupied: propertiesData.filter(p => p.status === 'rented').length,
+    // Try both 'rented' and 'occupied' status for compatibility
+    occupied: propertiesData.filter(p => p.status === 'rented' || p.status === 'occupied').length,
     vacant: propertiesData.filter(p => p.status === 'available').length,
     maintenance: propertiesData.filter(p => p.status === 'maintenance').length,
-    occupancyRate: propertiesData.length > 0 ? Math.round((propertiesData.filter(p => p.status === 'rented').length / propertiesData.length) * 100) : 0
+    occupancyRate: propertiesData.length > 0 ? Math.round((propertiesData.filter(p => p.status === 'rented' || p.status === 'occupied').length / propertiesData.length) * 100) : 0
   };
   
   const tenantStats = {

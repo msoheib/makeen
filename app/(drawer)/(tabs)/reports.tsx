@@ -275,7 +275,7 @@ export default function ReportsScreen() {
           [{ text: 'حسناً', style: 'default' }]
         );
       }
-          } catch (error) {
+    } catch (error) {
       console.error('Report generation error:', error);
       Alert.alert(
         'خطأ في إنشاء التقرير',
@@ -441,9 +441,9 @@ export default function ReportsScreen() {
                   // Admin or other roles get all categories
                   filterCategories = [
                     ...filterCategories,
-                    { key: 'revenue', label: 'الإيرادات' },
-                    { key: 'expenses', label: 'المصروفات' },
-                    { key: 'properties', label: 'العقارات' },
+                { key: 'revenue', label: 'الإيرادات' },
+                { key: 'expenses', label: 'المصروفات' },
+                { key: 'properties', label: 'العقارات' },
                     { key: 'tenants', label: 'المستأجرين' },
                     { key: 'maintenance', label: 'الصيانة' },
                     { key: 'financial', label: 'المالي الشامل' }

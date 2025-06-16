@@ -161,23 +161,50 @@ export function isAdminOrManager(userContext: UserContext | null): boolean {
  * Check if user has permission to access a screen
  */
 export function hasScreenAccess(screen: string, userContext: UserContext | null): boolean {
-  if (!userContext || !userContext.isAuthenticated) return false;
+  console.log(`[Permissions] hasScreenAccess check for screen "${screen}":`, {
+    userContext: userContext,
+    isAuthenticated: userContext?.isAuthenticated,
+    role: userContext?.role
+  });
+  
+  if (!userContext || !userContext.isAuthenticated) {
+    console.log(`[Permissions] Access denied: No user context or not authenticated`);
+    return false;
+  }
   
   // Admin and Manager have access to everything
-  if (isAdminOrManager(userContext)) return true;
+  if (isAdminOrManager(userContext)) {
+    console.log(`[Permissions] Access granted: User is admin/manager`);
+    return true;
+  }
   
   const permission = SCREEN_PERMISSIONS.find(p => p.screen === screen);
-  if (!permission) return false;
+  if (!permission) {
+    console.log(`[Permissions] Access denied: No permission found for screen "${screen}"`);
+    return false;
+  }
   
   // Check role-based access
   const hasRoleAccess = permission.roles.includes(userContext.role);
-  if (!hasRoleAccess) return false;
+  console.log(`[Permissions] Role access check:`, {
+    userRole: userContext.role,
+    allowedRoles: permission.roles,
+    hasRoleAccess
+  });
+  
+  if (!hasRoleAccess) {
+    console.log(`[Permissions] Access denied: Role not allowed`);
+    return false;
+  }
   
   // Check additional conditions if any
   if (permission.condition) {
-    return permission.condition(userContext);
+    const conditionResult = permission.condition(userContext);
+    console.log(`[Permissions] Condition check result:`, conditionResult);
+    return conditionResult;
   }
   
+  console.log(`[Permissions] Access granted: All checks passed`);
   return true;
 }
 
@@ -267,6 +294,12 @@ export function useScreenAccess(screen: string) {
   const { userContext, loading } = useUserContext();
   
   const hasAccess = !loading && hasScreenAccess(screen, userContext);
+  
+  console.log(`[Permissions] useScreenAccess for screen "${screen}":`, {
+    loading,
+    userContext,
+    hasAccess
+  });
   
   return { hasAccess, loading, userContext };
 }

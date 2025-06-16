@@ -180,6 +180,11 @@ export default function AssignTenantScreen() {
           }
         ]
       );
+      
+      // Automatically navigate back after a short delay
+      setTimeout(() => {
+        router.replace('/(drawer)/(tabs)/tenants');
+      }, 1500);
 
     } catch (error) {
       console.error('Unexpected error:', error);

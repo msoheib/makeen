@@ -1,21 +1,29 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, FlatList, ScrollView, SafeAreaView, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native';
-import { Text, Searchbar, FAB } from 'react-native-paper';
+import { View, StyleSheet, FlatList, ScrollView, SafeAreaView, TouchableOpacity, RefreshControl, ActivityIndicator, Alert } from 'react-native';
+import { Text, Searchbar, FAB, Button, IconButton } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { lightTheme, darkTheme, spacing } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
-import { Building2, Home, Search, Plus } from 'lucide-react-native';
+import { Building2, Home, Search, Plus, MessageSquare, Users } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import StatCard from '@/components/StatCard';
 import ModernCard from '@/components/ModernCard';
 import { useApi } from '@/hooks/useApi';
-import { propertiesApi } from '@/lib/api';
+import { propertiesApi, bidsApi } from '@/lib/api';
+import { getCurrentUserContext } from '@/lib/security';
 
 export default function PropertiesScreen() {
   const router = useRouter();
   const { isDarkMode } = useAppStore();
   const theme = isDarkMode ? darkTheme : lightTheme;
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Get current user context for role-based functionality
+  const { 
+    data: userContext, 
+    loading: userLoading, 
+    error: userError 
+  } = useApi(() => getCurrentUserContext(), []);
 
   // Fetch properties from database
   const { 
@@ -62,6 +70,41 @@ export default function PropertiesScreen() {
   const handleRefresh = () => {
     refetchProperties();
     refetchStats();
+  };
+
+  // Handle rental contract request
+  const handleRequestContract = async (property: any) => {
+    if (!userContext || userContext.role !== 'tenant') {
+      Alert.alert(
+        'خطأ في الصلاحية',
+        'يجب أن تكون مستأجرًا لطلب عقد إيجار',
+        [{ text: 'موافق', style: 'default' }]
+      );
+      return;
+    }
+
+    // Navigate to bid submission screen with rental-specific parameters
+    router.push({
+      pathname: '/tenant/place-bid',
+      params: {
+        propertyId: property.id,
+        propertyTitle: property.title,
+        propertyPrice: property.annual_rent || property.price,
+        listingType: 'rent',
+        bidType: 'rental',
+        minBidAmount: property.minimum_bid_amount || 0,
+        maxBidAmount: property.maximum_bid_amount || 0
+      }
+    });
+  };
+
+  // Check if user can request contract for a property
+  const canRequestContract = (property: any) => {
+    return userContext && 
+           userContext.role === 'tenant' && 
+           property.status === 'available' && 
+           (property.listing_type === 'rent' || property.listing_type === 'both') &&
+           property.is_accepting_bids;
   };
 
   // Loading state
@@ -178,18 +221,48 @@ export default function PropertiesScreen() {
       </View>
       
       <View style={styles.propertyFooter}>
-                  <Text style={[styles.propertyPrice, { color: theme.colors.primary }]}>
-            {Number(item.price).toLocaleString('ar-SA')} ريال
+        <View style={styles.priceAndTypeContainer}>
+          <Text style={[styles.propertyPrice, { color: theme.colors.primary }]}>
+            {Number(item.annual_rent || item.price).toLocaleString('ar-SA')} ريال
+            {item.annual_rent && '/سنة'}
           </Text>
-        <View style={[styles.typeTag, { backgroundColor: theme.colors.surfaceVariant }]}>
-          <Text style={[styles.typeText, { color: theme.colors.onSurfaceVariant }]}>
-            {item.property_type === 'villa' ? 'فيلا' : 
-             item.property_type === 'apartment' ? 'شقة' : 
-             item.property_type === 'office' ? 'مكتب' :
-             item.property_type === 'retail' ? 'تجاري' :
-             item.property_type === 'warehouse' ? 'مستودع' : (item.property_type || 'غير محدد')}
-          </Text>
+          <View style={[styles.typeTag, { backgroundColor: theme.colors.surfaceVariant }]}>
+            <Text style={[styles.typeText, { color: theme.colors.onSurfaceVariant }]}>
+              {item.property_type === 'villa' ? 'فيلا' : 
+               item.property_type === 'apartment' ? 'شقة' : 
+               item.property_type === 'office' ? 'مكتب' :
+               item.property_type === 'retail' ? 'تجاري' :
+               item.property_type === 'warehouse' ? 'مستودع' : (item.property_type || 'غير محدد')}
+            </Text>
+          </View>
         </View>
+        
+        {/* Tenant Actions */}
+        {canRequestContract(item) && (
+          <View style={styles.tenantActions}>
+            <Button
+              mode="contained"
+              icon={() => <MessageSquare size={16} color={theme.colors.onPrimary} />}
+              onPress={() => handleRequestContract(item)}
+              style={[styles.requestButton, { backgroundColor: theme.colors.primary }]}
+              labelStyle={styles.requestButtonText}
+              compact
+            >
+              طلب عقد إيجار
+            </Button>
+          </View>
+        )}
+        
+        {/* Owner/Admin View Button */}
+        {userContext && (userContext.role === 'owner' || userContext.role === 'admin' || userContext.role === 'manager') && (
+          <View style={styles.adminActions}>
+            <IconButton
+              icon={() => <Users size={20} color={theme.colors.onSurfaceVariant} />}
+              onPress={() => router.push(`/properties/${item.id}`)}
+              style={[styles.viewButton, { backgroundColor: theme.colors.surfaceVariant }]}
+            />
+          </View>
+        )}
       </View>
     </View>
   );
@@ -402,6 +475,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   propertyFooter: {
+    flexDirection: 'column',
+    gap: 12,
+  },
+  priceAndTypeContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -418,6 +495,25 @@ const styles = StyleSheet.create({
   typeText: {
     fontSize: 12,
     fontWeight: '500',
+  },
+  tenantActions: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  requestButton: {
+    borderRadius: 8,
+    elevation: 2,
+  },
+  requestButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  adminActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  viewButton: {
+    borderRadius: 8,
   },
   emptyState: {
     padding: 32,

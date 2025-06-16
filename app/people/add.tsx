@@ -76,6 +76,11 @@ export default function AddPersonScreen() {
           },
         ]
       );
+      
+      // Automatically navigate back after a short delay
+      setTimeout(() => {
+        router.replace('/(drawer)/(tabs)/people');
+      }, 1500);
     } catch (error: any) {
       console.error('Error adding person:', error);
       if (error.code === '23505') {

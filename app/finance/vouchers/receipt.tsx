@@ -216,6 +216,11 @@ export default function ReceiptVoucherScreen() {
           },
         ]
       );
+      
+      // Automatically navigate back after a short delay
+      setTimeout(() => {
+        router.replace('/(drawer)/(tabs)/payments');
+      }, 1500);
     } catch (error: any) {
       console.error('Error creating receipt voucher:', error);
       if (error.code === '23505') {

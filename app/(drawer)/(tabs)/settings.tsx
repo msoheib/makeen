@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
+import { View, StyleSheet, ScrollView, SafeAreaView, Alert } from 'react-native';
 import { Text, List, Switch, Divider } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { lightTheme, darkTheme } from '@/lib/theme';
@@ -13,7 +13,8 @@ import {
   HelpCircle, 
   Shield, 
   FileText,
-  ChevronRight
+  ChevronRight,
+  LogOut
 } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 
@@ -21,6 +22,29 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { isDarkMode, toggleDarkMode, language, setLanguage } = useAppStore();
   const theme = isDarkMode ? darkTheme : lightTheme;
+
+  const handleLogout = () => {
+    Alert.alert(
+      'تسجيل الخروج',
+      'هل أنت متأكد من رغبتك في تسجيل الخروج؟',
+      [
+        {
+          text: 'إلغاء',
+          style: 'cancel'
+        },
+        {
+          text: 'تسجيل الخروج',
+          style: 'destructive',
+          onPress: () => {
+            // Clear any stored data and navigate to login
+            console.log('User logged out');
+            // In a real app, you would clear the authentication token
+            // and navigate to the login screen
+          }
+        }
+      ]
+    );
+  };
 
   const settingsItems = [
     {
@@ -188,6 +212,25 @@ export default function SettingsScreen() {
                 )}
               </View>
             ))}
+          </View>
+        </View>
+
+        {/* Logout Section */}
+        <View style={styles.section}>
+          <View style={[styles.sectionCard, { backgroundColor: theme.colors.surface }]}>
+            <List.Item
+              title="تسجيل الخروج"
+              description="الخروج من التطبيق"
+              titleStyle={[styles.itemTitle, { color: '#f44336' }]}
+              descriptionStyle={[styles.itemDescription, { color: theme.colors.onSurfaceVariant }]}
+              left={() => (
+                <View style={[styles.iconContainer, { backgroundColor: '#f4433620' }]}>
+                  <LogOut size={24} color="#f44336" />
+                </View>
+              )}
+              onPress={handleLogout}
+              style={[styles.listItem, { backgroundColor: theme.colors.surface }]}
+            />
           </View>
         </View>
 

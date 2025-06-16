@@ -111,6 +111,11 @@ export default function AddMaintenanceRequestScreen() {
           },
         ]
       );
+      
+      // Automatically navigate back after a short delay
+      setTimeout(() => {
+        router.replace('/(drawer)/(tabs)/maintenance');
+      }, 1500);
     } catch (error: any) {
       console.error('Error submitting maintenance request:', error);
       Alert.alert(t('common:error'), error.message || t('common:tryAgain'));
