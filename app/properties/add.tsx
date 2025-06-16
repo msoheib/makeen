@@ -134,7 +134,7 @@ export default function AddPropertyScreen() {
         [
           {
             text: 'موافق',
-            onPress: () => router.push('/(drawer)/(tabs)/properties'),
+            onPress: () => router.replace('/(drawer)/(tabs)/properties'),
           },
         ]
       );
@@ -166,15 +166,13 @@ export default function AddPropertyScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <IconButton
-          icon={() => <ArrowLeft size={24} color={theme.colors.onSurface} />}
-          onPress={() => router.push('/(drawer)/(tabs)/properties')}
-          style={styles.backButton}
-        />
-        <Text style={styles.headerTitle}>إضافة عقار</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+      <ModernHeader
+        title="إضافة عقار"
+        showBackButton={true}
+        showMenu={false}
+        showNotifications={false}
+        onBackPress={() => router.push('/(drawer)/(tabs)/properties')}
+      />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Basic Information */}
@@ -386,26 +384,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
-  header: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    paddingHorizontal: spacing.m,
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.s,
-  },
-  backButton: {
-    margin: 0,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    flex: 1,
-    textAlign: 'center',
-  },
-  headerSpacer: {
-    width: 40,
-  },
+
   content: {
     flex: 1,
   },

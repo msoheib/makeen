@@ -1,4 +1,5 @@
 // PDF Generation API Service
+import Constants from 'expo-constants';
 
 export interface PDFRequest {
   reportType: 'revenue' | 'expense' | 'property' | 'tenant' | 'maintenance';
@@ -12,7 +13,7 @@ export interface PDFRequest {
 
 export interface PDFResponse {
   success: boolean;
-  pdfBlob?: Blob;
+  htmlContent?: string;
   filename?: string;
   error?: string;
   message?: string;
@@ -20,79 +21,111 @@ export interface PDFResponse {
 
 class PDFGeneratorAPI {
   private readonly edgeFunctionUrl: string;
+  private readonly anonKey: string;
 
   constructor() {
     const projectId = 'fbabpaorcvatejkrelrf';
     this.edgeFunctionUrl = `https://${projectId}.supabase.co/functions/v1/pdf-generator`;
+    
+    // Properly access Expo environment variables
+    const extraConfig = Constants.expoConfig?.extra;
+    this.anonKey = extraConfig?.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
+    
+    if (!this.anonKey) {
+      console.error('Supabase anonymous key not found in Expo config');
+    }
   }
 
   /**
-   * Generate PDF report using Supabase Edge Function
+   * Generate HTML report using Supabase Edge Function
    */
-  async generatePDF(request: PDFRequest): Promise<PDFResponse> {
+  async generateReport(request: PDFRequest): Promise<PDFResponse> {
     try {
-      console.log('Generating PDF for request:', request);
+      console.log('Generating report for request:', request);
+      
+      if (!this.anonKey) {
+        throw new Error('Missing Supabase authentication key');
+      }
       
       const response = await fetch(this.edgeFunctionUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY}`
+          'Authorization': `Bearer ${this.anonKey}`,
+          'apikey': this.anonKey
         },
         body: JSON.stringify(request)
       });
 
+      console.log('Report API response status:', response.status);
+
       if (!response.ok) {
         // Try to get error message from response
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        
         try {
           const errorData = await response.json();
-          throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
-        } catch {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          console.log('Error response data:', errorData);
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (jsonError) {
+          console.log('Could not parse error response as JSON:', jsonError);
+          try {
+            const errorText = await response.text();
+            console.log('Error response text:', errorText);
+            if (errorText) {
+              errorMessage = errorText;
+            }
+          } catch (textError) {
+            console.log('Could not read error response as text:', textError);
+          }
         }
+        
+        throw new Error(errorMessage);
       }
 
-      // Check if response is PDF or JSON error
+      // Check if response is HTML or JSON error
       const contentType = response.headers.get('content-type');
+      console.log('Response content type:', contentType);
       
-      if (contentType?.includes('application/pdf')) {
-        // Success: PDF response
-        const pdfBlob = await response.blob();
+      if (contentType?.includes('text/html')) {
+        // Success: HTML response
+        const htmlContent = await response.text();
         const filename = this.extractFilenameFromHeaders(response.headers) || 
-                        `report-${request.reportType}-${new Date().toISOString().split('T')[0]}.pdf`;
+                        `report-${request.reportType}-${new Date().toISOString().split('T')[0]}.html`;
         
-        console.log('PDF generated successfully:', filename);
+        console.log('Report generated successfully:', filename);
         
         return {
           success: true,
-          pdfBlob,
+          htmlContent,
           filename
         };
       } else {
         // Error response in JSON format
         const errorData = await response.json();
-        throw new Error(errorData.error || 'PDF generation failed');
+        throw new Error(errorData.error || 'Report generation failed');
       }
 
     } catch (error) {
-      console.error('PDF generation failed:', error);
+      console.error('Report generation failed:', error);
       
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'PDF generation failed',
-        message: 'فشل في إنشاء ملف PDF. يرجى المحاولة مرة أخرى.'
+        error: error instanceof Error ? error.message : 'Report generation failed',
+        message: 'فشل في إنشاء التقرير. يرجى المحاولة مرة أخرى.'
       };
     }
   }
 
   /**
-   * Download PDF file to device
+   * Download HTML file to device
    */
-  async downloadPDF(pdfBlob: Blob, filename: string): Promise<boolean> {
+  async downloadHTML(htmlContent: string, filename: string): Promise<boolean> {
     try {
       // For web/Expo - create download link
       if (typeof window !== 'undefined') {
-        const url = URL.createObjectURL(pdfBlob);
+        const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
         link.download = filename;
@@ -104,25 +137,47 @@ class PDFGeneratorAPI {
       }
       
       // For React Native - would need file system API
-      console.log('PDF download not implemented for React Native yet');
+      console.log('HTML download not implemented for React Native yet');
       return false;
       
     } catch (error) {
-      console.error('PDF download failed:', error);
+      console.error('HTML download failed:', error);
       return false;
     }
   }
 
   /**
-   * Share PDF file using native sharing
+   * Open HTML content in new window/tab
    */
-  async sharePDF(pdfBlob: Blob, filename: string): Promise<boolean> {
+  async openHTML(htmlContent: string, title: string = 'Report'): Promise<boolean> {
+    try {
+      if (typeof window !== 'undefined') {
+        const newWindow = window.open('', '_blank');
+        if (newWindow) {
+          newWindow.document.write(htmlContent);
+          newWindow.document.close();
+          newWindow.document.title = title;
+          return true;
+        }
+      }
+      return false;
+    } catch (error) {
+      console.error('Failed to open HTML:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Share HTML file using native sharing
+   */
+  async shareHTML(htmlContent: string, filename: string): Promise<boolean> {
     try {
       // For web - use Web Share API if available
       if (typeof window !== 'undefined' && navigator.share) {
-        const file = new File([pdfBlob], filename, { type: 'application/pdf' });
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const file = new File([blob], filename, { type: 'text/html' });
         await navigator.share({
-          title: 'تقرير PDF',
+          title: 'تقرير HTML',
           text: 'تقرير تم إنشاؤه من تطبيق إدارة العقارات',
           files: [file]
         });
@@ -130,11 +185,11 @@ class PDFGeneratorAPI {
       }
       
       // Fallback to download
-      return await this.downloadPDF(pdfBlob, filename);
+      return await this.downloadHTML(htmlContent, filename);
       
     } catch (error) {
-      console.error('PDF sharing failed:', error);
-      return await this.downloadPDF(pdfBlob, filename);
+      console.error('HTML sharing failed:', error);
+      return await this.downloadHTML(htmlContent, filename);
     }
   }
 
@@ -167,24 +222,29 @@ class PDFGeneratorAPI {
     const arabicType = typeMap[reportType] || reportType;
     const date = new Date().toISOString().split('T')[0];
     
-    return `${arabicType}-${date}.pdf`;
+    return `${arabicType}-${date}.html`;
   }
 
   /**
-   * Generate and download PDF in one operation
+   * Generate and download report in one operation
    */
   async generateAndDownload(request: PDFRequest): Promise<PDFResponse> {
-    const result = await this.generatePDF(request);
+    const result = await this.generateReport(request);
     
-    if (result.success && result.pdfBlob && result.filename) {
-      const downloaded = await this.downloadPDF(result.pdfBlob, result.filename);
+    if (result.success && result.htmlContent && result.filename) {
+      // Try to open in new tab first, fallback to download
+      const opened = await this.openHTML(result.htmlContent, this.getReportTypeLabel(request.reportType));
       
-      if (!downloaded) {
-        return {
-          ...result,
-          success: false,
-          error: 'تم إنشاء PDF بنجاح ولكن فشل التحميل'
-        };
+      if (!opened) {
+        const downloaded = await this.downloadHTML(result.htmlContent, result.filename);
+        
+        if (!downloaded) {
+          return {
+            ...result,
+            success: false,
+            error: 'تم إنشاء التقرير بنجاح ولكن فشل التحميل'
+          };
+        }
       }
     }
     
@@ -204,6 +264,15 @@ class PDFGeneratorAPI {
     };
     
     return labels[reportType] || reportType;
+  }
+
+  /**
+   * Legacy method for backward compatibility
+   * @deprecated Use generateAndDownload instead
+   */
+  async generatePDF(request: PDFRequest): Promise<PDFResponse> {
+    console.warn('generatePDF is deprecated. Use generateAndDownload instead.');
+    return this.generateAndDownload(request);
   }
 }
 

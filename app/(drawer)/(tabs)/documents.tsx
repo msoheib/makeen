@@ -233,8 +233,9 @@ export default function DocumentsScreen() {
       <ModernHeader
         title={t('title')}
         subtitle={t('subtitle')}
-        isHomepage={false}
-        onNotificationPress={() => router.push('/notifications')}
+        variant="dark"
+        showNotifications={true}
+        showMenu={true}
       />
 
       {/* Stats Overview */}

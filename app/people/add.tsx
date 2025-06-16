@@ -72,7 +72,7 @@ export default function AddPersonScreen() {
         [
           {
             text: 'OK',
-            onPress: () => router.replace('/people'),
+            onPress: () => router.replace('/(drawer)/(tabs)/people'),
           },
         ]
       );
@@ -90,15 +90,13 @@ export default function AddPersonScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <IconButton
-          icon={() => <ArrowLeft size={24} color={theme.colors.onSurface} />}
-          onPress={() => router.back()}
-          style={styles.backButton}
-        />
-        <Text style={styles.headerTitle}>Add Person</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+      <ModernHeader
+        title="Add Person"
+        showBackButton={true}
+        showMenu={false}
+        showNotifications={false}
+        onBackPress={() => router.back()}
+      />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Basic Information */}
@@ -235,26 +233,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.m,
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.s,
-  },
-  backButton: {
-    margin: 0,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    flex: 1,
-    textAlign: 'center',
-  },
-  headerSpacer: {
-    width: 40,
-  },
+
   content: {
     flex: 1,
   },

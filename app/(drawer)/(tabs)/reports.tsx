@@ -12,10 +12,68 @@ import { useScreenAccess } from '@/lib/permissions';
 import { useApi } from '@/hooks/useApi';
 import { reportsApi } from '@/lib/api';
 
-// Generate reports based on database data
-const generateReports = (hasData: boolean) => {
+// Generate reports based on database data and user role
+const generateReports = (hasData: boolean, userRole?: string) => {
   if (!hasData) return [];
   
+  // Owner reports - focused on income and maintenance costs only
+  if (userRole === 'owner') {
+    return [
+      {
+        id: '1',
+        title: 'تقرير الدخل الإيجاري',
+        description: 'دخل العقارات من الإيجارات الشهرية',
+        type: 'rental-income',
+        lastGenerated: new Date().toISOString(),
+        icon: TrendingUp,
+        color: '#4CAF50',
+      },
+      {
+        id: '2',
+        title: 'تقرير مصاريف الصيانة',
+        description: 'تكاليف الصيانة والإصلاحات للعقارات',
+        type: 'maintenance-expenses',
+        lastGenerated: new Date().toISOString(),
+        icon: Calendar,
+        color: '#F44336',
+      }
+    ];
+  }
+  
+  // Property Manager reports - comprehensive view with 3 main types
+  if (userRole === 'manager') {
+    return [
+      {
+        id: '1',
+        title: 'تقرير الدخل الشامل',
+        description: 'جميع مصادر الدخل والإيرادات',
+        type: 'income',
+        lastGenerated: new Date().toISOString(),
+        icon: TrendingUp,
+        color: '#4CAF50',
+      },
+      {
+        id: '2',
+        title: 'تقرير المصروفات',
+        description: 'المصروفات التشغيلية والصيانة',
+        type: 'expenses',
+        lastGenerated: new Date().toISOString(),
+        icon: PieChart,
+        color: '#F44336',
+      },
+      {
+        id: '3',
+        title: 'تقرير التدفق النقدي',
+        description: 'التدفق النقدي والميزانية المالية',
+        type: 'cashflow',
+        lastGenerated: new Date().toISOString(),
+        icon: BarChart3,
+        color: '#2196F3',
+      }
+    ];
+  }
+  
+  // Admin users get all reports (existing comprehensive set)
   return [
     {
       id: '1',
@@ -91,10 +149,10 @@ export default function ReportsScreen() {
     loading: statsLoading, 
     error: statsError, 
     refetch: refetchStats 
-  } = useApi(() => reportsApi.getStats(), []);
+  } = useApi(() => reportsApi.getStats(userContext?.role), [userContext?.role]);
 
-  // Generate dynamic reports based on available data
-  const availableReports = generateReports(!!stats && stats.totalReports > 0);
+  // Generate dynamic reports based on available data and user role
+  const availableReports = generateReports(!!stats && stats.totalReports > 0, userContext?.role);
 
   // Show loading while checking permissions
   if (permissionLoading) {
@@ -105,7 +163,7 @@ export default function ReportsScreen() {
           subtitle="تقارير شاملة للأداء والإحصائيات"
           showNotifications={true}
           showMenu={true}
-          variant="default"
+          variant="dark"
         />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -126,7 +184,7 @@ export default function ReportsScreen() {
           subtitle="تقارير شاملة للأداء والإحصائيات"
           showNotifications={true}
           showMenu={true}
-          variant="default"
+          variant="dark"
         />
         <View style={styles.accessDeniedContainer}>
           <Lock size={64} color="#ccc" />
@@ -172,7 +230,13 @@ export default function ReportsScreen() {
       'properties': 'property',
       'tenants': 'tenant',
       'maintenance': 'maintenance',
-      'financial': 'revenue' // Financial reports use revenue type for now
+      'financial': 'revenue',
+      // Owner-specific report types
+      'rental-income': 'revenue',
+      'maintenance-expenses': 'maintenance',
+      // Manager-specific report types
+      'income': 'revenue',
+      'cashflow': 'revenue' // Use revenue API for cashflow reports
     };
     
     return typeMap[reportType] || 'revenue';
@@ -192,8 +256,8 @@ export default function ReportsScreen() {
         }
       };
 
-      console.log('Generating PDF for report:', report.title);
-      console.log('PDF request:', pdfRequest);
+      console.log('Generating report for:', report.title);
+      console.log('Report request:', pdfRequest);
 
       // Call PDF API
       const response = await pdfApi.generateAndDownload(pdfRequest);
@@ -201,7 +265,7 @@ export default function ReportsScreen() {
       if (response.success) {
         Alert.alert(
           'تم إنشاء التقرير',
-          `تم إنشاء ${report.title} بنجاح وتحميله على جهازك!`,
+          `تم إنشاء ${report.title} بنجاح وفتحه في نافذة جديدة! يمكنك طباعته أو حفظه كملف PDF من المتصفح.`,
           [{ text: 'حسناً', style: 'default' }]
         );
       } else {
@@ -211,11 +275,11 @@ export default function ReportsScreen() {
           [{ text: 'حسناً', style: 'default' }]
         );
       }
-    } catch (error) {
-      console.error('PDF generation error:', error);
+          } catch (error) {
+      console.error('Report generation error:', error);
       Alert.alert(
         'خطأ في إنشاء التقرير',
-        'فشل في إنشاء ملف PDF. يرجى التحقق من الاتصال بالإنترنت والمحاولة مرة أخرى.',
+        'فشل في إنشاء التقرير. يرجى التحقق من الاتصال بالإنترنت والمحاولة مرة أخرى.',
         [{ text: 'حسناً', style: 'default' }]
       );
     } finally {
@@ -337,7 +401,7 @@ export default function ReportsScreen() {
             <View style={styles.statCardWrapper}>
               <StatCard
                 title="متوسط وقت التوليد"
-                value={stats?.avgGenerationTime || '0ث'}
+                value={stats?.avgGenerationTime || '0s'}
                 color="#FF9800"
                 loading={statsLoading}
               />
@@ -356,13 +420,38 @@ export default function ReportsScreen() {
             contentContainerStyle={{ paddingVertical: 8, paddingHorizontal: 16 }}
           >
             <View style={styles.filterButtons}>
-              {[
-                { key: 'all', label: 'الكل' },
-                { key: 'revenue', label: 'الإيرادات' },
-                { key: 'expenses', label: 'المصروفات' },
-                { key: 'properties', label: 'العقارات' },
-                { key: 'tenants', label: 'المستأجرين' }
-              ].map((filter) => (
+              {(() => {
+                // Role-specific filter categories
+                let filterCategories = [{ key: 'all', label: 'الكل' }];
+                
+                if (userContext?.role === 'owner') {
+                  filterCategories = [
+                    ...filterCategories,
+                    { key: 'rental-income', label: 'الدخل الإيجاري' },
+                    { key: 'maintenance-expenses', label: 'مصاريف الصيانة' }
+                  ];
+                } else if (userContext?.role === 'manager') {
+                  filterCategories = [
+                    ...filterCategories,
+                    { key: 'income', label: 'الدخل' },
+                    { key: 'expenses', label: 'المصروفات' },
+                    { key: 'cashflow', label: 'التدفق النقدي' }
+                  ];
+                } else {
+                  // Admin or other roles get all categories
+                  filterCategories = [
+                    ...filterCategories,
+                    { key: 'revenue', label: 'الإيرادات' },
+                    { key: 'expenses', label: 'المصروفات' },
+                    { key: 'properties', label: 'العقارات' },
+                    { key: 'tenants', label: 'المستأجرين' },
+                    { key: 'maintenance', label: 'الصيانة' },
+                    { key: 'financial', label: 'المالي الشامل' }
+                  ];
+                }
+                
+                return filterCategories;
+              })().map((filter) => (
                 <Card
                   key={filter.key}
                   style={[

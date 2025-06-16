@@ -46,7 +46,7 @@ export default function TenantsScreen() {
           title="المستأجرين" 
           showNotifications={true}
           showMenu={true}
-          variant="default"
+          variant="dark"
         />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -66,7 +66,7 @@ export default function TenantsScreen() {
           title="المستأجرين" 
           showNotifications={true}
           showMenu={true}
-          variant="default"
+          variant="dark"
         />
         <View style={styles.accessDeniedContainer}>
           <Lock size={64} color="#ccc" />
@@ -117,7 +117,7 @@ export default function TenantsScreen() {
         <View style={styles.tenantInfo}>
           <Avatar.Text
             size={60}
-            label={`${item.first_name?.[0] || ''}${item.last_name?.[0] || ''}`}
+            label={`${(item.first_name || '').charAt(0)}${(item.last_name || '').charAt(0)}`}
             style={{ backgroundColor: theme.colors.primaryContainer }}
             labelStyle={{ color: theme.colors.primary }}
           />
@@ -191,7 +191,7 @@ export default function TenantsScreen() {
         title="المستأجرين" 
         showNotifications={true}
         showMenu={true}
-        variant="default"
+        variant="dark"
       />
 
       <ScrollView 

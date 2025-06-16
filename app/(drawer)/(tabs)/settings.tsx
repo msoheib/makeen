@@ -120,6 +120,7 @@ export default function SettingsScreen() {
         title="الإعدادات" 
         showNotifications={true}
         showProfile={true}
+        variant="dark"
       />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

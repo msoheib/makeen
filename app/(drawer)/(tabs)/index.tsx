@@ -122,7 +122,7 @@ export default function DashboardScreen() {
   if (permissionLoading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <ModernHeader title="لوحة التحكم" />
+        <ModernHeader title="لوحة التحكم" variant="dark" />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={[styles.loadingText, { color: theme.colors.onSurfaceVariant }]}>
@@ -158,7 +158,7 @@ export default function DashboardScreen() {
   if (!canAccessDashboard) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <ModernHeader title="لوحة التحكم" />
+        <ModernHeader title="لوحة التحكم" variant="dark" />
         <View style={styles.accessDeniedContainer}>
           <Lock size={64} color="#ccc" />
           <Text style={[styles.accessDeniedText, { color: theme.colors.onSurfaceVariant }]}>

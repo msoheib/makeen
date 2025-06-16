@@ -212,7 +212,7 @@ export default function ReceiptVoucherScreen() {
         [
           {
             text: 'OK',
-            onPress: () => router.back(),
+            onPress: () => router.replace('/(drawer)/(tabs)/payments'),
           },
         ]
       );

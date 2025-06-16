@@ -18,6 +18,7 @@ interface ModernHeaderProps {
   onNotificationPress?: () => void;
   onSearchPress?: () => void;
   onMenuPress?: () => void;
+  onBackPress?: () => void;
   variant?: 'light' | 'dark';
 }
 
@@ -31,6 +32,7 @@ export default function ModernHeader({
   onNotificationPress,
   onSearchPress,
   onMenuPress,
+  onBackPress,
   variant = 'dark'
 }: ModernHeaderProps) {
   const navigation = useNavigation();
@@ -58,7 +60,9 @@ export default function ModernHeader({
   };
 
   const handleBackPress = () => {
-    if (router.canGoBack()) {
+    if (onBackPress) {
+      onBackPress();
+    } else if (router.canGoBack()) {
       router.back();
     } else {
       router.push('/(drawer)/(tabs)/');

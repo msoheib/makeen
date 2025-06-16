@@ -178,25 +178,31 @@ const VoucherCard: React.FC<VoucherCardProps> = ({
 
         <View style={styles.details}>
           {voucher.property && (
-            <Text style={[styles.detailText, { color: theme.colors.onSurfaceVariant }]}>
+            <View style={styles.detailRow}>
               <MaterialIcons name="location-on" size={14} color={theme.colors.onSurfaceVariant} />
-              {' '}{voucher.property.title}
-              {voucher.property.property_code && ` (${voucher.property.property_code})`}
-            </Text>
+              <Text style={[styles.detailText, { color: theme.colors.onSurfaceVariant }]}>
+                {' '}{voucher.property.title}
+                {voucher.property.property_code && ` (${voucher.property.property_code})`}
+              </Text>
+            </View>
           )}
           
           {voucher.tenant && (
-            <Text style={[styles.detailText, { color: theme.colors.onSurfaceVariant }]}>
+            <View style={styles.detailRow}>
               <MaterialIcons name="person" size={14} color={theme.colors.onSurfaceVariant} />
-              {' '}{voucher.tenant.first_name} {voucher.tenant.last_name}
-            </Text>
+              <Text style={[styles.detailText, { color: theme.colors.onSurfaceVariant }]}>
+                {' '}{voucher.tenant.first_name} {voucher.tenant.last_name}
+              </Text>
+            </View>
           )}
           
           {voucher.account && (
-            <Text style={[styles.detailText, { color: theme.colors.onSurfaceVariant }]}>
+            <View style={styles.detailRow}>
               <MaterialIcons name="account-balance" size={14} color={theme.colors.onSurfaceVariant} />
-              {' '}{voucher.account.account_code} - {voucher.account.account_name}
-            </Text>
+              <Text style={[styles.detailText, { color: theme.colors.onSurfaceVariant }]}>
+                {' '}{voucher.account.account_code} - {voucher.account.account_name}
+              </Text>
+            </View>
           )}
         </View>
       </View>
@@ -285,11 +291,15 @@ const styles = StyleSheet.create({
   details: {
     gap: 4,
   },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
   detailText: {
     fontSize: 12,
     lineHeight: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
+    marginLeft: 4,
   },
   actions: {
     flexDirection: 'row',

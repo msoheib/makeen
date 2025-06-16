@@ -5,7 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
 import { profilesApi } from '@/lib/api';
 import { useApi } from '@/hooks/useApi';
-import { ArrowLeft, User, Mail, Phone, MapPin, FileText } from 'lucide-react-native';
+import { User, Mail, Phone, MapPin, FileText } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import { useTranslation } from '@/lib/useTranslation';
@@ -105,11 +105,10 @@ export default function EditTenantScreen() {
         <ModernHeader
           title={t('edit.title')}
           subtitle={t('edit.loading')}
-          variant="dark"
+          showBackButton={true}
+          showMenu={false}
           showNotifications={false}
-          isHomepage={false}
-          leftIcon={<ArrowLeft size={24} color={theme.colors.onPrimary} />}
-          onLeftPress={() => router.back()}
+          onBackPress={() => router.back()}
         />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -125,11 +124,10 @@ export default function EditTenantScreen() {
         <ModernHeader
           title={t('edit.title')}
           subtitle={t('edit.error')}
-          variant="dark"
+          showBackButton={true}
+          showMenu={false}
           showNotifications={false}
-          isHomepage={false}
-          leftIcon={<ArrowLeft size={24} color={theme.colors.onPrimary} />}
-          onLeftPress={() => router.back()}
+          onBackPress={() => router.back()}
         />
         <View style={styles.loadingContainer}>
           <Text style={styles.errorTitle}>{t('edit.error')}</Text>
@@ -146,11 +144,10 @@ export default function EditTenantScreen() {
       <ModernHeader
         title={t('edit.title')}
         subtitle={`${t('common:edit')} ${tenant.first_name} ${tenant.last_name}`}
-        variant="dark"
+        showBackButton={true}
+        showMenu={false}
         showNotifications={false}
-        isHomepage={false}
-        leftIcon={<ArrowLeft size={24} color={theme.colors.onPrimary} />}
-        onLeftPress={() => router.back()}
+        onBackPress={() => router.back()}
       />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

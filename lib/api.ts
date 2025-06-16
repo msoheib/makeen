@@ -389,6 +389,28 @@ export const contractsApi = {
     return handleApiCall(() => query);
   },
 
+  // Get contract by ID
+  async getById(id: string): Promise<ApiResponse<any>> {
+    return handleApiCall(() => 
+      supabase
+        .from('contracts')
+        .select(`
+          *,
+          property:properties(
+            id, title, description, address, city, area_sqm, 
+            bedrooms, bathrooms, property_type, property_code,
+            amenities, is_furnished, parking_spaces
+          ),
+          tenant:profiles!contracts_tenant_id_fkey(
+            id, first_name, last_name, email, phone, address, 
+            city, nationality, is_foreign, status
+          )
+        `)
+        .eq('id', id)
+        .single()
+    );
+  },
+
   // Create contract
   async create(contract: TablesInsert<'contracts'>): Promise<ApiResponse<Tables<'contracts'>>> {
     return handleApiCall(() => 
@@ -1242,7 +1264,7 @@ export const reservationsApi = {
 // Reports API
 export const reportsApi = {
   // Get reports dashboard statistics
-  async getStats(): Promise<ApiResponse<{
+  async getStats(userRole?: string): Promise<ApiResponse<{
     totalReports: number;
     generatedThisMonth: number;
     scheduledReports: number;
@@ -1289,27 +1311,50 @@ export const reportsApi = {
         
         console.log('getStats: Counts calculated', { propertiesCount, tenantsCount, vouchersCount, maintenanceCount, monthlyReportsCount });
         
-        // Calculate total available reports based on actual data
+        // Calculate total available reports based on actual data and user role
         let totalReports = 0;
         
-        // Financial reports (available if there are posted vouchers)
-        if (vouchersCount > 0) {
-          totalReports += 4; // Revenue, Expense, P&L, Cash Flow
-        }
-        
-        // Property reports (available if there are properties)
-        if (propertiesCount > 0) {
-          totalReports += 3; // Occupancy, Maintenance, Property Performance
-        }
-        
-        // Tenant reports (available if there are tenants)
-        if (tenantsCount > 0) {
-          totalReports += 3; // Tenant Report, Payment History, Lease Expiry
-        }
-        
-        // Operations reports (available if there are maintenance requests)
-        if (maintenanceCount > 0) {
-          totalReports += 2; // Operations Summary, Vendor Report
+        if (userRole === 'owner') {
+          // Owners only see:
+          // 1. Rental Income Report (if they have properties with income)
+          // 2. Maintenance Expenses Report (if they have maintenance costs)
+          if (vouchersCount > 0) {
+            totalReports += 1; // Rental Income Report
+          }
+          if (maintenanceCount > 0 || vouchersCount > 0) {
+            totalReports += 1; // Maintenance Expenses Report
+          }
+        } else if (userRole === 'manager') {
+          // Property Managers see:
+          // 1. Income Report (revenue from all properties)
+          // 2. Expenses Report (mainly maintenance)
+          // 3. Cashflow Report (combined income and expenses)
+          if (vouchersCount > 0) {
+            totalReports += 1; // Income Report
+            totalReports += 1; // Expenses Report
+            totalReports += 1; // Cashflow Report
+          }
+        } else {
+          // Admin or other roles get all reports
+          // Financial reports (available if there are posted vouchers)
+          if (vouchersCount > 0) {
+            totalReports += 4; // Revenue, Expense, P&L, Cash Flow
+          }
+          
+          // Property reports (available if there are properties)
+          if (propertiesCount > 0) {
+            totalReports += 3; // Occupancy, Maintenance, Property Performance
+          }
+          
+          // Tenant reports (available if there are tenants)
+          if (tenantsCount > 0) {
+            totalReports += 3; // Tenant Report, Payment History, Lease Expiry
+          }
+          
+          // Operations reports (available if there are maintenance requests)
+          if (maintenanceCount > 0) {
+            totalReports += 2; // Operations Summary, Vendor Report
+          }
         }
         
         const result = {
@@ -1701,6 +1746,1678 @@ export const reportsApi = {
         error: null
       };
     });
+  },
+
+  // Owner-specific Rental Income Report
+  async getOwnerRentalIncomeReport(ownerId?: string, startDate?: string, endDate?: string): Promise<ApiResponse<{
+    totalRentalIncome: number;
+    monthlyBreakdown: Array<{ month: string; income: number; year: number }>;
+    propertyBreakdown: Array<{ propertyId: string; propertyTitle: string; income: number }>;
+    lastGenerated: string;
+  }>> {
+    return handleApiCall(async () => {
+      const startDateFilter = startDate || new Date(new Date().getFullYear(), 0, 1).toISOString();
+      const endDateFilter = endDate || new Date().toISOString();
+
+      let query = supabase
+        .from('vouchers')
+        .select(`
+          amount,
+          created_at,
+          property_id,
+          property:properties(id, title, owner_id)
+        `)
+        .eq('voucher_type', 'receipt')
+        .eq('status', 'posted')
+        .gte('created_at', startDateFilter)
+        .lte('created_at', endDateFilter);
+
+      // Filter by owner if specified
+      if (ownerId) {
+        query = query.eq('property.owner_id', ownerId);
+      }
+
+      const { data: vouchers, error: vouchersError } = await query;
+
+      if (vouchersError) throw vouchersError;
+
+      const totalRentalIncome = vouchers?.reduce((sum, v) => sum + (v.amount || 0), 0) || 0;
+
+      // Group by month and property
+      const monthlyData: { [key: string]: number } = {};
+      const propertyData: { [key: string]: { title: string; income: number } } = {};
+
+      vouchers?.forEach(voucher => {
+        const date = new Date(voucher.created_at);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        
+        monthlyData[monthKey] = (monthlyData[monthKey] || 0) + voucher.amount;
+
+        if (voucher.property_id && voucher.property) {
+          if (!propertyData[voucher.property_id]) {
+            propertyData[voucher.property_id] = {
+              title: voucher.property.title || 'Unknown Property',
+              income: 0
+            };
+          }
+          propertyData[voucher.property_id].income += voucher.amount;
+        }
+      });
+
+      const monthlyBreakdown = Object.entries(monthlyData).map(([monthKey, income]) => {
+        const [year, month] = monthKey.split('-');
+        return {
+          month: new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('en-US', { month: 'long' }),
+          year: parseInt(year),
+          income
+        };
+      });
+
+      const propertyBreakdown = Object.entries(propertyData).map(([propertyId, data]) => ({
+        propertyId,
+        propertyTitle: data.title,
+        income: data.income
+      }));
+
+      return {
+        data: {
+          totalRentalIncome,
+          monthlyBreakdown,
+          propertyBreakdown,
+          lastGenerated: new Date().toISOString()
+        },
+        error: null
+      };
+    });
+  },
+
+  // Owner-specific Maintenance Expenses Report
+  async getOwnerMaintenanceExpensesReport(ownerId?: string, startDate?: string, endDate?: string): Promise<ApiResponse<{
+    totalMaintenanceExpenses: number;
+    monthlyBreakdown: Array<{ month: string; expenses: number; year: number }>;
+    propertyBreakdown: Array<{ propertyId: string; propertyTitle: string; expenses: number }>;
+    requestBreakdown: Array<{ requestId: string; title: string; cost: number; status: string }>;
+    lastGenerated: string;
+  }>> {
+    return handleApiCall(async () => {
+      const startDateFilter = startDate || new Date(new Date().getFullYear(), 0, 1).toISOString();
+      const endDateFilter = endDate || new Date().toISOString();
+
+      // Get maintenance-related payment vouchers
+      let voucherQuery = supabase
+        .from('vouchers')
+        .select(`
+          amount,
+          created_at,
+          property_id,
+          description,
+          property:properties(id, title, owner_id)
+        `)
+        .eq('voucher_type', 'payment')
+        .eq('status', 'posted')
+        .gte('created_at', startDateFilter)
+        .lte('created_at', endDateFilter)
+        .ilike('description', '%maintenance%');
+
+      if (ownerId) {
+        voucherQuery = voucherQuery.eq('property.owner_id', ownerId);
+      }
+
+      // Get work orders for maintenance requests
+      let workOrderQuery = supabase
+        .from('work_orders')
+        .select(`
+          actual_cost,
+          estimated_cost,
+          completion_date,
+          description,
+          status,
+          maintenance_request:maintenance_requests(
+            id,
+            title,
+            property:properties(id, title, owner_id)
+          )
+        `)
+        .gte('completion_date', startDateFilter)
+        .lte('completion_date', endDateFilter);
+
+      const [vouchersResult, workOrdersResult] = await Promise.all([voucherQuery, workOrderQuery]);
+
+      if (vouchersResult.error) throw vouchersResult.error;
+      if (workOrdersResult.error) throw workOrdersResult.error;
+
+      const vouchers = vouchersResult.data || [];
+      const workOrders = (workOrdersResult.data || []).filter(wo => 
+        !ownerId || wo.maintenance_request?.property?.owner_id === ownerId
+      );
+
+      // Combine voucher expenses and work order costs
+      const totalVoucherExpenses = vouchers.reduce((sum, v) => sum + (v.amount || 0), 0);
+      const totalWorkOrderExpenses = workOrders.reduce((sum, wo) => sum + (wo.actual_cost || wo.estimated_cost || 0), 0);
+      const totalMaintenanceExpenses = totalVoucherExpenses + totalWorkOrderExpenses;
+
+      // Group by month and property
+      const monthlyData: { [key: string]: number } = {};
+      const propertyData: { [key: string]: { title: string; expenses: number } } = {};
+      const requestData: Array<{ requestId: string; title: string; cost: number; status: string }> = [];
+
+      // Process vouchers
+      vouchers.forEach(voucher => {
+        const date = new Date(voucher.created_at);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        
+        monthlyData[monthKey] = (monthlyData[monthKey] || 0) + voucher.amount;
+
+        if (voucher.property_id && voucher.property) {
+          if (!propertyData[voucher.property_id]) {
+            propertyData[voucher.property_id] = {
+              title: voucher.property.title || 'Unknown Property',
+              expenses: 0
+            };
+          }
+          propertyData[voucher.property_id].expenses += voucher.amount;
+        }
+      });
+
+      // Process work orders
+      workOrders.forEach(workOrder => {
+        const cost = workOrder.actual_cost || workOrder.estimated_cost || 0;
+        const date = new Date(workOrder.completion_date);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        
+        monthlyData[monthKey] = (monthlyData[monthKey] || 0) + cost;
+
+        const property = workOrder.maintenance_request?.property;
+        if (property) {
+          if (!propertyData[property.id]) {
+            propertyData[property.id] = {
+              title: property.title || 'Unknown Property',
+              expenses: 0
+            };
+          }
+          propertyData[property.id].expenses += cost;
+        }
+
+        // Add to request breakdown
+        requestData.push({
+          requestId: workOrder.maintenance_request?.id || '',
+          title: workOrder.maintenance_request?.title || workOrder.description || 'Maintenance Work',
+          cost,
+          status: workOrder.status || 'completed'
+        });
+      });
+
+      const monthlyBreakdown = Object.entries(monthlyData).map(([monthKey, expenses]) => {
+        const [year, month] = monthKey.split('-');
+        return {
+          month: new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('en-US', { month: 'long' }),
+          year: parseInt(year),
+          expenses
+        };
+      });
+
+      const propertyBreakdown = Object.entries(propertyData).map(([propertyId, data]) => ({
+        propertyId,
+        propertyTitle: data.title,
+        expenses: data.expenses
+      }));
+
+      return {
+        data: {
+          totalMaintenanceExpenses,
+          monthlyBreakdown,
+          propertyBreakdown,
+          requestBreakdown: requestData,
+          lastGenerated: new Date().toISOString()
+        },
+        error: null
+      };
+    });
+  },
+
+  // Manager-specific Cashflow Report (Income + Expenses combined)
+  async getManagerCashflowReport(startDate?: string, endDate?: string): Promise<ApiResponse<{
+    totalIncome: number;
+    totalExpenses: number;
+    netCashflow: number;
+    monthlyBreakdown: Array<{ 
+      month: string; 
+      year: number;
+      income: number; 
+      expenses: number; 
+      netCashflow: number; 
+    }>;
+    lastGenerated: string;
+  }>> {
+    return handleApiCall(async () => {
+      const startDateFilter = startDate || new Date(new Date().getFullYear(), 0, 1).toISOString();
+      const endDateFilter = endDate || new Date().toISOString();
+
+      // Get all posted vouchers for the period
+      const { data: vouchers, error: vouchersError } = await supabase
+        .from('vouchers')
+        .select(`
+          amount,
+          created_at,
+          voucher_type
+        `)
+        .eq('status', 'posted')
+        .gte('created_at', startDateFilter)
+        .lte('created_at', endDateFilter);
+
+      if (vouchersError) throw vouchersError;
+
+      const incomeVouchers = vouchers?.filter(v => v.voucher_type === 'receipt') || [];
+      const expenseVouchers = vouchers?.filter(v => v.voucher_type === 'payment') || [];
+
+      const totalIncome = incomeVouchers.reduce((sum, v) => sum + (v.amount || 0), 0);
+      const totalExpenses = expenseVouchers.reduce((sum, v) => sum + (v.amount || 0), 0);
+      const netCashflow = totalIncome - totalExpenses;
+
+      // Group by month
+      const monthlyData: { [key: string]: { income: number; expenses: number } } = {};
+
+      incomeVouchers.forEach(voucher => {
+        const date = new Date(voucher.created_at);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        
+        if (!monthlyData[monthKey]) {
+          monthlyData[monthKey] = { income: 0, expenses: 0 };
+        }
+        monthlyData[monthKey].income += voucher.amount;
+      });
+
+      expenseVouchers.forEach(voucher => {
+        const date = new Date(voucher.created_at);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        
+        if (!monthlyData[monthKey]) {
+          monthlyData[monthKey] = { income: 0, expenses: 0 };
+        }
+        monthlyData[monthKey].expenses += voucher.amount;
+      });
+
+      const monthlyBreakdown = Object.entries(monthlyData).map(([monthKey, data]) => {
+        const [year, month] = monthKey.split('-');
+        return {
+          month: new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('en-US', { month: 'long' }),
+          year: parseInt(year),
+          income: data.income,
+          expenses: data.expenses,
+          netCashflow: data.income - data.expenses
+        };
+      });
+
+      return {
+        data: {
+          totalIncome,
+          totalExpenses,
+          netCashflow,
+          monthlyBreakdown,
+          lastGenerated: new Date().toISOString()
+        },
+        error: null
+      };
+    });
+  }
+};
+
+// Bidding API - Complete bidding system for tenants and buyers
+export const bidsApi = {
+  // Get all bids with filtering and role-based access
+  async getAll(filters?: {
+    property_id?: string;
+    bidder_id?: string;
+    bid_type?: 'rental' | 'purchase';
+    bid_status?: string;
+  }): Promise<ApiResponse<any[]>> {
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext) {
+      return {
+        data: null,
+        error: { message: 'Authentication required to access bids' }
+      };
+    }
+
+    let query = supabase
+      .from('bids')
+      .select(`
+        *,
+        property:properties(id, title, address, city, price, listing_type, owner_id),
+        bidder:profiles!bids_bidder_id_fkey(id, first_name, last_name, email, phone),
+        manager:profiles!bids_manager_id_fkey(id, first_name, last_name, email)
+      `)
+      .order('created_at', { ascending: false });
+
+    // Role-based filtering
+    if (userContext.role === 'tenant' || userContext.role === 'buyer') {
+      // Users see only their own bids
+      query = query.eq('bidder_id', userContext.userId);
+    } else if (userContext.role === 'owner') {
+      // Owners see bids on their properties
+      query = query.eq('property.owner_id', userContext.userId);
+    }
+    // Managers/admins see all bids
+
+    // Apply additional filters
+    if (filters?.property_id) query = query.eq('property_id', filters.property_id);
+    if (filters?.bidder_id) query = query.eq('bidder_id', filters.bidder_id);
+    if (filters?.bid_type) query = query.eq('bid_type', filters.bid_type);
+    if (filters?.bid_status) query = query.eq('bid_status', filters.bid_status);
+
+    return handleApiCall(() => query);
+  },
+
+  // Get bids by property (for property owners and managers)
+  async getByProperty(propertyId: string): Promise<ApiResponse<any[]>> {
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext) {
+      return {
+        data: null,
+        error: { message: 'Authentication required to access property bids' }
+      };
+    }
+
+    return handleApiCall(() => 
+      supabase
+        .from('bids')
+        .select(`
+          *,
+          property:properties(id, title, address, city, price, listing_type),
+          bidder:profiles!bids_bidder_id_fkey(id, first_name, last_name, email, phone, kyc_status),
+          manager:profiles!bids_manager_id_fkey(id, first_name, last_name, email)
+        `)
+        .eq('property_id', propertyId)
+        .order('bid_amount', { ascending: false })
+    );
+  },
+
+  // Create a new bid (for tenants and buyers)
+  async create(bidData: {
+    property_id: string;
+    bid_type: 'rental' | 'purchase';
+    bid_amount: number;
+    message?: string;
+    rental_duration_months?: number;
+    security_deposit_amount?: number;
+    utilities_included?: boolean;
+    move_in_date?: string;
+  }): Promise<ApiResponse<any>> {
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext) {
+      return {
+        data: null,
+        error: { message: 'Authentication required to submit bid' }
+      };
+    }
+
+    // Validate user can bid
+    if (!userContext.canBid) {
+      return {
+        data: null,
+        error: { message: 'Your account needs approval before you can submit bids' }
+      };
+    }
+
+    // Check if property accepts bids
+    const { data: property } = await supabase
+      .from('properties')
+      .select('is_accepting_bids, minimum_bid_amount, maximum_bid_amount, listing_type, status')
+      .eq('id', bidData.property_id)
+      .single();
+
+    if (!property?.is_accepting_bids || property.status !== 'available') {
+      return {
+        data: null,
+        error: { message: 'This property is not currently accepting bids' }
+      };
+    }
+
+    // Validate bid amount
+    if (property.minimum_bid_amount && bidData.bid_amount < property.minimum_bid_amount) {
+      return {
+        data: null,
+        error: { message: `Bid amount must be at least ${property.minimum_bid_amount} SAR` }
+      };
+    }
+
+    if (property.maximum_bid_amount && bidData.bid_amount > property.maximum_bid_amount) {
+      return {
+        data: null,
+        error: { message: `Bid amount cannot exceed ${property.maximum_bid_amount} SAR` }
+      };
+    }
+
+    // Validate bid type matches property listing
+    if (property.listing_type !== 'both' && property.listing_type !== bidData.bid_type) {
+      return {
+        data: null,
+        error: { message: `This property is only available for ${property.listing_type}` }
+      };
+    }
+
+    const bid = {
+      property_id: bidData.property_id,
+      bidder_id: userContext.userId,
+      bid_type: bidData.bid_type,
+      bid_amount: bidData.bid_amount,
+      message: bidData.message,
+      expires_at: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString(), // 72 hours
+      rental_duration_months: bidData.rental_duration_months,
+      security_deposit_amount: bidData.security_deposit_amount,
+      utilities_included: bidData.utilities_included,
+      move_in_date: bidData.move_in_date
+    };
+
+    return handleApiCall(() => 
+      supabase
+        .from('bids')
+        .insert(bid)
+        .select(`
+          *,
+          property:properties(id, title, address, city, price),
+          bidder:profiles!bids_bidder_id_fkey(id, first_name, last_name, email)
+        `)
+        .single()
+    );
+  },
+
+  // Manager approval workflow
+  async approveByManager(bidId: string, notes?: string): Promise<ApiResponse<any>> {
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext || userContext.role !== 'manager') {
+      return {
+        data: null,
+        error: { message: 'Only managers can approve bids' }
+      };
+    }
+
+    return handleApiCall(() => 
+      supabase
+        .from('bids')
+        .update({
+          bid_status: 'manager_approved',
+          manager_approved: true,
+          manager_approval_date: new Date().toISOString(),
+          manager_id: userContext.userId,
+          manager_notes: notes
+        })
+        .eq('id', bidId)
+        .eq('bid_status', 'pending')
+        .select()
+        .single()
+    );
+  },
+
+  // Owner approval workflow
+  async approveByOwner(bidId: string, notes?: string): Promise<ApiResponse<any>> {
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext || userContext.role !== 'owner') {
+      return {
+        data: null,
+        error: { message: 'Only property owners can approve bids' }
+      };
+    }
+
+    return handleApiCall(() => 
+      supabase
+        .from('bids')
+        .update({
+          bid_status: 'accepted',
+          owner_approved: true,
+          owner_approval_date: new Date().toISOString(),
+          owner_notes: notes
+        })
+        .eq('id', bidId)
+        .eq('bid_status', 'manager_approved')
+        .select()
+        .single()
+    );
+  },
+
+  // Reject bid
+  async reject(bidId: string, reason: string, rejectedBy: 'manager' | 'owner'): Promise<ApiResponse<any>> {
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext || (rejectedBy === 'manager' && userContext.role !== 'manager') || 
+        (rejectedBy === 'owner' && userContext.role !== 'owner')) {
+      return {
+        data: null,
+        error: { message: 'Insufficient permissions to reject bid' }
+      };
+    }
+
+    const updateData = {
+      bid_status: 'rejected',
+      rejection_reason: reason,
+      ...(rejectedBy === 'manager' && {
+        manager_id: userContext.userId,
+        manager_notes: reason,
+        manager_approval_date: new Date().toISOString()
+      }),
+      ...(rejectedBy === 'owner' && {
+        owner_notes: reason,
+        owner_approval_date: new Date().toISOString()
+      })
+    };
+
+    return handleApiCall(() => 
+      supabase
+        .from('bids')
+        .update(updateData)
+        .eq('id', bidId)
+        .select()
+        .single()
+    );
+  },
+
+  // Withdraw bid (for bidders)
+  async withdraw(bidId: string): Promise<ApiResponse<any>> {
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext) {
+      return {
+        data: null,
+        error: { message: 'Authentication required to withdraw bid' }
+      };
+    }
+
+    return handleApiCall(() => 
+      supabase
+        .from('bids')
+        .update({
+          bid_status: 'withdrawn',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', bidId)
+        .eq('bidder_id', userContext.userId)
+        .in('bid_status', ['pending', 'manager_approved'])
+        .select()
+        .single()
+    );
+  }
+};
+
+// User Approvals API - User signup and transaction approval workflow
+export const userApprovalsApi = {
+  // Get all approval requests (for managers)
+  async getAll(filters?: {
+    approval_type?: string;
+    approval_status?: string;
+    priority_level?: string;
+  }): Promise<ApiResponse<any[]>> {
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext || userContext.role !== 'manager') {
+      return {
+        data: null,
+        error: { message: 'Only managers can view approval requests' }
+      };
+    }
+
+    let query = supabase
+      .from('user_approvals')
+      .select(`
+        *,
+        requested_by:profiles!user_approvals_requested_by_fkey(id, first_name, last_name, email, phone, role, profile_type),
+        approved_by:profiles!user_approvals_approved_by_fkey(id, first_name, last_name, email)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (filters?.approval_type) query = query.eq('approval_type', filters.approval_type);
+    if (filters?.approval_status) query = query.eq('approval_status', filters.approval_status);
+    if (filters?.priority_level) query = query.eq('priority_level', filters.priority_level);
+
+    return handleApiCall(() => query);
+  },
+
+  // Create user signup approval request
+  async createUserSignupApproval(userId: string, notes?: string): Promise<ApiResponse<any>> {
+    return handleApiCall(() => 
+      supabase
+        .from('user_approvals')
+        .insert({
+          approval_type: 'user_signup',
+          requested_by: userId,
+          related_entity_type: 'profile',
+          related_entity_id: userId,
+          approval_notes: notes,
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days
+        })
+        .select()
+        .single()
+    );
+  },
+
+  // Approve user signup
+  async approveUserSignup(approvalId: string, notes?: string): Promise<ApiResponse<any>> {
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext || userContext.role !== 'manager') {
+      return {
+        data: null,
+        error: { message: 'Only managers can approve user signups' }
+      };
+    }
+
+    // Update approval record
+    const { data: approval, error: approvalError } = await supabase
+      .from('user_approvals')
+      .update({
+        approval_status: 'approved',
+        approved_by: userContext.userId,
+        approval_date: new Date().toISOString(),
+        approval_notes: notes
+      })
+      .eq('id', approvalId)
+      .eq('approval_status', 'pending')
+      .select()
+      .single();
+
+    if (approvalError) {
+      return { data: null, error: { message: approvalError.message } };
+    }
+
+    // Update user profile
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({
+        approval_status: 'approved',
+        approved_by: userContext.userId,
+        approval_date: new Date().toISOString(),
+        can_bid: true,
+        kyc_status: 'verified'
+      })
+      .eq('id', approval.related_entity_id);
+
+    if (profileError) {
+      return { data: null, error: { message: profileError.message } };
+    }
+
+    return { data: approval, error: null };
+  },
+
+  // Reject user signup
+  async rejectUserSignup(approvalId: string, reason: string): Promise<ApiResponse<any>> {
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext || userContext.role !== 'manager') {
+      return {
+        data: null,
+        error: { message: 'Only managers can reject user signups' }
+      };
+    }
+
+    // Update approval record
+    const { data: approval, error: approvalError } = await supabase
+      .from('user_approvals')
+      .update({
+        approval_status: 'rejected',
+        approved_by: userContext.userId,
+        approval_date: new Date().toISOString(),
+        rejection_reason: reason
+      })
+      .eq('id', approvalId)
+      .eq('approval_status', 'pending')
+      .select()
+      .single();
+
+    if (approvalError) {
+      return { data: null, error: { message: approvalError.message } };
+    }
+
+    // Update user profile
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({
+        approval_status: 'rejected',
+        approved_by: userContext.userId,
+        approval_date: new Date().toISOString(),
+        rejection_reason: reason,
+        can_bid: false
+      })
+      .eq('id', approval.related_entity_id);
+
+    if (profileError) {
+      return { data: null, error: { message: profileError.message } };
+    }
+
+    return { data: approval, error: null };
+  }
+};
+
+// Tenant-specific API functions
+export const tenantApi = {
+  // Get available rental properties for tenants
+  async getAvailableRentalProperties(filters?: {
+    city?: string;
+    property_type?: string;
+    min_price?: number;
+    max_price?: number;
+    bedrooms?: number;
+  }): Promise<ApiResponse<any[]>> {
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext || userContext.role !== 'tenant') {
+      return {
+        data: null,
+        error: { message: 'Only approved tenants can view rental properties' }
+      };
+    }
+
+    let query = supabase
+      .from('properties')
+      .select(`
+        *,
+        owner:profiles!properties_owner_id_fkey(id, first_name, last_name, email, phone),
+        existing_bids:bids(id, bid_amount, bid_status, bidder_id)
+      `)
+      .eq('status', 'available')
+      .eq('is_accepting_bids', true)
+      .in('listing_type', ['rent', 'both'])
+      .eq('approval_status', 'approved')
+      .order('created_at', { ascending: false });
+
+    // Apply filters
+    if (filters?.city) query = query.ilike('city', `%${filters.city}%`);
+    if (filters?.property_type) query = query.eq('property_type', filters.property_type);
+    if (filters?.min_price) query = query.gte('price', filters.min_price);
+    if (filters?.max_price) query = query.lte('price', filters.max_price);
+    if (filters?.bedrooms) query = query.eq('bedrooms', filters.bedrooms);
+
+    return handleApiCall(() => query);
+  },
+
+  // Get tenant's bids
+  async getMyBids(): Promise<ApiResponse<any[]>> {
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext || userContext.role !== 'tenant') {
+      return {
+        data: null,
+        error: { message: 'Only tenants can view their bids' }
+      };
+    }
+
+    return handleApiCall(() => 
+      supabase
+        .from('bids')
+        .select(`
+          *,
+          property:properties(id, title, address, city, price, status, listing_type),
+          manager:profiles!bids_manager_id_fkey(id, first_name, last_name, email)
+        `)
+        .eq('bidder_id', userContext.userId)
+        .order('created_at', { ascending: false })
+    );
+  },
+
+  // Get tenant's rental history and current contracts
+  async getMyContracts(): Promise<ApiResponse<any[]>> {
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext || userContext.role !== 'tenant') {
+      return {
+        data: null,
+        error: { message: 'Only tenants can view their contracts' }
+      };
+    }
+
+    return handleApiCall(() => 
+      supabase
+        .from('contracts')
+        .select(`
+          *,
+          property:properties(id, title, address, city, neighborhood, property_type),
+          maintenance_requests:maintenance_requests(id, title, status, priority, created_at)
+        `)
+        .eq('tenant_id', userContext.userId)
+        .order('start_date', { ascending: false })
+    );
+  },
+
+  // Get tenant's maintenance requests
+  async getMyMaintenanceRequests(): Promise<ApiResponse<any[]>> {
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext || userContext.role !== 'tenant') {
+      return {
+        data: null,
+        error: { message: 'Only tenants can view their maintenance requests' }
+      };
+    }
+
+    return handleApiCall(() => 
+      supabase
+        .from('maintenance_requests')
+        .select(`
+          *,
+          property:properties(id, title, address, city),
+          work_orders(id, status, estimated_cost, actual_cost, completion_date)
+        `)
+        .eq('tenant_id', userContext.userId)
+        .order('created_at', { ascending: false })
+    );
+  },
+
+  // Submit maintenance request
+  async createMaintenanceRequest(requestData: {
+    property_id: string;
+    title: string;
+    description: string;
+    priority?: 'low' | 'medium' | 'high' | 'urgent';
+    images?: string[];
+  }): Promise<ApiResponse<any>> {
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext || userContext.role !== 'tenant') {
+      return {
+        data: null,
+        error: { message: 'Only tenants can submit maintenance requests' }
+      };
+    }
+
+    // Verify tenant has active contract for this property
+    const { data: contract } = await supabase
+      .from('contracts')
+      .select('id')
+      .eq('tenant_id', userContext.userId)
+      .eq('property_id', requestData.property_id)
+      .eq('status', 'active')
+      .single();
+
+    if (!contract) {
+      return {
+        data: null,
+        error: { message: 'You can only submit maintenance requests for properties you are currently renting' }
+      };
+    }
+
+    const request = {
+      property_id: requestData.property_id,
+      tenant_id: userContext.userId,
+      title: requestData.title,
+      description: requestData.description,
+      priority: requestData.priority || 'medium',
+      images: requestData.images,
+      status: 'pending'
+    };
+
+    return handleApiCall(() => 
+      supabase
+        .from('maintenance_requests')
+        .insert(request)
+        .select(`
+          *,
+          property:properties(id, title, address, city)
+        `)
+        .single()
+    );
+  }
+};
+
+// Bidding System API
+export const biddingApi = {
+  // Submit a bid on a property
+  async submitBid(bidData: {
+    property_id: string;
+    bidder_id: string;
+    bid_type: 'rental' | 'purchase';
+    bid_amount: number;
+    rental_duration_months?: number;
+    security_deposit_amount?: number;
+    utilities_included?: boolean;
+    message?: string;
+    expires_at: string;
+  }): Promise<ApiResponse<any>> {
+    try {
+      const { data, error } = await supabase
+        .from('bids')
+        .insert([{
+          property_id: bidData.property_id,
+          bidder_id: bidData.bidder_id,
+          bid_type: bidData.bid_type,
+          bid_amount: bidData.bid_amount,
+          rental_duration_months: bidData.rental_duration_months,
+          security_deposit_amount: bidData.security_deposit_amount,
+          utilities_included: bidData.utilities_included,
+          message: bidData.message,
+          expires_at: bidData.expires_at,
+          bid_status: 'pending'
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to submit bid' };
+    }
+  },
+
+  // Get bids for a specific user
+  async getMyBids(userId: string): Promise<ApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('bids')
+        .select(`
+          *,
+          property:properties(
+            id, title, address, city, property_type, price, annual_rent, images,
+            owner:profiles(id, first_name, last_name, phone)
+          )
+        `)
+        .eq('bidder_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch bids' };
+    }
+  },
+
+  // Get bids on properties owned by a specific user
+  async getBidsOnMyProperties(ownerId: string): Promise<ApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('bids')
+        .select(`
+          *,
+          property:properties!inner(
+            id, title, address, city, property_type, price, annual_rent
+          ),
+          bidder:profiles(
+            id, first_name, last_name, phone, email, kyc_status, credit_score
+          )
+        `)
+        .eq('property.owner_id', ownerId)
+        .in('bid_status', ['pending', 'manager_approved'])
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch property bids' };
+    }
+  },
+
+  // Respond to a bid (accept/reject by property owner)
+  async respondToBid(bidId: string, response: 'accept' | 'reject', ownerId: string, message?: string): Promise<ApiResponse<any>> {
+    try {
+      const updateData: any = {
+        owner_approved: response === 'accept',
+        owner_approval_date: new Date().toISOString(),
+        owner_response_message: message,
+        bid_status: response === 'accept' ? 'owner_approved' : 'owner_rejected'
+      };
+
+      const { data, error } = await supabase
+        .from('bids')
+        .update(updateData)
+        .eq('id', bidId)
+        .eq('property.owner_id', ownerId)
+        .select(`
+          *,
+          property:properties(id, title, owner_id),
+          bidder:profiles(id, first_name, last_name)
+        `)
+        .single();
+
+      if (error) throw error;
+
+      // If bid is accepted, create transaction record
+      if (response === 'accept' && data) {
+        const transactionData = {
+          property_id: data.property_id,
+          transaction_type: data.bid_type === 'purchase' ? 'sale' : 'rental',
+          transaction_amount: data.bid_amount,
+          buyer_id: data.bid_type === 'purchase' ? data.bidder_id : null,
+          tenant_id: data.bid_type === 'rental' ? data.bidder_id : null,
+          previous_owner_id: ownerId,
+          bid_id: bidId,
+          transaction_status: 'pending'
+        };
+
+        await supabase.from('property_transactions').insert([transactionData]);
+      }
+
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to respond to bid' };
+    }
+  },
+
+  // Get properties available for bidding
+  async getPropertiesForBidding(bidType: 'rental' | 'purchase', excludeOwnerId?: string): Promise<ApiResponse<any[]>> {
+    try {
+      let query = supabase
+        .from('properties')
+        .select(`
+          id, title, description, property_type, address, city, country,
+          price, annual_rent, bedrooms, bathrooms, area_sqm, amenities,
+          minimum_bid_amount, maximum_bid_amount, is_accepting_bids,
+          listing_expires_at, images, is_furnished,
+          owner:profiles(id, first_name, last_name, phone)
+        `)
+        .eq('status', 'available')
+        .eq('approval_status', 'approved')
+        .eq('is_accepting_bids', true)
+        .gt('listing_expires_at', new Date().toISOString());
+
+      if (bidType === 'rental') {
+        query = query.in('listing_type', ['rent', 'both']);
+      } else {
+        query = query.in('listing_type', ['sale', 'both']);
+      }
+
+      if (excludeOwnerId) {
+        query = query.neq('owner_id', excludeOwnerId);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch properties for bidding' };
+    }
+  }
+};
+
+// Property Owner Maintenance API
+export const ownerMaintenanceApi = {
+  // Get maintenance requests for properties owned by a specific user
+  async getMaintenanceRequestsForMyProperties(ownerId: string): Promise<ApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('maintenance_requests')
+        .select(`
+          *,
+          property:properties!inner(
+            id, title, address, city, owner_id
+          ),
+          tenant:profiles(
+            id, first_name, last_name, phone, email
+          ),
+          work_orders(
+            id, status, estimated_cost, actual_cost, start_date, completion_date,
+            assigned_to:profiles(id, first_name, last_name, phone)
+          )
+        `)
+        .eq('property.owner_id', ownerId)
+        .in('status', ['pending', 'approved', 'in_progress'])
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch maintenance requests' };
+    }
+  },
+
+  // Create work order for maintenance request
+  async createWorkOrder(workOrderData: {
+    maintenance_request_id: string;
+    assigned_to?: string;
+    description: string;
+    estimated_cost: number;
+    start_date: string;
+  }): Promise<ApiResponse<any>> {
+    try {
+      const { data: workOrder, error: workOrderError } = await supabase
+        .from('work_orders')
+        .insert([{
+          maintenance_request_id: workOrderData.maintenance_request_id,
+          assigned_to: workOrderData.assigned_to,
+          description: workOrderData.description,
+          estimated_cost: workOrderData.estimated_cost,
+          start_date: workOrderData.start_date,
+          status: 'assigned'
+        }])
+        .select()
+        .single();
+
+      if (workOrderError) throw workOrderError;
+
+      // Update maintenance request status
+      const { error: updateError } = await supabase
+        .from('maintenance_requests')
+        .update({ status: 'approved' })
+        .eq('id', workOrderData.maintenance_request_id);
+
+      if (updateError) throw updateError;
+
+      return { success: true, data: workOrder };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to create work order' };
+    }
+  },
+
+  // Get contractors/employees for work order assignment
+  async getContractors(): Promise<ApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, phone, email')
+        .in('role', ['employee', 'contractor'])
+        .eq('status', 'active')
+        .order('first_name');
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch contractors' };
+    }
+  }
+};
+
+// Property Management API for Owners
+export const ownerPropertyApi = {
+  // Get properties owned by a specific user
+  async getMyProperties(ownerId: string): Promise<ApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .select(`
+          *,
+          contracts(
+            id, tenant_id, start_date, end_date, rent_amount, status,
+            tenant:profiles(id, first_name, last_name, phone)
+          )
+        `)
+        .eq('owner_id', ownerId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch properties' };
+    }
+  },
+
+  // Create new property listing (requires manager approval)
+  async createProperty(propertyData: {
+    title: string;
+    description: string;
+    property_type: string;
+    address: string;
+    city: string;
+    country: string;
+    area_sqm: number;
+    bedrooms?: number;
+    bathrooms?: number;
+    price: number;
+    annual_rent?: number;
+    owner_id: string;
+    listing_type: 'rent' | 'sale' | 'both';
+    minimum_bid_amount?: number;
+    maximum_bid_amount?: number;
+    bid_increment?: number;
+    listing_expires_at: string;
+    amenities?: string[];
+    is_furnished?: boolean;
+  }): Promise<ApiResponse<any>> {
+    try {
+      // Create property with pending approval status
+      const { data: property, error: propertyError } = await supabase
+        .from('properties')
+        .insert([{
+          ...propertyData,
+          approval_status: 'pending',
+          is_accepting_bids: false, // Will be enabled after approval
+          status: 'available'
+        }])
+        .select()
+        .single();
+
+      if (propertyError) throw propertyError;
+
+      // Create approval request
+      const { error: approvalError } = await supabase
+        .from('user_approvals')
+        .insert([{
+          approval_type: 'property_listing',
+          requested_by: propertyData.owner_id,
+          related_entity_type: 'property',
+          related_entity_id: property.id,
+          expires_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days
+        }]);
+
+      if (approvalError) throw approvalError;
+
+      return { success: true, data: property };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to create property' };
+    }
+  },
+
+  // Get property analytics for owner
+  async getPropertyAnalytics(propertyId: string, ownerId: string): Promise<ApiResponse<any>> {
+    try {
+      // Get property details
+      const { data: property, error: propertyError } = await supabase
+        .from('properties')
+        .select('*')
+        .eq('id', propertyId)
+        .eq('owner_id', ownerId)
+        .single();
+
+      if (propertyError) throw propertyError;
+
+      // Get maintenance costs
+      const { data: maintenanceCosts, error: maintenanceError } = await supabase
+        .from('work_orders')
+        .select('actual_cost, estimated_cost')
+        .eq('maintenance_request.property_id', propertyId);
+
+      // Get rental income
+      const { data: contracts, error: contractsError } = await supabase
+        .from('contracts')
+        .select('rent_amount, start_date, end_date, status')
+        .eq('property_id', propertyId);
+
+      // Get bids
+      const { data: bids, error: bidsError } = await supabase
+        .from('bids')
+        .select('bid_amount, bid_type, bid_status, created_at')
+        .eq('property_id', propertyId);
+
+      const totalMaintenanceCosts = maintenanceCosts?.reduce((sum, order) => 
+        sum + (order.actual_cost || order.estimated_cost || 0), 0) || 0;
+
+      const monthlyRent = contracts?.find(c => c.status === 'active')?.rent_amount || 0;
+      const annualRent = monthlyRent * 12;
+      const roi = property.price > 0 ? ((annualRent - totalMaintenanceCosts) / property.price) * 100 : 0;
+
+      const analytics = {
+        property,
+        monthlyRent,
+        annualRent,
+        totalMaintenanceCosts,
+        roi,
+        activeBids: bids?.filter(b => b.bid_status === 'pending').length || 0,
+        totalBids: bids?.length || 0,
+        occupancyStatus: contracts?.some(c => c.status === 'active') ? 'occupied' : 'vacant'
+      };
+
+      return { success: true, data: analytics };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch property analytics' };
+    }
+  }
+};
+
+// User Approval API (for managers)
+export const approvalsApi = {
+  // Get pending user approvals
+  async getPendingUserApprovals(): Promise<ApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('user_approvals')
+        .select(`
+          *,
+          profile:profiles(
+            id, first_name, last_name, email, phone, role, kyc_status
+          )
+        `)
+        .eq('approval_status', 'pending')
+        .eq('approval_type', 'user_signup')
+        .order('created_at');
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch pending approvals' };
+    }
+  },
+
+  // Get pending property approvals
+  async getPendingPropertyApprovals(): Promise<ApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('user_approvals')
+        .select(`
+          *,
+          property:properties(
+            id, title, address, city, property_type, price, listing_type,
+            owner:profiles(id, first_name, last_name)
+          )
+        `)
+        .eq('approval_status', 'pending')
+        .eq('approval_type', 'property_listing')
+        .order('created_at');
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch pending property approvals' };
+    }
+  },
+
+  // Approve user
+  async approveUser(userId: string, managerId: string, notes?: string): Promise<ApiResponse<any>> {
+    try {
+      // Update profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          approval_status: 'approved',
+          approved_by: managerId,
+          approval_date: new Date().toISOString(),
+          can_bid: true,
+          kyc_status: 'verified'
+        })
+        .eq('id', userId);
+
+      if (profileError) throw profileError;
+
+      // Update approval record
+      const { data, error: approvalError } = await supabase
+        .from('user_approvals')
+        .update({
+          approval_status: 'approved',
+          approved_by: managerId,
+          approval_date: new Date().toISOString(),
+          approval_notes: notes
+        })
+        .eq('related_entity_id', userId)
+        .eq('approval_type', 'user_signup')
+        .select()
+        .single();
+
+      if (approvalError) throw approvalError;
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to approve user' };
+    }
+  },
+
+  // Approve property
+  async approveProperty(propertyId: string, managerId: string): Promise<ApiResponse<any>> {
+    try {
+      // Update property
+      const { error: propertyError } = await supabase
+        .from('properties')
+        .update({
+          approval_status: 'approved',
+          approved_by: managerId,
+          approval_date: new Date().toISOString(),
+          is_accepting_bids: true
+        })
+        .eq('id', propertyId);
+
+      if (propertyError) throw propertyError;
+
+      // Update approval record
+      const { data, error: approvalError } = await supabase
+        .from('user_approvals')
+        .update({
+          approval_status: 'approved',
+          approved_by: managerId,
+          approval_date: new Date().toISOString()
+        })
+        .eq('related_entity_id', propertyId)
+        .eq('approval_type', 'property_listing')
+        .select()
+        .single();
+
+      if (approvalError) throw approvalError;
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to approve property' };
+    }
+  }
+};
+
+// Buyer API (comprehensive buyer functionality)
+export const buyerApi = {
+  // Get properties available for purchase
+  async getBrowseProperties(filters?: {
+    city?: string;
+    property_type?: string;
+    min_price?: number;
+    max_price?: number;
+    bedrooms?: number;
+    listing_type?: 'sale' | 'rent' | 'both';
+  }): Promise<ApiResponse<any[]>> {
+    try {
+      let query = supabase
+        .from('properties')
+        .select(`
+          *,
+          owner:profiles(id, first_name, last_name, phone),
+          bids(id, bid_amount, bid_status, created_at)
+        `)
+        .eq('status', 'available')
+        .eq('approval_status', 'approved')
+        .eq('is_accepting_bids', true)
+        .gt('listing_expires_at', new Date().toISOString());
+
+      // Apply filters
+      if (filters?.city) {
+        query = query.ilike('city', `%${filters.city}%`);
+      }
+      if (filters?.property_type) {
+        query = query.eq('property_type', filters.property_type);
+      }
+      if (filters?.min_price) {
+        query = query.gte('price', filters.min_price);
+      }
+      if (filters?.max_price) {
+        query = query.lte('price', filters.max_price);
+      }
+      if (filters?.bedrooms) {
+        query = query.eq('bedrooms', filters.bedrooms);
+      }
+      if (filters?.listing_type && filters.listing_type !== 'both') {
+        query = query.or(`listing_type.eq.${filters.listing_type},listing_type.eq.both`);
+      }
+
+      const { data, error } = await query
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch properties' };
+    }
+  },
+
+  // Get buyer's bid history
+  async getMyBids(buyerId: string): Promise<ApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('bids')
+        .select(`
+          *,
+          property:properties(
+            id, title, address, city, price, images,
+            owner:profiles(id, first_name, last_name, phone)
+          )
+        `)
+        .eq('bidder_id', buyerId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return { success: true, data: data || [] };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch bids' };
+    }
+  },
+
+  // Submit a new bid
+  async submitBid(bidData: {
+    property_id: string;
+    bidder_id: string;
+    bid_type: 'purchase' | 'rental';
+    bid_amount: number;
+    message?: string;
+    rental_duration_months?: number;
+    security_deposit_amount?: number;
+    utilities_included?: boolean;
+    move_in_date?: string;
+  }): Promise<ApiResponse<any>> {
+    try {
+      // Check if user can bid
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('can_bid, approval_status')
+        .eq('id', bidData.bidder_id)
+        .single();
+
+      if (!profile?.can_bid || profile?.approval_status !== 'approved') {
+        throw new Error('User is not approved to submit bids');
+      }
+
+      // Check if property is available for bidding
+      const { data: property } = await supabase
+        .from('properties')
+        .select('is_accepting_bids, owner_id, minimum_bid_amount, maximum_bid_amount')
+        .eq('id', bidData.property_id)
+        .single();
+
+      if (!property?.is_accepting_bids) {
+        throw new Error('Property is not accepting bids');
+      }
+
+      if (property.owner_id === bidData.bidder_id) {
+        throw new Error('Cannot bid on your own property');
+      }
+
+      // Validate bid amount
+      if (property.minimum_bid_amount && bidData.bid_amount < property.minimum_bid_amount) {
+        throw new Error(`Bid amount must be at least ${property.minimum_bid_amount}`);
+      }
+
+      if (property.maximum_bid_amount && bidData.bid_amount > property.maximum_bid_amount) {
+        throw new Error(`Bid amount cannot exceed ${property.maximum_bid_amount}`);
+      }
+
+      // Check for existing active bid
+      const { data: existingBid } = await supabase
+        .from('bids')
+        .select('id')
+        .eq('property_id', bidData.property_id)
+        .eq('bidder_id', bidData.bidder_id)
+        .eq('bid_status', 'pending')
+        .single();
+
+      if (existingBid) {
+        throw new Error('You already have an active bid on this property');
+      }
+
+      // Create the bid
+      const { data: bid, error } = await supabase
+        .from('bids')
+        .insert([{
+          property_id: bidData.property_id,
+          bidder_id: bidData.bidder_id,
+          bid_type: bidData.bid_type,
+          bid_amount: bidData.bid_amount,
+          message: bidData.message,
+          rental_duration_months: bidData.rental_duration_months,
+          security_deposit_amount: bidData.security_deposit_amount,
+          utilities_included: bidData.utilities_included,
+          move_in_date: bidData.move_in_date,
+          expires_at: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString(), // 72 hours
+          bid_status: 'pending'
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data: bid };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to submit bid' };
+    }
+  },
+
+  // Get buyer dashboard data
+  async getDashboardData(buyerId: string): Promise<ApiResponse<{
+    totalBids: number;
+    pendingBids: number;
+    acceptedBids: number;
+    rejectedBids: number;
+    availableProperties: number;
+    favoriteProperties: number;
+    approvalStatus: string;
+    canBid: boolean;
+  }>> {
+    try {
+      // Get bid statistics
+      const { data: bids } = await supabase
+        .from('bids')
+        .select('bid_status')
+        .eq('bidder_id', buyerId);
+
+      const bidStats = bids?.reduce((acc, bid) => {
+        acc.total++;
+        if (bid.bid_status === 'pending' || bid.bid_status === 'manager_approved') acc.pending++;
+        else if (bid.bid_status === 'owner_approved') acc.accepted++;
+        else if (bid.bid_status === 'rejected') acc.rejected++;
+        return acc;
+      }, { total: 0, pending: 0, accepted: 0, rejected: 0 }) || { total: 0, pending: 0, accepted: 0, rejected: 0 };
+
+      // Get available properties count
+      const { count: availableCount } = await supabase
+        .from('properties')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'available')
+        .eq('approval_status', 'approved')
+        .eq('is_accepting_bids', true);
+
+      // Get buyer profile info
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('approval_status, can_bid')
+        .eq('id', buyerId)
+        .single();
+
+      const dashboardData = {
+        totalBids: bidStats.total,
+        pendingBids: bidStats.pending,
+        acceptedBids: bidStats.accepted,
+        rejectedBids: bidStats.rejected,
+        availableProperties: availableCount || 0,
+        favoriteProperties: 0, // TODO: Implement favorites
+        approvalStatus: profile?.approval_status || 'pending',
+        canBid: profile?.can_bid || false
+      };
+
+      return { success: true, data: dashboardData };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to fetch dashboard data' };
+    }
+  },
+
+  // Withdraw a bid
+  async withdrawBid(bidId: string, buyerId: string): Promise<ApiResponse<any>> {
+    try {
+      const { data, error } = await supabase
+        .from('bids')
+        .update({
+          bid_status: 'withdrawn',
+          withdrawal_date: new Date().toISOString(),
+          withdrawal_reason: 'Withdrawn by buyer'
+        })
+        .eq('id', bidId)
+        .eq('bidder_id', buyerId)
+        .eq('bid_status', 'pending')
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to withdraw bid' };
+    }
   }
 };
 
@@ -1719,4 +3436,12 @@ export default {
   clients: clientsApi,
   reservations: reservationsApi,
   reports: reportsApi,
+  bids: bidsApi,
+  userApprovals: userApprovalsApi,
+  tenant: tenantApi,
+  bidding: biddingApi,
+  ownerMaintenance: ownerMaintenanceApi,
+  ownerProperty: ownerPropertyApi,
+  approvals: approvalsApi,
+  buyer: buyerApi,
 }; 

@@ -174,7 +174,8 @@ export default function DocumentViewerScreen() {
         <ModernHeader
           title="Document Viewer"
           subtitle="Loading document..."
-          isHomepage={false}
+          variant="dark"
+          showBackButton={true}
           onBackPress={() => router.back()}
         />
         <View style={styles.loadingContainer}>
@@ -191,7 +192,8 @@ export default function DocumentViewerScreen() {
         <ModernHeader
           title="Document Viewer"
           subtitle="Error loading document"
-          isHomepage={false}
+          variant="dark"
+          showBackButton={true}
           onBackPress={() => router.back()}
         />
         <View style={styles.errorContainer}>
@@ -217,7 +219,8 @@ export default function DocumentViewerScreen() {
       <ModernHeader
         title="Document Viewer"
         subtitle={document.title}
-        isHomepage={false}
+        variant="dark"
+        showBackButton={true}
         onBackPress={() => router.back()}
       />
 

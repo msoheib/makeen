@@ -107,7 +107,7 @@ export default function AddMaintenanceRequestScreen() {
         [
           {
             text: t('common:ok'),
-            onPress: () => router.replace('/maintenance'),
+            onPress: () => router.replace('/(drawer)/(tabs)/maintenance'),
           },
         ]
       );
@@ -154,8 +154,10 @@ export default function AddMaintenanceRequestScreen() {
     <View style={styles.container}>
       <ModernHeader 
         title={t('addRequest')}
-        showBack={true}
-        onBack={() => router.back()}
+        showBackButton={true}
+        showMenu={false}
+        showNotifications={false}
+        onBackPress={() => router.back()}
       />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

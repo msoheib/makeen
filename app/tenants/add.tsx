@@ -176,7 +176,7 @@ export default function AssignTenantScreen() {
         [
           {
             text: 'موافق',
-            onPress: () => router.push('/(drawer)/(tabs)/tenants')
+            onPress: () => router.replace('/(drawer)/(tabs)/tenants')
           }
         ]
       );

@@ -187,7 +187,9 @@ export default function PaymentsScreen() {
         <ModernHeader
           title="Payments"
           subtitle="Track all transactions"
-          isHomepage={false}
+          variant="dark"
+          showNotifications={true}
+          showMenu={true}
         />
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Failed to load payments</Text>
@@ -204,8 +206,9 @@ export default function PaymentsScreen() {
       <ModernHeader
         title="Payments"
         subtitle="Track all transactions"
-        isHomepage={false}
-        onNotificationPress={() => router.push('/notifications')}
+        variant="dark"
+        showNotifications={true}
+        showMenu={true}
       />
 
       {/* Stats Overview */}

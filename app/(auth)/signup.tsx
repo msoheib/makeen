@@ -129,6 +129,7 @@ export default function SignUpScreen() {
               onValueChange={value => setRole(value as UserRole)}
               buttons={[
                 { value: 'tenant', label: 'Tenant' },
+                { value: 'buyer', label: 'Buyer' },
                 { value: 'owner', label: 'Property Owner' },
                 { value: 'manager', label: 'Manager' }
               ]}

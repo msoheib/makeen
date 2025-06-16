@@ -13,8 +13,7 @@ import {
   MapPin, 
   Home, 
   FileText, 
-  Calendar,
-  ArrowLeft 
+  Calendar
 } from 'lucide-react-native';
 import { useTranslation } from '@/lib/useTranslation';
 
@@ -259,9 +258,8 @@ export default function TenantDetailsScreen() {
         subtitle={loading ? t('details.loading') : (tenant ? `${tenant.first_name} ${tenant.last_name}` : "Not Found")}
         variant="dark"
         showNotifications={false}
-        isHomepage={false}
-        leftIcon={<ArrowLeft size={24} color={theme.colors.onPrimary} />}
-        onLeftPress={() => router.back()}
+        showBackButton={true}
+        onBackPress={() => router.back()}
       />
 
       {loading ? renderLoadingState() : error ? renderErrorState() : renderTenantInfo()}

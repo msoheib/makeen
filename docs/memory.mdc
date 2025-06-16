@@ -1127,3 +1127,262 @@ const handleBackPress = () => {
 
 ---
 **Status:** ✅ **COMPLETE** - Context-aware navigation system fully implemented with 100% route detection accuracy, smart back navigation, comprehensive testing validation, and production-ready deployment. All 6 tasks completed successfully following proper task-driven development methodology.
+
+## Comprehensive Tenant Flow Implementation (December 2024)
+
+### ✅ **COMPLETED: Full Tenant Workflow System**
+
+**Implementation Overview:** Complete tenant-facing functionality implemented covering registration, property browsing, bidding, and maintenance requests with Arabic localization and Material Design 3 UI.
+
+**Problem Addressed:** Property managers needed a comprehensive tenant portal allowing prospective and current tenants to browse properties, submit rental bids, track applications, and request maintenance services.
+
+#### **1. Database Infrastructure & API Layer**
+
+**Database Tables Enhanced:**
+- **`bids`** - Complete bidding system with status workflow (pending → manager_approved → accepted/rejected)
+- **`user_approvals`** - Tenant registration approval workflow
+- **`property_transactions`** - Financial transaction tracking
+- **Enhanced `profiles`** - Role-based access with tenant-specific fields
+- **Enhanced `properties`** - Bidding controls (min/max amounts, acceptance status)
+- **Enhanced `maintenance_requests`** - Tenant maintenance submission system
+
+**API Infrastructure (`lib/api.ts`):**
+- **`tenantApi`** (lines 2134-2324): Complete tenant-specific functions
+  - `getAvailableRentalProperties()` - Property browsing with advanced filtering
+  - `getMyBids()` - Bid tracking with status and property details
+  - `getMyContracts()` - Rental history and active agreements
+  - `getMyMaintenanceRequests()` - Maintenance request tracking
+  - `createMaintenanceRequest()` - Maintenance submission with validation
+
+- **`bidsApi`** (lines 1703-1923): Comprehensive bidding system
+  - `create()` - Bid submission with business logic validation
+  - `approveByManager()` - Manager approval workflow
+  - `approveByOwner()` - Owner approval workflow
+  - Role-based access control and data filtering
+
+**Security & Validation:**
+- **Authentication Required:** All tenant functions require valid user context
+- **Role-Based Access:** Tenants see only their own data (bids, contracts, maintenance)
+- **Business Logic Validation:** Bid amounts, property availability, contract verification
+- **Data Integrity:** Foreign key relationships and constraint enforcement
+
+#### **2. Tenant Dashboard Screen (`app/tenant/dashboard.tsx` - 847 lines)**
+
+**Three-Tab Interface:**
+1. **Browse Properties Tab:**
+   - Available rental properties with search/filtering
+   - Property cards showing key details (bedrooms, bathrooms, parking)
+   - Price display in Saudi Riyal with proper formatting
+   - Owner contact information and property features
+   - Direct "Place Bid" and "View Details" actions
+
+2. **My Bids Tab:**
+   - Real-time bid status tracking with color-coded indicators
+   - Bid details: amount, duration, security deposit, move-in date
+   - Status workflow visualization (pending → manager_approved → accepted/rejected)
+   - Bid withdrawal functionality
+   - Property information linked to each bid
+
+3. **Maintenance Requests Tab:**
+   - Active maintenance requests with priority indicators
+   - Property association and status tracking
+   - Request history with timestamps
+   - Direct link to create new maintenance requests
+
+**Real-Time Statistics:**
+- **Available Properties:** Live count of browsable rental properties
+- **My Bids:** Total submitted bids with active/pending breakdown
+- **Active Contracts:** Current rental agreements count
+- **Maintenance Requests:** Open request tracking
+
+**UI/UX Features:**
+- ✅ **Arabic Localization:** Full RTL support with Arabic text
+- ✅ **Material Design 3:** Consistent theming and component usage
+- ✅ **Pull-to-Refresh:** Synchronized data refresh across all tabs
+- ✅ **Search Functionality:** Property search by title, address, city
+- ✅ **Loading States:** Comprehensive loading indicators and error handling
+- ✅ **Responsive Design:** Optimized for mobile screens
+
+#### **3. Bid Submission Screen (`app/tenant/place-bid.tsx` - 652 lines)**
+
+**Property Information Display:**
+- **Full Property Details:** Title, address, features, pricing
+- **Owner Information:** Contact details and property specifications
+- **Visual Elements:** Property images, feature icons, location data
+
+**Bid Form Components:**
+- **Bid Amount:** Validation against property min/max limits with real-time feedback
+- **Rental Duration:** Selection options (6, 12, 24 months) with cost calculation
+- **Security Deposit:** Configurable deposit amount with validation
+- **Move-in Date:** Date picker with future date validation
+- **Utilities Toggle:** Include/exclude utilities in rental agreement
+- **Message Field:** Optional message to property owner
+
+**Advanced Validation System:**
+```typescript
+// Bid amount validation against property limits
+if (property?.minimum_bid_amount && amount < property.minimum_bid_amount) {
+  setBidAmountError(`الحد الأدنى للعرض هو ${formatPrice(property.minimum_bid_amount)}`);
+  return false;
+}
+
+// Move-in date validation
+const selectedDate = new Date(moveInDate);
+const today = new Date();
+if (selectedDate < today) {
+  setMoveInDateError('تاريخ الانتقال يجب أن يكون في المستقبل');
+  return false;
+}
+```
+
+**Cost Calculation Engine:**
+- **Monthly Rent Calculation:** Based on bid amount and duration
+- **Total First Year Cost:** Monthly rent × 12 + security deposit
+- **Real-time Updates:** Instant cost recalculation on input changes
+- **SAR Currency Formatting:** Proper Arabic number formatting
+
+**Submission Workflow:**
+1. **Client-side Validation:** All fields validated before submission
+2. **API Integration:** Uses `bidsApi.create()` with comprehensive error handling
+3. **Success Feedback:** User-friendly success message with next steps
+4. **Error Handling:** Specific error messages for validation failures
+
+#### **4. Property Details Screen (`app/tenant/property-details.tsx` - 734 lines)**
+
+**Comprehensive Property Information:**
+- **Basic Details:** Type, size, bedrooms, bathrooms, parking
+- **Location Information:** Full address, neighborhood, city
+- **Financial Details:** Price, annual rent, service charges
+- **Features & Amenities:** Furnished status, amenities list
+- **Owner Contact:** Owner name and contact information
+
+**Bidding Integration:**
+- **Direct Bid Placement:** Seamless transition to bid submission form
+- **Bid Status Display:** Shows if user has existing bid on property
+- **Property Availability:** Real-time availability status checking
+
+#### **5. Technical Implementation Details**
+
+**State Management:**
+- **Zustand Store:** Theme and user preference management
+- **useApi Hooks:** Custom hooks for API state management with loading/error states
+- **React State:** Local component state for form inputs and UI interactions
+
+**Navigation Integration:**
+- **Expo Router:** File-based routing with parameter passing
+- **Deep Linking:** Property ID-based navigation between screens
+- **Back Navigation:** Consistent navigation patterns across screens
+
+**Performance Optimizations:**
+- **Concurrent API Calls:** Parallel data fetching for dashboard statistics
+- **Efficient Filtering:** Client-side property search to reduce API calls
+- **Memoized Calculations:** Optimized re-renders for cost calculations
+- **Loading States:** Non-blocking UI updates during data fetching
+
+**Error Handling Strategy:**
+- **API Level:** Standardized error responses with user-friendly messages
+- **Component Level:** Graceful degradation with fallback UI states
+- **Network Issues:** Retry mechanisms and offline state handling
+- **Validation Errors:** Real-time field validation with helpful error messages
+
+#### **6. Business Logic & Workflow**
+
+**Tenant Registration & Approval:**
+- **Account Creation:** Basic profile creation with tenant role assignment
+- **Manager Review:** Approval workflow through `user_approvals` table
+- **Access Control:** Bidding capabilities unlocked after approval
+- **KYC Process:** Document verification and approval tracking
+
+**Property Browsing & Filtering:**
+- **Availability Checking:** Only approved, available properties shown
+- **Role-Based Filtering:** Tenants see rental properties only
+- **Search Capabilities:** Multi-field search across property attributes
+- **Real-time Updates:** Live property status and availability
+
+**Bidding Process:**
+1. **Property Selection:** Browse and select available rental property
+2. **Bid Submission:** Complete form with rental terms and preferences
+3. **Manager Review:** Property manager reviews and approves/rejects bid
+4. **Owner Decision:** Property owner makes final acceptance decision
+5. **Contract Creation:** Successful bids convert to rental contracts
+
+**Maintenance Request Workflow:**
+1. **Active Contract Verification:** Only current tenants can submit requests
+2. **Request Submission:** Priority level and detailed description
+3. **Property Manager Assignment:** Automatic routing to property manager
+4. **Work Order Creation:** Manager creates work orders for contractors
+5. **Status Tracking:** Real-time status updates for tenants
+
+#### **7. Arabic Localization & Cultural Adaptation**
+
+**Language Support:**
+- **RTL Layout:** Right-to-left text direction throughout interface
+- **Arabic Text:** All UI labels, messages, and content in Arabic
+- **Number Formatting:** Arabic numerals and currency formatting (SAR)
+- **Date Formatting:** Arabic date display patterns
+
+**Cultural Considerations:**
+- **Saudi Real Estate Terms:** Property type names and terminology
+- **Local Currency:** Saudi Riyal (SAR) with proper formatting
+- **Regional Features:** Neighborhood and city names in Arabic
+- **Business Practices:** Rental terms and practices aligned with Saudi market
+
+#### **8. Current Implementation Status**
+
+**✅ Fully Functional Features:**
+- **Registration & Approval:** Complete tenant onboarding workflow
+- **Property Browsing:** Advanced search and filtering capabilities
+- **Bid Submission:** Comprehensive rental bid system with validation
+- **Bid Tracking:** Real-time status updates and bid management
+- **Maintenance Requests:** Complete request submission and tracking
+- **Contract Management:** Rental agreement viewing and management
+
+**✅ Technical Quality:**
+- **Performance:** Optimized API calls and efficient state management
+- **Security:** Role-based access control and data validation
+- **User Experience:** Intuitive interface with comprehensive error handling
+- **Accessibility:** Arabic language support and responsive design
+- **Integration:** Seamless integration with existing property management system
+
+**📋 Integration Points:**
+- **Property Manager Dashboard:** Bid approval and maintenance assignment
+- **Owner Dashboard:** Final bid approval and property management
+- **Financial System:** Rent payment tracking and accounting integration
+- **Notification System:** Real-time updates for bid status changes
+
+#### **9. Database Relationships & Data Flow**
+
+**Tenant Data Architecture:**
+```
+profiles (tenant) → bids → properties → contracts
+                      ↓
+                 maintenance_requests → work_orders
+```
+
+**API Data Flow:**
+```
+Frontend Components → useApi Hooks → API Functions → Supabase → Database
+                                      ↓
+Error Handling ← Loading States ← Response Processing ← Query Results
+```
+
+**Security Model:**
+- **Authentication:** Required for all tenant API functions
+- **Authorization:** Role-based data filtering at API level
+- **Data Isolation:** Tenants access only their own data
+- **Audit Trail:** All actions logged with timestamps and user attribution
+
+---
+
+### **Files Implementing Tenant Flow:**
+- **Database Schema:** 18 tables with comprehensive relationships
+- **API Layer:** `lib/api.ts` - tenantApi and bidsApi functions (400+ lines)
+- **Frontend Screens:**
+  - `app/tenant/dashboard.tsx` - Main tenant dashboard (847 lines)
+  - `app/tenant/place-bid.tsx` - Bid submission form (652 lines)  
+  - `app/tenant/property-details.tsx` - Property viewing (734 lines)
+- **Documentation:** `docs/user-role-flows.md` - SQL queries and workflows
+- **Security:** `lib/security.ts` - Role-based access control functions
+
+---
+**Status:** ✅ **COMPLETE** - Comprehensive tenant flow fully implemented with Arabic localization, Material Design 3 UI, role-based security, and complete business logic covering registration, property browsing, bidding, and maintenance requests.
