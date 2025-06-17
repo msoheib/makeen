@@ -17,7 +17,7 @@ import {
   Portal,
 } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
-import { Camera, CameraType } from 'expo-camera';
+import { Camera } from 'expo-camera';
 import { theme, spacing } from '@/lib/theme';
 import { ImagePlus, Camera as CameraIcon, Image as ImageIcon, X } from 'lucide-react-native';
 import { uploadImage, validateImage, ImageUploadResult } from '@/lib/imageUpload';
@@ -48,7 +48,7 @@ export default function PhotoCapture({
   const [menuVisible, setMenuVisible] = useState(false);
   const [cameraVisible, setCameraVisible] = useState(false);
   const [cameraRef, setCameraRef] = useState<Camera | null>(null);
-  const [cameraType, setCameraType] = useState(CameraType.back);
+  const [cameraType, setCameraType] = useState<'front' | 'back'>('back');
 
   // Request permissions on component mount
   React.useEffect(() => {
@@ -185,7 +185,7 @@ export default function PhotoCapture({
                 iconColor="white"
                 size={24}
                 onPress={() => setCameraType(
-                  cameraType === CameraType.back ? CameraType.front : CameraType.back
+                  cameraType === 'back' ? 'front' : 'back'
                 )}
                 style={styles.cameraFlipButton}
               />

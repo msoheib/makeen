@@ -37,7 +37,7 @@ export const SCREEN_PERMISSIONS: ScreenPermission[] = [
   { screen: 'property-details', roles: ['admin', 'manager', 'owner', 'tenant'] },
   
   // People Management
-  { screen: 'tenants', roles: ['admin', 'manager', 'owner'] },
+  { screen: 'tenants', roles: ['admin', 'manager'] },
   { screen: 'owners', roles: ['admin', 'manager'] },
   { screen: 'buyers', roles: ['admin', 'manager', 'owner'] },
   { screen: 'suppliers', roles: ['admin', 'manager'] },
@@ -138,7 +138,7 @@ export const SIDEBAR_PERMISSIONS: NavigationPermission[] = [
 export const TAB_PERMISSIONS: NavigationPermission[] = [
   { id: 'dashboard', label: 'Dashboard', roles: ['admin', 'manager', 'owner', 'tenant'] },
   { id: 'properties', label: 'Properties', roles: ['admin', 'manager', 'owner', 'tenant'] },
-  { id: 'tenants', label: 'Tenants', roles: ['admin', 'manager', 'owner'] },
+  { id: 'tenants', label: 'Tenants', roles: ['admin', 'manager'] },
   { id: 'maintenance', label: 'Maintenance', roles: ['admin', 'manager', 'owner', 'tenant'] },
   { id: 'reports', label: 'Reports', roles: ['admin', 'manager', 'owner'] },
   { id: 'finance', label: 'Finance', roles: ['admin', 'manager', 'owner'] },

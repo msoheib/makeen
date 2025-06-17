@@ -69,12 +69,13 @@ export const propertiesApi = {
         // Owners see only their properties
         query = query.eq('owner_id', userContext.userId);
       } else if (userContext.role === 'tenant') {
-        // Tenants see their rented properties + available properties
+        // Tenants see ONLY their rented properties (no available properties)
         const rentedPropertyIds = userContext.rentedPropertyIds || [];
         if (rentedPropertyIds.length > 0) {
-          query = query.or(`status.eq.available,id.in.(${rentedPropertyIds.join(',')})`);
+          query = query.in('id', rentedPropertyIds);
         } else {
-          query = query.eq('status', 'available');
+          // If tenant has no properties, return empty result
+          query = query.eq('id', 'no-properties-for-tenant');
         }
       }
     }
@@ -200,9 +201,14 @@ export const propertiesApi = {
         propertiesQuery = propertiesQuery.eq('owner_id', userContext.userId);
         contractsQuery = contractsQuery.in('property_id', userContext.ownedPropertyIds || []);
       } else if (userContext.role === 'tenant') {
-        // Tenants see limited data - only their rented properties
+        // Tenants see ONLY their rented properties
         const rentedPropertyIds = userContext.rentedPropertyIds || [];
-        propertiesQuery = propertiesQuery.in('id', rentedPropertyIds);
+        if (rentedPropertyIds.length > 0) {
+          propertiesQuery = propertiesQuery.in('id', rentedPropertyIds);
+        } else {
+          // If tenant has no properties, return empty result
+          propertiesQuery = propertiesQuery.eq('id', 'no-properties-for-tenant');
+        }
         contractsQuery = contractsQuery.eq('tenant_id', userContext.userId);
       }
       // Admins see everything (no additional filtering)

@@ -118,7 +118,7 @@ export default function TabLayout() {
         }}
       />
       
-      {/* Tenants - Different access for different roles */}
+      {/* Tenants - Admin and Manager only */}
       <Tabs.Screen
         name="tenants"
         options={{
@@ -139,18 +139,23 @@ export default function TabLayout() {
         }}
       />
       
-      {/* Properties - All roles have some access */}
+      {/* Properties - All roles have access but filtered content */}
       <Tabs.Screen
         name="properties"
         options={{
           title: t('properties'),
+          href: hasTabAccess('properties') ? undefined : null,
           tabBarIcon: ({ size, color }) => (
-            <TabIconWithBadge 
-              Icon={Building2} 
-              badgeCount={propertyBadges.count} 
-              size={size} 
-              color={color} 
-            />
+            hasTabAccess('properties') ? (
+              <TabIconWithBadge 
+                Icon={Building2} 
+                badgeCount={propertyBadges.count} 
+                size={size} 
+                color={color} 
+              />
+            ) : (
+              <Lock size={size} color="#ccc" />
+            )
           ),
         }}
       />
