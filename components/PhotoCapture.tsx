@@ -134,13 +134,20 @@ export default function PhotoCapture({
 
   const processImage = async (uri: string) => {
     try {
+      console.log('PhotoCapture: Starting image processing for URI:', uri);
+      
       // Validate image
       const validation = await validateImage(uri);
+      console.log('PhotoCapture: Image validation result:', validation);
+      
       if (!validation.valid) {
+        console.error('PhotoCapture: Image validation failed:', validation.error);
         Alert.alert(t('photos.invalidImage'), validation.error || t('common:tryAgain'));
         return;
       }
 
+      console.log('PhotoCapture: Starting upload to Supabase Storage...');
+      
       // Upload to Supabase Storage
       const uploadResult: ImageUploadResult = await uploadImage(
         uri,
@@ -148,16 +155,24 @@ export default function PhotoCapture({
         'requests'
       );
 
+      console.log('PhotoCapture: Upload result received:', uploadResult);
+
       if (uploadResult.success && uploadResult.url) {
         // Add to images array
         const newImages = [...images, uploadResult.url];
+        console.log('PhotoCapture: Adding image to array. Current images:', images.length, 'New total:', newImages.length);
+        console.log('PhotoCapture: New image URL:', uploadResult.url);
         onImagesChange(newImages);
+        
+        // Show success message
+        Alert.alert(t('common:success'), t('photos.uploadSuccess') || 'Image uploaded successfully!');
       } else {
+        console.error('PhotoCapture: Upload failed:', uploadResult.error);
         Alert.alert(t('photos.uploadFailed'), uploadResult.error || t('common:tryAgain'));
       }
     } catch (error: any) {
-      console.error('Error processing image:', error);
-      Alert.alert(t('common:error'), t('common:tryAgain'));
+      console.error('PhotoCapture: Error processing image:', error);
+      Alert.alert(t('common:error'), error.message || t('common:tryAgain'));
     }
   };
 

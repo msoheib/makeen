@@ -109,34 +109,37 @@ const applyRTL = (isRTLLanguage: boolean): void => {
   }
 };
 
-// Get device language (currently unused - app defaults to Arabic regardless of device)
+// Get device language (COMPLETELY UNUSED - app ignores device language entirely)
+// This function exists but is NOT called anywhere - app defaults to Arabic always
 const getDeviceLanguage = (): 'en' | 'ar' => {
   try {
     const locales = RNLocalize.getLocales();
     if (locales && locales.length > 0) {
       const deviceLanguage = locales[0].languageCode;
-      // Default to Arabic if not specifically English
+      // This logic is irrelevant since function is never called
       return deviceLanguage === 'en' ? 'en' : 'ar';
     }
   } catch (error) {
     console.warn('Error getting device language:', error);
   }
-  // Fallback to Arabic as the default
+  // This fallback is irrelevant since function is never called
   return 'ar';
 };
 
-// Get stored language
+// Get stored language - ONLY returns English if explicitly set
 const getStoredLanguage = async (): Promise<'en' | 'ar'> => {
   try {
     // Use consistent storage key throughout the app
     const stored = await safeStorage.getItem('app-language');
-    if (stored === 'en' || stored === 'ar') {
-      return stored;
+    // ONLY return English if explicitly stored as 'en'
+    if (stored === 'en') {
+      return 'en';
     }
+    // ALL other cases (including 'ar', null, undefined, any other value) return Arabic
   } catch (error) {
     console.warn('Error getting stored language:', error);
   }
-  // Always default to Arabic unless explicitly set to English
+  // ALWAYS default to Arabic unless explicitly set to English
   return 'ar';
 };
 
@@ -183,9 +186,11 @@ const initializeI18n = async () => {
 // Initialize immediately
 initializeI18n();
 
-// Get current language
+// Get current language - ALWAYS defaults to Arabic
 export const getCurrentLanguage = (): 'en' | 'ar' => {
-  return (i18n.language as 'en' | 'ar') || 'ar';
+  const current = i18n.language as 'en' | 'ar';
+  // ONLY return English if explicitly set to 'en', otherwise ALWAYS Arabic
+  return current === 'en' ? 'en' : 'ar';
 };
 
 // Check if current language is RTL

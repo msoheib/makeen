@@ -23,6 +23,7 @@ import StatCard from '@/components/StatCard';
 import { useApi } from '@/hooks/useApi';
 import { propertiesApi, profilesApi, contractsApi } from '@/lib/api';
 import { useScreenAccess, SCREEN_PERMISSIONS } from '@/lib/permissions';
+import { formatCurrency } from '@/lib/formatters';
 
 // Static data to prevent loading issues
 const staticData = {
@@ -481,7 +482,7 @@ export default function DashboardScreen() {
           <View style={[styles.activityHeader, { flexDirection: getFlexDirection('row') }]}>
             <View style={styles.activityLeft}>
               <Text style={[styles.activityAmount, { color: theme.colors.primary }]}>
-                ريال {activity.amount.toLocaleString('ar-SA')} SAR •
+                {formatCurrency(activity.amount)}
               </Text>
               <Text style={[styles.activityDate, { color: theme.colors.onSurfaceVariant }]}>
                 {activity.date}

@@ -160,7 +160,7 @@ export default function ModernHeader({
                     style={[styles.notificationBadge, { backgroundColor: theme.colors.error }]}
                     size={18}
                   >
-                    {unreadCount > 99 ? '99+' : unreadCount.toString()}
+                    {unreadCount > 99 ? '99+' : String(unreadCount || 0)}
                   </Badge>
                 )}
               </View>

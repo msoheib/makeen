@@ -83,7 +83,7 @@ export default function CashflowCard({
             fontSize: 18,
           }
         ]}>
-          ريال {formatCurrency(income)} SAR •
+          {formatCurrency(income)}
         </Text>
         <Text style={[
           styles.label, 
@@ -104,7 +104,7 @@ export default function CashflowCard({
             fontSize: 18,
           }
         ]}>
-          ريال {formatCurrency(expenses)} SAR •
+          {formatCurrency(expenses)}
         </Text>
         <Text style={[
           styles.label, 
@@ -131,7 +131,7 @@ export default function CashflowCard({
             fontWeight: '700',
           }
         ]}>
-          ريال {formatCurrency(netIncome)} SAR •
+          {formatCurrency(netIncome)}
         </Text>
         <Text style={[
           styles.label, 

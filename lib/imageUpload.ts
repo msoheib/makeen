@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import * as FileSystem from 'expo-file-system';
+import { decode } from 'base64-arraybuffer';
 
 export interface ImageUploadResult {
   success: boolean;
@@ -20,6 +21,8 @@ export async function uploadImage(
   folder?: string
 ): Promise<ImageUploadResult> {
   try {
+    console.log('Starting image upload...', { uri, bucket, folder });
+    
     // Generate unique filename
     const timestamp = Date.now();
     const randomId = Math.random().toString(36).substring(2);
@@ -28,28 +31,30 @@ export async function uploadImage(
     
     // Create storage path
     const storagePath = folder ? `${folder}/${fileName}` : fileName;
+    console.log('Storage path:', storagePath);
     
     // Read file as base64
     const base64 = await FileSystem.readAsStringAsync(uri, {
       encoding: FileSystem.EncodingType.Base64,
     });
     
-    // Convert base64 to blob for upload
-    const byteCharacters = atob(base64);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: `image/${fileExtension}` });
+    console.log('File read as base64, length:', base64.length);
     
-    // Upload to Supabase Storage
+    // Convert base64 to ArrayBuffer for React Native compatibility
+    const arrayBuffer = decode(base64);
+    
+    console.log('Converted to ArrayBuffer, byteLength:', arrayBuffer.byteLength);
+    
+    // Upload to Supabase Storage using ArrayBuffer
     const { data, error } = await supabase.storage
       .from(bucket)
-      .upload(storagePath, blob, {
+      .upload(storagePath, arrayBuffer, {
+        contentType: `image/${fileExtension}`,
         cacheControl: '3600',
         upsert: false
       });
+    
+    console.log('Supabase upload response:', { data, error });
     
     if (error) {
       console.error('Supabase upload error:', error);
@@ -63,6 +68,8 @@ export async function uploadImage(
     const { data: publicUrlData } = supabase.storage
       .from(bucket)
       .getPublicUrl(storagePath);
+    
+    console.log('Public URL generated:', publicUrlData.publicUrl);
     
     return {
       success: true,

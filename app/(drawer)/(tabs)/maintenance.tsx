@@ -1,77 +1,58 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, FlatList } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, StyleSheet, FlatList, SafeAreaView, ActivityIndicator, RefreshControl } from 'react-native';
 import { Text, Searchbar, SegmentedButtons } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { theme, spacing } from '@/lib/theme';
-import { supabase } from '@/lib/supabase';
-import { MaintenanceRequest } from '@/lib/types';
-import { PenTool as Tool, Plus, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, Clock, Circle as XCircle } from 'lucide-react-native';
+import { lightTheme, darkTheme, spacing } from '@/lib/theme';
+import { useAppStore } from '@/lib/store';
+import { PenTool as Tool, Plus, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, Clock, Settings } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import StatCard from '@/components/StatCard';
 import MaintenanceRequestCard from '@/components/MaintenanceRequestCard';
 import { useTranslation } from '@/lib/useTranslation';
 import { getFlexDirection, getTextAlign, rtlStyles } from '@/lib/rtl';
+import { useApi } from '@/hooks/useApi';
+import { maintenanceApi } from '@/lib/api';
 
 export default function MaintenanceScreen() {
   const router = useRouter();
   const { t } = useTranslation('maintenance');
-  const [loading, setLoading] = useState(true);
-  const [requests, setRequests] = useState<MaintenanceRequest[]>([]);
-  const [filteredRequests, setFilteredRequests] = useState<MaintenanceRequest[]>([]);
+  const { isDarkMode } = useAppStore();
+  const theme = isDarkMode ? darkTheme : lightTheme;
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
-  const [stats, setStats] = useState({
-    total: 0,
-    pending: 0,
-    inProgress: 0,
-    completed: 0,
-  });
 
-  useEffect(() => {
-    fetchMaintenanceRequests();
-  }, []);
+  // API Calls using useApi hook
+  const { 
+    data: requests, 
+    loading, 
+    error, 
+    refetch 
+  } = useApi(() => maintenanceApi.getRequests(), []);
 
-  useEffect(() => {
-    filterRequests();
-  }, [requests, searchQuery, activeFilter]);
-
-  const fetchMaintenanceRequests = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('maintenance_requests')
-        .select(`
-          *,
-          property:properties(title, address, city),
-          tenant:profiles(first_name, last_name)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      
-      if (data) {
-        setRequests(data);
-        
-        // Calculate stats
-        const pending = data.filter(r => r.status === 'pending').length;
-        const inProgress = data.filter(r => r.status === 'in_progress').length;
-        const completed = data.filter(r => r.status === 'completed').length;
-        
-        setStats({
-          total: data.length,
-          pending,
-          inProgress,
-          completed,
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching maintenance requests:', error);
-    } finally {
-      setLoading(false);
+  // Calculate stats from real data
+  const stats = React.useMemo(() => {
+    if (!requests) {
+      return { total: 0, pending: 0, inProgress: 0, completed: 0 };
     }
-  };
+    
+    const pending = requests.filter(r => r.status === 'pending').length;
+    const inProgress = requests.filter(r => r.status === 'in_progress').length;
+    const completed = requests.filter(r => r.status === 'completed').length;
+    
+    return {
+      total: requests.length,
+      pending,
+      inProgress,
+      completed,
+    };
+  }, [requests]);
 
-  const filterRequests = () => {
+  // Filter requests based on search and status
+  const filteredRequests = React.useMemo(() => {
+    if (!requests) return [];
+    
     let filtered = [...requests];
     
     // Filter by status
@@ -86,15 +67,68 @@ export default function MaintenanceScreen() {
         request.title.toLowerCase().includes(query) ||
         request.description.toLowerCase().includes(query) ||
         request.property?.title?.toLowerCase().includes(query) ||
-        `${request.tenant?.first_name} ${request.tenant?.last_name}`.toLowerCase().includes(query)
+        `${request.tenant?.first_name || ''} ${request.tenant?.last_name || ''}`.toLowerCase().includes(query)
       );
     }
     
-    setFilteredRequests(filtered);
-  };
+    return filtered;
+  }, [requests, searchQuery, activeFilter]);
+
+  // Pull to refresh handler
+  const onRefresh = useCallback(() => {
+    refetch();
+  }, [refetch]);
+
+  // Show loading screen while data is being fetched
+  if (loading && !requests) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <ModernHeader
+          title={t('title')}
+          subtitle={t('subtitle')}
+          onNotificationPress={() => router.push('/notifications')}
+          onSearchPress={() => router.push('/search')}
+        />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={[styles.loadingText, { color: theme.colors.onSurfaceVariant }]}>
+            {t('common:loading')}
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Show error state if there's an error
+  if (error) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <ModernHeader
+          title={t('title')}
+          subtitle={t('subtitle')}
+          onNotificationPress={() => router.push('/notifications')}
+          onSearchPress={() => router.push('/search')}
+        />
+        <ModernCard style={styles.errorCard}>
+          <Text style={[styles.errorTitle, { color: theme.colors.error }]}>
+            {t('common:error')}
+          </Text>
+          <Text style={[styles.errorMessage, { color: theme.colors.onSurfaceVariant }]}>
+            {error.message || t('common:errorLoadingData')}
+          </Text>
+          <Text 
+            style={[styles.retryButton, { color: theme.colors.primary }]}
+            onPress={refetch}
+          >
+            {t('common:retry')}
+          </Text>
+        </ModernCard>
+      </SafeAreaView>
+    );
+  }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ModernHeader
         title={t('title')}
         subtitle={t('subtitle')}
@@ -117,7 +151,7 @@ export default function MaintenanceScreen() {
                 إجمالي الطلبات
               </Text>
               <Text style={[styles.horizontalStatValue, { color: theme.colors.primary, textAlign: 'center' }]}>
-                {loading ? '...' : stats.total.toString()}
+                {stats.total.toString()}
               </Text>
             </View>
             
@@ -129,7 +163,7 @@ export default function MaintenanceScreen() {
                 قيد الانتظار
               </Text>
               <Text style={[styles.horizontalStatValue, { color: '#FF9800', textAlign: 'center' }]}>
-                {loading ? '...' : stats.pending.toString()}
+                {stats.pending.toString()}
               </Text>
             </View>
             
@@ -141,7 +175,7 @@ export default function MaintenanceScreen() {
                 قيد التنفيذ
               </Text>
               <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary, textAlign: 'center' }]}>
-                {loading ? '...' : stats.inProgress.toString()}
+                {stats.inProgress.toString()}
               </Text>
             </View>
             
@@ -153,7 +187,7 @@ export default function MaintenanceScreen() {
                 مكتملة
               </Text>
               <Text style={[styles.horizontalStatValue, { color: '#4CAF50', textAlign: 'center' }]}>
-                {loading ? '...' : stats.completed.toString()}
+                {stats.completed.toString()}
               </Text>
             </View>
           </View>
@@ -195,11 +229,19 @@ export default function MaintenanceScreen() {
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={onRefresh}
+            colors={[theme.colors.primary]}
+            tintColor={theme.colors.primary}
+          />
+        }
         ListEmptyComponent={
           <ModernCard style={styles.emptyState}>
             <Plus size={48} color={theme.colors.onSurfaceVariant} />
-            <Text style={[styles.emptyStateTitle, { textAlign: getTextAlign() }]}>{t('noMaintenanceRequests')}</Text>
-            <Text style={[styles.emptyStateSubtitle, { textAlign: getTextAlign() }]}>
+            <Text style={[styles.emptyStateTitle, { color: theme.colors.onSurface, textAlign: getTextAlign() }]}>{t('noMaintenanceRequests')}</Text>
+            <Text style={[styles.emptyStateSubtitle, { color: theme.colors.onSurfaceVariant, textAlign: getTextAlign() }]}>
               {searchQuery || activeFilter !== 'all' 
                 ? t('adjustSearchOrFilters') 
                 : t('addFirstRequest')}
@@ -219,14 +261,44 @@ export default function MaintenanceScreen() {
           </Text>
         </ModernCard>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.m,
+  },
+  loadingText: {
+    marginTop: spacing.m,
+    fontSize: 16,
+  },
+  errorCard: {
+    margin: spacing.m,
+    padding: spacing.l,
+    alignItems: 'center',
+  },
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: spacing.s,
+  },
+  errorMessage: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: spacing.m,
+  },
+  retryButton: {
+    fontSize: 16,
+    fontWeight: '600',
+    paddingVertical: spacing.s,
+    paddingHorizontal: spacing.m,
   },
   statsSection: {
     marginVertical: 16,

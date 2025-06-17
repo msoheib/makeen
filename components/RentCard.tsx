@@ -85,7 +85,7 @@ export default function RentCard({
             fontSize: 18,
           }
         ]}>
-          ريال {formatCurrency(totalRent)} SAR •
+          {formatCurrency(totalRent)}
         </Text>
         <Text style={[
           styles.label, 
@@ -106,7 +106,7 @@ export default function RentCard({
             fontSize: 18,
           }
         ]}>
-          ريال {formatCurrency(collectedRent)} SAR •
+          {formatCurrency(collectedRent)}
         </Text>
         <Text style={[
           styles.label, 
@@ -127,7 +127,7 @@ export default function RentCard({
             fontSize: 18,
           }
         ]}>
-          ريال {formatCurrency(pendingRent)} SAR •
+          {formatCurrency(pendingRent)}
         </Text>
         <Text style={[
           styles.label, 

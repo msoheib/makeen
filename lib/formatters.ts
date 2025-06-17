@@ -1,11 +1,11 @@
 import { format } from 'date-fns';
 import { enUS, ar } from 'date-fns/locale';
+import { getCurrentLanguage } from './i18n';
 
 // Simple check for Arabic language without complex dependencies
 const isArabicLanguage = () => {
   try {
-    // Simple check - if this fails, default to false
-    return false; // Temporarily disable Arabic numerals to fix loading issue
+    return getCurrentLanguage() === 'ar';
   } catch {
     return false;
   }
@@ -46,16 +46,31 @@ export const formatDate = (date: Date | string, formatString: string = 'PPP'): s
 };
 
 export const formatCurrency = (amount: number, currency: string = 'SAR'): string => {
-  const formattedAmount = new Intl.NumberFormat('ar-SA', {
+  const currentLanguage = getCurrentLanguage();
+  
+  // Use language-appropriate number formatting
+  const locale = currentLanguage === 'ar' ? 'ar-SA' : 'en-US';
+  const formattedAmount = new Intl.NumberFormat(locale, {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
   
-  // Use currency symbol consistently regardless of language
-  const currencySymbol = currency === 'SAR' ? 'ر.س' : currency;
+  // Use different currency symbols based on language
+  let currencySymbol: string;
+  if (currency === 'SAR') {
+    currencySymbol = currentLanguage === 'ar' ? 'ر.س' : 'SAR';
+  } else {
+    currencySymbol = currency;
+  }
   
-  // Always display as: amount + space + symbol (e.g., "1,000 ر.س")
-  return `${formattedAmount} ${currencySymbol}`;
+  // Language-appropriate display format
+  if (currentLanguage === 'ar') {
+    // Arabic: amount + space + symbol (e.g., "1,000 ر.س")
+    return `${formattedAmount} ${currencySymbol}`;
+  } else {
+    // English: symbol + space + amount (e.g., "SAR 1,000")
+    return `${currencySymbol} ${formattedAmount}`;
+  }
 };
 
 export const formatNumber = (num: number | string): string => {
