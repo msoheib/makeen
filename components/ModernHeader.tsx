@@ -3,12 +3,13 @@ import { View, StyleSheet, Platform, StatusBar, TouchableOpacity } from 'react-n
 import { Text, IconButton, Badge } from 'react-native-paper';
 import { lightTheme, darkTheme, spacing } from '@/lib/theme';
 import { Bell, Search, Menu, ArrowRight, ArrowLeft } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, DrawerActions } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { useAppStore } from '@/lib/store';
 import { useApi } from '@/hooks/useApi';
 import { notificationsApi } from '@/lib/api';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { rtlStyles, isRTL, getFlexDirection } from '@/lib/rtl';
 
 interface ModernHeaderProps {
   title?: string;
@@ -59,8 +60,7 @@ export default function ModernHeader({
     if (onMenuPress) {
       onMenuPress();
     } else {
-      const { setSidebarOpen } = useAppStore.getState();
-      setSidebarOpen(true);
+      navigation.dispatch(DrawerActions.openDrawer());
     }
   };
 
@@ -85,6 +85,9 @@ export default function ModernHeader({
   // Determine if we should show back button based on navigation state
   const shouldShowBackButton = showBackButton || (router.canGoBack() && !showMenu);
 
+  // Use proper RTL-aware arrow direction
+  const BackArrowIcon = isRTL() ? ArrowRight : ArrowLeft;
+
   return (
     <>
       <StatusBar 
@@ -93,12 +96,12 @@ export default function ModernHeader({
         translucent={true}
       />
       <View style={[styles.container, { backgroundColor, paddingTop: safeAreaPadding }]}>
-        <View style={styles.content}>
-          {/* Right side - Navigation (Back/Menu) */}
-          <View style={styles.navigationSection}>
+        <View style={[styles.content, { flexDirection: getFlexDirection('row') }]}>
+          {/* Start side - Navigation (Back/Menu) */}
+          <View style={[styles.navigationSection, rtlStyles.alignItemsStart]}>
             {shouldShowBackButton ? (
               <IconButton
-                icon={() => <ArrowRight size={24} color={iconColor} />}
+                icon={() => <BackArrowIcon size={24} color={iconColor} />}
                 onPress={handleBackPress}
                 style={styles.navButton}
                 accessibilityLabel="العودة"
@@ -117,11 +120,15 @@ export default function ModernHeader({
           <View style={styles.titleSection}>
             {title && (
               <View style={styles.titleContainer}>
-                <Text style={[styles.title, { color: textColor }]} numberOfLines={1}>
+                <Text style={[styles.title, { color: textColor }, rtlStyles.textAlign('center')]} numberOfLines={1}>
                   {title}
                 </Text>
                 {subtitle && (
-                  <Text style={[styles.subtitle, { color: isDark ? '#94A3B8' : theme.colors.onSurfaceVariant }]} numberOfLines={1}>
+                  <Text style={[
+                    styles.subtitle, 
+                    { color: isDark ? '#94A3B8' : theme.colors.onSurfaceVariant },
+                    rtlStyles.textAlign('center')
+                  ]} numberOfLines={1}>
                     {subtitle}
                   </Text>
                 )}
@@ -129,8 +136,8 @@ export default function ModernHeader({
             )}
           </View>
 
-          {/* Left side - Actions */}
-          <View style={styles.actionsSection}>
+          {/* End side - Actions */}
+          <View style={[styles.actionsSection, { flexDirection: getFlexDirection('row') }]}>
             {showSearch && (
               <IconButton
                 icon={() => <Search size={24} color={iconColor} />}
@@ -166,9 +173,8 @@ export default function ModernHeader({
 
 const styles = StyleSheet.create({
   container: {
-    // paddingTop is now handled dynamically with safe area insets
-    paddingHorizontal: spacing.l, // Increased padding from spacing.m to spacing.l
-    paddingBottom: spacing.m,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
     elevation: 2,
@@ -178,23 +184,20 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   content: {
-    flexDirection: 'row-reverse', // RTL layout
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 56, // Standard app bar height
-    paddingVertical: spacing.s, // Additional vertical padding
+    minHeight: 56,
+    paddingVertical: spacing.sm,
   },
   navigationSection: {
     width: 48,
-    alignItems: 'flex-end', // Align to right for RTL
   },
   titleSection: {
     flex: 1,
     alignItems: 'center',
-    paddingHorizontal: spacing.m, // Padding around title
+    paddingHorizontal: spacing.md,
   },
   actionsSection: {
-    flexDirection: 'row-reverse', // RTL for action buttons
     alignItems: 'center',
     width: 'auto',
     minWidth: 48,
@@ -206,7 +209,7 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     margin: 0,
-    marginHorizontal: spacing.xs, // Small margin between action buttons
+    marginHorizontal: spacing.xs,
     width: 40,
     height: 40,
   },
@@ -215,16 +218,12 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
   },
   title: {
-    fontSize: 20, // Slightly larger for better readability
+    fontSize: 20,
     fontWeight: '600',
-    textAlign: 'center',
-    writingDirection: 'rtl', // Ensure RTL text direction
   },
   subtitle: {
     fontSize: 14,
-    textAlign: 'center',
     marginTop: 2,
-    writingDirection: 'rtl',
   },
   notificationContainer: {
     position: 'relative',

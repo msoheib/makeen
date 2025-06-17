@@ -1,16 +1,18 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, FlatList, ScrollView, SafeAreaView, ActivityIndicator, RefreshControl } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, StyleSheet, FlatList, ScrollView, SafeAreaView, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
 import { Text, Searchbar, Avatar, FAB } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { lightTheme, darkTheme, spacing } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
-import { Users, Phone, Mail, MapPin, Plus, Lock, Shield } from 'lucide-react-native';
+import { rtlStyles, getFlexDirection } from '@/lib/rtl';
+import { Users, Phone, Mail, MapPin, Plus, Lock, Shield, UserCheck, UserClock, Globe2 } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
-import StatCard from '@/components/StatCard';
+import { StatCard } from '@/components/StatCard';
 import ModernCard from '@/components/ModernCard';
 import { useScreenAccess } from '@/lib/permissions';
 import { useApi } from '@/hooks/useApi';
 import { profilesApi } from '@/lib/api';
+import { useFilteredNavigation } from '@/lib/permissions';
 
 export default function TenantsScreen() {
   const router = useRouter();
@@ -137,8 +139,8 @@ export default function TenantsScreen() {
 
   const renderTenant = ({ item }: { item: any }) => (
     <View style={[styles.tenantCard, { backgroundColor: theme.colors.surface }]}>
-      <View style={styles.tenantHeader}>
-        <View style={styles.tenantInfo}>
+      <View style={[styles.tenantHeader, { flexDirection: getFlexDirection('row') }]}>
+        <View style={[styles.tenantInfo, { flexDirection: getFlexDirection('row') }]}>
           <Avatar.Text
             size={60}
             label={`${(item.first_name || '').charAt(0)}${(item.last_name || '').charAt(0)}`}
@@ -176,19 +178,19 @@ export default function TenantsScreen() {
       </View>
 
       <View style={styles.contactInfo}>
-        <View style={styles.contactItem}>
+        <View style={[styles.contactItem, { flexDirection: getFlexDirection('row') }]}>
           <Mail size={16} color={theme.colors.onSurfaceVariant} />
           <Text style={[styles.contactText, { color: theme.colors.onSurfaceVariant }]}>
             {item.email || 'No email'}
           </Text>
         </View>
-        <View style={styles.contactItem}>
+        <View style={[styles.contactItem, { flexDirection: getFlexDirection('row') }]}>
           <Phone size={16} color={theme.colors.onSurfaceVariant} />
           <Text style={[styles.contactText, { color: theme.colors.onSurfaceVariant }]}>
             {item.phone || 'No phone'}
           </Text>
         </View>
-        <View style={styles.contactItem}>
+        <View style={[styles.contactItem, { flexDirection: getFlexDirection('row') }]}>
           <MapPin size={16} color={theme.colors.onSurfaceVariant} />
           <Text style={[styles.contactText, { color: theme.colors.onSurfaceVariant }]}>
             {item.address || 'No address'}
@@ -236,7 +238,7 @@ export default function TenantsScreen() {
             إحصائيات المستأجرين
           </Text>
           <View style={[styles.horizontalStatsCard, { backgroundColor: theme.colors.surface }]}>
-            <View style={styles.horizontalStatsRow}>
+            <View style={[styles.horizontalStatsRow, { flexDirection: getFlexDirection('row') }]}>
               <View style={styles.horizontalStatItem}>
                 <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
                   <Users size={24} color={theme.colors.primary} />
@@ -425,7 +427,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   horizontalStatsRow: {
-    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
@@ -496,13 +497,11 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   tenantHeader: {
-    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 12,
   },
   tenantInfo: {
-    flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
@@ -533,7 +532,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   contactItem: {
-    flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 6,
   },

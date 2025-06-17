@@ -3,6 +3,7 @@ import { View, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, RefreshC
 import { Text } from 'react-native-paper';
 import { lightTheme } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
+import { rtlStyles, getFlexDirection } from '@/lib/rtl';
 import { 
   Building2, 
   Users, 
@@ -333,7 +334,7 @@ export default function DashboardScreen() {
         الإحصائيات السريعة
       </Text>
       <View style={[styles.horizontalStatsCard, { backgroundColor: theme.colors.surface }]}>
-        <View style={styles.horizontalStatsRow}>
+        <View style={[styles.horizontalStatsRow, { flexDirection: getFlexDirection('row') }]}>
           <View style={styles.horizontalStatItem}>
             <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
               <Building2 size={24} color={theme.colors.primary} />
@@ -416,7 +417,7 @@ export default function DashboardScreen() {
         نظرة عامة على العقارات
       </Text>
       <View style={[styles.propertyOverviewCard, { backgroundColor: theme.colors.surface }]}>
-        <View style={styles.propertyRow}>
+        <View style={[styles.propertyRow, { flexDirection: getFlexDirection('row') }]}>
           <View style={styles.propertyItem}>
             <View style={[styles.propertyIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
               <Building2 size={24} color={theme.colors.primary} />
@@ -473,7 +474,7 @@ export default function DashboardScreen() {
       </Text>
       {recentActivities.map((activity) => (
         <View key={activity.id} style={[styles.activityCard, { backgroundColor: theme.colors.surface }]}>
-          <View style={styles.activityHeader}>
+          <View style={[styles.activityHeader, { flexDirection: getFlexDirection('row') }]}>
             <View style={styles.activityLeft}>
               <Text style={[styles.activityAmount, { color: theme.colors.primary }]}>
                 ريال {activity.amount.toLocaleString('ar-SA')} SAR •
@@ -570,7 +571,6 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   statsGrid: {
-    flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     gap: 12,
@@ -594,7 +594,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   propertyRow: {
-    flexDirection: 'row',
     justifyContent: 'space-around',
     marginBottom: 20,
   },
@@ -647,7 +646,6 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   activityHeader: {
-    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
@@ -704,7 +702,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   horizontalStatsRow: {
-    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },

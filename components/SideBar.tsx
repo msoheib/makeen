@@ -7,8 +7,7 @@ import { DrawerActions } from '@react-navigation/native';
 import { NotificationBadge } from './NotificationBadge';
 import { useTabBadgeCount } from '@/hooks/useNotificationBadges';
 import { useTranslation } from '@/lib/useTranslation';
-import { rtlStyles, rtlLayout } from '@/lib/theme';
-import { isRTL } from '@/lib/rtl';
+import { rtlStyles, isRTL, getFlexDirection } from '@/lib/rtl';
 import { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { useFilteredNavigation, getRoleDisplayName, SIDEBAR_PERMISSIONS } from '@/lib/permissions';
 
@@ -45,9 +44,19 @@ const SideBar = (props: DrawerContentComponentProps) => {
         };
         
         const content = (
-            <View style={[styles.menuItem, rtlStyles.paddingStart(10 + level * 15)]}>
+            <View style={[
+                styles.menuItem, 
+                { flexDirection: getFlexDirection('row') },
+                rtlStyles.paddingStart(10 + level * 15)
+            ]}>
                 {item.icon && <item.icon color="#333" size={20} />}
-                <Text style={[styles.menuItemText, rtlStyles.textLeft]}>{item.title}</Text>
+                <Text style={[
+                    styles.menuItemText, 
+                    rtlStyles.textAlignStart,
+                    rtlStyles.marginStart(15)
+                ]}>
+                    {item.title}
+                </Text>
                 {badgeCount > 0 && (
                     <NotificationBadge 
                         count={badgeCount} 
@@ -84,11 +93,11 @@ const SideBar = (props: DrawerContentComponentProps) => {
                 edges={['top', 'bottom']}
             >
                 <View style={styles.header}>
-                    <Text style={[styles.headerText, rtlStyles.textLeft]}>{t('appTitle')}</Text>
+                    <Text style={[styles.headerText, rtlStyles.textAlignStart]}>{t('appTitle')}</Text>
                 </View>
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#0066CC" />
-                    <Text style={styles.loadingText}>Loading user permissions...</Text>
+                    <Text style={[styles.loadingText, rtlStyles.textAlignStart]}>Loading user permissions...</Text>
                 </View>
             </SafeAreaView>
         );
@@ -100,21 +109,25 @@ const SideBar = (props: DrawerContentComponentProps) => {
             edges={['top', 'bottom']}
         >
             <View style={styles.header}>
-                <Text style={[styles.headerText, rtlStyles.textLeft]}>{t('appTitle')}</Text>
+                <Text style={[styles.headerText, rtlStyles.textAlignStart]}>{t('appTitle')}</Text>
                 {userContext && (
                     <View style={styles.userInfo}>
-                        <View style={styles.roleContainer}>
+                        <View style={[styles.roleContainer, { flexDirection: getFlexDirection('row') }]}>
                             {userContext.role === 'admin' ? (
                                 <Shield size={16} color="#0066CC" />
                             ) : (
                                 <User size={16} color="#666" />
                             )}
-                            <Text style={[styles.roleText, rtlStyles.textLeft]}>
+                            <Text style={[
+                                styles.roleText, 
+                                rtlStyles.textAlignStart,
+                                rtlStyles.marginStart(6)
+                            ]}>
                                 {getRoleDisplayName(userContext.role)}
                             </Text>
                         </View>
                         {userContext.profile?.email && (
-                            <Text style={[styles.emailText, rtlStyles.textLeft]}>
+                            <Text style={[styles.emailText, rtlStyles.textAlignStart]}>
                                 {userContext.profile.email}
                             </Text>
                         )}
@@ -158,7 +171,6 @@ const styles = StyleSheet.create({
         marginTop: 8,
     },
     roleContainer: {
-        flexDirection: 'row',
         alignItems: 'center',
         marginBottom: 4,
     },
@@ -166,7 +178,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '600',
         color: '#0066CC',
-        marginLeft: 6,
     },
     emailText: {
         fontSize: 12,
@@ -182,13 +193,11 @@ const styles = StyleSheet.create({
         marginTop: 16,
         fontSize: 14,
         color: '#666',
-        textAlign: 'center',
     },
     menuContainer: {
         flex: 1,
     },
     menuItem: {
-        ...rtlStyles.row,
         alignItems: 'center',
         paddingVertical: 15,
         paddingHorizontal: 20,
@@ -197,7 +206,6 @@ const styles = StyleSheet.create({
     },
     menuItemText: {
         fontSize: 16,
-        ...rtlStyles.marginStart(15),
         flex: 1,
         color: '#333',
     },
