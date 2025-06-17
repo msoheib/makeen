@@ -5,6 +5,8 @@ import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Platform, Alert } from 'react-native';
 import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system';
 
 export interface PDFRequest {
   type: string;
@@ -201,16 +203,21 @@ class PDFGeneratorAPI {
    */
   async convertHTMLToPDF(htmlContent: string, filename: string): Promise<boolean> {
     try {
-      console.log('Converting HTML to PDF using Expo Print...');
+      console.log('🔄 Converting HTML to PDF using Expo Print...');
+      console.log('📱 Platform.OS:', Platform.OS);
+      console.log('📄 Filename:', filename);
+      console.log('📝 HTML content length:', htmlContent.length);
       
       // For React Native - use expo-print to generate PDF
       if (Platform.OS !== 'web') {
+        console.log('📱 Using React Native path for PDF conversion...');
         const { uri } = await Print.printToFileAsync({
           html: htmlContent,
           base64: false
         });
         
-        console.log('PDF generated at:', uri);
+        console.log('✅ PDF generated successfully at:', uri);
+        console.log('📁 PDF file URI:', uri);
         
         // Check if sharing is available
         const isAvailable = await Sharing.isAvailableAsync();
@@ -562,9 +569,13 @@ class PDFGeneratorAPI {
       // Handle HTML response (convert to PDF on client-side)
       else if (result.htmlContent && result.contentType === 'text/html') {
         console.log('Converting HTML to PDF on client-side...');
+        console.log('Platform.OS:', Platform.OS);
+        console.log('Original filename:', result.filename);
         
         // Try to convert HTML to PDF using Expo Print
         const pdfFilename = result.filename.replace('.html', '.pdf');
+        console.log('PDF filename:', pdfFilename);
+        
         const converted = await this.convertHTMLToPDF(result.htmlContent, pdfFilename);
         
         if (converted) {
