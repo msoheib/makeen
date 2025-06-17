@@ -116,9 +116,17 @@ export default function TenantsScreen() {
   }
 
   // Use real data from API with fallback
-  const tenantsData = tenants?.data || allTenants?.data || [];
+  const tenantsData = tenants || allTenants || [];
   const isLoading = tenantsLoading || allTenantsLoading;
   const hasError = tenantsError && allTenantsError;
+
+  // DEBUG: Log the corrected data structure
+  console.log('[Tenants Debug] Fixed data access:', {
+    tenantsData: tenantsData,
+    tenantCount: tenantsData?.length || 0,
+    isLoading: isLoading,
+    hasError: hasError
+  });
 
   // Filter tenants based on search
   const filteredTenants = tenantsData.filter(tenant => {
@@ -247,7 +255,7 @@ export default function TenantsScreen() {
                   إجمالي المستأجرين
                 </Text>
                 <Text style={[styles.horizontalStatValue, { color: theme.colors.primary }]}>
-                  {isLoading ? '...' : tenantStats.total.toString()}
+                  {isLoading ? '...' : String(tenantStats.total || 0)}
                 </Text>
               </View>
               
@@ -259,7 +267,7 @@ export default function TenantsScreen() {
                   مستأجرين نشطين
                 </Text>
                 <Text style={[styles.horizontalStatValue, { color: '#4CAF50' }]}>
-                  {isLoading ? '...' : tenantStats.active.toString()}
+                  {isLoading ? '...' : String(tenantStats.active || 0)}
                 </Text>
               </View>
               
@@ -271,7 +279,7 @@ export default function TenantsScreen() {
                   مستأجرين معلقين
                 </Text>
                 <Text style={[styles.horizontalStatValue, { color: '#FF9800' }]}>
-                  {isLoading ? '...' : tenantStats.pending.toString()}
+                  {isLoading ? '...' : String(tenantStats.pending || 0)}
                 </Text>
               </View>
               
@@ -283,7 +291,7 @@ export default function TenantsScreen() {
                   مستأجرين أجانب
                 </Text>
                 <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary }]}>
-                  {isLoading ? '...' : tenantStats.foreign.toString()}
+                  {isLoading ? '...' : String(tenantStats.foreign || 0)}
                 </Text>
               </View>
             </View>
