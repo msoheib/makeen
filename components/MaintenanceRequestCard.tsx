@@ -1,9 +1,9 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, Image } from 'react-native';
 import { Card, Text, Chip, TouchableRipple } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { MaintenanceRequest } from '@/lib/types';
-import { Clock, AlertCircle } from 'lucide-react-native';
+import { Clock, AlertCircle, ImageIcon } from 'lucide-react-native';
 import { theme, shadows } from '@/lib/theme';
 import { format } from 'date-fns';
 
@@ -28,6 +28,52 @@ interface MaintenanceRequestCardProps {
   request: MaintenanceRequest;
   onPress?: () => void;
 }
+
+// Helper function to get proper image URL or maintenance-related placeholder
+const getImageUrl = (imageName: string): string => {
+  // Check if it's already a full URL
+  if (imageName.startsWith('http://') || imageName.startsWith('https://')) {
+    return imageName;
+  }
+  
+  // If it's just a filename, provide maintenance-related placeholder based on filename
+  const maintenancePlaceholders = [
+    'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400&h=300&fit=crop', // Tools
+    'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop', // Plumbing
+    'https://images.unsplash.com/photo-1558618046-2c2a2d1d8e31?w=400&h=300&fit=crop', // Electrical
+    'https://images.unsplash.com/photo-1556075798-4825dfaaf498?w=400&h=300&fit=crop', // General repair
+  ];
+  
+  // Select placeholder based on filename hash for consistency
+  const hash = imageName.split('').reduce((a, b) => {
+    a = ((a << 5) - a) + b.charCodeAt(0);
+    return a & a;
+  }, 0);
+  
+  return maintenancePlaceholders[Math.abs(hash) % maintenancePlaceholders.length];
+};
+
+// Component for handling image loading with error fallback
+const MaintenanceImage = ({ imageName, style }: { imageName: string; style: any }) => {
+  const [imageError, setImageError] = useState(false);
+  
+  if (imageError) {
+    return (
+      <View style={[style, styles.placeholderContainer]}>
+        <ImageIcon size={24} color={theme.colors.onSurfaceVariant} />
+      </View>
+    );
+  }
+  
+  return (
+    <Image
+      source={{ uri: getImageUrl(imageName) }}
+      style={style}
+      onError={() => setImageError(true)}
+      resizeMode="cover"
+    />
+  );
+};
 
 export default function MaintenanceRequestCard({ request, onPress }: MaintenanceRequestCardProps) {
   const router = useRouter();
@@ -92,8 +138,8 @@ export default function MaintenanceRequestCard({ request, onPress }: Maintenance
           <View style={styles.imagesRow}>
             {request.images.slice(0, 3).map((image, index) => (
               <View key={index} style={styles.imageContainer}>
-                <Card.Cover 
-                  source={{ uri: image }} 
+                <MaintenanceImage 
+                  imageName={image}
                   style={styles.image} 
                 />
               </View>
@@ -181,5 +227,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: theme.colors.onSurfaceVariant,
+  },
+  placeholderContainer: {
+    backgroundColor: theme.colors.surfaceVariant,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 6,
   },
 });
