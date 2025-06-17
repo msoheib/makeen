@@ -1,6 +1,6 @@
 import 'react-native-gesture-handler';
 import { useEffect, useState } from 'react';
-import { Platform } from 'react-native';
+import { Platform, I18nManager } from 'react-native';
 import { Slot } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
@@ -13,6 +13,18 @@ import * as SplashScreen from 'expo-splash-screen';
 import i18n from '@/lib/i18n'; // Initialize i18n
 import { initializeRTL } from '@/lib/rtl';
 import CustomSplashScreen from '@/components/SplashScreen';
+import AndroidRTLFix from '@/components/AndroidRTLFix';
+
+// Enable RTL support immediately for Android - must be done before any components render
+if (Platform.OS === 'android') {
+  console.log('[App] Configuring Android RTL at app startup...');
+  I18nManager.allowRTL(true);
+  I18nManager.forceRTL(true); // Force RTL for Arabic app
+  console.log('[App] Android RTL configured:', {
+    isRTL: I18nManager.isRTL,
+    allowRTL: I18nManager.allowRTL
+  });
+}
 
 // Initialize RTL support
 initializeRTL();
@@ -50,6 +62,24 @@ export default function RootLayout() {
   // Check if everything is ready
   const appReady = frameworkReady && fontsLoaded && i18nReady;
 
+  // Additional RTL verification for Android
+  useEffect(() => {
+    if (Platform.OS === 'android' && appReady) {
+      console.log('[App] Verifying RTL configuration:', {
+        isRTL: I18nManager.isRTL,
+        allowRTL: I18nManager.allowRTL,
+        platform: Platform.OS
+      });
+      
+      // If RTL is still not enabled on Android, force it again
+      if (!I18nManager.isRTL) {
+        console.log('[App] RTL not detected, forcing RTL configuration...');
+        I18nManager.allowRTL(true);
+        I18nManager.forceRTL(true);
+      }
+    }
+  }, [appReady]);
+
   const handleSplashFinish = () => {
     setShowSplash(false);
   };
@@ -72,6 +102,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <PaperProvider theme={theme}>
+        <AndroidRTLFix />
         <StatusBar style="auto" />
         <Slot />
       </PaperProvider>

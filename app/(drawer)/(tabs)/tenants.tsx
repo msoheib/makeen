@@ -211,38 +211,55 @@ export default function TenantsScreen() {
           <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
             إحصائيات المستأجرين
           </Text>
-          <View style={styles.statsGrid}>
-            <View style={styles.statCardWrapper}>
-              <StatCard
-                title="إجمالي المستأجرين"
-                value={tenantStats.total.toString()}
-                color={theme.colors.primary}
-                loading={tenantsLoading}
-              />
-            </View>
-            <View style={styles.statCardWrapper}>
-              <StatCard
-                title="مستأجرين نشطين"
-                value={tenantStats.active.toString()}
-                color="#4CAF50"
-                loading={tenantsLoading}
-              />
-            </View>
-            <View style={styles.statCardWrapper}>
-              <StatCard
-                title="مستأجرين معلقين"
-                value={tenantStats.pending.toString()}
-                color="#FF9800"
-                loading={tenantsLoading}
-              />
-            </View>
-            <View style={styles.statCardWrapper}>
-              <StatCard
-                title="مستأجرين أجانب"
-                value={tenantStats.foreign.toString()}
-                color={theme.colors.secondary}
-                loading={tenantsLoading}
-              />
+          <View style={[styles.horizontalStatsCard, { backgroundColor: theme.colors.surface }]}>
+            <View style={styles.horizontalStatsRow}>
+              <View style={styles.horizontalStatItem}>
+                <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
+                  <Users size={24} color={theme.colors.primary} />
+                </View>
+                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                  إجمالي المستأجرين
+                </Text>
+                <Text style={[styles.horizontalStatValue, { color: theme.colors.primary }]}>
+                  {tenantsLoading ? '...' : tenantStats.total.toString()}
+                </Text>
+              </View>
+              
+              <View style={styles.horizontalStatItem}>
+                <View style={[styles.horizontalStatIcon, { backgroundColor: '#4CAF5020' }]}>
+                  <Phone size={24} color="#4CAF50" />
+                </View>
+                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                  مستأجرين نشطين
+                </Text>
+                <Text style={[styles.horizontalStatValue, { color: '#4CAF50' }]}>
+                  {tenantsLoading ? '...' : tenantStats.active.toString()}
+                </Text>
+              </View>
+              
+              <View style={styles.horizontalStatItem}>
+                <View style={[styles.horizontalStatIcon, { backgroundColor: '#FF980020' }]}>
+                  <Mail size={24} color="#FF9800" />
+                </View>
+                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                  مستأجرين معلقين
+                </Text>
+                <Text style={[styles.horizontalStatValue, { color: '#FF9800' }]}>
+                  {tenantsLoading ? '...' : tenantStats.pending.toString()}
+                </Text>
+              </View>
+              
+              <View style={styles.horizontalStatItem}>
+                <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.secondary}20` }]}>
+                  <MapPin size={24} color={theme.colors.secondary} />
+                </View>
+                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                  مستأجرين أجانب
+                </Text>
+                <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary }]}>
+                  {tenantsLoading ? '...' : tenantStats.foreign.toString()}
+                </Text>
+              </View>
             </View>
           </View>
         </View>
@@ -370,8 +387,47 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   statCardWrapper: {
+    width: '48%',
+    minHeight: 120,
+  },
+  // Horizontal stats styles
+  horizontalStatsCard: {
+    borderRadius: 16,
+    padding: 20,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  horizontalStatsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  horizontalStatItem: {
     flex: 1,
-    minWidth: '45%',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+  },
+  horizontalStatIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  horizontalStatLabel: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginBottom: 4,
+    lineHeight: 16,
+  },
+  horizontalStatValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   searchSection: {
     marginBottom: 16,

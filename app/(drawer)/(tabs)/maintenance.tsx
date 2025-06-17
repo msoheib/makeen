@@ -103,46 +103,60 @@ export default function MaintenanceScreen() {
 
       {/* Stats Overview */}
       <View style={styles.statsSection}>
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          data={[
-            {
-              title: t('totalRequests'),
-              value: stats.total.toString(),
-              color: theme.colors.primary,
-              icon: <Tool size={20} color={theme.colors.primary} />,
-            },
-            {
-              title: t('statuses.pending'),
-              value: stats.pending.toString(),
-              color: theme.colors.warning,
-              icon: <Clock size={20} color={theme.colors.warning} />,
-            },
-            {
-              title: t('statuses.inProgress'),
-              value: stats.inProgress.toString(),
-              color: theme.colors.secondary,
-              icon: <AlertTriangle size={20} color={theme.colors.secondary} />,
-            },
-            {
-              title: t('statuses.completed'),
-              value: stats.completed.toString(),
-              color: theme.colors.success,
-              icon: <CheckCircle size={20} color={theme.colors.success} />,
-            },
-          ]}
-          renderItem={({ item }) => (
-            <StatCard
-              title={item.title}
-              value={item.value}
-              color={item.color}
-              icon={item.icon}
-            />
-          )}
-          keyExtractor={(item) => item.title}
-          contentContainerStyle={styles.statsContainer}
-        />
+        <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+          إحصائيات الصيانة
+        </Text>
+        <View style={[styles.horizontalStatsCard, { backgroundColor: theme.colors.surface }]}>
+          <View style={styles.horizontalStatsRow}>
+            <View style={styles.horizontalStatItem}>
+              <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
+                <Tool size={24} color={theme.colors.primary} />
+              </View>
+              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                إجمالي الطلبات
+              </Text>
+              <Text style={[styles.horizontalStatValue, { color: theme.colors.primary }]}>
+                {loading ? '...' : stats.total.toString()}
+              </Text>
+            </View>
+            
+            <View style={styles.horizontalStatItem}>
+              <View style={[styles.horizontalStatIcon, { backgroundColor: '#FF980020' }]}>
+                <Clock size={24} color="#FF9800" />
+              </View>
+              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                قيد الانتظار
+              </Text>
+              <Text style={[styles.horizontalStatValue, { color: '#FF9800' }]}>
+                {loading ? '...' : stats.pending.toString()}
+              </Text>
+            </View>
+            
+            <View style={styles.horizontalStatItem}>
+              <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.secondary}20` }]}>
+                <AlertTriangle size={24} color={theme.colors.secondary} />
+              </View>
+              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                قيد التنفيذ
+              </Text>
+              <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary }]}>
+                {loading ? '...' : stats.inProgress.toString()}
+              </Text>
+            </View>
+            
+            <View style={styles.horizontalStatItem}>
+              <View style={[styles.horizontalStatIcon, { backgroundColor: '#4CAF5020' }]}>
+                <CheckCircle size={24} color="#4CAF50" />
+              </View>
+              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                مكتملة
+              </Text>
+              <Text style={[styles.horizontalStatValue, { color: '#4CAF50' }]}>
+                {loading ? '...' : stats.completed.toString()}
+              </Text>
+            </View>
+          </View>
+        </View>
       </View>
 
       {/* Search and Filters */}
@@ -214,10 +228,63 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   statsSection: {
-    marginBottom: spacing.m,
+    marginVertical: 16,
+    paddingHorizontal: 16,
   },
-  statsContainer: {
-    paddingHorizontal: spacing.m,
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 16,
+    textAlign: 'right',
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  statCardWrapper: {
+    width: '48%',
+    minHeight: 120,
+  },
+  // Horizontal stats styles
+  horizontalStatsCard: {
+    borderRadius: 16,
+    padding: 20,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  horizontalStatsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  horizontalStatItem: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 8,
+  },
+  horizontalStatIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  horizontalStatLabel: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginBottom: 4,
+    lineHeight: 16,
+  },
+  horizontalStatValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   filtersSection: {
     paddingHorizontal: spacing.m,

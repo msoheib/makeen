@@ -23,7 +23,18 @@
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.decimaldrown.propertymanagement"
+      "package": "com.decimaldrown.propertymanagement",
+      "supportsRtl": true,
+      "allowBackup": false,
+      "config": {
+        "supportsRtl": true
+      },
+      "androidManifest": {
+        "supportsRtl": true,
+        "application": {
+          "android:supportsRtl": "true"
+        }
+      }
     },
     "web": {
       "bundler": "metro",

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView, SafeAreaView, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, SafeAreaView, Alert, Platform, I18nManager } from 'react-native';
 import { Text, List, Switch, Divider } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { lightTheme, darkTheme } from '@/lib/theme';
@@ -214,6 +214,40 @@ export default function SettingsScreen() {
             ))}
           </View>
         </View>
+
+        {/* RTL Debug Section (Android only) */}
+        {Platform.OS === 'android' && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+              معلومات التخطيط (Android Debug)
+            </Text>
+            <View style={[styles.sectionCard, { backgroundColor: theme.colors.surface }]}>
+              <List.Item
+                title="حالة RTL"
+                description={`isRTL: ${I18nManager.isRTL ? 'مفعل' : 'معطل'} | allowRTL: ${I18nManager.allowRTL ? 'مفعل' : 'معطل'}`}
+                titleStyle={[styles.itemTitle, { color: theme.colors.onSurface }]}
+                descriptionStyle={[styles.itemDescription, { color: theme.colors.onSurfaceVariant }]}
+                left={() => (
+                  <View style={[styles.iconContainer, { backgroundColor: `${theme.colors.primary}20` }]}>
+                    <Globe size={24} color={theme.colors.primary} />
+                  </View>
+                )}
+              />
+              <Divider style={styles.divider} />
+              <List.Item
+                title="المنصة"
+                description={`Platform: ${Platform.OS} | Version: ${Platform.Version}`}
+                titleStyle={[styles.itemTitle, { color: theme.colors.onSurface }]}
+                descriptionStyle={[styles.itemDescription, { color: theme.colors.onSurfaceVariant }]}
+                left={() => (
+                  <View style={[styles.iconContainer, { backgroundColor: `${theme.colors.secondary}20` }]}>
+                    <Shield size={24} color={theme.colors.secondary} />
+                  </View>
+                )}
+              />
+            </View>
+          </View>
+        )}
 
         {/* Logout Section */}
         <View style={styles.section}>

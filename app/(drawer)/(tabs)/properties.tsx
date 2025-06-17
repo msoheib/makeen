@@ -295,34 +295,55 @@ export default function PropertiesScreen() {
           <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
             إحصائيات العقارات
           </Text>
-          <View style={styles.statsGrid}>
-            <View style={styles.statCardWrapper}>
-              <StatCard
-                title="إجمالي العقارات"
-                value={stats.total}
-                color={theme.colors.primary}
-              />
-            </View>
-            <View style={styles.statCardWrapper}>
-              <StatCard
-                title="عقارات متاحة"
-                value={stats.available}
-                color="#4CAF50"
-              />
-            </View>
-            <View style={styles.statCardWrapper}>
-              <StatCard
-                title="عقارات مؤجرة"
-                value={stats.rented}
-                color={theme.colors.secondary}
-              />
-            </View>
-            <View style={styles.statCardWrapper}>
-              <StatCard
-                title="تحت الصيانة"
-                value={stats.maintenance}
-                color="#F44336"
-              />
+          <View style={[styles.horizontalStatsCard, { backgroundColor: theme.colors.surface }]}>
+            <View style={styles.horizontalStatsRow}>
+              <View style={styles.horizontalStatItem}>
+                <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
+                  <Building2 size={24} color={theme.colors.primary} />
+                </View>
+                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                  إجمالي العقارات
+                </Text>
+                <Text style={[styles.horizontalStatValue, { color: theme.colors.primary }]}>
+                  {(propertiesLoading || statsLoading) ? '...' : stats.total}
+                </Text>
+              </View>
+              
+              <View style={styles.horizontalStatItem}>
+                <View style={[styles.horizontalStatIcon, { backgroundColor: '#4CAF5020' }]}>
+                  <Home size={24} color="#4CAF50" />
+                </View>
+                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                  عقارات متاحة
+                </Text>
+                <Text style={[styles.horizontalStatValue, { color: '#4CAF50' }]}>
+                  {(propertiesLoading || statsLoading) ? '...' : stats.available}
+                </Text>
+              </View>
+              
+              <View style={styles.horizontalStatItem}>
+                <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.secondary}20` }]}>
+                  <Users size={24} color={theme.colors.secondary} />
+                </View>
+                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                  عقارات مؤجرة
+                </Text>
+                <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary }]}>
+                  {(propertiesLoading || statsLoading) ? '...' : stats.rented}
+                </Text>
+              </View>
+              
+              <View style={styles.horizontalStatItem}>
+                <View style={[styles.horizontalStatIcon, { backgroundColor: '#F4433620' }]}>
+                  <MessageSquare size={24} color="#F44336" />
+                </View>
+                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                  تحت الصيانة
+                </Text>
+                <Text style={[styles.horizontalStatValue, { color: '#F44336' }]}>
+                  {(propertiesLoading || statsLoading) ? '...' : stats.maintenance}
+                </Text>
+              </View>
             </View>
           </View>
         </View>
@@ -534,6 +555,45 @@ const styles = StyleSheet.create({
   statCardWrapper: {
     width: '48%',
     minHeight: 120,
+  },
+  // Horizontal stats styles
+  horizontalStatsCard: {
+    borderRadius: 16,
+    padding: 20,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  horizontalStatsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  horizontalStatItem: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 8,
+  },
+  horizontalStatIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  horizontalStatLabel: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginBottom: 4,
+    lineHeight: 16,
+  },
+  horizontalStatValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   fab: {
     position: 'absolute',

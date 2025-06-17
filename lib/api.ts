@@ -2059,6 +2059,640 @@ export const reportsApi = {
         error: null
       };
     });
+  },
+
+  // Additional comprehensive reports as requested
+
+  // Summary Reports
+  async getSummaryReport(dateRange?: { startDate: string; endDate: string }): Promise<ApiResponse<any>> {
+    try {
+      const { data: properties } = await supabase.from('properties').select('*');
+      const { data: contracts } = await supabase.from('contracts').select('*');
+      const { data: vouchers } = await supabase.from('vouchers').select('*');
+      const { data: maintenance } = await supabase.from('maintenance_requests').select('*');
+
+      const summary = {
+        totalProperties: properties?.length || 0,
+        activeContracts: contracts?.filter(c => c.status === 'active').length || 0,
+        totalRevenue: vouchers?.filter(v => v.voucher_type === 'receipt' && v.status === 'posted')
+          .reduce((sum, v) => sum + Number(v.amount), 0) || 0,
+        totalExpenses: vouchers?.filter(v => v.voucher_type === 'payment' && v.status === 'posted')
+          .reduce((sum, v) => sum + Number(v.amount), 0) || 0,
+        maintenanceRequests: maintenance?.length || 0,
+        generatedAt: new Date().toISOString()
+      };
+
+      return { data: summary, error: null };
+    } catch (error) {
+      return { data: null, error: 'Failed to generate summary report' };
+    }
+  },
+
+  // Invoices Report  
+  async getInvoicesReport(dateRange?: { startDate: string; endDate: string }): Promise<ApiResponse<any>> {
+    try {
+      let query = supabase
+        .from('invoices')
+        .select(`
+          *,
+          properties(title, address),
+          profiles(first_name, last_name)
+        `);
+
+      if (dateRange?.startDate && dateRange?.endDate) {
+        query = query
+          .gte('issue_date', dateRange.startDate)
+          .lte('issue_date', dateRange.endDate);
+      }
+
+      const { data: invoices, error } = await query;
+      if (error) throw error;
+
+      const summary = {
+        totalInvoices: invoices?.length || 0,
+        totalAmount: invoices?.reduce((sum, inv) => sum + Number(inv.total_amount), 0) || 0,
+        paidInvoices: invoices?.filter(inv => inv.status === 'paid').length || 0,
+        overdueInvoices: invoices?.filter(inv => inv.status === 'overdue').length || 0,
+        invoices: invoices || [],
+        generatedAt: new Date().toISOString()
+      };
+
+      return { data: summary, error: null };
+    } catch (error) {
+      return { data: null, error: 'Failed to generate invoices report' };
+    }
+  },
+
+  // Account Statement
+  async getAccountStatement(accountId?: string, dateRange?: { startDate: string; endDate: string }): Promise<ApiResponse<any>> {
+    try {
+      const { data: vouchers, error } = await supabase
+        .from('vouchers')
+        .select(`
+          *,
+          accounts(account_code, account_name),
+          properties(title),
+          profiles(first_name, last_name)
+        `)
+        .eq('status', 'posted')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const statement = {
+        openingBalance: 0,
+        closingBalance: vouchers?.reduce((balance, v) => {
+          return v.voucher_type === 'receipt' 
+            ? balance + Number(v.amount)
+            : balance - Number(v.amount);
+        }, 0) || 0,
+        transactions: vouchers || [],
+        totalDebits: vouchers?.filter(v => v.voucher_type === 'payment')
+          .reduce((sum, v) => sum + Number(v.amount), 0) || 0,
+        totalCredits: vouchers?.filter(v => v.voucher_type === 'receipt')
+          .reduce((sum, v) => sum + Number(v.amount), 0) || 0,
+        generatedAt: new Date().toISOString()
+      };
+
+      return { data: statement, error: null };
+    } catch (error) {
+      return { data: null, error: 'Failed to generate account statement' };
+    }
+  },
+
+  // Financial Statements
+  async getFinancialStatements(dateRange?: { startDate: string; endDate: string }): Promise<ApiResponse<any>> {
+    try {
+      const { data: vouchers } = await supabase
+        .from('vouchers')
+        .select('*, accounts(account_code, account_name, account_type)')
+        .eq('status', 'posted');
+
+      const { data: accounts } = await supabase
+        .from('accounts')
+        .select('*')
+        .order('account_code');
+
+      const revenue = vouchers?.filter(v => v.voucher_type === 'receipt')
+        .reduce((sum, v) => sum + Number(v.amount), 0) || 0;
+      
+      const expenses = vouchers?.filter(v => v.voucher_type === 'payment')
+        .reduce((sum, v) => sum + Number(v.amount), 0) || 0;
+
+      const statements = {
+        profitLoss: {
+          revenue,
+          expenses,
+          netIncome: revenue - expenses
+        },
+        balanceSheet: {
+          assets: accounts?.filter(a => a.account_type === 'asset') || [],
+          liabilities: accounts?.filter(a => a.account_type === 'liability') || [],
+          equity: accounts?.filter(a => a.account_type === 'equity') || []
+        },
+        cashFlow: {
+          operatingActivities: revenue - expenses,
+          investingActivities: 0,
+          financingActivities: 0
+        },
+        generatedAt: new Date().toISOString()
+      };
+
+      return { data: statements, error: null };
+    } catch (error) {
+      return { data: null, error: 'Failed to generate financial statements' };
+    }
+  },
+
+  // Payments and Late Tenants Report
+  async getPaymentsAndLateTenantsReport(): Promise<ApiResponse<any>> {
+    try {
+      const { data: contracts } = await supabase
+        .from('contracts')
+        .select(`
+          *,
+          properties(title, address),
+          profiles(first_name, last_name, phone)
+        `)
+        .eq('status', 'active');
+
+      const { data: vouchers } = await supabase
+        .from('vouchers')
+        .select('*')
+        .eq('voucher_type', 'receipt')
+        .eq('status', 'posted')
+        .order('created_at', { ascending: false });
+
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+      const latePayments = contracts?.filter(contract => {
+        const lastPayment = vouchers?.find(v => v.tenant_id === contract.tenant_id);
+        const lastPaymentDate = lastPayment ? new Date(lastPayment.created_at) : new Date(contract.start_date);
+        return lastPaymentDate < thirtyDaysAgo;
+      }) || [];
+
+      const report = {
+        totalContracts: contracts?.length || 0,
+        currentTenants: contracts?.length || 0,
+        latePayments: latePayments.length,
+        onTimePayments: (contracts?.length || 0) - latePayments.length,
+        lateTenantsDetails: latePayments.map(contract => ({
+          tenantName: `${contract.profiles?.first_name} ${contract.profiles?.last_name}`,
+          propertyTitle: contract.properties?.title,
+          rentAmount: contract.rent_amount,
+          phone: contract.profiles?.phone,
+          contractNumber: contract.contract_number,
+          daysBehind: Math.floor((now.getTime() - new Date(contract.start_date).getTime()) / (1000 * 60 * 60 * 24))
+        })),
+        generatedAt: new Date().toISOString()
+      };
+
+      return { data: report, error: null };
+    } catch (error) {
+      return { data: null, error: 'Failed to generate payments and late tenants report' };
+    }
+  },
+
+  // Vacancies and Offers Report
+  async getVacanciesAndOffersReport(): Promise<ApiResponse<any>> {
+    try {
+      const { data: properties } = await supabase
+        .from('properties')
+        .select(`
+          *,
+          profiles(first_name, last_name)
+        `);
+
+      const { data: bids } = await supabase
+        .from('bids')
+        .select(`
+          *,
+          properties(title, address),
+          profiles(first_name, last_name)
+        `)
+        .order('created_at', { ascending: false });
+
+      const vacantProperties = properties?.filter(p => p.status === 'available') || [];
+      const reservedProperties = properties?.filter(p => p.status === 'reserved') || [];
+      const activeBids = bids?.filter(b => b.bid_status === 'pending') || [];
+
+      const report = {
+        totalProperties: properties?.length || 0,
+        vacantProperties: vacantProperties.length,
+        reservedProperties: reservedProperties.length,
+        occupiedProperties: properties?.filter(p => p.status === 'rented').length || 0,
+        activeBids: activeBids.length,
+        averageVacancyRate: ((vacantProperties.length / (properties?.length || 1)) * 100).toFixed(2),
+        vacancyDetails: vacantProperties.map(p => ({
+          title: p.title,
+          address: p.address,
+          price: p.price,
+          propertyType: p.property_type,
+          daysVacant: Math.floor((new Date().getTime() - new Date(p.updated_at).getTime()) / (1000 * 60 * 60 * 24))
+        })),
+        bidDetails: activeBids.map(b => ({
+          propertyTitle: b.properties?.title,
+          bidderName: `${b.profiles?.first_name} ${b.profiles?.last_name}`,
+          bidAmount: b.bid_amount,
+          bidType: b.bid_type,
+          createdAt: b.created_at
+        })),
+        generatedAt: new Date().toISOString()
+      };
+
+      return { data: report, error: null };
+    } catch (error) {
+      return { data: null, error: 'Failed to generate vacancies and offers report' };
+    }
+  },
+
+  // Property Report
+  async getPropertyReport(propertyId?: string): Promise<ApiResponse<any>> {
+    try {
+      let query = supabase
+        .from('properties')
+        .select(`
+          *,
+          profiles(first_name, last_name, phone),
+          contracts(*, profiles(first_name, last_name)),
+          maintenance_requests(*),
+          vouchers(*)
+        `);
+
+      if (propertyId) {
+        query = query.eq('id', propertyId);
+      }
+
+      const { data: properties, error } = await query;
+      if (error) throw error;
+
+      const report = properties?.map(property => ({
+        propertyDetails: {
+          title: property.title,
+          address: property.address,
+          propertyType: property.property_type,
+          status: property.status,
+          price: property.price,
+          area: property.area_sqm,
+          bedrooms: property.bedrooms,
+          bathrooms: property.bathrooms
+        },
+        ownerDetails: {
+          name: `${property.profiles?.first_name} ${property.profiles?.last_name}`,
+          phone: property.profiles?.phone
+        },
+        financialSummary: {
+          totalRevenue: property.vouchers?.filter(v => v.voucher_type === 'receipt')
+            .reduce((sum, v) => sum + Number(v.amount), 0) || 0,
+          totalExpenses: property.vouchers?.filter(v => v.voucher_type === 'payment')
+            .reduce((sum, v) => sum + Number(v.amount), 0) || 0,
+          maintenanceRequests: property.maintenance_requests?.length || 0
+        },
+        currentTenant: property.contracts?.find(c => c.status === 'active')?.profiles ? {
+          name: `${property.contracts.find(c => c.status === 'active')?.profiles?.first_name} ${property.contracts.find(c => c.status === 'active')?.profiles?.last_name}`,
+          rentAmount: property.contracts.find(c => c.status === 'active')?.rent_amount
+        } : null
+      })) || [];
+
+      return { data: { properties: report, generatedAt: new Date().toISOString() }, error: null };
+    } catch (error) {
+      return { data: null, error: 'Failed to generate property report' };
+    }
+  },
+
+  // Tenants Statement Report
+  async getTenantsStatementReport(ownerId?: string): Promise<ApiResponse<any>> {
+    try {
+      let propertiesQuery = supabase
+        .from('properties')
+        .select(`
+          *,
+          contracts!inner(*,
+            profiles(first_name, last_name, phone)
+          ),
+          vouchers(*)
+        `);
+
+      if (ownerId) {
+        propertiesQuery = propertiesQuery.eq('owner_id', ownerId);
+      }
+
+      const { data: properties, error } = await propertiesQuery;
+      if (error) throw error;
+
+      const tenantsStatement = properties?.map(property => {
+        const activeContract = property.contracts?.find(c => c.status === 'active');
+        const tenantPayments = property.vouchers?.filter(v => 
+          v.voucher_type === 'receipt' && v.tenant_id === activeContract?.tenant_id
+        ) || [];
+
+        return {
+          propertyTitle: property.title,
+          tenantName: activeContract ? 
+            `${activeContract.profiles?.first_name} ${activeContract.profiles?.last_name}` : 'No Active Tenant',
+          tenantPhone: activeContract?.profiles?.phone,
+          rentAmount: activeContract?.rent_amount || 0,
+          totalPaid: tenantPayments.reduce((sum, v) => sum + Number(v.amount), 0),
+          lastPaymentDate: tenantPayments.length > 0 ? 
+            Math.max(...tenantPayments.map(v => new Date(v.created_at).getTime())) : null,
+          contractStatus: activeContract?.status || 'No Contract'
+        };
+      }) || [];
+
+      return { 
+        data: { 
+          tenants: tenantsStatement, 
+          generatedAt: new Date().toISOString() 
+        }, 
+        error: null 
+      };
+    } catch (error) {
+      return { data: null, error: 'Failed to generate tenants statement report' };
+    }
+  },
+
+  // Owner Financial Report
+  async getOwnerFinancialReport(ownerId?: string): Promise<ApiResponse<any>> {
+    try {
+      let query = supabase
+        .from('profiles')
+        .select(`
+          *,
+          properties(*,
+            contracts(*),
+            vouchers(*),
+            maintenance_requests(*)
+          )
+        `)
+        .eq('role', 'owner');
+
+      if (ownerId) {
+        query = query.eq('id', ownerId);
+      }
+
+      const { data: owners, error } = await query;
+      if (error) throw error;
+
+      const ownerReports = owners?.map(owner => {
+        const totalRevenue = owner.properties?.flatMap(p => p.vouchers || [])
+          .filter(v => v.voucher_type === 'receipt')
+          .reduce((sum, v) => sum + Number(v.amount), 0) || 0;
+
+        const totalExpenses = owner.properties?.flatMap(p => p.vouchers || [])
+          .filter(v => v.voucher_type === 'payment')
+          .reduce((sum, v) => sum + Number(v.amount), 0) || 0;
+
+        const totalProperties = owner.properties?.length || 0;
+        const occupiedProperties = owner.properties?.filter(p => p.status === 'rented').length || 0;
+
+        return {
+          ownerName: `${owner.first_name} ${owner.last_name}`,
+          ownerPhone: owner.phone,
+          totalProperties,
+          occupiedProperties,
+          vacantProperties: totalProperties - occupiedProperties,
+          occupancyRate: totalProperties > 0 ? ((occupiedProperties / totalProperties) * 100).toFixed(2) : '0',
+          totalRevenue,
+          totalExpenses,
+          netIncome: totalRevenue - totalExpenses,
+          maintenanceRequests: owner.properties?.flatMap(p => p.maintenance_requests || []).length || 0
+        };
+      }) || [];
+
+      return { 
+        data: { 
+          owners: ownerReports, 
+          generatedAt: new Date().toISOString() 
+        }, 
+        error: null 
+      };
+    } catch (error) {
+      return { data: null, error: 'Failed to generate owner financial report' };
+    }
+  },
+
+  // Owner Full Report
+  async getOwnerFullReport(ownerId?: string): Promise<ApiResponse<any>> {
+    try {
+      let query = supabase
+        .from('profiles')
+        .select(`
+          *,
+          properties(*,
+            contracts(*,
+              profiles(first_name, last_name, phone)
+            ),
+            vouchers(*),
+            maintenance_requests(*,
+              work_orders(*)
+            )
+          )
+        `)
+        .eq('role', 'owner');
+
+      if (ownerId) {
+        query = query.eq('id', ownerId);
+      }
+
+      const { data: owners, error } = await query;
+      if (error) throw error;
+
+      const fullReports = owners?.map(owner => ({
+        ownerInfo: {
+          name: `${owner.first_name} ${owner.last_name}`,
+          email: owner.email,
+          phone: owner.phone,
+          address: owner.address,
+          city: owner.city,
+          country: owner.country
+        },
+        propertiesOverview: {
+          totalProperties: owner.properties?.length || 0,
+          rentedProperties: owner.properties?.filter(p => p.status === 'rented').length || 0,
+          availableProperties: owner.properties?.filter(p => p.status === 'available').length || 0,
+          maintenanceProperties: owner.properties?.filter(p => p.status === 'maintenance').length || 0
+        },
+        financialSummary: {
+          totalRevenue: owner.properties?.flatMap(p => p.vouchers || [])
+            .filter(v => v.voucher_type === 'receipt')
+            .reduce((sum, v) => sum + Number(v.amount), 0) || 0,
+          totalExpenses: owner.properties?.flatMap(p => p.vouchers || [])
+            .filter(v => v.voucher_type === 'payment')
+            .reduce((sum, v) => sum + Number(v.amount), 0) || 0,
+          maintenanceCosts: owner.properties?.flatMap(p => p.maintenance_requests || [])
+            .flatMap(mr => mr.work_orders || [])
+            .reduce((sum, wo) => sum + Number(wo.actual_cost || wo.estimated_cost || 0), 0) || 0
+        },
+        propertiesDetails: owner.properties?.map(property => ({
+          title: property.title,
+          address: property.address,
+          status: property.status,
+          price: property.price,
+          currentTenant: property.contracts?.find(c => c.status === 'active')?.profiles ? 
+            `${property.contracts.find(c => c.status === 'active')?.profiles?.first_name} ${property.contracts.find(c => c.status === 'active')?.profiles?.last_name}` : 'Vacant',
+          monthlyRent: property.contracts?.find(c => c.status === 'active')?.rent_amount || 0,
+          maintenanceRequests: property.maintenance_requests?.length || 0
+        })) || [],
+        generatedAt: new Date().toISOString()
+      })) || [];
+
+      return { data: { owners: fullReports }, error: null };
+    } catch (error) {
+      return { data: null, error: 'Failed to generate owner full report' };
+    }
+  },
+
+  // Electrical Meter Report (placeholder)
+  async getElectricalMeterReport(): Promise<ApiResponse<any>> {
+    try {
+      const { data: properties } = await supabase
+        .from('properties')
+        .select(`
+          *,
+          profiles(first_name, last_name)
+        `);
+
+      // This would typically integrate with utility providers or IoT devices
+      const meterReadings = properties?.map(property => ({
+        propertyTitle: property.title,
+        propertyAddress: property.address,
+        ownerName: `${property.profiles?.first_name} ${property.profiles?.last_name}`,
+        currentReading: Math.floor(Math.random() * 10000) + 5000, // Simulated data
+        previousReading: Math.floor(Math.random() * 8000) + 3000,
+        consumption: Math.floor(Math.random() * 2000) + 500,
+        estimatedBill: (Math.floor(Math.random() * 2000) + 500) * 0.18, // SAR per kWh
+        readingDate: new Date().toISOString().split('T')[0]
+      })) || [];
+
+      return { 
+        data: { 
+          meterReadings,
+          totalConsumption: meterReadings.reduce((sum, reading) => sum + reading.consumption, 0),
+          averageConsumption: meterReadings.length > 0 ? 
+            meterReadings.reduce((sum, reading) => sum + reading.consumption, 0) / meterReadings.length : 0,
+          generatedAt: new Date().toISOString() 
+        }, 
+        error: null 
+      };
+    } catch (error) {
+      return { data: null, error: 'Failed to generate electrical meter report' };
+    }
+  },
+
+  // Owner Classes Report
+  async getOwnerClassesReport(): Promise<ApiResponse<any>> {
+    try {
+      const { data: owners } = await supabase
+        .from('profiles')
+        .select(`
+          *,
+          properties(*)
+        `)
+        .eq('role', 'owner');
+
+      const ownerClasses = owners?.map(owner => {
+        const propertyCount = owner.properties?.length || 0;
+        let classification = 'Small Owner';
+        
+        if (propertyCount >= 10) classification = 'Large Owner';
+        else if (propertyCount >= 5) classification = 'Medium Owner';
+        else if (propertyCount >= 2) classification = 'Regular Owner';
+
+        return {
+          ownerName: `${owner.first_name} ${owner.last_name}`,
+          email: owner.email,
+          phone: owner.phone,
+          totalProperties: propertyCount,
+          classification,
+          nationality: owner.nationality || 'Saudi',
+          joinDate: owner.created_at,
+          totalPortfolioValue: owner.properties?.reduce((sum, p) => sum + Number(p.price || 0), 0) || 0
+        };
+      }) || [];
+
+      const classificationSummary = {
+        'Small Owner': ownerClasses.filter(o => o.classification === 'Small Owner').length,
+        'Regular Owner': ownerClasses.filter(o => o.classification === 'Regular Owner').length,
+        'Medium Owner': ownerClasses.filter(o => o.classification === 'Medium Owner').length,
+        'Large Owner': ownerClasses.filter(o => o.classification === 'Large Owner').length
+      };
+
+      return { 
+        data: { 
+          owners: ownerClasses,
+          classificationSummary,
+          totalOwners: ownerClasses.length,
+          generatedAt: new Date().toISOString() 
+        }, 
+        error: null 
+      };
+    } catch (error) {
+      return { data: null, error: 'Failed to generate owner classes report' };
+    }
+  },
+
+  // Tenants Balance Report
+  async getTenantsBalanceReport(): Promise<ApiResponse<any>> {
+    try {
+      const { data: tenants } = await supabase
+        .from('profiles')
+        .select(`
+          *,
+          contracts(*,
+            properties(title, address)
+          ),
+          vouchers(*)
+        `)
+        .eq('role', 'tenant');
+
+      const tenantBalances = tenants?.map(tenant => {
+        const activeContract = tenant.contracts?.find(c => c.status === 'active');
+        const payments = tenant.vouchers?.filter(v => v.voucher_type === 'receipt') || [];
+        const totalPaid = payments.reduce((sum, v) => sum + Number(v.amount), 0);
+        
+        // Calculate expected payments based on contract duration
+        const monthlyRent = activeContract?.rent_amount || 0;
+        const contractStart = activeContract ? new Date(activeContract.start_date) : new Date();
+        const monthsSinceStart = Math.max(1, Math.floor((new Date().getTime() - contractStart.getTime()) / (30 * 24 * 60 * 60 * 1000)));
+        const expectedTotal = monthlyRent * monthsSinceStart;
+        const balance = expectedTotal - totalPaid;
+
+        return {
+          tenantName: `${tenant.first_name} ${tenant.last_name}`,
+          phone: tenant.phone,
+          email: tenant.email,
+          propertyTitle: activeContract?.properties?.title || 'No Active Property',
+          monthlyRent,
+          totalPaid,
+          expectedTotal,
+          balance,
+          status: balance > 0 ? 'Outstanding' : 'Current',
+          lastPaymentDate: payments.length > 0 ? 
+            new Date(Math.max(...payments.map(p => new Date(p.created_at).getTime()))).toISOString().split('T')[0] : 'No payments',
+          contractStatus: activeContract?.status || 'No Contract'
+        };
+      }) || [];
+
+      const summary = {
+        totalTenants: tenantBalances.length,
+        currentTenants: tenantBalances.filter(t => t.status === 'Current').length,
+        outstandingTenants: tenantBalances.filter(t => t.status === 'Outstanding').length,
+        totalOutstanding: tenantBalances.filter(t => t.balance > 0).reduce((sum, t) => sum + t.balance, 0),
+        totalPaid: tenantBalances.reduce((sum, t) => sum + t.totalPaid, 0)
+      };
+
+      return { 
+        data: { 
+          tenants: tenantBalances,
+          summary,
+          generatedAt: new Date().toISOString() 
+        }, 
+        error: null 
+      };
+    } catch (error) {
+      return { data: null, error: 'Failed to generate tenants balance report' };
+    }
   }
 };
 

@@ -34,17 +34,50 @@ const safeStorage = {
   }
 };
 
-// Apply RTL layout to the app
+// Apply RTL layout to the app with Android-specific handling
 export const applyRTL = (isRTLLanguage: boolean): void => {
-  if (I18nManager.isRTL !== isRTLLanguage) {
-    I18nManager.allowRTL(isRTLLanguage);
-    I18nManager.forceRTL(isRTLLanguage);
+  try {
+    console.log(`[RTL] Applying RTL configuration: isRTLLanguage=${isRTLLanguage}, Platform=${Platform.OS}`);
+    
+    // Always allow RTL first
+    I18nManager.allowRTL(true);
+    
+    // For Android, we need to be more aggressive with RTL configuration
+    if (Platform.OS === 'android') {
+      // Force RTL for Arabic regardless of current state
+      if (isRTLLanguage) {
+        I18nManager.forceRTL(true);
+        console.log('[RTL] Android: Forced RTL enabled');
+      } else {
+        I18nManager.forceRTL(false);
+        console.log('[RTL] Android: Forced RTL disabled');
+      }
+    } else {
+      // For other platforms, only change if needed
+      if (I18nManager.isRTL !== isRTLLanguage) {
+        I18nManager.forceRTL(isRTLLanguage);
+        console.log(`[RTL] ${Platform.OS}: RTL state changed to ${isRTLLanguage}`);
+      }
+    }
+    
+    console.log(`[RTL] Final state: I18nManager.isRTL=${I18nManager.isRTL}, allowRTL=${I18nManager.allowRTL}`);
+  } catch (error) {
+    console.error('[RTL] Error applying RTL configuration:', error);
   }
 };
 
-// Initialize RTL based on current language
+// Initialize RTL based on current language with early Android setup
 export const initializeRTL = async (): Promise<void> => {
   try {
+    console.log('[RTL] Starting RTL initialization...');
+    
+    // For Android, set up RTL immediately for Arabic
+    if (Platform.OS === 'android') {
+      I18nManager.allowRTL(true);
+      I18nManager.forceRTL(true); // Default to RTL for Arabic app
+      console.log('[RTL] Android: Early RTL setup completed');
+    }
+    
     const savedLanguage = await safeStorage.getItem(LANGUAGE_STORAGE_KEY);
     const currentLang = getCurrentLanguage();
     
@@ -60,15 +93,17 @@ export const initializeRTL = async (): Promise<void> => {
     const isRTLLang = language === 'ar';
     applyRTL(isRTLLang);
     
-    console.log(`RTL initialized: Language=${language}, RTL=${isRTLLang}, I18nManager.isRTL=${I18nManager.isRTL}`);
+    console.log(`[RTL] Initialization complete: Language=${language}, RTL=${isRTLLang}, I18nManager.isRTL=${I18nManager.isRTL}`);
   } catch (error) {
-    console.error('Error initializing RTL:', error);
+    console.error('[RTL] Error initializing RTL:', error);
   }
 };
 
 // Change language and update RTL layout
 export const switchLanguage = async (language: SupportedLanguage): Promise<void> => {
   try {
+    console.log(`[RTL] Switching language to: ${language}`);
+    
     // Save language preference
     await safeStorage.setItem(LANGUAGE_STORAGE_KEY, language);
     
@@ -79,9 +114,14 @@ export const switchLanguage = async (language: SupportedLanguage): Promise<void>
     const isRTLLang = language === 'ar';
     applyRTL(isRTLLang);
     
-    console.log(`Language switched to: ${language}, RTL: ${isRTLLang}`);
+    console.log(`[RTL] Language switch complete: ${language}, RTL: ${isRTLLang}`);
+    
+    // For Android, recommend app restart for full RTL effect
+    if (Platform.OS === 'android') {
+      console.log('[RTL] Android: Consider restarting app for complete RTL layout changes');
+    }
   } catch (error) {
-    console.error('Error switching language:', error);
+    console.error('[RTL] Error switching language:', error);
     throw error;
   }
 };
@@ -101,6 +141,12 @@ export const getSavedLanguage = async (): Promise<SupportedLanguage | null> => {
 export const needsRestart = (newLanguage: SupportedLanguage): boolean => {
   const currentIsRTL = I18nManager.isRTL;
   const newIsRTL = newLanguage === 'ar';
+  
+  // Android always benefits from restart for RTL changes
+  if (Platform.OS === 'android' && currentIsRTL !== newIsRTL) {
+    return true;
+  }
+  
   return currentIsRTL !== newIsRTL;
 };
 
@@ -129,6 +175,16 @@ export const getStart = (): 'left' | 'right' => {
 
 export const getEnd = (): 'left' | 'right' => {
   return isRTL() ? 'left' : 'right';
+};
+
+// Android-specific RTL utilities
+export const androidRTLFix = () => {
+  if (Platform.OS === 'android') {
+    // Ensure RTL is properly configured for Android
+    I18nManager.allowRTL(true);
+    I18nManager.forceRTL(true);
+    console.log('[RTL] Android RTL fix applied');
+  }
 };
 
 // Re-export isRTL so other modules can import it directly from this file

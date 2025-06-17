@@ -77,6 +77,15 @@ export default function CashflowCard({
       
       <View style={[styles.row, { marginBottom: spacing.s }]}>
         <Text style={[
+          styles.value, 
+          { 
+            color: '#4CAF50',
+            fontSize: 18,
+          }
+        ]}>
+          ريال {formatCurrency(income)} SAR •
+        </Text>
+        <Text style={[
           styles.label, 
           { 
             color: theme.colors.onSurfaceVariant,
@@ -85,18 +94,18 @@ export default function CashflowCard({
         ]}>
           الدخل
         </Text>
-        <Text style={[
-          styles.value, 
-          { 
-            color: '#4CAF50',
-            fontSize: 18,
-          }
-        ]}>
-          {formatCurrency(income)} ريال
-        </Text>
       </View>
 
       <View style={[styles.row, { marginBottom: spacing.s }]}>
+        <Text style={[
+          styles.value, 
+          { 
+            color: theme.colors.error,
+            fontSize: 18,
+          }
+        ]}>
+          ريال {formatCurrency(expenses)} SAR •
+        </Text>
         <Text style={[
           styles.label, 
           { 
@@ -105,15 +114,6 @@ export default function CashflowCard({
           }
         ]}>
           المصروفات
-        </Text>
-        <Text style={[
-          styles.value, 
-          { 
-            color: theme.colors.error,
-            fontSize: 18,
-          }
-        ]}>
-          {formatCurrency(expenses)} ريال
         </Text>
       </View>
 
@@ -124,6 +124,16 @@ export default function CashflowCard({
 
       <View style={styles.row}>
         <Text style={[
+          styles.value, 
+          { 
+            color: theme.colors.primary,
+            fontSize: 20,
+            fontWeight: '700',
+          }
+        ]}>
+          ريال {formatCurrency(netIncome)} SAR •
+        </Text>
+        <Text style={[
           styles.label, 
           { 
             color: theme.colors.onSurface,
@@ -132,16 +142,6 @@ export default function CashflowCard({
           }
         ]}>
           صافي الدخل
-        </Text>
-        <Text style={[
-          styles.value, 
-          { 
-            color: theme.colors.primary,
-            fontSize: 20,
-            fontWeight: '700',
-          }
-        ]}>
-          {formatCurrency(netIncome)} ريال
         </Text>
       </View>
     </View>
@@ -171,6 +171,7 @@ const styles = StyleSheet.create({
   value: {
     fontWeight: '600',
     textAlign: 'left',
+    marginRight: 8,
   },
   separator: {
     height: 1,

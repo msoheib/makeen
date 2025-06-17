@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { lightTheme, darkTheme, spacing, borderRadius, shadows } from '@/lib/theme';
+import { lightTheme, darkTheme, spacing, borderRadius, shadows, rtlStyles } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
 import { formatNumber } from '@/lib/formatters';
+import { isRTL } from '@/lib/rtl';
 
 interface StatCardProps {
   title: string;
@@ -35,14 +36,15 @@ export default function StatCard({
         ...shadows.small,
       }
     ]}>
-      <View style={styles.header}>
+      <View style={[styles.header, rtlStyles.row()]}>
         {icon && (
-          <View style={styles.iconContainer}>
+          <View style={[styles.iconContainer, rtlStyles.marginEnd(8)]}>
             {icon}
           </View>
         )}
         <Text style={[
           styles.title, 
+          rtlStyles.textAlign(),
           { 
             color: theme.colors.onSurfaceVariant,
             fontSize: 13,
@@ -97,21 +99,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   header: {
-    flexDirection: 'row',
     alignItems: 'flex-start',
     marginBottom: 8,
     minHeight: 24,
   },
   iconContainer: {
-    marginRight: 8,
-    marginLeft: 4,
+    // RTL-aware margins are now handled by rtlStyles.marginEnd(8)
   },
   title: {
     fontWeight: '500',
-    textAlign: 'right',
     flex: 1,
     flexWrap: 'wrap',
     lineHeight: 18,
+    // RTL-aware text alignment is now handled by rtlStyles.textAlign()
   },
   value: {
     fontWeight: '700',

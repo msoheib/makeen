@@ -204,13 +204,13 @@ function buildPropertiesFilter(userContext: UserContext): any {
       return { owner_id: userContext.userId };
     
     case 'tenant':
-      // Tenants see their rented properties + available properties
-      return {
-        or: [
-          { status: 'available' },
-          { id: { in: userContext.rentedPropertyIds || [] } }
-        ]
-      };
+      // **SECURITY**: Tenants see ONLY their rented properties (licensing restriction)
+      return { id: { in: userContext.rentedPropertyIds || [] } };
+    
+    case 'buyer':
+      // **SECURITY**: Buyers see ONLY properties they have relationships with (licensing restriction)
+      // TODO: Implement buyer property relationships (reservations, bids, purchases)
+      return { id: { in: [] } }; // Empty for now - no properties visible
     
     default:
       return null;

@@ -12,7 +12,7 @@ import { useScreenAccess } from '@/lib/permissions';
 import { useApi } from '@/hooks/useApi';
 import { reportsApi } from '@/lib/api';
 
-// Generate reports based on database data and user role
+// Comprehensive reports list as requested in the image
 const generateReports = (hasData: boolean, userRole?: string) => {
   if (!hasData) return [];
   
@@ -40,94 +40,172 @@ const generateReports = (hasData: boolean, userRole?: string) => {
     ];
   }
   
-  // Property Manager reports - comprehensive view with 3 main types
-  if (userRole === 'manager') {
-    return [
-      {
-        id: '1',
-        title: 'تقرير الدخل الشامل',
-        description: 'جميع مصادر الدخل والإيرادات',
-        type: 'income',
-        lastGenerated: new Date().toISOString(),
-        icon: TrendingUp,
-        color: '#4CAF50',
-      },
-      {
-        id: '2',
-        title: 'تقرير المصروفات',
-        description: 'المصروفات التشغيلية والصيانة',
-        type: 'expenses',
-        lastGenerated: new Date().toISOString(),
-        icon: PieChart,
-        color: '#F44336',
-      },
-      {
-        id: '3',
-        title: 'تقرير التدفق النقدي',
-        description: 'التدفق النقدي والميزانية المالية',
-        type: 'cashflow',
-        lastGenerated: new Date().toISOString(),
-        icon: BarChart3,
-        color: '#2196F3',
-      }
-    ];
-  }
-  
-  // Admin users get all reports (existing comprehensive set)
+  // Property Manager and Admin users get all comprehensive reports
   return [
     {
       id: '1',
-      title: 'تقرير الإيرادات الشهرية',
-      description: 'تقرير شامل للإيرادات والمدفوعات',
-      type: 'revenue',
-      lastGenerated: new Date().toISOString(),
-      icon: TrendingUp,
-      color: '#4CAF50',
-    },
-    {
-      id: '2',
-      title: 'تقرير المصروفات',
-      description: 'تحليل المصروفات والنفقات التشغيلية',
-      type: 'expenses',
-      lastGenerated: new Date().toISOString(),
-      icon: PieChart,
-      color: '#F44336',
-    },
-    {
-      id: '3',
-      title: 'تقرير أداء العقارات',
-      description: 'معدل الإشغال والعائد على الاستثمار',
-      type: 'properties',
+      title: 'ملخص التقارير',
+      titleEn: 'Summary of Reports',
+      description: 'ملخص شامل للأعمال والمؤشرات الرئيسية',
+      type: 'summary',
+      category: 'Summary',
       lastGenerated: new Date().toISOString(),
       icon: BarChart3,
       color: '#2196F3',
     },
     {
-      id: '4',
-      title: 'تقرير المستأجرين',
-      description: 'إحصائيات المستأجرين والعقود',
-      type: 'tenants',
+      id: '2',
+      title: 'تقرير الفواتير',
+      titleEn: 'Invoices Report',
+      description: 'فواتير ضريبة القيمة المضافة وملخص الفواتير',
+      type: 'invoices',
+      category: 'Financial',
       lastGenerated: new Date().toISOString(),
       icon: FileText,
-      color: '#FF9800',
-    },
-    {
-      id: '5',
-      title: 'تقرير الصيانة',
-      description: 'طلبات الصيانة والتكاليف',
-      type: 'maintenance',
-      lastGenerated: new Date().toISOString(),
-      icon: Calendar,
       color: '#9C27B0',
     },
     {
-      id: '6',
-      title: 'التقرير المالي الشامل',
-      description: 'التقرير المالي الشامل للمؤسسة',
-      type: 'financial',
+      id: '3',
+      title: 'كشف حساب',
+      titleEn: 'Account Statement',
+      description: 'دفتر الأستاذ العام ومعاملات الحساب',
+      type: 'account-statement',
+      category: 'Financial',
+      lastGenerated: new Date().toISOString(),
+      icon: FileText,
+      color: '#607D8B',
+    },
+    {
+      id: '4',
+      title: 'تقرير المصروفات',
+      titleEn: 'Expense Report',
+      description: 'المصروفات التشغيلية وتكاليف الصيانة',
+      type: 'expenses',
+      category: 'Financial',
+      lastGenerated: new Date().toISOString(),
+      icon: PieChart,
+      color: '#F44336',
+    },
+    {
+      id: '5',
+      title: 'تقرير الإيرادات',
+      titleEn: 'Revenue Report',
+      description: 'تفصيل الإيرادات الشهرية حسب العقار',
+      type: 'revenue',
+      category: 'Financial',
       lastGenerated: new Date().toISOString(),
       icon: TrendingUp,
-      color: '#607D8B',
+      color: '#4CAF50',
+    },
+    {
+      id: '6',
+      title: 'القوائم المالية',
+      titleEn: 'Financial Statements',
+      description: 'الميزانية العمومية والأرباح والخسائر والتدفق النقدي',
+      type: 'financial-statements',
+      category: 'Financial',
+      lastGenerated: new Date().toISOString(),
+      icon: BarChart3,
+      color: '#673AB7',
+    },
+    {
+      id: '7',
+      title: 'مواعيد الدفع والمستأجرين المتأخرين',
+      titleEn: 'Payments Dates & Late Tenants',
+      description: 'تتبع المدفوعات وتحليل المتأخرين',
+      type: 'payments-late-tenants',
+      category: 'Tenants',
+      lastGenerated: new Date().toISOString(),
+      icon: Calendar,
+      color: '#FF5722',
+    },
+    {
+      id: '8',
+      title: 'تقرير الشواغر والعروض',
+      titleEn: 'Vacancies and Offers Report',
+      description: 'توفر العقارات وتحليل العروض',
+      type: 'vacancies-offers',
+      category: 'Properties',
+      lastGenerated: new Date().toISOString(),
+      icon: TrendingUp,
+      color: '#795548',
+    },
+    {
+      id: '9',
+      title: 'تقرير العقارات',
+      titleEn: 'Property Report',
+      description: 'تحليل أداء العقارات الفردية',
+      type: 'property-report',
+      category: 'Properties',
+      lastGenerated: new Date().toISOString(),
+      icon: TrendingUp,
+      color: '#00BCD4',
+    },
+    {
+      id: '10',
+      title: 'بيان المستأجرين للمالك',
+      titleEn: 'Tenants Statement of Owner',
+      description: 'ملخص المستأجرين والمدفوعات الخاصة بالمالك',
+      type: 'tenants-statement',
+      category: 'Owners',
+      lastGenerated: new Date().toISOString(),
+      icon: FileText,
+      color: '#3F51B5',
+    },
+    {
+      id: '11',
+      title: 'التقرير المالي للمالك',
+      titleEn: 'Owner Financial Report',
+      description: 'إيرادات المالك والمصروفات والربحية',
+      type: 'owner-financial',
+      category: 'Owners',
+      lastGenerated: new Date().toISOString(),
+      icon: TrendingUp,
+      color: '#009688',
+    },
+    {
+      id: '12',
+      title: 'التقرير الكامل للمالك',
+      titleEn: 'Owner Full Report',
+      description: 'تحليل شامل لمحفظة المالك',
+      type: 'owner-full',
+      category: 'Owners',
+      lastGenerated: new Date().toISOString(),
+      icon: FileText,
+      color: '#8BC34A',
+    },
+    {
+      id: '13',
+      title: 'تقرير العداد الكهربائي',
+      titleEn: 'Electrical Meter Report',
+      description: 'استهلاك المرافق وتحليل الفواتير',
+      type: 'electrical-meter',
+      category: 'Operations',
+      lastGenerated: new Date().toISOString(),
+      icon: FileText,
+      color: '#FFC107',
+    },
+    {
+      id: '14',
+      title: 'تقرير فئات الملاك',
+      titleEn: 'Owner Classes Report',
+      description: 'تصنيف الملاك وتحليل المحفظة',
+      type: 'owner-classes',
+      category: 'Owners',
+      lastGenerated: new Date().toISOString(),
+      icon: FileText,
+      color: '#E91E63',
+    },
+    {
+      id: '15',
+      title: 'تقرير أرصدة المستأجرين',
+      titleEn: 'Tenants Balance Report',
+      description: 'أرصدة دفع المستأجرين والمبالغ المستحقة',
+      type: 'tenants-balance',
+      category: 'Tenants',
+      lastGenerated: new Date().toISOString(),
+      icon: FileText,
+      color: '#00BCD4',
     }
   ];
 };
@@ -211,7 +289,7 @@ export default function ReportsScreen() {
 
   const filteredReports = selectedCategory === 'all' 
     ? availableReports 
-    : availableReports.filter(report => report.type === selectedCategory);
+    : availableReports.filter(report => report.category === selectedCategory);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -225,6 +303,7 @@ export default function ReportsScreen() {
   // Map report types to PDF types
   const mapReportTypeToPDFType = (reportType: string): 'revenue' | 'expense' | 'property' | 'tenant' | 'maintenance' => {
     const typeMap: Record<string, 'revenue' | 'expense' | 'property' | 'tenant' | 'maintenance'> = {
+      // Existing mappings
       'revenue': 'revenue',
       'expenses': 'expense',
       'properties': 'property',
@@ -236,7 +315,21 @@ export default function ReportsScreen() {
       'maintenance-expenses': 'maintenance',
       // Manager-specific report types
       'income': 'revenue',
-      'cashflow': 'revenue' // Use revenue API for cashflow reports
+      'cashflow': 'revenue',
+      // New comprehensive report types
+      'summary': 'revenue',
+      'invoices': 'maintenance',
+      'account-statement': 'expense',
+      'financial-statements': 'revenue',
+      'payments-late-tenants': 'tenant',
+      'vacancies-offers': 'property',
+      'property-report': 'property',
+      'tenants-statement': 'tenant',
+      'owner-financial': 'revenue',
+      'owner-full': 'maintenance',
+      'electrical-meter': 'maintenance',
+      'owner-classes': 'maintenance',
+      'tenants-balance': 'tenant'
     };
     
     return typeMap[reportType] || 'revenue';
@@ -247,17 +340,96 @@ export default function ReportsScreen() {
     try {
       setGeneratingPDF(report.id);
       
-      // Create PDF request
+      console.log('Generating report for:', report.title, 'Type:', report.type);
+
+      let reportData = null;
+      
+      // Get data from appropriate API based on report type
+      switch (report.type) {
+        case 'summary':
+          reportData = await reportsApi.getSummaryReport();
+          break;
+        case 'invoices':
+          reportData = await reportsApi.getInvoicesReport();
+          break;
+        case 'account-statement':
+          reportData = await reportsApi.getAccountStatement();
+          break;
+        case 'financial-statements':
+          reportData = await reportsApi.getFinancialStatements();
+          break;
+        case 'payments-late-tenants':
+          reportData = await reportsApi.getPaymentsAndLateTenantsReport();
+          break;
+        case 'vacancies-offers':
+          reportData = await reportsApi.getVacanciesAndOffersReport();
+          break;
+        case 'property-report':
+          reportData = await reportsApi.getPropertyReport();
+          break;
+        case 'tenants-statement':
+          reportData = await reportsApi.getTenantsStatementReport();
+          break;
+        case 'owner-financial':
+          reportData = await reportsApi.getOwnerFinancialReport();
+          break;
+        case 'owner-full':
+          reportData = await reportsApi.getOwnerFullReport();
+          break;
+        case 'electrical-meter':
+          reportData = await reportsApi.getElectricalMeterReport();
+          break;
+        case 'owner-classes':
+          reportData = await reportsApi.getOwnerClassesReport();
+          break;
+        case 'tenants-balance':
+          reportData = await reportsApi.getTenantsBalanceReport();
+          break;
+        default:
+          // For legacy types, create PDF request
+          const pdfRequest: PDFRequest = {
+            reportType: mapReportTypeToPDFType(report.type),
+            dateRange: {
+              startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString(),
+              endDate: new Date().toISOString()
+            }
+          };
+          
+          const response = await pdfApi.generateAndDownload(pdfRequest);
+          
+          if (response.success) {
+            Alert.alert(
+              'تم إنشاء التقرير',
+              `تم إنشاء ${report.title} بنجاح وفتحه في نافذة جديدة!`,
+              [{ text: 'حسناً', style: 'default' }]
+            );
+          } else {
+            throw new Error(response.message || response.error || 'حدث خطأ غير متوقع');
+          }
+          return;
+      }
+
+      if (reportData?.error) {
+        throw new Error(reportData.error);
+      }
+
+      // Create PDF request with data
       const pdfRequest: PDFRequest = {
         reportType: mapReportTypeToPDFType(report.type),
+        data: reportData?.data,
+        title: report.title,
+        titleEn: report.titleEn,
         dateRange: {
           startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString(),
           endDate: new Date().toISOString()
         }
       };
 
-      console.log('Generating report for:', report.title);
-      console.log('Report request:', pdfRequest);
+      console.log('Generating PDF with data:', {
+        type: report.type,
+        title: report.title,
+        hasData: !!reportData?.data
+      });
 
       // Call PDF API
       const response = await pdfApi.generateAndDownload(pdfRequest);
@@ -373,38 +545,55 @@ export default function ReportsScreen() {
           <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
             إحصائيات التقارير
           </Text>
-          <View style={styles.statsGrid}>
-            <View style={styles.statCardWrapper}>
-              <StatCard
-                title="إجمالي التقارير"
-                value={stats?.totalReports?.toString() || '0'}
-                color={theme.colors.primary}
-                loading={statsLoading}
-              />
-            </View>
-            <View style={styles.statCardWrapper}>
-              <StatCard
-                title="مُولد هذا الشهر"
-                value={stats?.generatedThisMonth?.toString() || '0'}
-                color="#4CAF50"
-                loading={statsLoading}
-              />
-            </View>
-            <View style={styles.statCardWrapper}>
-              <StatCard
-                title="تقارير مجدولة"
-                value={stats?.scheduledReports?.toString() || '0'}
-                color={theme.colors.secondary}
-                loading={statsLoading}
-              />
-            </View>
-            <View style={styles.statCardWrapper}>
-              <StatCard
-                title="متوسط وقت التوليد"
-                value={stats?.avgGenerationTime || '0s'}
-                color="#FF9800"
-                loading={statsLoading}
-              />
+          <View style={[styles.horizontalStatsCard, { backgroundColor: theme.colors.surface }]}>
+            <View style={styles.horizontalStatsRow}>
+              <View style={styles.horizontalStatItem}>
+                <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
+                  <FileText size={24} color={theme.colors.primary} />
+                </View>
+                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                  إجمالي التقارير
+                </Text>
+                <Text style={[styles.horizontalStatValue, { color: theme.colors.primary }]}>
+                  {statsLoading ? '...' : stats?.totalReports?.toString() || '0'}
+                </Text>
+              </View>
+              
+              <View style={styles.horizontalStatItem}>
+                <View style={[styles.horizontalStatIcon, { backgroundColor: '#4CAF5020' }]}>
+                  <TrendingUp size={24} color="#4CAF50" />
+                </View>
+                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                  مُولد هذا الشهر
+                </Text>
+                <Text style={[styles.horizontalStatValue, { color: '#4CAF50' }]}>
+                  {statsLoading ? '...' : stats?.generatedThisMonth?.toString() || '0'}
+                </Text>
+              </View>
+              
+              <View style={styles.horizontalStatItem}>
+                <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.secondary}20` }]}>
+                  <Calendar size={24} color={theme.colors.secondary} />
+                </View>
+                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                  تقارير مجدولة
+                </Text>
+                <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary }]}>
+                  {statsLoading ? '...' : stats?.scheduledReports?.toString() || '0'}
+                </Text>
+              </View>
+              
+              <View style={styles.horizontalStatItem}>
+                <View style={[styles.horizontalStatIcon, { backgroundColor: '#FF980020' }]}>
+                  <BarChart3 size={24} color="#FF9800" />
+                </View>
+                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                  متوسط وقت التوليد
+                </Text>
+                <Text style={[styles.horizontalStatValue, { color: '#FF9800' }]}>
+                  {statsLoading ? '...' : stats?.avgGenerationTime || '0s'}
+                </Text>
+              </View>
             </View>
           </View>
         </View>
@@ -441,12 +630,12 @@ export default function ReportsScreen() {
                   // Admin or other roles get all categories
                   filterCategories = [
                     ...filterCategories,
-                { key: 'revenue', label: 'الإيرادات' },
-                { key: 'expenses', label: 'المصروفات' },
-                { key: 'properties', label: 'العقارات' },
-                    { key: 'tenants', label: 'المستأجرين' },
-                    { key: 'maintenance', label: 'الصيانة' },
-                    { key: 'financial', label: 'المالي الشامل' }
+                    { key: 'Summary', label: 'الملخص' },
+                    { key: 'Financial', label: 'المالية' },
+                    { key: 'Properties', label: 'العقارات' },
+                    { key: 'Tenants', label: 'المستأجرين' },
+                    { key: 'Owners', label: 'الملاك' },
+                    { key: 'Operations', label: 'العمليات' }
                   ];
                 }
                 
@@ -536,6 +725,45 @@ const styles = StyleSheet.create({
   statCardWrapper: {
     width: '48%',
     minHeight: 120,
+  },
+  // Horizontal stats styles
+  horizontalStatsCard: {
+    borderRadius: 16,
+    padding: 20,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  horizontalStatsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  horizontalStatItem: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 8,
+  },
+  horizontalStatIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  horizontalStatLabel: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginBottom: 4,
+    lineHeight: 16,
+  },
+  horizontalStatValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   filterSection: {
     marginBottom: 16,

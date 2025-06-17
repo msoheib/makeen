@@ -9,6 +9,9 @@ export interface PDFRequest {
   };
   propertyId?: string;
   tenantId?: string;
+  data?: any;
+  title?: string;
+  titleEn?: string;
 }
 
 export interface PDFResponse {

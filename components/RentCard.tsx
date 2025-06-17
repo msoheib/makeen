@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { lightTheme, darkTheme, spacing, borderRadius, shadows } from '@/lib/theme';
+import { lightTheme, darkTheme, spacing, borderRadius, shadows, rtlStyles } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
 import { formatCurrency } from '@/lib/formatters';
+import { isRTL } from '@/lib/rtl';
 
 interface RentCardProps {
   totalRent: number;
@@ -66,6 +67,7 @@ export default function RentCard({
     ]}>
       <Text style={[
         styles.title, 
+        rtlStyles.textAlign(),
         { 
           color: theme.colors.onSurface,
           fontSize: 18,
@@ -77,6 +79,15 @@ export default function RentCard({
       
       <View style={[styles.row, { marginBottom: spacing.s }]}>
         <Text style={[
+          styles.value, 
+          { 
+            color: theme.colors.primary,
+            fontSize: 18,
+          }
+        ]}>
+          ريال {formatCurrency(totalRent)} SAR •
+        </Text>
+        <Text style={[
           styles.label, 
           { 
             color: theme.colors.onSurfaceVariant,
@@ -85,18 +96,18 @@ export default function RentCard({
         ]}>
           إجمالي الإيجار
         </Text>
-        <Text style={[
-          styles.value, 
-          { 
-            color: theme.colors.primary,
-            fontSize: 18,
-          }
-        ]}>
-          {formatCurrency(totalRent)} ريال
-        </Text>
       </View>
 
       <View style={[styles.row, { marginBottom: spacing.s }]}>
+        <Text style={[
+          styles.value, 
+          { 
+            color: '#4CAF50',
+            fontSize: 18,
+          }
+        ]}>
+          ريال {formatCurrency(collectedRent)} SAR •
+        </Text>
         <Text style={[
           styles.label, 
           { 
@@ -106,18 +117,18 @@ export default function RentCard({
         ]}>
           المحصل
         </Text>
+      </View>
+
+      <View style={[styles.row]}>
         <Text style={[
           styles.value, 
           { 
-            color: '#4CAF50',
+            color: theme.colors.error,
             fontSize: 18,
           }
         ]}>
-          {formatCurrency(collectedRent)} ريال
+          ريال {formatCurrency(pendingRent)} SAR •
         </Text>
-      </View>
-
-      <View style={styles.row}>
         <Text style={[
           styles.label, 
           { 
@@ -126,15 +137,6 @@ export default function RentCard({
           }
         ]}>
           المعلق
-        </Text>
-        <Text style={[
-          styles.value, 
-          { 
-            color: theme.colors.error,
-            fontSize: 18,
-          }
-        ]}>
-          {formatCurrency(pendingRent)} ريال
         </Text>
       </View>
     </View>
@@ -149,7 +151,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontWeight: '600',
-    textAlign: 'right',
+    // RTL-aware text alignment is now handled by rtlStyles.textAlign()
   },
   row: {
     flexDirection: 'row',
@@ -164,6 +166,7 @@ const styles = StyleSheet.create({
   value: {
     fontWeight: '600',
     textAlign: 'left',
+    marginRight: 8,
   },
   loadingContainer: {
     flex: 1,
