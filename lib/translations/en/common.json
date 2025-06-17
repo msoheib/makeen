@@ -147,5 +147,14 @@
   "shared": "Shared",
   "exported": "Exported",
   "imported": "Imported",
-  "synchronized": "Synchronized"
+  "synchronized": "Synchronized",
+  "propertyManagementSystem": "Property Management System",
+  "signInToAccount": "Sign in to your account",
+  "password": "Password",
+  "rememberMe": "Remember me",
+  "or": "OR",
+  "createAccount": "Create Account",
+  "enterEmailPassword": "Please enter your email and password",
+  "signInFailed": "Sign-in failed: No user data returned",
+  "signInError": "Failed to sign in. Please try again"
 } 

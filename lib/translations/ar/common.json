@@ -150,5 +150,14 @@
   "imported": "تم الاستيراد",
   "synchronized": "تم التزامن",
   "categories": "الفئات",
-  "apply": "تطبيق"
+  "apply": "تطبيق",
+  "propertyManagementSystem": "نظام إدارة العقارات",
+  "signInToAccount": "تسجيل الدخول إلى حسابك",
+  "password": "كلمة المرور",
+  "rememberMe": "تذكرني",
+  "or": "أو",
+  "createAccount": "إنشاء حساب",
+  "enterEmailPassword": "يرجى إدخال البريد الإلكتروني وكلمة المرور",
+  "signInFailed": "فشل تسجيل الدخول: لم يتم إرجاع بيانات المستخدم",
+  "signInError": "فشل في تسجيل الدخول. يرجى المحاولة مرة أخرى"
 } 

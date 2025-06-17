@@ -40,34 +40,90 @@ export default function SettingsScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              console.log('Logging out user...');
+              console.log('🚀 Starting logout process...');
+              console.log('Platform:', Platform.OS);
+              
+              // Get current session before logout
+              const { data: sessionBefore } = await supabase.auth.getSession();
+              console.log('Session before logout:', sessionBefore.session ? 'EXISTS' : 'NONE');
               
               // Sign out from Supabase
+              console.log('📤 Calling supabase.auth.signOut()...');
               const { error } = await supabase.auth.signOut();
               
               if (error) {
-                console.error('Error signing out:', error);
-                Alert.alert('خطأ', 'حدث خطأ أثناء تسجيل الخروج. يرجى المحاولة مرة أخرى.');
+                console.error('❌ Supabase signOut error:', error);
+                Alert.alert('خطأ', `حدث خطأ أثناء تسجيل الخروج: ${error.message}`);
                 return;
               }
               
+              console.log('✅ Supabase signOut successful');
+              
+              // Verify session was cleared
+              const { data: sessionAfter } = await supabase.auth.getSession();
+              console.log('Session after logout:', sessionAfter.session ? 'STILL EXISTS' : 'CLEARED');
+              
               // Clear user state
+              console.log('🗑️ Clearing user state...');
               setUser(null);
               setAuthenticated(false);
               
-              console.log('User logged out successfully');
+              console.log('🧭 Navigating to auth screen...');
               
-              // Navigate to auth screen
-              router.replace('/(auth)');
+              // For web, try different navigation approaches
+              if (Platform.OS === 'web') {
+                // Try multiple navigation methods for web
+                try {
+                  console.log('🌐 Web platform detected, using replace navigation');
+                  router.replace('/(auth)');
+                } catch (navError) {
+                  console.error('❌ Navigation error, trying push instead:', navError);
+                  router.push('/(auth)');
+                }
+              } else {
+                router.replace('/(auth)');
+              }
+              
+              console.log('✅ Logout process completed successfully');
+              
+              // Additional verification after a short delay
+              setTimeout(async () => {
+                const { data: finalSession } = await supabase.auth.getSession();
+                console.log('Final session check:', finalSession.session ? 'STILL EXISTS - PROBLEM!' : 'CLEARED - SUCCESS');
+              }, 1000);
               
             } catch (error: any) {
-              console.error('Unexpected error during logout:', error);
-              Alert.alert('خطأ', 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.');
+              console.error('💥 Unexpected error during logout:', error);
+              console.error('Error details:', {
+                message: error.message,
+                stack: error.stack,
+                name: error.name
+              });
+              Alert.alert('خطأ', `حدث خطأ غير متوقع: ${error.message || 'Unknown error'}`);
             }
           }
         }
       ]
     );
+  };
+
+  // Simple fallback logout for web debugging
+  const handleSimpleLogout = async () => {
+    console.log('🔧 SIMPLE LOGOUT FOR DEBUGGING');
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setAuthenticated(false);
+      
+      // Force page reload on web as fallback
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.location.href = '/';
+      } else {
+        router.replace('/(auth)');
+      }
+    } catch (error) {
+      console.error('Simple logout error:', error);
+    }
   };
 
   const settingsItems = [
@@ -287,6 +343,25 @@ export default function SettingsScreen() {
               onPress={handleLogout}
               style={[styles.listItem, { backgroundColor: theme.colors.surface }]}
             />
+            {/* Web Debug Logout - only show on web */}
+            {Platform.OS === 'web' && (
+              <>
+                <Divider style={styles.divider} />
+                <List.Item
+                  title="تسجيل الخروج (تصحيح - ويب)"
+                  description="خروج مبسط للويب"
+                  titleStyle={[styles.itemTitle, { color: '#ff9800' }]}
+                  descriptionStyle={[styles.itemDescription, { color: theme.colors.onSurfaceVariant }]}
+                  left={() => (
+                    <View style={[styles.iconContainer, { backgroundColor: '#ff980020' }]}>
+                      <LogOut size={24} color="#ff9800" />
+                    </View>
+                  )}
+                  onPress={handleSimpleLogout}
+                  style={[styles.listItem, { backgroundColor: theme.colors.surface }]}
+                />
+              </>
+            )}
           </View>
         </View>
 

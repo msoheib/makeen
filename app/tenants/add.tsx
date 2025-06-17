@@ -313,9 +313,12 @@ export default function AssignTenantScreen() {
                 السعر: {selectedPropertyData.price.toLocaleString()} ريال
               </Text>
               <Text style={[styles.selectedDetail, { color: theme.colors.onSurfaceVariant }]}>
-                النوع: {selectedPropertyData.property_type === 'villa' ? 'فيلا' : 
-                       selectedPropertyData.property_type === 'apartment' ? 'شقة' : 
-                       selectedPropertyData.property_type === 'office' ? 'مكتب' : (selectedPropertyData.property_type || 'غير محدد')}
+                النوع: {
+                  selectedPropertyData.property_type === 'villa' ? 'فيلا' : 
+                  selectedPropertyData.property_type === 'apartment' ? 'شقة' : 
+                  selectedPropertyData.property_type === 'office' ? 'مكتب' : 
+                  (selectedPropertyData.property_type || 'غير محدد')
+                }
               </Text>
             </View>
           )}

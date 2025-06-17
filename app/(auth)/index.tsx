@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Image, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
+import { View, StyleSheet, Image, KeyboardAvoidingView, ScrollView, Platform, I18nManager } from 'react-native';
 import { Text, TextInput, Button, Divider, Checkbox } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { theme, spacing, shadows } from '@/lib/theme';
-import { Lock, Mail, Eye, EyeOff } from 'lucide-react-native';
 import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/lib/store';
+import { useCommonTranslation } from '@/lib/useTranslation';
+import { getTextAlign, getFlexDirection } from '@/lib/rtl';
 
 export default function SignInScreen() {
   const router = useRouter();
+  const { t, isRTL } = useCommonTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -21,7 +23,7 @@ export default function SignInScreen() {
 
   const handleSignIn = async () => {
     if (!email || !password) {
-      setError('Please enter your email and password.');
+      setError(t('enterEmailPassword', 'Please enter your email and password.'));
       return;
     }
     
@@ -75,11 +77,11 @@ export default function SignInScreen() {
         // This case should ideally not be reached if signInError is null, 
         // as data.user should be present on successful sign-in.
         console.warn('Supabase auth.signInWithPassword did not return a user object, but no explicit error was thrown.');
-        setError('Sign-in failed: No user data returned.');
+        setError(t('signInFailed', 'Sign-in failed: No user data returned.'));
       }
     } catch (error: any) {
       console.error('Error in handleSignIn:', error);
-      setError(error.message || 'Failed to sign in. Please try again.');
+      setError(error.message || t('signInError', 'Failed to sign in. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -89,9 +91,24 @@ export default function SignInScreen() {
     router.push('/(auth)/signup');
   };
 
+  const rtlStyles = {
+    container: {
+      direction: isRTL ? 'rtl' : 'ltr',
+    },
+    textAlign: {
+      textAlign: getTextAlign('left'),
+    },
+    textAlignCenter: {
+      textAlign: getTextAlign('center'),
+    },
+    row: {
+      flexDirection: getFlexDirection('row'),
+    },
+  };
+
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, rtlStyles.container]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
     >
@@ -101,20 +118,24 @@ export default function SignInScreen() {
             source={{ uri: 'https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg' }} 
             style={styles.logo} 
           />
-          <Text style={styles.title}>Property Management System</Text>
-          <Text style={styles.subtitle}>Sign in to your account</Text>
+          <Text style={[styles.title, rtlStyles.textAlignCenter]}>
+            {t('propertyManagementSystem', 'نظام إدارة العقارات')}
+          </Text>
+          <Text style={[styles.subtitle, rtlStyles.textAlignCenter]}>
+            {t('signInToAccount', 'تسجيل الدخول إلى حسابك')}
+          </Text>
         </View>
         
         {error && (
           <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
+            <Text style={[styles.errorText, rtlStyles.textAlign]}>{error}</Text>
           </View>
         )}
         
         <View style={styles.formContainer}>
           <View style={styles.inputContainer}>
             <TextInput
-              label="Email"
+              label={t('email', 'البريد الإلكتروني')}
               value={email}
               onChangeText={setEmail}
               mode="outlined"
@@ -127,7 +148,7 @@ export default function SignInScreen() {
           
           <View style={styles.inputContainer}>
             <TextInput
-              label="Password"
+              label={t('password', 'كلمة المرور')}
               value={password}
               onChangeText={setPassword}
               mode="outlined"
@@ -141,21 +162,23 @@ export default function SignInScreen() {
             />
           </View>
           
-          <View style={styles.rememberForgotRow}>
-            <View style={styles.checkboxContainer}>
+          <View style={[styles.rememberForgotRow, rtlStyles.row]}>
+            <View style={[styles.checkboxContainer, rtlStyles.row]}>
               <Checkbox
                 status={rememberMe ? 'checked' : 'unchecked'}
                 onPress={() => setRememberMe(!rememberMe)}
                 color={theme.colors.primary}
               />
-              <Text style={styles.rememberText}>Remember me</Text>
+              <Text style={[styles.rememberText, rtlStyles.textAlign]}>
+                {t('rememberMe', 'تذكرني')}
+              </Text>
             </View>
             <Button
               mode="text"
               onPress={() => {}}
-              labelStyle={styles.forgotText}
+              labelStyle={[styles.forgotText, rtlStyles.textAlign]}
             >
-              Forgot password?
+              {t('forgotPassword', 'نسيت كلمة المرور؟')}
             </Button>
           </View>
           
@@ -166,12 +189,12 @@ export default function SignInScreen() {
             loading={loading}
             disabled={loading}
           >
-            Sign In
+            {t('login', 'تسجيل الدخول')}
           </Button>
           
           <View style={styles.dividerContainer}>
             <Divider style={styles.divider} />
-            <Text style={styles.orText}>OR</Text>
+            <Text style={styles.orText}>{t('or', 'أو')}</Text>
             <Divider style={styles.divider} />
           </View>
           
@@ -180,59 +203,7 @@ export default function SignInScreen() {
             onPress={handleSignUp}
             style={styles.signUpButton}
           >
-            Create Account
-          </Button>
-          
-          {/* EMERGENCY DEMO BYPASS */}
-          <Button
-            mode="contained"
-            onPress={() => {
-              console.log('🚨 EMERGENCY DEMO BYPASS');
-              setUser({ 
-                id: 'demo-user', 
-                email: 'demo@realestatemg.com', 
-                role: 'admin',
-                first_name: 'Demo',
-                last_name: 'User',
-                created_at: new Date().toISOString(),
-                phone: null,
-                address: null,
-                city: null,
-                country: null,
-                nationality: null,
-                id_number: null,
-                is_foreign: false,
-                profile_type: 'admin',
-                status: 'active',
-                updated_at: new Date().toISOString()
-              });
-              setAuthenticated(true);
-              router.replace('/(drawer)');
-            }}
-            style={[styles.signUpButton, { backgroundColor: '#ff4444', marginTop: 10 }]}
-            labelStyle={{ color: 'white' }}
-          >
-            🚨 EMERGENCY DEMO LOGIN
-          </Button>
-          
-          {/* TEST PROXY BUTTON */}
-          <Button
-            mode="outlined"
-            onPress={async () => {
-              console.log('🧪 Testing CORS proxy...');
-              try {
-                const response = await fetch('http://localhost:3001/health');
-                const data = await response.json();
-                console.log('✅ Proxy health check:', data);
-                alert('✅ Proxy is working! ' + JSON.stringify(data));
-              } catch (error) {
-                console.error('❌ Proxy test failed:', error);
-                alert('❌ Proxy test failed: ' + error.message);
-              }
-            }}
-            style={[styles.signUpButton, { marginTop: 10 }]}
-          >
-            🧪 Test CORS Proxy
+            {t('createAccount', 'إنشاء حساب')}
           </Button>
         </View>
       </ScrollView>
