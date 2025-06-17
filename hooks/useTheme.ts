@@ -19,32 +19,84 @@ export const useTheme = (): ThemeContextType => {
     toggleDarkMode 
   } = useAppStore();
 
-  // Determine the actual theme based on settings
-  const getActualTheme = () => {
-    if (settings?.theme === 'system') {
-      return systemColorScheme === 'dark' ? 'dark' : 'light';
+  // Simplified theme resolution with proper fallbacks
+  const getActualTheme = (): 'light' | 'dark' => {
+    try {
+      // Get theme preference with fallback
+      const themePreference = settings?.theme || 'light';
+      
+      // Handle system theme
+      if (themePreference === 'system') {
+        return systemColorScheme === 'dark' ? 'dark' : 'light';
+      }
+      
+      // Handle explicit light/dark preference
+      return themePreference;
+    } catch (error) {
+      console.warn('useTheme: Error determining theme, falling back to light:', error);
+      return 'light';
     }
-    return settings?.theme || 'light';
   };
 
+  // Get actual theme with error handling
   const actualTheme = getActualTheme();
   const isDark = actualTheme === 'dark';
-  const theme = isDark ? darkTheme : lightTheme;
+  
+  // Ensure we always return a valid theme object
+  const theme = (() => {
+    try {
+      return isDark ? darkTheme : lightTheme;
+    } catch (error) {
+      console.warn('useTheme: Error loading theme object, falling back to lightTheme:', error);
+      return lightTheme;
+    }
+  })();
 
+  // Simplified toggle function with proper state synchronization
   const toggleTheme = () => {
-    const newTheme = isDark ? 'light' : 'dark';
-    updateSettings({ theme: newTheme });
-    toggleDarkMode();
-  };
-
-  const setTheme = (themeMode: 'light' | 'dark' | 'system') => {
-    updateSettings({ theme: themeMode });
-    if (themeMode !== 'system') {
-      // Update the legacy isDarkMode state for backwards compatibility
-      useAppStore.setState({ isDarkMode: themeMode === 'dark' });
+    try {
+      const newTheme = isDark ? 'light' : 'dark';
+      
+      // Update both new and legacy state simultaneously
+      updateSettings({ theme: newTheme });
+      
+      // Ensure legacy isDarkMode state is synchronized
+      useAppStore.setState({ 
+        isDarkMode: newTheme === 'dark',
+        theme: newTheme // Update legacy theme state too
+      });
+      
+    } catch (error) {
+      console.warn('useTheme: Error toggling theme:', error);
     }
   };
 
+  // Simplified setTheme function with proper state synchronization
+  const setTheme = (themeMode: 'light' | 'dark' | 'system') => {
+    try {
+      // Update settings
+      updateSettings({ theme: themeMode });
+      
+      // Update legacy state for backwards compatibility
+      if (themeMode !== 'system') {
+        useAppStore.setState({ 
+          isDarkMode: themeMode === 'dark',
+          theme: themeMode
+        });
+      } else {
+        // For system theme, determine actual theme and update legacy state
+        const systemIsDark = systemColorScheme === 'dark';
+        useAppStore.setState({ 
+          isDarkMode: systemIsDark,
+          theme: systemIsDark ? 'dark' : 'light'
+        });
+      }
+    } catch (error) {
+      console.warn('useTheme: Error setting theme:', error);
+    }
+  };
+
+  // Return with proper fallbacks
   return {
     theme,
     isDark,

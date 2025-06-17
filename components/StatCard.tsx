@@ -1,136 +1,60 @@
 import React from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { lightTheme, darkTheme, spacing, borderRadius, shadows, rtlStyles } from '@/lib/theme';
-import { useAppStore } from '@/lib/store';
-import { formatNumber } from '@/lib/formatters';
-import { isRTL } from '@/lib/rtl';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { Text, Avatar } from 'react-native-paper';
+import { useTheme } from '@/hooks/useTheme';
 
-interface StatCardProps {
-  title: string;
+type StatCardProps = {
+  icon: string;
+  label: string;
   value: string | number;
-  subtitle?: string;
-  color: string;
   loading?: boolean;
-  icon?: React.ReactNode;
-}
+  color?: string;
+};
 
-export default function StatCard({ 
-  title, 
-  value, 
-  subtitle, 
-  color, 
-  loading = false,
-  icon
-}: StatCardProps) {
-  const { isDarkMode } = useAppStore();
-  const theme = isDarkMode ? darkTheme : lightTheme;
+const StatCard: React.FC<StatCardProps> = ({ icon, label, value, loading, color }) => {
+  const { theme } = useTheme();
+  const cardColor = color || theme.colors.primary;
 
   return (
-    <View style={[
-      styles.container, 
-      { 
-        backgroundColor: theme.colors.surface,
-        borderColor: theme.colors.outline,
-        padding: spacing.m,
-        borderRadius: borderRadius.medium,
-        ...shadows.small,
-      }
-    ]}>
-      <View style={[styles.header, rtlStyles.row()]}>
-        {icon && (
-          <View style={[styles.iconContainer, rtlStyles.marginEnd(8)]}>
-            {icon}
-          </View>
-        )}
-        <Text style={[
-          styles.title, 
-          rtlStyles.textAlign(),
-          { 
-            color: theme.colors.onSurfaceVariant,
-            fontSize: 13,
-          }
-        ]} numberOfLines={2}>
-          {title}
-        </Text>
-      </View>
-      
-      <View style={styles.content}>
+    <View style={styles.statCard}>
+      <Avatar.Icon 
+        icon={icon} 
+        size={48} 
+        style={{ backgroundColor: `${cardColor}20`}}
+        color={cardColor}
+      />
+      <View style={styles.textContainer}>
         {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color={color} />
-          </View>
+          <ActivityIndicator size="small" color={cardColor} />
         ) : (
-          <>
-            <Text style={[
-              styles.value, 
-              { 
-                color, 
-                fontSize: 28,
-                lineHeight: 32,
-              }
-            ]}>
-              {typeof value === 'number' ? formatNumber(value) : value}
-            </Text>
-            {subtitle && (
-              <Text style={[
-                styles.subtitle, 
-                { 
-                  color: theme.colors.onSurfaceVariant,
-                  fontSize: 11,
-                }
-              ]} numberOfLines={1}>
-                {subtitle}
-              </Text>
-            )}
-          </>
+          <Text style={[styles.statValue, { color: theme.colors.onBackground }]}>{value}</Text>
         )}
+        <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>{label}</Text>
       </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    borderWidth: 1,
-    marginHorizontal: 0,
-    marginVertical: 0,
-    minHeight: 120,
-    justifyContent: 'space-between',
-  },
-  header: {
-    alignItems: 'flex-start',
-    marginBottom: 8,
-    minHeight: 24,
-  },
-  iconContainer: {
-    // RTL-aware margins are now handled by rtlStyles.marginEnd(8)
-  },
-  title: {
-    fontWeight: '500',
-    flex: 1,
-    flexWrap: 'wrap',
-    lineHeight: 18,
-    // RTL-aware text alignment is now handled by rtlStyles.textAlign()
-  },
-  value: {
-    fontWeight: '700',
-    textAlign: 'center',
-    marginVertical: 8,
-  },
-  subtitle: {
-    fontWeight: '400',
-    lineHeight: 14,
-    textAlign: 'center',
-  },
-  loadingContainer: {
-    justifyContent: 'center',
+  statCard: {
     alignItems: 'center',
+    padding: 10,
+    minWidth: 100,
     flex: 1,
   },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
+  textContainer: {
     alignItems: 'center',
+    marginTop: 8,
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  statLabel: {
+    fontSize: 12,
+    marginTop: 4,
+    textAlign: 'center',
   },
 });
+
+export default StatCard;

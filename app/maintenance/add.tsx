@@ -8,7 +8,8 @@ import { maintenanceApi, propertiesApi } from '@/lib/api';
 import { Tables, TablesInsert } from '@/lib/database.types';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
-import { Wrench, AlertTriangle, Building, Search, Check } from 'lucide-react-native';
+import PhotoCapture from '@/components/PhotoCapture';
+import { Wrench, AlertTriangle, Building, Search, Check, Camera } from 'lucide-react-native';
 import { useTranslation } from '@/lib/useTranslation';
 
 type MaintenanceRequest = TablesInsert<'maintenance_requests'>;
@@ -133,6 +134,10 @@ export default function AddMaintenanceRequestScreen() {
     if (errors.property_id) {
       setErrors({ ...errors, property_id: '' });
     }
+  };
+
+  const handleImagesChange = (images: string[]) => {
+    setFormData({ ...formData, images });
   };
 
   const getPriorityColor = (priority: string) => {
@@ -293,6 +298,26 @@ export default function AddMaintenanceRequestScreen() {
           {errors.property_id && <Text style={styles.errorText}>{errors.property_id}</Text>}
         </ModernCard>
 
+        {/* Photo Attachment Section */}
+        <ModernCard style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Camera size={20} color={theme.colors.tertiary} />
+            <Text style={styles.sectionTitle}>{t('photos.title')}</Text>
+          </View>
+          
+          <Text style={styles.sectionDescription}>
+            {t('photos.description')}
+          </Text>
+
+          <PhotoCapture
+            images={formData.images}
+            onImagesChange={handleImagesChange}
+            maxImages={5}
+            disabled={loading}
+            label=""
+          />
+        </ModernCard>
+
         {/* Submit Button */}
         <View style={styles.submitContainer}>
           <Button
@@ -399,6 +424,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: spacing.sm,
     color: theme.colors.onSurface,
+  },
+  sectionDescription: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    marginBottom: spacing.md,
+    lineHeight: 20,
   },
   input: {
     marginBottom: spacing.sm,

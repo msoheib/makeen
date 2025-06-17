@@ -2546,36 +2546,78 @@ export const reportsApi = {
   // Electrical Meter Report (placeholder)
   async getElectricalMeterReport(): Promise<ApiResponse<any>> {
     try {
-      const { data: properties } = await supabase
-        .from('properties')
+      const { data: utilityPayments } = await supabase
+        .from('utility_payments')
         .select(`
           *,
-          profiles(first_name, last_name)
-        `);
+          property:properties(id, title, address, city, owner_id,
+            profiles:profiles!properties_owner_id_fkey(first_name, last_name, email, phone)
+          )
+        `)
+        .eq('utility_type', 'electricity')
+        .order('reading_date', { ascending: false });
 
-      // This would typically integrate with utility providers or IoT devices
-      const meterReadings = properties?.map(property => ({
-        propertyTitle: property.title,
-        propertyAddress: property.address,
-        ownerName: `${property.profiles?.first_name} ${property.profiles?.last_name}`,
-        currentReading: Math.floor(Math.random() * 10000) + 5000, // Simulated data
-        previousReading: Math.floor(Math.random() * 8000) + 3000,
-        consumption: Math.floor(Math.random() * 2000) + 500,
-        estimatedBill: (Math.floor(Math.random() * 2000) + 500) * 0.18, // SAR per kWh
-        readingDate: new Date().toISOString().split('T')[0]
+      const meterReadings = utilityPayments?.map(payment => ({
+        paymentId: payment.id,
+        propertyId: payment.property_id,
+        propertyTitle: payment.property?.title || 'Unknown Property',
+        propertyAddress: payment.property?.address || '',
+        propertyCity: payment.property?.city || '',
+        ownerName: payment.property?.profiles ? 
+          `${payment.property.profiles.first_name} ${payment.property.profiles.last_name}` : 
+          'Unknown Owner',
+        ownerEmail: payment.property?.profiles?.email || '',
+        ownerPhone: payment.property?.profiles?.phone || '',
+        meterNumber: payment.meter_number || 'N/A',
+        currentReading: Number(payment.current_reading),
+        previousReading: Number(payment.previous_reading),
+        consumption: Number(payment.consumption),
+        ratePerUnit: Number(payment.rate_per_unit),
+        amount: Number(payment.amount),
+        readingDate: payment.reading_date,
+        dueDate: payment.due_date,
+        paymentStatus: payment.payment_status,
+        paymentDate: payment.payment_date,
+        paymentMethod: payment.payment_method,
+        paymentReference: payment.payment_reference,
+        notes: payment.notes
       })) || [];
+
+      // Calculate summary statistics
+      const totalConsumption = meterReadings.reduce((sum, reading) => sum + reading.consumption, 0);
+      const totalAmount = meterReadings.reduce((sum, reading) => sum + reading.amount, 0);
+      const pendingAmount = meterReadings
+        .filter(r => r.paymentStatus === 'pending')
+        .reduce((sum, reading) => sum + reading.amount, 0);
+      const overdueAmount = meterReadings
+        .filter(r => r.paymentStatus === 'overdue')
+        .reduce((sum, reading) => sum + reading.amount, 0);
+
+      const statistics = {
+        totalReadings: meterReadings.length,
+        totalConsumption,
+        averageConsumption: meterReadings.length > 0 ? totalConsumption / meterReadings.length : 0,
+        totalAmount,
+        pendingAmount,
+        overdueAmount,
+        paidAmount: totalAmount - pendingAmount - overdueAmount,
+        paymentStatusBreakdown: {
+          pending: meterReadings.filter(r => r.paymentStatus === 'pending').length,
+          paid: meterReadings.filter(r => r.paymentStatus === 'paid').length,
+          overdue: meterReadings.filter(r => r.paymentStatus === 'overdue').length
+        }
+      };
 
       return { 
         data: { 
           meterReadings,
-          totalConsumption: meterReadings.reduce((sum, reading) => sum + reading.consumption, 0),
-          averageConsumption: meterReadings.length > 0 ? 
-            meterReadings.reduce((sum, reading) => sum + reading.consumption, 0) / meterReadings.length : 0,
+          statistics,
           generatedAt: new Date().toISOString() 
         }, 
         error: null 
       };
     } catch (error) {
+      console.error('Error generating electrical meter report:', error);
       return { data: null, error: 'Failed to generate electrical meter report' };
     }
   },
@@ -2693,6 +2735,80 @@ export const reportsApi = {
     } catch (error) {
       return { data: null, error: 'Failed to generate tenants balance report' };
     }
+  },
+
+  // Add missing filter methods for reports screen
+  async getFilteredTenantReport(): Promise<ApiResponse<{ tenants: any[] }>> {
+    return handleApiCall(async () => {
+      const { data: tenants, error } = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          first_name,
+          last_name,
+          email,
+          phone,
+          status
+        `)
+        .eq('role', 'tenant')
+        .eq('status', 'active')
+        .order('first_name');
+
+      if (error) throw error;
+
+      return {
+        data: { tenants: tenants || [] },
+        error: null
+      };
+    });
+  },
+
+  async getFilteredOwnerFinancialReport(): Promise<ApiResponse<{ owners: any[] }>> {
+    return handleApiCall(async () => {
+      const { data: owners, error } = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          first_name,
+          last_name,
+          email,
+          phone,
+          status
+        `)
+        .eq('role', 'owner')
+        .eq('status', 'active')
+        .order('first_name');
+
+      if (error) throw error;
+
+      return {
+        data: { owners: owners || [] },
+        error: null
+      };
+    });
+  },
+
+  async getFilteredPropertyReport(): Promise<ApiResponse<{ properties: any[] }>> {
+    return handleApiCall(async () => {
+      const { data: properties, error } = await supabase
+        .from('properties')
+        .select(`
+          id,
+          title,
+          address,
+          city,
+          property_type,
+          status
+        `)
+        .order('title');
+
+      if (error) throw error;
+
+      return {
+        data: { properties: properties || [] },
+        error: null
+      };
+    });
   }
 };
 
@@ -4155,6 +4271,525 @@ export const notificationsApi = {
   }
 };
 
+// Add these interfaces after the existing interfaces
+interface ReportFilters {
+  tenantId?: string;
+  ownerId?: string;
+  propertyId?: string;
+  reportType?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+interface UserContext {
+  userId: string;
+  role: 'admin' | 'manager' | 'owner' | 'tenant';
+  ownedPropertyIds?: string[];
+}
+
+
+
+// Enhanced Reports API with role-based access control
+export const enhancedReportsApi = {
+  // Enhanced Revenue Report with role-based filtering
+  async getRevenueReport(userContext: UserContext, filters: ReportFilters = {}): Promise<ApiResponse<any>> {
+    try {
+      let query = supabase
+        .from('vouchers')
+        .select(`
+          *,
+          property:properties(title, owner_id)
+        `)
+        .eq('voucher_type', 'receipt')
+        .eq('status', 'posted');
+
+      // Apply role-based filtering
+      if (userContext.role === 'owner') {
+        if (userContext.ownedPropertyIds) {
+          query = query.in('property_id', userContext.ownedPropertyIds);
+        } else {
+          return { success: true, data: { revenue: [], summary: { total: 0, byProperty: {} } } };
+        }
+      }
+
+      if (filters.ownerId && userContext.role === 'manager') {
+        const { data: ownerProperties } = await supabase
+          .from('properties')
+          .select('id')
+          .eq('owner_id', filters.ownerId);
+        
+        if (ownerProperties) {
+          query = query.in('property_id', ownerProperties.map(p => p.id));
+        }
+      }
+
+      if (filters.startDate) {
+        query = query.gte('created_at', filters.startDate);
+      }
+
+      if (filters.endDate) {
+        query = query.lte('created_at', filters.endDate);
+      }
+
+      const { data: revenue, error } = await query.order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const total = revenue?.reduce((sum, r) => sum + (r.amount || 0), 0) || 0;
+      const byProperty = revenue?.reduce((acc, r) => {
+        const propertyTitle = r.property?.title || 'Unknown Property';
+        acc[propertyTitle] = (acc[propertyTitle] || 0) + (r.amount || 0);
+        return acc;
+      }, {} as Record<string, number>) || {};
+
+      return {
+        success: true,
+        data: {
+          revenue: revenue || [],
+          summary: { total, byProperty },
+          lastGenerated: new Date().toISOString()
+        }
+      };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to get revenue report' };
+    }
+  },
+
+  // Enhanced Property Report for single property
+  async getPropertyReport(userContext: UserContext, filters: ReportFilters): Promise<ApiResponse<any>> {
+    try {
+      if (!filters.propertyId) {
+        return { success: false, error: 'Property ID is required' };
+      }
+
+      // Check if user has access to this property
+      const { data: property, error: propertyError } = await supabase
+        .from('properties')
+        .select(`
+          *,
+          owner:profiles!owner_id(first_name, last_name, email),
+          contracts(*, tenant:profiles!tenant_id(first_name, last_name)),
+          maintenance_requests(*, work_orders(*))
+        `)
+        .eq('id', filters.propertyId)
+        .single();
+
+      if (propertyError) throw propertyError;
+
+      // Role-based access control
+      if (userContext.role === 'owner' && property.owner_id !== userContext.userId) {
+        return { success: false, error: 'Access denied: Not your property' };
+      }
+
+      // Get financial data for this property
+      const { data: vouchers } = await supabase
+        .from('vouchers')
+        .select('*')
+        .eq('property_id', filters.propertyId);
+
+      const revenue = vouchers?.filter(v => v.voucher_type === 'receipt' && v.status === 'posted')
+        .reduce((sum, v) => sum + (v.amount || 0), 0) || 0;
+
+      const expenses = vouchers?.filter(v => v.voucher_type === 'payment' && v.status === 'posted')
+        .reduce((sum, v) => sum + (v.amount || 0), 0) || 0;
+
+      return {
+        success: true,
+        data: {
+          property,
+          financials: { revenue, expenses, netIncome: revenue - expenses },
+          contracts: property.contracts || [],
+          maintenance: property.maintenance_requests || [],
+          lastGenerated: new Date().toISOString()
+        }
+      };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to get property report' };
+    }
+  },
+
+  // Enhanced Tenant Statement with role-based filtering
+  async getTenantStatement(userContext: UserContext, filters: ReportFilters): Promise<ApiResponse<any>> {
+    try {
+      if (!filters.tenantId) {
+        return { success: false, error: 'Tenant ID is required' };
+      }
+
+      // Get tenant contracts and check access
+      const { data: contracts, error: contractsError } = await supabase
+        .from('contracts')
+        .select(`
+          *,
+          property:properties(*, owner:profiles!owner_id(first_name, last_name)),
+          tenant:profiles!tenant_id(first_name, last_name, email)
+        `)
+        .eq('tenant_id', filters.tenantId);
+
+      if (contractsError) throw contractsError;
+
+      // Role-based access control
+      if (userContext.role === 'owner') {
+        const accessibleContracts = contracts?.filter(c => 
+          c.property?.owner_id === userContext.userId
+        ) || [];
+        
+        if (accessibleContracts.length === 0) {
+          return { success: false, error: 'Access denied: Tenant not associated with your properties' };
+        }
+      }
+
+      // Get payment history
+      const { data: payments } = await supabase
+        .from('vouchers')
+        .select(`
+          *,
+          property:properties(title)
+        `)
+        .eq('tenant_id', filters.tenantId)
+        .eq('voucher_type', 'receipt');
+
+      const totalPaid = payments?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
+      const lastPayment = payments?.[0]?.created_at;
+
+      return {
+        success: true,
+        data: {
+          tenant: contracts?.[0]?.tenant,
+          contracts: contracts || [],
+          payments: payments || [],
+          summary: { totalPaid, lastPayment },
+          lastGenerated: new Date().toISOString()
+        }
+      };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to get tenant statement' };
+    }
+  },
+
+  // Enhanced Owner Financial Report
+  async getOwnerFinancialReport(userContext: UserContext, filters: ReportFilters): Promise<ApiResponse<any>> {
+    try {
+      if (!filters.ownerId) {
+        return { success: false, error: 'Owner ID is required' };
+      }
+
+      // Role-based access control
+      if (userContext.role === 'owner' && filters.ownerId !== userContext.userId) {
+        return { success: false, error: 'Access denied: Can only view your own financial report' };
+      }
+
+      // Get owner's properties and financial data
+      const { data: properties, error: propertiesError } = await supabase
+        .from('properties')
+        .select(`
+          *,
+          contracts(*),
+          vouchers(*)
+        `)
+        .eq('owner_id', filters.ownerId);
+
+      if (propertiesError) throw propertiesError;
+
+      const totalRevenue = properties?.reduce((sum, p) => {
+        const propertyRevenue = p.vouchers?.filter(v => v.voucher_type === 'receipt' && v.status === 'posted')
+          .reduce((pSum, v) => pSum + (v.amount || 0), 0) || 0;
+        return sum + propertyRevenue;
+      }, 0) || 0;
+
+      const totalExpenses = properties?.reduce((sum, p) => {
+        const propertyExpenses = p.vouchers?.filter(v => v.voucher_type === 'payment' && v.status === 'posted')
+          .reduce((pSum, v) => pSum + (v.amount || 0), 0) || 0;
+        return sum + propertyExpenses;
+      }, 0) || 0;
+
+      return {
+        success: true,
+        data: {
+          ownerId: filters.ownerId,
+          properties: properties || [],
+          summary: {
+            totalProperties: properties?.length || 0,
+            totalRevenue,
+            totalExpenses,
+            netIncome: totalRevenue - totalExpenses
+          },
+          lastGenerated: new Date().toISOString()
+        }
+      };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to get owner financial report' };
+    }
+  },
+
+  // Enhanced Late Payments Report
+  async getPaymentsAndLateTenantsReport(userContext: UserContext, filters: ReportFilters = {}): Promise<ApiResponse<any>> {
+    try {
+      let query = supabase
+        .from('contracts')
+        .select(`
+          *,
+          property:properties(*, owner_id),
+          tenant:profiles!tenant_id(first_name, last_name, email),
+          vouchers:vouchers!property_id(*)
+        `)
+        .eq('status', 'active');
+
+      // Apply role-based filtering
+      if (userContext.role === 'owner') {
+        if (userContext.ownedPropertyIds) {
+          query = query.in('property_id', userContext.ownedPropertyIds);
+        } else {
+          return { success: true, data: { latePayments: [], summary: { totalLate: 0, totalOverdue: 0 } } };
+        }
+      }
+
+      if (filters.ownerId && userContext.role === 'manager') {
+        const { data: ownerProperties } = await supabase
+          .from('properties')
+          .select('id')
+          .eq('owner_id', filters.ownerId);
+        
+        if (ownerProperties) {
+          query = query.in('property_id', ownerProperties.map(p => p.id));
+        }
+      }
+
+      const { data: contracts, error } = await query;
+
+      if (error) throw error;
+
+      // Calculate payment status for each contract
+      const paymentStatus = contracts?.map(contract => {
+        const lastPayment = contract.vouchers
+          ?.filter(v => v.voucher_type === 'receipt' && v.status === 'posted')
+          ?.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())?.[0];
+
+        const daysSinceLastPayment = lastPayment 
+          ? Math.floor((new Date().getTime() - new Date(lastPayment.created_at).getTime()) / (1000 * 60 * 60 * 24))
+          : null;
+
+        return {
+          ...contract,
+          lastPayment,
+          daysSinceLastPayment,
+          status: !lastPayment ? 'no_payments' : 
+                  daysSinceLastPayment > 60 ? 'overdue' :
+                  daysSinceLastPayment > 30 ? 'late' : 'current'
+        };
+      }) || [];
+
+      const latePayments = paymentStatus.filter(p => p.status === 'late' || p.status === 'overdue');
+
+      return {
+        success: true,
+        data: {
+          latePayments,
+          summary: {
+            totalLate: latePayments.filter(p => p.status === 'late').length,
+            totalOverdue: latePayments.filter(p => p.status === 'overdue').length
+          },
+          lastGenerated: new Date().toISOString()
+        }
+      };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Failed to get payments and late tenants report' };
+    }
+  },
+
+  // ... existing methods remain the same for backward compatibility ...
+};
+
+// Utility Payments API - For managing electrical and other utility payments
+export const utilityPaymentsApi = {
+  // Get all utility payments with filtering
+  async getAll(filters?: {
+    property_id?: string;
+    utility_type?: string;
+    payment_status?: string;
+    start_date?: string;
+    end_date?: string;
+  }): Promise<ApiResponse<any[]>> {
+    return handleApiCall(async () => {
+      let query = supabase
+        .from('utility_payments')
+        .select(`
+          *,
+          property:properties(id, title, address, city),
+          uploaded_by_profile:profiles!utility_payments_uploaded_by_fkey(first_name, last_name)
+        `)
+        .order('reading_date', { ascending: false });
+
+      if (filters?.property_id) query = query.eq('property_id', filters.property_id);
+      if (filters?.utility_type) query = query.eq('utility_type', filters.utility_type);
+      if (filters?.payment_status) query = query.eq('payment_status', filters.payment_status);
+      if (filters?.start_date) query = query.gte('reading_date', filters.start_date);
+      if (filters?.end_date) query = query.lte('reading_date', filters.end_date);
+
+      return query;
+    });
+  },
+
+  // Upload new electrical payment data
+  async uploadElectricalPayment(paymentData: {
+    property_id: string;
+    meter_number?: string;
+    previous_reading: number;
+    current_reading: number;
+    rate_per_unit?: number;
+    reading_date: string;
+    due_date?: string;
+    payment_status?: 'pending' | 'paid' | 'overdue';
+    payment_date?: string;
+    payment_method?: string;
+    payment_reference?: string;
+    notes?: string;
+  }): Promise<ApiResponse<any>> {
+    return handleApiCall(async () => {
+      const userContext = await getCurrentUserContext();
+      
+      if (!userContext || !['admin', 'manager'].includes(userContext.role)) {
+        throw new Error('Only property managers and admins can upload electrical payments');
+      }
+
+      const insertData = {
+        ...paymentData,
+        utility_type: 'electricity',
+        rate_per_unit: paymentData.rate_per_unit || 0.18, // Default SAR per kWh
+        uploaded_by: userContext.userId
+      };
+
+      return supabase
+        .from('utility_payments')
+        .insert(insertData)
+        .select(`
+          *,
+          property:properties(id, title, address)
+        `)
+        .single();
+    });
+  },
+
+  // Bulk upload electrical payments (CSV import functionality)
+  async bulkUploadElectricalPayments(payments: Array<{
+    property_id: string;
+    meter_number?: string;
+    previous_reading: number;
+    current_reading: number;
+    reading_date: string;
+    due_date?: string;
+    notes?: string;
+  }>): Promise<ApiResponse<any[]>> {
+    return handleApiCall(async () => {
+      const userContext = await getCurrentUserContext();
+      
+      if (!userContext || !['admin', 'manager'].includes(userContext.role)) {
+        throw new Error('Only property managers and admins can bulk upload electrical payments');
+      }
+
+      const insertData = payments.map(payment => ({
+        ...payment,
+        utility_type: 'electricity',
+        rate_per_unit: 0.18, // Default SAR per kWh
+        uploaded_by: userContext.userId,
+        payment_status: 'pending'
+      }));
+
+      return supabase
+        .from('utility_payments')
+        .insert(insertData)
+        .select(`
+          *,
+          property:properties(id, title, address)
+        `);
+    });
+  },
+
+  // Update payment status (when payment is made)
+  async updatePaymentStatus(paymentId: string, updates: {
+    payment_status: 'pending' | 'paid' | 'overdue';
+    payment_date?: string;
+    payment_method?: string;
+    payment_reference?: string;
+    voucher_id?: string;
+  }): Promise<ApiResponse<any>> {
+    return handleApiCall(async () => {
+      return supabase
+        .from('utility_payments')
+        .update(updates)
+        .eq('id', paymentId)
+        .select()
+        .single();
+    });
+  },
+
+  // Get electrical payments by property
+  async getByProperty(propertyId: string): Promise<ApiResponse<any[]>> {
+    return handleApiCall(async () => {
+      return supabase
+        .from('utility_payments')
+        .select(`
+          *,
+          property:properties(id, title, address)
+        `)
+        .eq('property_id', propertyId)
+        .eq('utility_type', 'electricity')
+        .order('reading_date', { ascending: false });
+    });
+  },
+
+  // Get overdue payments
+  async getOverduePayments(): Promise<ApiResponse<any[]>> {
+    return handleApiCall(async () => {
+      return supabase
+        .from('utility_payments')
+        .select(`
+          *,
+          property:properties(id, title, address, owner_id),
+          property.profiles:properties!property_id(first_name, last_name, email, phone)
+        `)
+        .eq('payment_status', 'overdue')
+        .order('due_date', { ascending: true });
+    });
+  },
+
+  // Get utility payment statistics
+  async getStatistics(): Promise<ApiResponse<{
+    totalPayments: number;
+    pendingPayments: number;
+    paidPayments: number;
+    overduePayments: number;
+    totalAmount: number;
+    pendingAmount: number;
+    overdueAmount: number;
+    averageConsumption: number;
+  }>> {
+    return handleApiCall(async () => {
+      const { data: payments } = await supabase
+        .from('utility_payments')
+        .select('payment_status, amount, consumption')
+        .eq('utility_type', 'electricity');
+
+      if (!payments) return { data: null, error: null };
+
+      const stats = {
+        totalPayments: payments.length,
+        pendingPayments: payments.filter(p => p.payment_status === 'pending').length,
+        paidPayments: payments.filter(p => p.payment_status === 'paid').length,
+        overduePayments: payments.filter(p => p.payment_status === 'overdue').length,
+        totalAmount: payments.reduce((sum, p) => sum + Number(p.amount || 0), 0),
+        pendingAmount: payments.filter(p => p.payment_status === 'pending')
+          .reduce((sum, p) => sum + Number(p.amount || 0), 0),
+        overdueAmount: payments.filter(p => p.payment_status === 'overdue')
+          .reduce((sum, p) => sum + Number(p.amount || 0), 0),
+        averageConsumption: payments.length > 0 ? 
+          payments.reduce((sum, p) => sum + Number(p.consumption || 0), 0) / payments.length : 0
+      };
+
+      return { data: stats, error: null };
+    });
+  }
+};
+
 // Export all APIs
 export default {
   properties: propertiesApi,
@@ -4179,4 +4814,6 @@ export default {
   approvals: approvalsApi,
   buyer: buyerApi,
   notifications: notificationsApi,
+  utilityPayments: utilityPaymentsApi,
+  enhancedReports: enhancedReportsApi,
 }; 

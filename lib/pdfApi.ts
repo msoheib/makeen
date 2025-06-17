@@ -28,7 +28,9 @@ export interface PDFRequest {
 export interface PDFResponse {
   success: boolean;
   htmlContent?: string;
+  pdfData?: string; // Base64 encoded PDF data
   filename?: string;
+  contentType?: string; // 'application/pdf' or 'text/html'
   error?: string;
   message?: string;
 }
@@ -141,22 +143,40 @@ class PDFGeneratorAPI {
         throw new Error(errorMessage);
       }
 
-      // Check if response is HTML or JSON error
+      // Check if response is PDF, HTML, or JSON error
       const contentType = response.headers.get('content-type');
       console.log('Response content type:', contentType);
       
-      if (contentType?.includes('text/html')) {
-        // Success: HTML response
+      if (contentType?.includes('application/pdf')) {
+        // Success: PDF response - handle PDF download for mobile
+        const pdfBuffer = await response.arrayBuffer();
+        const filename = this.extractFilenameFromHeaders(response.headers) || 
+                        `report-${request.type}-${new Date().toISOString().split('T')[0]}.pdf`;
+        
+        console.log('PDF report generated successfully:', filename);
+        
+        // For Expo mobile app, convert to base64 and save/share
+        const base64Pdf = btoa(String.fromCharCode(...new Uint8Array(pdfBuffer)));
+        
+        return {
+          success: true,
+          pdfData: base64Pdf,
+          filename,
+          contentType: 'application/pdf'
+        };
+      } else if (contentType?.includes('text/html')) {
+        // Fallback: HTML response (if PDF generation failed)
         const htmlContent = await response.text();
         const filename = this.extractFilenameFromHeaders(response.headers) || 
                         `report-${request.type}-${new Date().toISOString().split('T')[0]}.html`;
         
-        console.log('Report generated successfully:', filename);
+        console.log('HTML report generated (PDF generation may have failed):', filename);
         
         return {
           success: true,
           htmlContent,
-          filename
+          filename,
+          contentType: 'text/html'
         };
       } else {
         // Error response in JSON format
@@ -172,6 +192,104 @@ class PDFGeneratorAPI {
         error: error instanceof Error ? error.message : 'Report generation failed',
         message: 'فشل في إنشاء التقرير. يرجى المحاولة مرة أخرى.'
       };
+    }
+  }
+
+  /**
+   * Download PDF file to device (for Expo mobile apps)
+   */
+  async downloadPDF(base64PdfData: string, filename: string): Promise<boolean> {
+    try {
+      // For web - create download link
+      if (typeof window !== 'undefined') {
+        // Convert base64 to blob
+        const binaryString = atob(base64PdfData);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        const blob = new Blob([bytes], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        return true;
+      }
+      
+      // For React Native - use expo-file-system and expo-sharing
+      if (Platform.OS !== 'web') {
+        return await this.downloadPDFNative(base64PdfData, filename);
+      }
+      
+      return false;
+      
+    } catch (error) {
+      console.error('PDF download failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Download PDF file on React Native using expo-file-system
+   */
+  private async downloadPDFNative(base64PdfData: string, filename: string): Promise<boolean> {
+    try {
+      // Ensure filename has .pdf extension
+      const pdfFilename = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
+      
+      // Create file path in document directory
+      const fileUri = `${FileSystem.documentDirectory}${pdfFilename}`;
+      
+      // Write PDF content to file as base64
+      await FileSystem.writeAsStringAsync(fileUri, base64PdfData, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      // Check if sharing is available
+      const isAvailable = await Sharing.isAvailableAsync();
+      
+      if (isAvailable) {
+        // Share the PDF file
+        await Sharing.shareAsync(fileUri, {
+          mimeType: 'application/pdf',
+          dialogTitle: 'حفظ التقرير PDF',
+          UTI: 'com.adobe.pdf',
+        });
+        
+        // Show success message
+        Alert.alert(
+          '✅ تم إنشاء التقرير بنجاح',
+          `تم إنشاء وحفظ التقرير PDF:\n${pdfFilename}\n\nيمكنك الآن مشاركته أو حفظه على جهازك.`,
+          [{ text: 'موافق', style: 'default' }]
+        );
+        
+        return true;
+      } else {
+        // Fallback - just save to app directory
+        Alert.alert(
+          '✅ تم حفظ التقرير PDF',
+          `تم حفظ التقرير في:\n${fileUri}\n\nيمكنك العثور عليه في مجلد المستندات.`,
+          [{ text: 'موافق', style: 'default' }]
+        );
+        
+        return true;
+      }
+      
+    } catch (error) {
+      console.error('Native PDF download failed:', error);
+      
+      Alert.alert(
+        '❌ خطأ في التحميل',
+        'فشل في حفظ التقرير PDF. يرجى المحاولة مرة أخرى.',
+        [{ text: 'موافق', style: 'default' }]
+      );
+      
+      return false;
     }
   }
 
@@ -356,33 +474,56 @@ class PDFGeneratorAPI {
   async generateAndDownload(request: PDFRequest): Promise<PDFResponse> {
     const result = await this.generateReport(request);
     
-    if (result.success && result.htmlContent && result.filename) {
-      // For web - try to open in new tab first, fallback to download
-      if (typeof window !== 'undefined') {
-        const opened = await this.openHTML(result.htmlContent, this.getReportTypeLabel(request.type));
+    if (result.success && result.filename) {
+      // Handle PDF response (preferred)
+      if (result.pdfData && result.contentType === 'application/pdf') {
+        console.log('Downloading PDF report...');
+        const downloaded = await this.downloadPDF(result.pdfData, result.filename);
         
-        if (!opened) {
+        if (!downloaded) {
+          return {
+            ...result,
+            success: false,
+            error: 'تم إنشاء تقرير PDF بنجاح ولكن فشل التحميل'
+          };
+        }
+        
+        return result;
+      }
+      
+      // Handle HTML response (fallback)
+      else if (result.htmlContent && result.contentType === 'text/html') {
+        console.log('Downloading HTML report (PDF generation may have failed)...');
+        
+        // For web - try to open in new tab first, fallback to download
+        if (typeof window !== 'undefined') {
+          const opened = await this.openHTML(result.htmlContent, this.getReportTypeLabel(request.type));
+          
+          if (!opened) {
+            const downloaded = await this.downloadHTML(result.htmlContent, result.filename);
+            
+            if (!downloaded) {
+              return {
+                ...result,
+                success: false,
+                error: 'تم إنشاء التقرير HTML بنجاح ولكن فشل التحميل'
+              };
+            }
+          }
+        } else {
+          // For React Native - directly download/share HTML
           const downloaded = await this.downloadHTML(result.htmlContent, result.filename);
           
           if (!downloaded) {
             return {
               ...result,
               success: false,
-              error: 'تم إنشاء التقرير بنجاح ولكن فشل التحميل'
+              error: 'تم إنشاء التقرير HTML بنجاح ولكن فشل في الحفظ أو المشاركة'
             };
           }
         }
-      } else {
-        // For React Native - directly download/share
-        const downloaded = await this.downloadHTML(result.htmlContent, result.filename);
         
-        if (!downloaded) {
-          return {
-            ...result,
-            success: false,
-            error: 'تم إنشاء التقرير بنجاح ولكن فشل في الحفظ أو المشاركة'
-          };
-        }
+        return result;
       }
     }
     

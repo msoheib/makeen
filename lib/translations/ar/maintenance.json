@@ -1,6 +1,6 @@
 {
   "title": "الصيانة",
-  "requests": "الطلبات",
+  "requests": "طلبات الصيانة",
   "workOrders": "أوامر العمل",
   "addRequest": "إضافة طلب",
   "addMaintenanceReport": "إضافة تقرير صيانة",
@@ -10,16 +10,34 @@
   "status": "الحالة",
   "property": "العقار",
   "tenant": "المستأجر",
-  "assignedTo": "مسند إلى",
+  "assignedTo": "مُكلف إلى",
   "estimatedCost": "التكلفة المقدرة",
   "actualCost": "التكلفة الفعلية",
   "startDate": "تاريخ البداية",
-  "completionDate": "تاريخ الانتهاء",
+  "completionDate": "تاريخ الإنجاز",
   "images": "الصور",
   "notes": "الملاحظات",
   "createWorkOrder": "إنشاء أمر عمل",
   "updateStatus": "تحديث الحالة",
   "viewDetails": "عرض التفاصيل",
+  "photos": {
+    "title": "إرفاق صور",
+    "description": "أضف صوراً لمساعدتنا في فهم المشكلة بشكل أفضل. يمكنك التقاط صور جديدة أو اختيار من المعرض.",
+    "takePhoto": "التقاط صورة",
+    "chooseFromGallery": "اختر من المعرض",
+    "addPhoto": "إضافة صورة",
+    "removePhoto": "إزالة الصورة",
+    "confirmRemove": "هل أنت متأكد من إزالة هذه الصورة؟",
+    "maxPhotos": "الحد الأقصى 5 صور",
+    "photoCount": "صور",
+    "uploading": "جاري رفع الصورة...",
+    "uploadFailed": "فشل في رفع الصورة",
+    "invalidImage": "ملف صورة غير صالح",
+    "fileTooLarge": "حجم الملف كبير جداً",
+    "permissionsRequired": "صلاحيات الكاميرا ومعرض الصور مطلوبة",
+    "cameraError": "فشل في التقاط الصورة",
+    "galleryError": "فشل في اختيار الصورة"
+  },
   "priorities": {
     "title": "مستوى الأولوية",
     "low": "منخفضة",
@@ -28,29 +46,29 @@
     "urgent": "عاجلة"
   },
   "priorityDescriptions": {
-    "low": "مشاكل غير عاجلة يمكن معالجتها أثناء الصيانة الدورية.",
-    "medium": "مشاكل صيانة معيارية يجب معالجتها خلال بضعة أيام.",
-    "high": "مشاكل مهمة تحتاج انتباه خلال 24-48 ساعة.",
-    "urgent": "مشاكل طوارئ تتطلب انتباه فوري (مخاطر أمان، تسريب مياه، إلخ)."
+    "low": "مشاكل غير عاجلة يمكن معالجتها أثناء الصيانة الاعتيادية.",
+    "medium": "مشاكل صيانة عادية يجب معالجتها خلال أيام قليلة.",
+    "high": "مشاكل مهمة تحتاج اهتمام خلال 24-48 ساعة.",
+    "urgent": "مشاكل طوارئ تتطلب اهتماماً فورياً (مخاطر أمان، تسرب مياه، إلخ)."
   },
   "statuses": {
-    "pending": "معلق",
+    "pending": "في الانتظار",
     "approved": "موافق عليه",
     "inProgress": "قيد التنفيذ",
     "completed": "مكتمل",
-    "cancelled": "ملغى"
+    "cancelled": "ملغي"
   },
   "workOrderStatuses": {
-    "assigned": "مسند",
+    "assigned": "مُكلف",
     "inProgress": "قيد التنفيذ",
     "completed": "مكتمل",
-    "cancelled": "ملغى"
+    "cancelled": "ملغي"
   },
   "selectProperty": "اختر العقار",
   "selectTenant": "اختر المستأجر",
   "selectPriority": "اختر الأولوية",
   "selectStatus": "اختر الحالة",
-  "enterDescription": "أدخل وصف مفصل لمشكلة الصيانة...",
+  "enterDescription": "أدخل وصفاً مفصلاً لمشكلة الصيانة...",
   "enterNotes": "أدخل الملاحظات...",
   "tapToSelect": "اضغط لاختيار العقار",
   "submitRequest": "إرسال الطلب",
@@ -75,5 +93,5 @@
   "subtitle": "إدارة طلبات الصيانة",
   "totalRequests": "إجمالي الطلبات",
   "adjustSearchOrFilters": "جرب تعديل البحث أو المرشحات",
-  "addFirstRequest": "قدم طلب الصيانة الأول للبدء"
+  "addFirstRequest": "أرسل أول طلب صيانة للبدء"
 } 

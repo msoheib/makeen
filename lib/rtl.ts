@@ -177,6 +177,42 @@ export const getEnd = (): 'left' | 'right' => {
   return isRTL() ? 'left' : 'right';
 };
 
+export const rtlStyles = {
+  row: (direction: 'row' | 'column' = 'row') => ({
+    flexDirection: getFlexDirection(direction),
+  }),
+  rowReverse: (direction: 'row' | 'column' = 'row') => ({
+    flexDirection: getFlexDirection(direction) === 'row' ? 'row-reverse' : 'row',
+  }),
+  textAlign: (align: 'left' | 'right' | 'center' = 'left') => ({
+    textAlign: getTextAlign(align),
+  }),
+  start: {
+    [getStart()]: 0,
+  },
+  end: {
+    [getEnd()]: 0,
+  },
+  marginLeft: (value: number) => ({
+    [isRTL() ? 'marginRight' : 'marginLeft']: value,
+  }),
+  marginRight: (value: number) => ({
+    [isRTL() ? 'marginLeft' : 'marginRight']: value,
+  }),
+  paddingLeft: (value: number) => ({
+    [isRTL() ? 'paddingRight' : 'paddingLeft']: value,
+  }),
+  paddingRight: (value: number) => ({
+    [isRTL() ? 'paddingLeft' : 'paddingRight']: value,
+  }),
+  marginStart: (value: number) => ({
+    [getStart()]: value,
+  }),
+  marginEnd: (value: number) => ({
+    [getEnd()]: value,
+  }),
+};
+
 // Android-specific RTL utilities
 export const androidRTLFix = () => {
   if (Platform.OS === 'android') {

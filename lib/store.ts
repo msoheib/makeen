@@ -314,3 +314,23 @@ export const useAppStore = create<AppState>()(
     }
   )
 );
+
+// Export a simpler hook that matches the expected interface
+export const useStore = () => {
+  const store = useAppStore();
+  return {
+    user: store.user ? {
+      ...store.user,
+      ownedPropertyIds: store.properties
+        .filter(p => p.owner_id === store.user?.id)
+        .map(p => p.id)
+    } : null,
+    // Keep other needed properties
+    settings: store.settings,
+    isAuthenticated: store.isAuthenticated,
+    isLoading: store.isLoading,
+    properties: store.properties,
+    // Keep all the methods
+    ...store
+  };
+};
