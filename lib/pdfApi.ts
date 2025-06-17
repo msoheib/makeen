@@ -1,8 +1,6 @@
 // PDF Generation API Service
 import Constants from 'expo-constants';
 import { supabase } from './supabase';
-import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
 import { Platform, Alert } from 'react-native';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
