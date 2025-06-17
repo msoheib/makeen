@@ -51,8 +51,11 @@ export const formatCurrency = (amount: number, currency: string = 'SAR'): string
     maximumFractionDigits: 0,
   }).format(amount);
   
-  const localizedAmount = toArabicNumerals(formattedAmount);
-  return isArabicLanguage() ? `${localizedAmount} ${currency}` : `${formattedAmount} ${currency}`;
+  // Use currency symbol consistently regardless of language
+  const currencySymbol = currency === 'SAR' ? 'ر.س' : currency;
+  
+  // Always display as: amount + space + symbol (e.g., "1,000 ر.س")
+  return `${formattedAmount} ${currencySymbol}`;
 };
 
 export const formatNumber = (num: number | string): string => {

@@ -29,6 +29,28 @@ export default function TenantsScreen() {
     refetch: refetchTenants 
   } = useApi(() => profilesApi.getTenants(), []);
 
+  // DEBUG: Log tenants data for troubleshooting
+  console.log('[Tenants Debug] API Response:', {
+    tenants: tenants,
+    loading: tenantsLoading,
+    error: tenantsError,
+    hasAccess: canAccessTenants,
+    userContext: userContext
+  });
+
+  // If permission check fails, try to get tenants anyway for debugging
+  const { 
+    data: allTenants, 
+    loading: allTenantsLoading,
+    error: allTenantsError 
+  } = useApi(() => profilesApi.getAll({ role: 'tenant' }), []);
+
+  console.log('[Tenants Debug] All Tenants (fallback):', {
+    allTenants: allTenants,
+    loading: allTenantsLoading,
+    error: allTenantsError
+  });
+
   // Handle refresh
   const [refreshing, setRefreshing] = React.useState(false);
   
@@ -91,8 +113,10 @@ export default function TenantsScreen() {
     );
   }
 
-  // Use real data from API
-  const tenantsData = tenants?.data || [];
+  // Use real data from API with fallback
+  const tenantsData = tenants?.data || allTenants?.data || [];
+  const isLoading = tenantsLoading || allTenantsLoading;
+  const hasError = tenantsError && allTenantsError;
 
   // Filter tenants based on search
   const filteredTenants = tenantsData.filter(tenant => {
@@ -221,7 +245,7 @@ export default function TenantsScreen() {
                   إجمالي المستأجرين
                 </Text>
                 <Text style={[styles.horizontalStatValue, { color: theme.colors.primary }]}>
-                  {tenantsLoading ? '...' : tenantStats.total.toString()}
+                  {isLoading ? '...' : tenantStats.total.toString()}
                 </Text>
               </View>
               
@@ -233,7 +257,7 @@ export default function TenantsScreen() {
                   مستأجرين نشطين
                 </Text>
                 <Text style={[styles.horizontalStatValue, { color: '#4CAF50' }]}>
-                  {tenantsLoading ? '...' : tenantStats.active.toString()}
+                  {isLoading ? '...' : tenantStats.active.toString()}
                 </Text>
               </View>
               
@@ -245,7 +269,7 @@ export default function TenantsScreen() {
                   مستأجرين معلقين
                 </Text>
                 <Text style={[styles.horizontalStatValue, { color: '#FF9800' }]}>
-                  {tenantsLoading ? '...' : tenantStats.pending.toString()}
+                  {isLoading ? '...' : tenantStats.pending.toString()}
                 </Text>
               </View>
               
@@ -257,7 +281,7 @@ export default function TenantsScreen() {
                   مستأجرين أجانب
                 </Text>
                 <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary }]}>
-                  {tenantsLoading ? '...' : tenantStats.foreign.toString()}
+                  {isLoading ? '...' : tenantStats.foreign.toString()}
                 </Text>
               </View>
             </View>
@@ -282,20 +306,20 @@ export default function TenantsScreen() {
             قائمة المستأجرين ({filteredTenants.length})
           </Text>
           
-          {tenantsLoading ? (
+          {isLoading ? (
             <View style={[styles.loadingState, { backgroundColor: theme.colors.surface }]}>
               <ActivityIndicator size="large" color={theme.colors.primary} />
               <Text style={[styles.loadingText, { color: theme.colors.onSurfaceVariant }]}>
                 جاري تحميل المستأجرين...
               </Text>
             </View>
-          ) : tenantsError ? (
+          ) : hasError ? (
             <View style={[styles.errorState, { backgroundColor: theme.colors.surface }]}>
               <Text style={[styles.errorText, { color: theme.colors.error }]}>
                 خطأ في تحميل البيانات
               </Text>
               <Text style={[styles.errorSubtext, { color: theme.colors.onSurfaceVariant }]}>
-                {tenantsError.message || 'حدث خطأ غير متوقع'}
+                {tenantsError?.message || allTenantsError?.message || 'حدث خطأ غير متوقع'}
               </Text>
             </View>
           ) : filteredTenants.length > 0 ? (

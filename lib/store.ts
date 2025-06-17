@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User, Property, MaintenanceRequest, Invoice, Voucher } from './types';
 import i18n, { changeLanguage as changeI18nLanguage } from './i18n';
 import { applyRTL } from './rtl';
+import type { SupportedLanguage } from './translations/types';
 
 // Settings types
 export interface NotificationSettings {
@@ -20,6 +21,42 @@ export interface AppSettings {
   notifications: NotificationSettings;
   supportEmail: string;
 }
+
+// Notification preferences type
+export interface NotificationPreferences {
+  soundEnabled: boolean;
+  vibrationEnabled: boolean;
+  badgeEnabled: boolean;
+  pushEnabled: boolean;
+  
+  // Category preferences
+  maintenance: boolean;
+  payments: boolean;
+  contracts: boolean;
+  reports: boolean;
+  
+  // Timing preferences
+  quietHoursEnabled: boolean;
+  quietHoursStart: string; // HH:MM format
+  quietHoursEnd: string;   // HH:MM format
+}
+
+// Default notification preferences
+const defaultNotificationPreferences: NotificationPreferences = {
+  soundEnabled: true,
+  vibrationEnabled: true,
+  badgeEnabled: true,
+  pushEnabled: true,
+  
+  maintenance: true,
+  payments: true,
+  contracts: true,
+  reports: true,
+  
+  quietHoursEnabled: false,
+  quietHoursStart: '22:00',
+  quietHoursEnd: '08:00',
+};
 
 // Define the state store structure
 interface AppState {
@@ -86,7 +123,7 @@ interface AppState {
   language: string;
   currency: string;
   
-  // Notifications
+ // Notifications
   notificationsEnabled: boolean;
   emailNotifications: boolean;
   pushNotifications: boolean;
@@ -106,6 +143,36 @@ interface AppState {
   setMaintenanceNotifications: (enabled: boolean) => void;
   setFinancialNotifications: (enabled: boolean) => void;
   setSidebarOpen: (open: boolean) => void;
+  
+  // Language settings
+  language: SupportedLanguage;
+  setLanguage: (language: SupportedLanguage) => void;
+  
+  // Currency settings 
+  currency: string;
+  setCurrency: (currency: string) => void;
+  
+  // Notification preferences
+  notificationPreferences: NotificationPreferences;
+  setNotificationPreferences: (preferences: Partial<NotificationPreferences>) => void;
+  updateNotificationPreference: (key: keyof NotificationPreferences, value: boolean | string) => void;
+  
+  // User profile
+  userProfile: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    role: string;
+  } | null;
+  setUserProfile: (profile: AppState['userProfile']) => void;
+  
+  // App settings
+  firstLaunch: boolean;
+  setFirstLaunch: (firstLaunch: boolean) => void;
+  
+  // Reset function
+  reset: () => void;
 }
 
 // Create the store with persistence
@@ -300,6 +367,46 @@ export const useAppStore = create<AppState>()(
       setMaintenanceNotifications: (enabled) => set({ maintenanceNotifications: enabled }),
       setFinancialNotifications: (enabled) => set({ financialNotifications: enabled }),
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
+      
+      // Language settings
+      language: 'ar' as SupportedLanguage,
+      setLanguage: (language) => set({ language }),
+      
+      // Currency settings 
+      currency: 'SAR',
+      setCurrency: (currency) => set({ currency }),
+      
+      // Notification preferences
+      notificationPreferences: defaultNotificationPreferences,
+      setNotificationPreferences: (preferences) =>
+        set((state) => ({
+          notificationPreferences: { ...state.notificationPreferences, ...preferences },
+        })),
+      updateNotificationPreference: (key, value) =>
+        set((state) => ({
+          notificationPreferences: {
+            ...state.notificationPreferences,
+            [key]: value,
+          },
+        })),
+      
+      // User profile
+      userProfile: null,
+      setUserProfile: (profile) => set({ userProfile: profile }),
+      
+      // App settings
+      firstLaunch: true,
+      setFirstLaunch: (firstLaunch) => set({ firstLaunch }),
+      
+      // Reset function
+      reset: () =>
+        set({
+          language: 'ar',
+          currency: 'SAR',
+          notificationPreferences: defaultNotificationPreferences,
+          userProfile: null,
+          firstLaunch: true,
+        }),
     }),
     {
       name: 'real-estate-app-storage',
@@ -334,3 +441,67 @@ export const useStore = () => {
     ...store
   };
 };
+
+// Notification badge state (separate store for better performance)
+interface NotificationBadgeState {
+  maintenanceBadge: number;
+  paymentsBadge: number;
+  contractsBadge: number;
+  reportsBadge: number;
+  totalBadge: number;
+  
+  setMaintenanceBadge: (count: number) => void;
+  setPaymentsBadge: (count: number) => void;
+  setContractsBadge: (count: number) => void;
+  setReportsBadge: (count: number) => void;
+  clearAllBadges: () => void;
+}
+
+export const useNotificationBadgeStore = create<NotificationBadgeState>((set, get) => ({
+  maintenanceBadge: 0,
+  paymentsBadge: 0,
+  contractsBadge: 0,
+  reportsBadge: 0,
+  totalBadge: 0,
+  
+  setMaintenanceBadge: (count) => {
+    set({ maintenanceBadge: count });
+    const state = get();
+    const total = state.maintenanceBadge + state.paymentsBadge + state.contractsBadge + state.reportsBadge;
+    set({ totalBadge: total });
+  },
+  
+  setPaymentsBadge: (count) => {
+    set({ paymentsBadge: count });
+    const state = get();
+    const total = state.maintenanceBadge + state.paymentsBadge + state.contractsBadge + state.reportsBadge;
+    set({ totalBadge: total });
+  },
+  
+  setContractsBadge: (count) => {
+    set({ contractsBadge: count });
+    const state = get();
+    const total = state.maintenanceBadge + state.paymentsBadge + state.contractsBadge + state.reportsBadge;
+    set({ totalBadge: total });
+  },
+  
+  setReportsBadge: (count) => {
+    set({ reportsBadge: count });
+    const state = get();
+    const total = state.maintenanceBadge + state.paymentsBadge + state.contractsBadge + state.reportsBadge;
+    set({ totalBadge: total });
+  },
+  
+  clearAllBadges: () => {
+    set({
+      maintenanceBadge: 0,
+      paymentsBadge: 0,
+      contractsBadge: 0,
+      reportsBadge: 0,
+      totalBadge: 0,
+    });
+  },
+}));
+
+// Backwards compatibility: export isDarkMode as always false
+export const isDarkMode = false;

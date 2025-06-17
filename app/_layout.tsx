@@ -13,21 +13,12 @@ import * as SplashScreen from 'expo-splash-screen';
 import i18n from '@/lib/i18n'; // Initialize i18n
 import { initializeRTL } from '@/lib/rtl';
 import CustomSplashScreen from '@/components/SplashScreen';
-import AndroidRTLFix from '@/components/AndroidRTLFix';
 
-// Enable RTL support immediately for Android - must be done before any components render
+// Early RTL setup - simplified and consistent
 if (Platform.OS === 'android') {
-  console.log('[App] Configuring Android RTL at app startup...');
+  console.log('[App] Configuring Android RTL at startup...');
   I18nManager.allowRTL(true);
-  I18nManager.forceRTL(true); // Force RTL for Arabic app
-  console.log('[App] Android RTL configured:', {
-    isRTL: I18nManager.isRTL,
-    allowRTL: I18nManager.allowRTL
-  });
 }
-
-// Initialize RTL support
-initializeRTL();
 
 // Prevent the splash screen from auto-hiding only on native platforms
 if (Platform.OS !== 'web') {
@@ -46,39 +37,38 @@ export default function RootLayout() {
     Inter_700Bold,
   });
 
-  // Initialize i18n
+  // Initialize i18n and RTL
   useEffect(() => {
-    if (i18n.isInitialized) {
-      setI18nReady(true);
-    } else {
-      const handleInitialized = () => setI18nReady(true);
-      i18n.on('initialized', handleInitialized);
-      return () => {
-        i18n.off('initialized', handleInitialized);
-      };
-    }
+    const initializeApp = async () => {
+      // Wait for i18n to be ready
+      if (i18n.isInitialized) {
+        setI18nReady(true);
+      } else {
+        const handleInitialized = () => setI18nReady(true);
+        i18n.on('initialized', handleInitialized);
+        
+        // Cleanup listener
+        return () => {
+          i18n.off('initialized', handleInitialized);
+        };
+      }
+
+      // Initialize RTL after i18n is ready
+      if (i18n.isInitialized) {
+        await initializeRTL();
+        console.log('[App] RTL initialization complete:', {
+          isRTL: I18nManager.isRTL,
+          allowRTL: I18nManager.allowRTL,
+          platform: Platform.OS
+        });
+      }
+    };
+
+    initializeApp();
   }, []);
 
   // Check if everything is ready
   const appReady = frameworkReady && fontsLoaded && i18nReady;
-
-  // Additional RTL verification for Android
-  useEffect(() => {
-    if (Platform.OS === 'android' && appReady) {
-      console.log('[App] Verifying RTL configuration:', {
-        isRTL: I18nManager.isRTL,
-        allowRTL: I18nManager.allowRTL,
-        platform: Platform.OS
-      });
-      
-      // If RTL is still not enabled on Android, force it again
-      if (!I18nManager.isRTL) {
-        console.log('[App] RTL not detected, forcing RTL configuration...');
-        I18nManager.allowRTL(true);
-        I18nManager.forceRTL(true);
-      }
-    }
-  }, [appReady]);
 
   const handleSplashFinish = () => {
     setShowSplash(false);
@@ -102,7 +92,6 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <PaperProvider theme={theme}>
-        <AndroidRTLFix />
         <StatusBar style="auto" />
         <Slot />
       </PaperProvider>

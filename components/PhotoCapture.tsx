@@ -17,7 +17,7 @@ import {
   Portal,
 } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
-import { Camera } from 'expo-camera';
+import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { theme, spacing } from '@/lib/theme';
 import { ImagePlus, Camera as CameraIcon, Image as ImageIcon, X } from 'lucide-react-native';
 import { uploadImage, validateImage, ImageUploadResult } from '@/lib/imageUpload';
@@ -47,8 +47,9 @@ export default function PhotoCapture({
   const [uploading, setUploading] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const [cameraVisible, setCameraVisible] = useState(false);
-  const [cameraRef, setCameraRef] = useState<Camera | null>(null);
-  const [cameraType, setCameraType] = useState<'front' | 'back'>('back');
+  const [cameraRef, setCameraRef] = useState<CameraView | null>(null);
+  const [facing, setFacing] = useState<CameraType>('back');
+  const [permission, requestPermission] = useCameraPermissions();
 
   // Request permissions on component mount
   React.useEffect(() => {
@@ -78,8 +79,10 @@ export default function PhotoCapture({
         base64: false,
       });
 
-      await processImage(photo.uri);
-      setCameraVisible(false);
+      if (photo) {
+        await processImage(photo.uri);
+        setCameraVisible(false);
+      }
     } catch (error: any) {
       console.error('Error taking photo:', error);
       Alert.alert(t('common:error'), t('photos.cameraError'));
@@ -113,6 +116,19 @@ export default function PhotoCapture({
 
   const openCamera = async () => {
     setMenuVisible(false);
+    
+    if (!permission?.granted) {
+      const permissionResult = await requestPermission();
+      if (!permissionResult.granted) {
+        Alert.alert(
+          t('common:permissions'),
+          t('photos.cameraPermissionRequired'),
+          [{ text: t('common:ok') }]
+        );
+        return;
+      }
+    }
+    
     setCameraVisible(true);
   };
 
@@ -163,12 +179,16 @@ export default function PhotoCapture({
     );
   };
 
+  function toggleCameraFacing() {
+    setFacing(current => (current === 'back' ? 'front' : 'back'));
+  }
+
   const renderCameraView = () => (
     <Portal>
       <View style={styles.cameraContainer}>
-        <Camera
+        <CameraView
           style={styles.camera}
-          type={cameraType}
+          facing={facing}
           ref={setCameraRef}
         >
           <View style={styles.cameraControls}>
@@ -184,9 +204,7 @@ export default function PhotoCapture({
                 icon="camera-flip"
                 iconColor="white"
                 size={24}
-                onPress={() => setCameraType(
-                  cameraType === 'back' ? 'front' : 'back'
-                )}
+                onPress={toggleCameraFacing}
                 style={styles.cameraFlipButton}
               />
             </View>
@@ -205,7 +223,7 @@ export default function PhotoCapture({
               </TouchableOpacity>
             </View>
           </View>
-        </Camera>
+        </CameraView>
       </View>
     </Portal>
   );

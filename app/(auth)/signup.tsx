@@ -7,9 +7,11 @@ import { Lock, Mail, Eye, EyeOff, User, ChevronLeft } from 'lucide-react-native'
 import { supabase } from '@/lib/supabase';
 import { UserRole } from '@/lib/types';
 import { AuthApiError } from '@supabase/supabase-js';
+import { useTranslation } from '@/lib/useTranslation';
 
 export default function SignUpScreen() {
   const router = useRouter();
+  const { t } = useTranslation('common');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -24,17 +26,17 @@ export default function SignUpScreen() {
   const handleSignUp = async () => {
     // Validate form fields
     if (!firstName || !lastName || !email || !password || !confirmPassword) {
-      setError('All fields are required.');
+      setError(t('signup.allFieldsRequired'));
       return;
     }
     
     if (password !== confirmPassword) {
-      setError('Passwords do not match.');
+      setError(t('signup.passwordsDontMatch'));
       return;
     }
     
     if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
+      setError(t('signup.passwordMinLength'));
       return;
     }
     
@@ -76,14 +78,14 @@ export default function SignUpScreen() {
         // Navigate back to sign in
         router.replace('/(auth)');
       } else {
-        setError('Signup initiated. Please check your email to confirm your account.');
+        setError(t('signup.signupInitiated'));
       }
     } catch (error: any) {
       if (error instanceof AuthApiError && error.message.includes('User already registered')) {
-        setError('This email is already in use. Please sign in instead.');
+        setError(t('signup.emailAlreadyInUse'));
       } else {
         console.error('Error in handleSignUp:', error);
-        setError(error.message || 'Failed to sign up. Please try again.');
+        setError(error.message || t('signup.signupFailed'));
       }
     } finally {
       setLoading(false);
@@ -106,12 +108,12 @@ export default function SignUpScreen() {
             <ChevronLeft size={size} color={color} />
           )}
         >
-          Back to Sign In
+          {t('signup.backToSignIn')}
         </Button>
         
         <View style={styles.header}>
-          <Text style={styles.title}>Create Your Account</Text>
-          <Text style={styles.subtitle}>Enter your details to get started</Text>
+          <Text style={styles.title}>{t('signup.createYourAccount')}</Text>
+          <Text style={styles.subtitle}>{t('signup.enterDetailsToGetStarted')}</Text>
         </View>
         
         {error && (
@@ -123,15 +125,15 @@ export default function SignUpScreen() {
         <View style={styles.formContainer}>
           {/* Role Selection */}
           <View style={styles.roleContainer}>
-            <Text style={styles.roleLabel}>I am a:</Text>
+            <Text style={styles.roleLabel}>{t('signup.iAmA')}</Text>
             <SegmentedButtons
               value={role}
               onValueChange={value => setRole(value as UserRole)}
               buttons={[
-                { value: 'tenant', label: 'Tenant' },
-                { value: 'buyer', label: 'Buyer' },
-                { value: 'owner', label: 'Property Owner' },
-                { value: 'manager', label: 'Manager' }
+                { value: 'tenant', label: t('signup.tenant') },
+                { value: 'buyer', label: t('signup.buyer') },
+                { value: 'owner', label: t('signup.propertyOwner') },
+                { value: 'manager', label: t('signup.manager') }
               ]}
               style={styles.roleButtons}
             />
@@ -140,7 +142,7 @@ export default function SignUpScreen() {
           <View style={styles.nameRow}>
             <View style={[styles.inputContainer, styles.halfInput]}>
               <TextInput
-                label="First Name"
+                label={t('signup.firstName')}
                 value={firstName}
                 onChangeText={setFirstName}
                 mode="outlined"
@@ -151,7 +153,7 @@ export default function SignUpScreen() {
             
             <View style={[styles.inputContainer, styles.halfInput]}>
               <TextInput
-                label="Last Name"
+                label={t('signup.lastName')}
                 value={lastName}
                 onChangeText={setLastName}
                 mode="outlined"
@@ -163,7 +165,7 @@ export default function SignUpScreen() {
           
           <View style={styles.inputContainer}>
             <TextInput
-              label="Email"
+              label={t('email')}
               value={email}
               onChangeText={setEmail}
               mode="outlined"
@@ -176,7 +178,7 @@ export default function SignUpScreen() {
           
           <View style={styles.inputContainer}>
             <TextInput
-              label="Password"
+              label={t('password')}
               value={password}
               onChangeText={setPassword}
               mode="outlined"
@@ -192,7 +194,7 @@ export default function SignUpScreen() {
           
           <View style={styles.inputContainer}>
             <TextInput
-              label="Confirm Password"
+              label={t('signup.confirmPassword')}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               mode="outlined"
@@ -213,12 +215,12 @@ export default function SignUpScreen() {
             loading={loading}
             disabled={loading}
           >
-            Create Account
+            {t('createAccount')}
           </Button>
           
           <View style={styles.dividerContainer}>
             <Divider style={styles.divider} />
-            <Text style={styles.orText}>OR</Text>
+            <Text style={styles.orText}>{t('or')}</Text>
             <Divider style={styles.divider} />
           </View>
           
@@ -227,7 +229,7 @@ export default function SignUpScreen() {
             onPress={() => router.replace('/(auth)')}
             style={styles.signInButton}
           >
-            Sign In
+            {t('signup.signIn')}
           </Button>
         </View>
       </ScrollView>

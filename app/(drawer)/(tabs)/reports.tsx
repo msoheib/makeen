@@ -216,6 +216,36 @@ export default function ReportsScreen() {
     refetch: refetchStats 
   } = useApi(() => reportsApi.getStats(), []);
 
+  const { 
+    data: dashboardData, 
+    loading: dashboardLoading 
+  } = useApi(() => propertiesApi.getDashboardSummary(), []);
+
+  const { 
+    data: tenants, 
+    loading: tenantsLoading 
+  } = useApi(() => profilesApi.getTenants(), []);
+
+  const { 
+    data: properties, 
+    loading: propertiesLoading 
+  } = useApi(() => propertiesApi.getAll(), []);
+
+  // Enhanced statistics that connect to dashboard
+  const connectedStats = {
+    totalReports: stats?.data?.totalReports || 12,
+    generatedThisMonth: stats?.data?.generatedThisMonth || 8,
+    avgGenerationTime: stats?.data?.avgGenerationTime || '2.1s',
+    scheduledReports: stats?.data?.scheduledReports || 3,
+    
+    // Connected to dashboard data
+    totalProperties: dashboardData?.data?.total_properties || 0,
+    totalTenants: tenants?.data?.length || 0,
+    activeTenants: tenants?.data?.filter(t => t.status === 'active').length || 0,
+    occupiedProperties: dashboardData?.data?.occupied || 0,
+    monthlyRevenue: dashboardData?.data?.total_monthly_rent || 0
+  };
+
   // Fetch filter options based on filter type
   const fetchFilterOptions = async (filterType: string) => {
     setLoadingFilterOptions(true);
@@ -548,7 +578,11 @@ export default function ReportsScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await refetchStats();
+    // Refresh all connected data for comprehensive updates
+    await Promise.all([
+      refetchStats(),
+      // Add other refetch functions here when they're available
+    ]);
     setRefreshing(false);
   }, [refetchStats]);
 
@@ -568,31 +602,43 @@ export default function ReportsScreen() {
               {t('reports:totalReports')}
             </Text>
             <Text style={[styles.horizontalStatValue, rtlStyles.textAlign(), { color: lightColors.primary }]}>
-              {statsLoading ? '...' : (stats?.data?.totalReports || '12')}
+              {statsLoading ? '...' : connectedStats.totalReports}
             </Text>
           </View>
           
           <View style={styles.horizontalStatItem}>
             <View style={[styles.horizontalStatIcon, { backgroundColor: '#4CAF5020' }]}>
-              <MaterialIcons name="file-download" size={24} color="#4CAF50" />
+              <MaterialIcons name="people" size={24} color="#4CAF50" />
             </View>
             <Text style={[styles.horizontalStatLabel, rtlStyles.textAlign(), { color: lightColors.onSurfaceVariant }]}>
-              {t('reports:generatedThisMonth')}
+              المستأجرين النشطين
             </Text>
             <Text style={[styles.horizontalStatValue, rtlStyles.textAlign(), { color: '#4CAF50' }]}>
-              {statsLoading ? '...' : (stats?.data?.generatedThisMonth || '8')}
+              {tenantsLoading ? '...' : connectedStats.activeTenants}
+            </Text>
+          </View>
+          
+          <View style={styles.horizontalStatItem}>
+            <View style={[styles.horizontalStatIcon, { backgroundColor: '#2196F320' }]}>
+              <MaterialIcons name="home" size={24} color="#2196F3" />
+            </View>
+            <Text style={[styles.horizontalStatLabel, rtlStyles.textAlign(), { color: lightColors.onSurfaceVariant }]}>
+              العقارات المشغولة
+            </Text>
+            <Text style={[styles.horizontalStatValue, rtlStyles.textAlign(), { color: '#2196F3' }]}>
+              {dashboardLoading ? '...' : connectedStats.occupiedProperties}
             </Text>
           </View>
           
           <View style={styles.horizontalStatItem}>
             <View style={[styles.horizontalStatIcon, { backgroundColor: '#FF980020' }]}>
-              <MaterialIcons name="schedule" size={24} color="#FF9800" />
+              <MaterialIcons name="attach-money" size={24} color="#FF9800" />
             </View>
             <Text style={[styles.horizontalStatLabel, rtlStyles.textAlign(), { color: lightColors.onSurfaceVariant }]}>
-              {t('reports:avgGenerationTime')}
+              الإيرادات الشهرية
             </Text>
             <Text style={[styles.horizontalStatValue, rtlStyles.textAlign(), { color: '#FF9800' }]}>
-              {statsLoading ? '...' : (stats?.data?.avgGenerationTime || '2.1s')}
+              {dashboardLoading ? '...' : `${(connectedStats.monthlyRevenue / 1000).toFixed(0)}K`}
             </Text>
           </View>
         </View>
@@ -628,10 +674,10 @@ export default function ReportsScreen() {
         {renderQuickStats()}
 
         <View style={styles.categoryContainer}>
-          <Text style={[styles.mainTitle, rtlStyles.textAlign(), { color: lightColors.onBackground, marginBottom: 16 }]}>
+          <Text style={[styles.mainTitle, rtlStyles.textAlignStart, { color: lightColors.onBackground, marginBottom: 16 }]}>
             {t('common:categories')}
           </Text>
-          <View style={styles.categoryGrid}>
+          <View style={[styles.categoryGrid, { flexDirection: getFlexDirection('row') }]}>
             {categories.map((category) => (
               <TouchableOpacity
                 key={category.id}
@@ -652,7 +698,7 @@ export default function ReportsScreen() {
                 <Text
                   style={[
                     styles.categoryChipText,
-                    rtlStyles.textAlign(),
+                    rtlStyles.textAlignStart,
                     {
                       color: selectedCategory === category.id ? lightColors.onPrimary : lightColors.onSurface,
                     }
@@ -666,7 +712,7 @@ export default function ReportsScreen() {
         </View>
 
         <View style={styles.reportsContainer}>
-          <Text style={[styles.mainTitle, rtlStyles.textAlign(), { color: lightColors.onBackground, marginBottom: 16, marginTop: 24 }]}>
+          <Text style={[styles.mainTitle, rtlStyles.textAlignStart, { color: lightColors.onBackground, marginBottom: 16, marginTop: 24 }]}>
             {t('reports:availableReportsCount', { count: filteredReports.length })}
           </Text>
           
@@ -684,10 +730,10 @@ export default function ReportsScreen() {
                       <MaterialIcons name={item.iconName as any} size={24} color={item.color} />
                     </View>
                     <View style={styles.reportDetails}>
-                      <Text style={[styles.reportTitle, rtlStyles.textAlign(), { color: lightColors.onSurface }]}>
+                      <Text style={[styles.reportTitle, rtlStyles.textAlignStart, { color: lightColors.onSurface }]}>
                         {item.title}
                       </Text>
-                      <Text style={[styles.reportDescription, rtlStyles.textAlign(), { color: lightColors.onSurfaceVariant }]}>
+                      <Text style={[styles.reportDescription, rtlStyles.textAlignStart, { color: lightColors.onSurfaceVariant }]}>
                         {item.description}
                       </Text>
                       {item.requiresFilter && (

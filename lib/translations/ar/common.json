@@ -159,5 +159,25 @@
   "createAccount": "إنشاء حساب",
   "enterEmailPassword": "يرجى إدخال البريد الإلكتروني وكلمة المرور",
   "signInFailed": "فشل تسجيل الدخول: لم يتم إرجاع بيانات المستخدم",
-  "signInError": "فشل في تسجيل الدخول. يرجى المحاولة مرة أخرى"
+  "signInError": "فشل في تسجيل الدخول. يرجى المحاولة مرة أخرى",
+  "signup": {
+    "backToSignIn": "العودة إلى تسجيل الدخول",
+    "createYourAccount": "إنشاء حسابك",
+    "enterDetailsToGetStarted": "أدخل بياناتك للبدء",
+    "iAmA": "أنا:",
+    "tenant": "مستأجر",
+    "buyer": "مشتري",
+    "propertyOwner": "مالك عقار",
+    "manager": "مدير",
+    "firstName": "الاسم الأول",
+    "lastName": "اسم العائلة",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "allFieldsRequired": "جميع الحقول مطلوبة.",
+    "passwordsDontMatch": "كلمات المرور غير متطابقة.",
+    "passwordMinLength": "كلمة المرور يجب أن تكون 6 أحرف على الأقل.",
+    "emailAlreadyInUse": "هذا البريد الإلكتروني مستخدم بالفعل. يرجى تسجيل الدخول بدلاً من ذلك.",
+    "signupInitiated": "تم بدء التسجيل. يرجى التحقق من بريدك الإلكتروني لتأكيد حسابك.",
+    "signupFailed": "فشل في التسجيل. يرجى المحاولة مرة أخرى.",
+    "signIn": "تسجيل الدخول"
+  }
 } 
