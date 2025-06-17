@@ -599,38 +599,64 @@ serve(async (req) => {
 
     console.log('Data fetched successfully, generating PDF...');
 
-    // Generate PDF using Puppeteer
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
-    
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
-    
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: {
-        top: '1cm',
-        right: '1cm',
-        bottom: '1cm',
-        left: '1cm'
-      }
-    });
-    
-    await browser.close();
+    try {
+      // Generate PDF using Puppeteer
+      console.log('Launching Puppeteer browser...');
+      const browser = await puppeteer.launch({
+        headless: true,
+        args: [
+          '--no-sandbox', 
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor'
+        ]
+      });
+      
+      console.log('Creating new page...');
+      const page = await browser.newPage();
+      
+      console.log('Setting page content...');
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      
+      console.log('Generating PDF...');
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: {
+          top: '1cm',
+          right: '1cm',
+          bottom: '1cm',
+          left: '1cm'
+        }
+      });
+      
+      console.log('Closing browser...');
+      await browser.close();
 
-    console.log('PDF generated successfully');
+      console.log('PDF generated successfully, buffer size:', pdfBuffer.byteLength);
 
-    // Return PDF as response
-    return new Response(pdfBuffer, {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="report-${request.reportType}-${new Date().toISOString().split('T')[0]}.pdf"`
-      }
-    });
+      // Return PDF as response
+      return new Response(pdfBuffer, {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `attachment; filename="report-${request.reportType}-${new Date().toISOString().split('T')[0]}.pdf"`
+        }
+      });
+      
+    } catch (pdfError) {
+      console.error('PDF generation failed, falling back to HTML:', pdfError);
+      
+      // Fallback to HTML response if PDF generation fails
+      return new Response(html, {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/html; charset=utf-8',
+          'Content-Disposition': `attachment; filename="report-${request.reportType}-${new Date().toISOString().split('T')[0]}.html"`
+        }
+      });
+    }
 
   } catch (error) {
     console.error('PDF generation error:', error);

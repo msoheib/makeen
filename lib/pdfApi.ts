@@ -4,6 +4,7 @@ import { supabase } from './supabase';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Platform, Alert } from 'react-native';
+import * as Print from 'expo-print';
 
 export interface PDFRequest {
   type: string;
@@ -192,6 +193,73 @@ class PDFGeneratorAPI {
         error: error instanceof Error ? error.message : 'Report generation failed',
         message: 'فشل في إنشاء التقرير. يرجى المحاولة مرة أخرى.'
       };
+    }
+  }
+
+  /**
+   * Convert HTML to PDF using Expo Print API (client-side solution)
+   */
+  async convertHTMLToPDF(htmlContent: string, filename: string): Promise<boolean> {
+    try {
+      console.log('Converting HTML to PDF using Expo Print...');
+      
+      // For React Native - use expo-print to generate PDF
+      if (Platform.OS !== 'web') {
+        const { uri } = await Print.printToFileAsync({
+          html: htmlContent,
+          base64: false
+        });
+        
+        console.log('PDF generated at:', uri);
+        
+        // Check if sharing is available
+        const isAvailable = await Sharing.isAvailableAsync();
+        
+        if (isAvailable) {
+          // Share the generated PDF
+          await Sharing.shareAsync(uri, {
+            mimeType: 'application/pdf',
+            dialogTitle: 'حفظ التقرير PDF',
+            UTI: 'com.adobe.pdf',
+          });
+          
+          // Show success message
+          Alert.alert(
+            '✅ تم إنشاء PDF بنجاح',
+            `تم تحويل التقرير إلى PDF وحفظه.\n\nيمكنك الآن مشاركته أو حفظه على جهازك.`,
+            [{ text: 'موافق', style: 'default' }]
+          );
+          
+          return true;
+        } else {
+          Alert.alert(
+            '✅ تم إنشاء PDF',
+            `تم حفظ التقرير PDF في:\n${uri}`,
+            [{ text: 'موافق', style: 'default' }]
+          );
+          
+          return true;
+        }
+      }
+      
+      // For web - fallback to download HTML
+      if (typeof window !== 'undefined') {
+        return await this.downloadHTML(htmlContent, filename.replace('.pdf', '.html'));
+      }
+      
+      return false;
+      
+    } catch (error) {
+      console.error('HTML to PDF conversion failed:', error);
+      
+      Alert.alert(
+        '❌ خطأ في التحويل',
+        'فشل في تحويل التقرير إلى PDF. سيتم حفظه كـ HTML.',
+        [{ text: 'موافق', style: 'default' }]
+      );
+      
+      // Fallback to HTML download
+      return await this.downloadHTML(htmlContent, filename.replace('.pdf', '.html'));
     }
   }
 
@@ -491,39 +559,57 @@ class PDFGeneratorAPI {
         return result;
       }
       
-      // Handle HTML response (fallback)
+      // Handle HTML response (convert to PDF on client-side)
       else if (result.htmlContent && result.contentType === 'text/html') {
-        console.log('Downloading HTML report (PDF generation may have failed)...');
+        console.log('Converting HTML to PDF on client-side...');
         
-        // For web - try to open in new tab first, fallback to download
-        if (typeof window !== 'undefined') {
-          const opened = await this.openHTML(result.htmlContent, this.getReportTypeLabel(request.type));
+        // Try to convert HTML to PDF using Expo Print
+        const pdfFilename = result.filename.replace('.html', '.pdf');
+        const converted = await this.convertHTMLToPDF(result.htmlContent, pdfFilename);
+        
+        if (converted) {
+          // Update result to reflect PDF conversion
+          return {
+            ...result,
+            success: true,
+            filename: pdfFilename,
+            contentType: 'application/pdf',
+            message: 'تم إنشاء التقرير PDF بنجاح'
+          };
+        } else {
+          // Fallback to HTML handling if PDF conversion fails
+          console.log('PDF conversion failed, falling back to HTML...');
           
-          if (!opened) {
+          // For web - try to open in new tab first, fallback to download
+          if (typeof window !== 'undefined') {
+            const opened = await this.openHTML(result.htmlContent, this.getReportTypeLabel(request.type));
+            
+            if (!opened) {
+              const downloaded = await this.downloadHTML(result.htmlContent, result.filename);
+              
+              if (!downloaded) {
+                return {
+                  ...result,
+                  success: false,
+                  error: 'تم إنشاء التقرير HTML بنجاح ولكن فشل التحميل'
+                };
+              }
+            }
+          } else {
+            // For React Native - directly download/share HTML
             const downloaded = await this.downloadHTML(result.htmlContent, result.filename);
             
             if (!downloaded) {
               return {
                 ...result,
                 success: false,
-                error: 'تم إنشاء التقرير HTML بنجاح ولكن فشل التحميل'
+                error: 'تم إنشاء التقرير HTML بنجاح ولكن فشل في الحفظ أو المشاركة'
               };
             }
           }
-        } else {
-          // For React Native - directly download/share HTML
-          const downloaded = await this.downloadHTML(result.htmlContent, result.filename);
           
-          if (!downloaded) {
-            return {
-              ...result,
-              success: false,
-              error: 'تم إنشاء التقرير HTML بنجاح ولكن فشل في الحفظ أو المشاركة'
-            };
-          }
+          return result;
         }
-        
-        return result;
       }
     }
     

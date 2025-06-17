@@ -390,19 +390,19 @@ export default function ReportsScreen() {
   // Render Quick Statistics (matching dashboard's horizontal stats container)
   const renderQuickStats = () => (
     <View style={styles.quickStatsSection}>
-      <Text style={[styles.sectionTitle, { color: lightColors.onBackground }]}>
+      <Text style={[styles.sectionTitle, { color: colors.onBackground }]}>
         {t('reports:quickStatistics')}
       </Text>
-      <View style={[styles.horizontalStatsCard, { backgroundColor: lightColors.surface }]}>
+      <View style={[styles.horizontalStatsCard, { backgroundColor: colors.surface }]}>
         <View style={styles.horizontalStatsRow}>
           <View style={styles.horizontalStatItem}>
-            <View style={[styles.horizontalStatIcon, { backgroundColor: `${lightColors.primary}20` }]}>
-              <MaterialIcons name="assessment" size={24} color={lightColors.primary} />
+            <View style={[styles.horizontalStatIcon, { backgroundColor: `${colors.primary}20` }]}>
+              <MaterialIcons name="assessment" size={24} color={colors.primary} />
             </View>
-            <Text style={[styles.horizontalStatLabel, { color: lightColors.onSurfaceVariant }]}>
+            <Text style={[styles.horizontalStatLabel, { color: colors.onSurfaceVariant }]}>
               {t('reports:totalReports')}
             </Text>
-            <Text style={[styles.horizontalStatValue, { color: lightColors.primary }]}>
+            <Text style={[styles.horizontalStatValue, { color: colors.primary }]}>
               {statsLoading ? '...' : (stats?.data?.totalReports || '12')}
             </Text>
           </View>
@@ -411,7 +411,7 @@ export default function ReportsScreen() {
             <View style={[styles.horizontalStatIcon, { backgroundColor: '#4CAF5020' }]}>
               <MaterialIcons name="file-download" size={24} color="#4CAF50" />
             </View>
-            <Text style={[styles.horizontalStatLabel, { color: lightColors.onSurfaceVariant }]}>
+            <Text style={[styles.horizontalStatLabel, { color: colors.onSurfaceVariant }]}>
               {t('reports:generatedThisMonth')}
             </Text>
             <Text style={[styles.horizontalStatValue, { color: '#4CAF50' }]}>
@@ -423,7 +423,7 @@ export default function ReportsScreen() {
             <View style={[styles.horizontalStatIcon, { backgroundColor: '#FF980020' }]}>
               <MaterialIcons name="schedule" size={24} color="#FF9800" />
             </View>
-            <Text style={[styles.horizontalStatLabel, { color: lightColors.onSurfaceVariant }]}>
+            <Text style={[styles.horizontalStatLabel, { color: colors.onSurfaceVariant }]}>
               {t('reports:avgGenerationTime')}
             </Text>
             <Text style={[styles.horizontalStatValue, { color: '#FF9800' }]}>
@@ -440,11 +440,11 @@ export default function ReportsScreen() {
       <SafeAreaView style={styles.container}>
         <ModernHeader title={t('reports:title')} />
         <View style={styles.noAccessContainer}>
-          <MaterialIcons name="lock" size={64} color={lightColors.onSurfaceVariant} />
-          <Text style={[styles.noAccessText, { color: lightColors.onSurface }]}>
+          <MaterialIcons name="lock" size={64} color={colors.onSurfaceVariant} />
+          <Text style={[styles.noAccessText, { color: colors.onSurface }]}>
             {t('reports:noAccessMessage')}
           </Text>
-          <Text style={[styles.noAccessSubtext, { color: lightColors.onSurfaceVariant }]}>
+          <Text style={[styles.noAccessSubtext, { color: colors.onSurfaceVariant }]}>
             {t('reports:noAccessSuggestion')}
           </Text>
         </View>
@@ -453,17 +453,17 @@ export default function ReportsScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: lightColors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ModernHeader title={t('reports:title')} />
       
       <ScrollView 
-        style={[styles.content, { backgroundColor: lightColors.background }]}
+        style={[styles.content, { backgroundColor: colors.background }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         {renderQuickStats()}
 
         <View style={styles.categoryContainer}>
-          <Text style={[styles.mainTitle, rtlStyles.textAlign(), { color: lightColors.onBackground, marginBottom: 16 }]}>{t('common:categories')}</Text>
+          <Text style={[styles.mainTitle, rtlStyles.textAlign(), { color: colors.onBackground, marginBottom: 16 }]}>{t('common:categories')}</Text>
           <View style={styles.categoryGrid}>
             {categories.map((category) => (
               <TouchableOpacity
@@ -471,8 +471,8 @@ export default function ReportsScreen() {
                 style={[
                   styles.categoryCard,
                   {
-                    backgroundColor: selectedCategory === category.id ? lightColors.primary : lightColors.surface,
-                    borderColor: lightColors.outline,
+                    backgroundColor: selectedCategory === category.id ? colors.primary : colors.surface,
+                    borderColor: colors.outline,
                   }
                 ]}
                 onPress={() => setSelectedCategory(category.id)}
@@ -480,13 +480,13 @@ export default function ReportsScreen() {
                 <MaterialIcons
                   name={category.icon as any}
                   size={24}
-                  color={selectedCategory === category.id ? lightColors.onPrimary : lightColors.onSurface}
+                  color={selectedCategory === category.id ? colors.onPrimary : colors.onSurface}
                 />
                 <Text
                   style={[
                     styles.categoryChipText,
                     {
-                      color: selectedCategory === category.id ? lightColors.onPrimary : lightColors.onSurface,
+                      color: selectedCategory === category.id ? colors.onPrimary : colors.onSurface,
                     }
                   ]}
                 >
@@ -498,30 +498,30 @@ export default function ReportsScreen() {
         </View>
 
         <View style={styles.reportsContainer}>
-           <Text style={[styles.mainTitle, rtlStyles.textAlign(), { color: lightColors.onBackground, marginBottom: 16, marginTop: 24 }]}>
+           <Text style={[styles.mainTitle, rtlStyles.textAlign(), { color: colors.onBackground, marginBottom: 16, marginTop: 24 }]}>
             {t('reports:availableReportsCount', { count: filteredReports.length })}
           </Text>
           
           <FlatList
             data={filteredReports}
             renderItem={({ item }) => (
-              <View style={[styles.reportCard, { backgroundColor: lightColors.surface }]}>
+              <View style={[styles.reportCard, { backgroundColor: colors.surface }]}>
                 <View style={[styles.reportHeader, rtlStyles.rowReverse()]}>
                   <View style={[styles.reportInfo, rtlStyles.rowReverse()]}>
                     <View style={[styles.iconContainer, { backgroundColor: `${item.color}20` }, rtlStyles.marginLeft(12)]}>
                       <MaterialIcons name={item.iconName as any} size={24} color={item.color} />
                     </View>
                     <View style={styles.reportDetails}>
-                      <Text style={[styles.reportTitle, { color: lightColors.onSurface, textAlign: I18nManager.isRTL ? 'right' : 'left' }]}>
+                      <Text style={[styles.reportTitle, { color: colors.onSurface, textAlign: I18nManager.isRTL ? 'right' : 'left' }]}>
                         {item.title}
                       </Text>
-                      <Text style={[styles.reportDescription, { color: lightColors.onSurfaceVariant, textAlign: I18nManager.isRTL ? 'right' : 'left' }]}>
+                      <Text style={[styles.reportDescription, { color: colors.onSurfaceVariant, textAlign: I18nManager.isRTL ? 'right' : 'left' }]}>
                         {item.description}
                       </Text>
                       {item.requiresFilter && (
                         <View style={[styles.filterBadge, rtlStyles.rowReverse()]}>
-                          <MaterialIcons name="filter-list" size={12} color={lightColors.primary} />
-                          <Text style={[styles.filterText, { color: lightColors.primary }]}>
+                          <MaterialIcons name="filter-list" size={12} color={colors.primary} />
+                          <Text style={[styles.filterText, { color: colors.primary }]}>
                             {t('reports:requiresFilter', { filterType: t(`reports:filterType_${item.filterType}`) })}
                           </Text>
                         </View>
@@ -530,26 +530,26 @@ export default function ReportsScreen() {
                   </View>
                   {generatingPDF === item.id ? (
                     <View style={styles.loadingContainer}>
-                      <ActivityIndicator size="small" color={lightColors.primary} />
+                      <ActivityIndicator size="small" color={colors.primary} />
                     </View>
                   ) : (
                     <IconButton
                       icon="download"
                       size={20}
-                      iconColor={lightColors.primary}
+                      iconColor={colors.primary}
                       onPress={() => handleDownloadPDF(item)}
                     />
                   )}
                 </View>
 
                 <View style={styles.reportData}>
-                  <Text style={[styles.reportTime, { color: lightColors.onSurfaceVariant, textAlign: I18nManager.isRTL ? 'right' : 'left' }]}>
+                  <Text style={[styles.reportTime, { color: colors.onSurfaceVariant, textAlign: I18nManager.isRTL ? 'right' : 'left' }]}>
                     {t('reports:downloadAvailable')}
                   </Text>
                 </View>
 
-                <View style={[styles.reportFooter, { borderTopColor: lightColors.outline }]}>
-                  <Text style={[styles.lastGenerated, { color: lightColors.onSurfaceVariant, textAlign: I18nManager.isRTL ? 'right' : 'left' }]}>
+                <View style={[styles.reportFooter, { borderTopColor: colors.outline }]}>
+                  <Text style={[styles.lastGenerated, { color: colors.onSurfaceVariant, textAlign: I18nManager.isRTL ? 'right' : 'left' }]}>
                     {t('reports:lastUpdated', { date: formatDate(item.lastGenerated) })}
                   </Text>
                 </View>

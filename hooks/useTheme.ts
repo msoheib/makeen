@@ -45,7 +45,14 @@ export const useTheme = (): ThemeContextType => {
   // Ensure we always return a valid theme object
   const theme = (() => {
     try {
-      return isDark ? darkTheme : lightTheme;
+      const selectedTheme = isDark ? darkTheme : lightTheme;
+      
+      // Debug logging to verify theme object structure
+      console.log('useTheme: Current theme mode:', actualTheme);
+      console.log('useTheme: Theme colors available:', !!selectedTheme.colors);
+      console.log('useTheme: Background color:', selectedTheme.colors?.background);
+      
+      return selectedTheme;
     } catch (error) {
       console.warn('useTheme: Error loading theme object, falling back to lightTheme:', error);
       return lightTheme;
