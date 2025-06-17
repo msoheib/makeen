@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { lightTheme, darkTheme } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
 import { supabase } from '@/lib/supabase';
+import { useTranslation } from 'react-i18next';
 import { 
   User, 
   Bell, 
@@ -21,6 +22,7 @@ import ModernHeader from '@/components/ModernHeader';
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const { t } = useTranslation(['settings', 'common']);
   const { isDarkMode, toggleDarkMode, language, setLanguage } = useAppStore();
   const setUser = useAppStore(state => state.setUser);
   const setAuthenticated = useAppStore(state => state.setAuthenticated);
@@ -28,15 +30,15 @@ export default function SettingsScreen() {
 
   const handleLogout = async () => {
     Alert.alert(
-      'تسجيل الخروج',
-      'هل أنت متأكد من رغبتك في تسجيل الخروج؟',
+      t('logoutConfirmTitle', { ns: 'settings' }),
+      t('logoutConfirmMessage', { ns: 'settings' }),
       [
         {
-          text: 'إلغاء',
+          text: t('cancel', { ns: 'common' }),
           style: 'cancel'
         },
         {
-          text: 'تسجيل الخروج',
+          text: t('logout', { ns: 'common' }),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -53,7 +55,7 @@ export default function SettingsScreen() {
               
               if (error) {
                 console.error('❌ Supabase signOut error:', error);
-                Alert.alert('خطأ', `حدث خطأ أثناء تسجيل الخروج: ${error.message}`);
+                Alert.alert(t('error', { ns: 'common' }), error.message);
                 return;
               }
               
@@ -99,7 +101,7 @@ export default function SettingsScreen() {
                 stack: error.stack,
                 name: error.name
               });
-              Alert.alert('خطأ', `حدث خطأ غير متوقع: ${error.message || 'Unknown error'}`);
+              Alert.alert(t('error', { ns: 'common' }), error.message || 'Unknown error');
             }
           }
         }
@@ -128,107 +130,99 @@ export default function SettingsScreen() {
 
   const settingsItems = [
     {
-      title: 'الملف الشخصي',
-      description: 'إدارة معلوماتك الشخصية',
+      key: 'profile',
       icon: User,
       onPress: () => router.push('/profile'),
-      showSwitch: false
     },
     {
-      title: 'الإشعارات',
-      description: 'إعدادات التنبيهات والإشعارات',
+      key: 'notifications',
       icon: Bell,
       onPress: () => router.push('/notifications'),
-      showSwitch: false
     },
     {
-      title: 'اللغة',
-      description: 'العربية',
+      key: 'language',
       icon: Globe,
       onPress: () => router.push('/language'),
-      showSwitch: false
     },
     {
-      title: 'المظهر الداكن',
-      description: isDarkMode ? 'مفعل' : 'معطل',
+      key: 'theme',
       icon: Palette,
       onPress: toggleDarkMode,
       showSwitch: true,
-      switchValue: isDarkMode
+      switchValue: isDarkMode,
+      description: t(isDarkMode ? 'theme.darkTheme.title' : 'theme.lightTheme.title')
     },
     {
-      title: 'العملة',
-      description: 'ريال سعودي (SAR)',
+      key: 'currency',
       icon: DollarSign,
       onPress: () => router.push('/currency'),
-      showSwitch: false
     }
   ];
 
   const supportItems = [
     {
-      title: 'المساعدة والدعم',
-      description: 'الحصول على المساعدة',
+      key: 'support',
       icon: HelpCircle,
       onPress: () => router.push('/support')
     },
     {
-      title: 'الخصوصية',
-      description: 'سياسة الخصوصية',
+      key: 'privacy',
       icon: Shield,
       onPress: () => router.push('/privacy')
     },
     {
-      title: 'الشروط والأحكام',
-      description: 'شروط الاستخدام',
+      key: 'terms',
       icon: FileText,
       onPress: () => router.push('/terms')
     }
   ];
 
-  const renderSettingItem = (item: any, index: number) => {
+  const renderSettingItem = (item: any, index: number, total: number) => {
     const IconComponent = item.icon;
+    const title = t(`${item.key}.title`);
+    const description = item.description || t(`${item.key}.description`);
     
     return (
-      <List.Item
-        key={index}
-        title={item.title}
-        description={item.description}
-        titleStyle={[styles.itemTitle, { color: theme.colors.onSurface }]}
-        descriptionStyle={[styles.itemDescription, { color: theme.colors.onSurfaceVariant }]}
-        left={() => (
-          <View style={[styles.iconContainer, { backgroundColor: `${theme.colors.primary}20` }]}>
-            <IconComponent size={24} color={theme.colors.primary} />
-          </View>
-        )}
-        right={() => (
-          item.showSwitch ? (
-            <Switch
-              value={item.switchValue}
-              onValueChange={item.onPress}
-              color={theme.colors.primary}
-            />
-          ) : (
-            <ChevronRight size={20} color={theme.colors.onSurfaceVariant} />
-          )
-        )}
-        onPress={!item.showSwitch ? item.onPress : undefined}
-        style={[styles.listItem, { backgroundColor: theme.colors.surface }]}
-      />
+      <View key={item.key}>
+        <List.Item
+          title={title}
+          description={description}
+          titleStyle={[styles.itemTitle, { color: theme.colors.onSurface }]}
+          descriptionStyle={[styles.itemDescription, { color: theme.colors.onSurfaceVariant }]}
+          left={() => (
+            <View style={[styles.iconContainer, { backgroundColor: `${theme.colors.primary}20` }]}>
+              <IconComponent size={24} color={theme.colors.primary} />
+            </View>
+          )}
+          right={() => (
+            item.showSwitch ? (
+              <Switch
+                value={item.switchValue}
+                onValueChange={item.onPress}
+                color={theme.colors.primary}
+              />
+            ) : (
+              <ChevronRight size={20} color={theme.colors.onSurfaceVariant} />
+            )
+          )}
+          onPress={!item.showSwitch ? item.onPress : undefined}
+          style={[styles.listItem, { backgroundColor: theme.colors.surface }]}
+        />
+        {index < total - 1 && <Divider style={styles.divider} />}
+      </View>
     );
   };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ModernHeader 
-        title="الإعدادات" 
+        title={t('title')}
         showNotifications={true}
         showProfile={true}
         variant="dark"
       />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* User Profile Section */}
         <View style={styles.profileSection}>
           <List.Item
             style={[styles.profileCard, { backgroundColor: theme.colors.surface }]}
@@ -238,7 +232,7 @@ export default function SettingsScreen() {
                 <User size={32} color={theme.colors.primary} />
               </View>
             )}
-            title="مدير النظام"
+            title={t('profile.myProfile')}
             description="admin@realestate.com"
             titleStyle={[styles.profileName, { color: theme.colors.onSurface }]}
             descriptionStyle={[styles.profileEmail, { color: theme.colors.onSurfaceVariant }]}
@@ -246,50 +240,21 @@ export default function SettingsScreen() {
           />
         </View>
 
-        {/* General Settings */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
-            الإعدادات العامة
+            {t('appSettings')}
           </Text>
           <View style={[styles.sectionCard, { backgroundColor: theme.colors.surface }]}>
-            {settingsItems.map((item, index) => (
-              <View key={index}>
-                {renderSettingItem(item, index)}
-                {index < settingsItems.length - 1 && (
-                  <Divider style={styles.divider} />
-                )}
-              </View>
-            ))}
+            {settingsItems.map((item, index) => renderSettingItem(item, index, settingsItems.length))}
           </View>
         </View>
 
-        {/* Support Section */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
-            الدعم والمساعدة
+            {t('helpSection')}
           </Text>
           <View style={[styles.sectionCard, { backgroundColor: theme.colors.surface }]}>
-            {supportItems.map((item, index) => (
-              <View key={index}>
-                <List.Item
-                  title={item.title}
-                  description={item.description}
-                  titleStyle={[styles.itemTitle, { color: theme.colors.onSurface }]}
-                  descriptionStyle={[styles.itemDescription, { color: theme.colors.onSurfaceVariant }]}
-                  left={() => (
-                    <View style={[styles.iconContainer, { backgroundColor: `${theme.colors.secondary}20` }]}>
-                      <item.icon size={24} color={theme.colors.secondary} />
-                    </View>
-                  )}
-                  right={() => <ChevronRight size={20} color={theme.colors.onSurfaceVariant} />}
-                  onPress={item.onPress}
-                  style={[styles.listItem, { backgroundColor: theme.colors.surface }]}
-                />
-                {index < supportItems.length - 1 && (
-                  <Divider style={styles.divider} />
-                )}
-              </View>
-            ))}
+            {supportItems.map((item, index) => renderSettingItem(item, index, supportItems.length))}
           </View>
         </View>
 
@@ -331,10 +296,8 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <View style={[styles.sectionCard, { backgroundColor: theme.colors.surface }]}>
             <List.Item
-              title="تسجيل الخروج"
-              description="الخروج من التطبيق"
+              title={t('logout', { ns: 'common' })}
               titleStyle={[styles.itemTitle, { color: '#f44336' }]}
-              descriptionStyle={[styles.itemDescription, { color: theme.colors.onSurfaceVariant }]}
               left={() => (
                 <View style={[styles.iconContainer, { backgroundColor: '#f4433620' }]}>
                   <LogOut size={24} color="#f44336" />
@@ -369,13 +332,13 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <View style={[styles.appInfoCard, { backgroundColor: theme.colors.surface }]}>
             <Text style={[styles.appName, { color: theme.colors.onSurface }]}>
-              نظام إدارة العقارات
+              {t('propertyManagementSystem', { ns: 'common' })}
             </Text>
             <Text style={[styles.appVersion, { color: theme.colors.onSurfaceVariant }]}>
-              الإصدار 1.0.0
+              {t('version', { ns: 'common' })} 1.0.0
             </Text>
             <Text style={[styles.appDescription, { color: theme.colors.onSurfaceVariant }]}>
-              تطبيق شامل لإدارة العقارات والمستأجرين والمالية
+              {t('propertyManagementSystemDescription', { ns: 'common' })}
             </Text>
           </View>
         </View>

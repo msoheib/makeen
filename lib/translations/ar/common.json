@@ -160,6 +160,7 @@
   "enterEmailPassword": "يرجى إدخال البريد الإلكتروني وكلمة المرور",
   "signInFailed": "فشل تسجيل الدخول: لم يتم إرجاع بيانات المستخدم",
   "signInError": "فشل في تسجيل الدخول. يرجى المحاولة مرة أخرى",
+  "propertyManagementSystemDescription": "تطبيق شامل لإدارة العقارات والمستأجرين والمالية",
   "signup": {
     "backToSignIn": "العودة إلى تسجيل الدخول",
     "createYourAccount": "إنشاء حسابك",

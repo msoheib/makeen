@@ -1,0 +1,36 @@
+{
+  "title": "Payments",
+  "subtitle": "Track all transactions",
+  "totalReceived": "Total Received",
+  "totalPaid": "Total Paid",
+  "pending": "Pending",
+  "completed": "Completed",
+  "all": "All",
+  "posted": "Posted",
+  "draft": "Draft",
+  "cancelled": "Cancelled",
+  "searchPlaceholder": "Search payments...",
+  "addPayment": "Add Payment",
+  "noPaymentsFound": "No payments found",
+  "adjustSearch": "Try adjusting your search or filters",
+  "addFirstPayment": "Start by adding your first payment",
+  "failedToLoad": "Failed to load payments",
+  "retry": "Retry",
+  "loading": "Loading payments...",
+  "types": {
+    "receipt": "Receipt",
+    "payment": "Payment", 
+    "journal": "Journal"
+  },
+  "statuses": {
+    "posted": "Posted",
+    "draft": "Draft",
+    "cancelled": "Cancelled"
+  },
+  "methods": {
+    "cash": "Cash",
+    "bank": "Bank",
+    "card": "Card",
+    "cheque": "Cheque"
+  }
+} 

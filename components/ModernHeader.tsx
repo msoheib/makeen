@@ -9,7 +9,8 @@ import { useAppStore } from '@/lib/store';
 import { useApi } from '@/hooks/useApi';
 import { notificationsApi } from '@/lib/api';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { rtlStyles, isRTL, getFlexDirection } from '@/lib/rtl';
+import { rtlStyles, getFlexDirection } from '@/lib/rtl';
+import { isRTL } from '@/lib/i18n';
 
 interface ModernHeaderProps {
   title?: string;

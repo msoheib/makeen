@@ -1,6 +1,10 @@
 {
   "title": "Settings",
   "subtitle": "App preferences and account",
+  "appSettings": "App Settings",
+  "helpSection": "Help & Support",
+  "logoutConfirmTitle": "Logout",
+  "logoutConfirmMessage": "Are you sure you want to logout?",
   "profile": {
     "title": "Profile",
     "description": "Manage your personal information and account details",

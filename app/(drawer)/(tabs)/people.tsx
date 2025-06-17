@@ -9,9 +9,11 @@ import { Users, UserPlus, Phone, Mail, Plus } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import StatCard from '@/components/StatCard';
+import { useTranslation } from 'react-i18next';
 
 export default function PeopleScreen() {
   const router = useRouter();
+  const { t } = useTranslation('people');
   const [loading, setLoading] = useState(true);
   const [people, setPeople] = useState<User[]>([]);
   const [filteredPeople, setFilteredPeople] = useState<User[]>([]);
@@ -136,8 +138,8 @@ export default function PeopleScreen() {
   return (
     <View style={styles.container}>
       <ModernHeader
-        title="People"
-        subtitle="Manage tenants, owners, and staff"
+        title={t('title')}
+        subtitle={t('subtitle')}
         onNotificationPress={() => router.push('/notifications')}
         onSearchPress={() => router.push('/search')}
       />

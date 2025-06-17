@@ -1,6 +1,6 @@
 import 'react-native-gesture-handler';
 import { useEffect, useState } from 'react';
-import { Platform, I18nManager } from 'react-native';
+import { Platform } from 'react-native';
 import { Slot } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
@@ -10,15 +10,8 @@ import { theme } from '@/lib/theme';
 import { useFonts } from 'expo-font';
 import { Inter_400Regular, Inter_500Medium, Inter_700Bold } from '@expo-google-fonts/inter';
 import * as SplashScreen from 'expo-splash-screen';
-import i18n from '@/lib/i18n'; // Initialize i18n
-import { initializeRTL } from '@/lib/rtl';
+import i18n from '@/lib/i18n'; // Initialize i18n (RTL is now handled there)
 import CustomSplashScreen from '@/components/SplashScreen';
-
-// Early RTL setup - simplified and consistent
-if (Platform.OS === 'android') {
-  console.log('[App] Configuring Android RTL at startup...');
-  I18nManager.allowRTL(true);
-}
 
 // Prevent the splash screen from auto-hiding only on native platforms
 if (Platform.OS !== 'web') {
@@ -37,30 +30,19 @@ export default function RootLayout() {
     Inter_700Bold,
   });
 
-  // Initialize i18n and RTL
+  // Wait for i18n initialization (RTL is handled in i18n initialization now)
   useEffect(() => {
     const initializeApp = async () => {
-      // Wait for i18n to be ready
+      // i18n initialization now handles RTL setup before React components render
       if (i18n.isInitialized) {
         setI18nReady(true);
       } else {
         const handleInitialized = () => setI18nReady(true);
         i18n.on('initialized', handleInitialized);
         
-        // Cleanup listener
         return () => {
           i18n.off('initialized', handleInitialized);
         };
-      }
-
-      // Initialize RTL after i18n is ready
-      if (i18n.isInitialized) {
-        await initializeRTL();
-        console.log('[App] RTL initialization complete:', {
-          isRTL: I18nManager.isRTL,
-          allowRTL: I18nManager.allowRTL,
-          platform: Platform.OS
-        });
       }
     };
 

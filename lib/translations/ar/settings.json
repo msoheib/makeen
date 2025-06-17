@@ -1,6 +1,10 @@
 {
   "title": "الإعدادات",
   "subtitle": "تفضيلات التطبيق والحساب",
+  "appSettings": "إعدادات التطبيق",
+  "helpSection": "الدعم والمساعدة",
+  "logoutConfirmTitle": "تسجيل الخروج",
+  "logoutConfirmMessage": "هل أنت متأكد من رغبتك في تسجيل الخروج؟",
   "profile": {
     "title": "الملف الشخصي",
     "description": "إدارة معلوماتك الشخصية وتفاصيل الحساب",

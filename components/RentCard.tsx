@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { lightTheme, darkTheme, spacing, borderRadius, shadows, rtlStyles } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
 import { formatCurrency } from '@/lib/formatters';
-import { isRTL } from '@/lib/rtl';
+import { isRTL } from '@/lib/i18n';
 
 interface RentCardProps {
   totalRent: number;

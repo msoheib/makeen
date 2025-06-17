@@ -10,9 +10,11 @@ import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import StatCard from '@/components/StatCard';
 import VoucherCard from '@/components/VoucherCard';
+import { useTranslation } from 'react-i18next';
 
 export default function FinanceScreen() {
   const router = useRouter();
+  const { t } = useTranslation('finance');
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('vouchers');
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
@@ -148,8 +150,8 @@ export default function FinanceScreen() {
   return (
     <View style={styles.container}>
       <ModernHeader
-        title="Finance"
-        subtitle="Manage financial records"
+        title={t('title')}
+        subtitle={t('subtitle')}
         onNotificationPress={() => router.push('/notifications')}
         onSearchPress={() => router.push('/search')}
       />

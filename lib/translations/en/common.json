@@ -156,5 +156,6 @@
   "createAccount": "Create Account",
   "enterEmailPassword": "Please enter your email and password",
   "signInFailed": "Sign-in failed: No user data returned",
-  "signInError": "Failed to sign in. Please try again"
+  "signInError": "Failed to sign in. Please try again",
+  "propertyManagementSystemDescription": "Comprehensive property management application for tenants, maintenance, and finances"
 } 

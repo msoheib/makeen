@@ -3,7 +3,7 @@ import { View, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, RefreshC
 import { Text } from 'react-native-paper';
 import { lightTheme } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
-import { rtlStyles, getFlexDirection } from '@/lib/rtl';
+import { rtlStyles, getTextAlign, getFlexDirection } from '@/lib/rtl';
 import { 
   Building2, 
   Users, 
@@ -23,7 +23,6 @@ import StatCard from '@/components/StatCard';
 import { useApi } from '@/hooks/useApi';
 import { propertiesApi, profilesApi, contractsApi } from '@/lib/api';
 import { useScreenAccess, SCREEN_PERMISSIONS } from '@/lib/permissions';
-import { rtlStyles, getTextAlign, getFlexDirection } from '@/lib/rtl';
 
 // Static data to prevent loading issues
 const staticData = {
@@ -215,14 +214,19 @@ export default function DashboardScreen() {
   };
   
   // Enhanced tenant statistics with better calculations
+  // First, calculate the value needed for the object
+  const totalTenantsCount = tenantsData.length;
+  
+  // Now create the object using the pre-calculated variable
   const tenantStats = {
-    totalTenants: tenantsData.length,
+    totalTenants: totalTenantsCount,
     activeTenants: tenantsData.filter(t => t.status === 'active').length,
     foreignTenants: tenantsData.filter(t => t.is_foreign === true).length,
     pendingTenants: tenantsData.filter(t => t.status === 'pending').length,
     // Calculate contract-related stats
     activeContracts: dashboardData?.active_contracts || 0,
-    expiringContracts: Math.floor(tenantStats.totalTenants * 0.1) // TODO: Calculate from actual contract expiry dates
+    // Use the new variable here instead of referencing tenantStats
+    expiringContracts: Math.floor(totalTenantsCount * 0.1) // TODO: Calculate from actual contract expiry dates
   };
 
   // Enhanced financial summary with real monthly rent data

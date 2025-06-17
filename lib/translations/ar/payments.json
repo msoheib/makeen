@@ -1,0 +1,36 @@
+{
+  "title": "المدفوعات",
+  "subtitle": "تتبع جميع المعاملات",
+  "totalReceived": "إجمالي المستلم",
+  "totalPaid": "إجمالي المدفوع",
+  "pending": "معلق",
+  "completed": "مكتمل",
+  "all": "الكل",
+  "posted": "مرسل",
+  "draft": "مسودة",
+  "cancelled": "ملغي",
+  "searchPlaceholder": "البحث في المدفوعات...",
+  "addPayment": "إضافة دفعة",
+  "noPaymentsFound": "لم يتم العثور على مدفوعات",
+  "adjustSearch": "جرب تعديل البحث أو الفلاتر",
+  "addFirstPayment": "ابدأ بإضافة أول دفعة لك",
+  "failedToLoad": "فشل في تحميل المدفوعات",
+  "retry": "إعادة المحاولة",
+  "loading": "جاري تحميل المدفوعات...",
+  "types": {
+    "receipt": "إيصال",
+    "payment": "دفعة", 
+    "journal": "يومية"
+  },
+  "statuses": {
+    "posted": "مرسل",
+    "draft": "مسودة",
+    "cancelled": "ملغي"
+  },
+  "methods": {
+    "cash": "نقداً",
+    "bank": "بنك",
+    "card": "بطاقة",
+    "cheque": "شيك"
+  }
+} 

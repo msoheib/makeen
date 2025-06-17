@@ -1,126 +1,49 @@
-import { I18nManager, Platform } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getCurrentLanguage, changeLanguage, isRTL } from './i18n';
-import type { SupportedLanguage } from './translations/types';
+import { I18nManager, Platform, Alert } from 'react-native';
+import { Updates } from 'expo-modules-core';
+import { changeLanguage, isRTL, SupportedLanguage } from './i18n';
 
-// Storage key for language preference
-const LANGUAGE_STORAGE_KEY = 'user_language';
-
-// Safe storage wrapper for web compatibility
-const safeStorage = {
-  async getItem(key: string): Promise<string | null> {
-    try {
-      if (Platform.OS === 'web' && typeof window === 'undefined') {
-        console.warn('Window not available, using memory storage fallback');
-        return null;
-      }
-      return await AsyncStorage.getItem(key);
-    } catch (error) {
-      console.warn('AsyncStorage getItem failed, using fallback:', error);
-      return null;
-    }
-  },
-  
-  async setItem(key: string, value: string): Promise<void> {
-    try {
-      if (Platform.OS === 'web' && typeof window === 'undefined') {
-        console.warn('Window not available, skipping storage');
-        return;
-      }
-      await AsyncStorage.setItem(key, value);
-    } catch (error) {
-      console.warn('AsyncStorage setItem failed:', error);
-    }
-  }
-};
-
-// Simplified RTL application - consistent across platforms
+/**
+ * Applies the RTL layout direction natively.
+ * @param isRTLLanguage - Whether the language requires RTL layout.
+ */
 export const applyRTL = (isRTLLanguage: boolean): void => {
   try {
-    console.log(`[RTL] Applying RTL configuration: isRTLLanguage=${isRTLLanguage}, Platform=${Platform.OS}`);
-    
-    // Always allow RTL
+    console.log(`[RTL] Applying RTL config: isRTLLanguage=${isRTLLanguage}, Platform=${Platform.OS}`);
     I18nManager.allowRTL(true);
-    
-    // Apply RTL based on language
     I18nManager.forceRTL(isRTLLanguage);
-    
-    console.log(`[RTL] Final state: I18nManager.isRTL=${I18nManager.isRTL}, allowRTL=${I18nManager.allowRTL}`);
+    console.log(`[RTL] Final state: I18nManager.isRTL=${I18nManager.isRTL}`);
   } catch (error) {
     console.error('[RTL] Error applying RTL configuration:', error);
   }
 };
 
-// Simplified RTL initialization
-export const initializeRTL = async (): Promise<void> => {
+/**
+ * Changes the app's language and reloads the app if required for RTL changes.
+ * This is the main function to use when switching languages from the UI.
+ * @param language - The new language to switch to.
+ */
+export const switchLanguageAndReload = async (language: SupportedLanguage): Promise<void> => {
   try {
-    console.log('[RTL] Starting RTL initialization...');
-    
-    const savedLanguage = await safeStorage.getItem(LANGUAGE_STORAGE_KEY);
-    const currentLang = getCurrentLanguage();
-    
-    // Use saved language if available, otherwise use device language
-    const language: SupportedLanguage = (savedLanguage as SupportedLanguage) || currentLang;
-    
-    // Apply the language
-    if (language !== currentLang) {
-      await changeLanguage(language);
-    }
-    
-    // Apply RTL layout
-    const isRTLLang = language === 'ar';
-    applyRTL(isRTLLang);
-    
-    console.log(`[RTL] Initialization complete: Language=${language}, RTL=${isRTLLang}, I18nManager.isRTL=${I18nManager.isRTL}`);
-  } catch (error) {
-    console.error('[RTL] Error initializing RTL:', error);
-  }
-};
+    const currentIsRTL = I18nManager.isRTL;
+    const newIsRTL = language === 'ar';
 
-// Change language and update RTL layout
-export const switchLanguage = async (language: SupportedLanguage): Promise<void> => {
-  try {
-    console.log(`[RTL] Switching language to: ${language}`);
-    
-    // Save language preference
-    await safeStorage.setItem(LANGUAGE_STORAGE_KEY, language);
-    
-    // Change language in i18n
+    // Use the centralized language change function from i18n.ts
     await changeLanguage(language);
-    
-    // Apply RTL layout
-    const isRTLLang = language === 'ar';
-    applyRTL(isRTLLang);
-    
-    console.log(`[RTL] Language switch complete: ${language}, RTL: ${isRTLLang}`);
+
+    // On Android, RTL changes require an app restart to fully take effect
+    if (Platform.OS === 'android' && currentIsRTL !== newIsRTL) {
+      Alert.alert(
+        'Restart Required',
+        'The app needs to restart to apply the new language direction.',
+        [{ text: 'OK', onPress: async () => await Updates.reloadAsync() }]
+      );
+    } else {
+      // For iOS or when RTL direction doesn't change, apply immediately
+      applyRTL(newIsRTL);
+    }
   } catch (error) {
     console.error('[RTL] Error switching language:', error);
-    throw error;
   }
-};
-
-// Get saved language from storage
-export const getSavedLanguage = async (): Promise<SupportedLanguage | null> => {
-  try {
-    const savedLanguage = await safeStorage.getItem(LANGUAGE_STORAGE_KEY);
-    return savedLanguage as SupportedLanguage;
-  } catch (error) {
-    console.error('Error getting saved language:', error);
-    return null;
-  }
-};
-
-// Check if app restart is needed for RTL changes
-export const needsRestart = (newLanguage: SupportedLanguage): boolean => {
-  const currentIsRTL = I18nManager.isRTL;
-  const newIsRTL = newLanguage === 'ar';
-  
-  // Only Android typically needs restart for RTL changes
-  if (Platform.OS === 'android' && currentIsRTL !== newIsRTL) {
-    return true;
-  }
-  
-  return false;
 };
 
 // Helper function to get direction for styles
@@ -209,15 +132,37 @@ export const rtlStyles = {
   alignItemsEnd: {
     alignItems: isRTL() ? 'flex-start' : 'flex-end' as const,
   },
+  borderLeftWidth: (value: number) => ({
+    [isRTL() ? 'borderRightWidth' : 'borderLeftWidth']: value,
+  }),
+  borderRightWidth: (value: number) => ({
+    [isRTL() ? 'borderLeftWidth' : 'borderRightWidth']: value,
+  }),
+  borderStartWidth: (value: number) => ({
+    [isRTL() ? 'borderRightWidth' : 'borderLeftWidth']: value,
+  }),
+  borderEndWidth: (value: number) => ({
+    [isRTL() ? 'borderLeftWidth' : 'borderRightWidth']: value,
+  }),
 };
 
-// Simplified Android RTL utilities
+// Platform-specific styles for RTL
+export const platformRTLStyles = Platform.select({
+  android: {
+    writingDirection: isRTL() ? 'rtl' : 'ltr' as const,
+  },
+  ios: {
+    writingDirection: isRTL() ? 'rtl' : 'ltr' as const,
+  },
+  default: {},
+});
+
+// Android-specific RTL fixes
 export const androidRTLFix = () => {
   if (Platform.OS === 'android') {
-    I18nManager.allowRTL(true);
-    console.log('[RTL] Android RTL fix applied');
+    return {
+      direction: isRTL() ? 'rtl' : 'ltr' as const,
+    };
   }
-};
-
-// Re-export isRTL so other modules can import it directly from this file
-export { isRTL }; 
+  return {};
+}; 

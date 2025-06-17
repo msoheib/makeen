@@ -1,7 +1,7 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
+import { Platform, I18nManager } from 'react-native';
 import * as RNLocalize from 'react-native-localize';
 
 // Import translation files
@@ -16,6 +16,7 @@ import maintenanceEn from './translations/en/maintenance.json';
 import peopleEn from './translations/en/people.json';
 import documentsEn from './translations/en/documents.json';
 import financeEn from './translations/en/finance.json';
+import paymentsEn from './translations/en/payments.json';
 
 import commonAr from './translations/ar/common.json';
 import navigationAr from './translations/ar/navigation.json';
@@ -28,6 +29,7 @@ import maintenanceAr from './translations/ar/maintenance.json';
 import peopleAr from './translations/ar/people.json';
 import documentsAr from './translations/ar/documents.json';
 import financeAr from './translations/ar/finance.json';
+import paymentsAr from './translations/ar/payments.json';
 
 export type SupportedLanguage = 'en' | 'ar';
 
@@ -73,6 +75,7 @@ const resources = {
     people: peopleEn,
     documents: documentsEn,
     finance: financeEn,
+    payments: paymentsEn,
   },
   ar: {
     common: commonAr,
@@ -86,26 +89,46 @@ const resources = {
     people: peopleAr,
     documents: documentsAr,
     finance: financeAr,
+    payments: paymentsAr,
   },
 };
 
-// Get device language
+/**
+ * Applies the RTL layout direction natively.
+ * This function is defined here to avoid circular dependencies.
+ * @param isRTLLanguage - Whether the language requires RTL layout.
+ */
+const applyRTL = (isRTLLanguage: boolean): void => {
+  try {
+    console.log(`[i18n] Applying RTL config: isRTLLanguage=${isRTLLanguage}, Platform=${Platform.OS}`);
+    I18nManager.allowRTL(true);
+    I18nManager.forceRTL(isRTLLanguage);
+    console.log(`[i18n] Final state: I18nManager.isRTL=${I18nManager.isRTL}`);
+  } catch (error) {
+    console.error('[i18n] Error applying RTL configuration:', error);
+  }
+};
+
+// Get device language (currently unused - app defaults to Arabic regardless of device)
 const getDeviceLanguage = (): 'en' | 'ar' => {
   try {
     const locales = RNLocalize.getLocales();
     if (locales && locales.length > 0) {
       const deviceLanguage = locales[0].languageCode;
-      return deviceLanguage === 'ar' ? 'ar' : 'ar'; // Default to Arabic for testing
+      // Default to Arabic if not specifically English
+      return deviceLanguage === 'en' ? 'en' : 'ar';
     }
   } catch (error) {
     console.warn('Error getting device language:', error);
   }
-  return 'ar'; // fallback changed to Arabic for testing
+  // Fallback to Arabic as the default
+  return 'ar';
 };
 
 // Get stored language
 const getStoredLanguage = async (): Promise<'en' | 'ar'> => {
   try {
+    // Use consistent storage key throughout the app
     const stored = await safeStorage.getItem('app-language');
     if (stored === 'en' || stored === 'ar') {
       return stored;
@@ -113,7 +136,8 @@ const getStoredLanguage = async (): Promise<'en' | 'ar'> => {
   } catch (error) {
     console.warn('Error getting stored language:', error);
   }
-  return getDeviceLanguage();
+  // Always default to Arabic unless explicitly set to English
+  return 'ar';
 };
 
 // Initialize i18next
@@ -121,17 +145,21 @@ const initializeI18n = async () => {
   try {
     console.log('Starting i18n initialization...');
     
-    const storedLanguage = await getStoredLanguage();
-    console.log('Using language:', storedLanguage);
+    const language = await getStoredLanguage();
+    console.log('Using language:', language);
+
+    // CRITICAL FIX: Apply RTL settings immediately after language determination
+    // This happens BEFORE React initialization to prevent race condition
+    applyRTL(language === 'ar');
     
     await i18n
       .use(initReactI18next)
       .init({
         resources,
-        lng: storedLanguage,
-        fallbackLng: 'ar',
+        lng: language,
+        fallbackLng: 'ar', // Consistent fallback language
         defaultNS: 'common',
-        ns: ['common', 'navigation', 'dashboard', 'properties', 'settings', 'reports', 'tenants', 'maintenance', 'people', 'documents', 'finance'],
+        ns: ['common', 'navigation', 'dashboard', 'properties', 'settings', 'reports', 'tenants', 'maintenance', 'people', 'documents', 'finance', 'payments'],
         
         interpolation: {
           escapeValue: false, // React already escapes values
@@ -173,7 +201,7 @@ export const changeLanguage = async (language: 'en' | 'ar'): Promise<void> => {
     // Change i18next language
     await i18n.changeLanguage(language);
     
-    // Store the language preference
+    // Store the language preference using consistent key
     await safeStorage.setItem('app-language', language);
     
     console.log('Language changed successfully to:', language);

@@ -1,15 +1,15 @@
 import { MD3LightTheme } from 'react-native-paper';
-import { isRTL } from './rtl';
+import { isRTL } from './i18n';
 
 // Define light colors
 export const lightColors = {
-  primary: '#2E7D32', // Green
+  primary: '#1976D2', // Primary Blue (consistent with app icon and splash)
   onPrimary: '#FFFFFF',
-  primaryContainer: '#A5D6A7',
-  onPrimaryContainer: '#1B5E20',
-  secondary: '#1976D2', // Blue
+  primaryContainer: '#BBDEFB', // Light blue container
+  onPrimaryContainer: '#0D47A1', // Dark blue text
+  secondary: '#2196F3', // Light Blue for secondary elements
   onSecondary: '#FFFFFF',
-  secondaryContainer: '#BBDEFB',
+  secondaryContainer: '#E3F2FD', // Very light blue container
   onSecondaryContainer: '#0D47A1',
   tertiary: '#7B1FA2', // Purple
   onTertiary: '#FFFFFF',
@@ -19,6 +19,16 @@ export const lightColors = {
   onError: '#FFFFFF',
   errorContainer: '#FFCDD2',
   onErrorContainer: '#B71C1C',
+  // Additional semantic colors
+  success: '#4CAF50',
+  onSuccess: '#FFFFFF',
+  successContainer: '#C8E6C9',
+  onSuccessContainer: '#2E7D32',
+  warning: '#FF9800',
+  onWarning: '#FFFFFF', 
+  warningContainer: '#FFE0B2',
+  onWarningContainer: '#E65100',
+  notification: '#2196F3',
   background: '#FAFAFA',
   onBackground: '#1C1B1F',
   surface: '#FFFFFF',
@@ -31,7 +41,7 @@ export const lightColors = {
   scrim: '#000000',
   inverseSurface: '#313033',
   inverseOnSurface: '#F4EFF4',
-  inversePrimary: '#4CAF50',
+  inversePrimary: '#42A5F5', // Light blue for inverse elements
   elevation: {
     level0: 'transparent',
     level1: '#FFFFFF',
@@ -65,6 +75,22 @@ export const spacing = {
   lg: 24,
   xl: 32,
   xxl: 48,
+  // Add missing mappings for backwards compatibility
+  s: 8,  // same as sm
+  m: 16, // same as md
+  l: 24, // same as lg
+};
+
+// Compact spacing for tighter layouts
+export const compactSpacing = {
+  xs: 2,
+  sm: 4,
+  md: 6,
+  lg: 8,
+  xl: 12,
+  '2xl': 16,
+  '3xl': 20,
+  '4xl': 24,
 };
 
 export const borderRadius = {
@@ -189,3 +215,6 @@ export const shadowsCompact = {
     elevation: 4,
   },
 };
+
+// Export shadows as an alias for shadowsCompact for backwards compatibility
+export const shadows = shadowsCompact;

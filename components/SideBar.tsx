@@ -7,7 +7,8 @@ import { DrawerActions } from '@react-navigation/native';
 import { NotificationBadge } from './NotificationBadge';
 import { useTabBadgeCount } from '@/hooks/useNotificationBadges';
 import { useTranslation } from '@/lib/useTranslation';
-import { rtlStyles, isRTL, getFlexDirection } from '@/lib/rtl';
+import { rtlStyles, getFlexDirection } from '@/lib/rtl';
+import { isRTL } from '@/lib/i18n';
 import { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { useFilteredNavigation, getRoleDisplayName, SIDEBAR_PERMISSIONS } from '@/lib/permissions';
 

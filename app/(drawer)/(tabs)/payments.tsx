@@ -8,6 +8,7 @@ import { useApi } from '@/hooks/useApi';
 import { TrendingUp, TrendingDown, DollarSign, Calendar, CheckCircle, Clock, XCircle, Filter, Plus } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
+import { useTranslation } from 'react-i18next';
 
 // Updated interface to match voucher data structure
 interface Payment {
@@ -26,6 +27,7 @@ interface Payment {
 
 export default function PaymentsScreen() {
   const router = useRouter();
+  const { t } = useTranslation('payments');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'posted' | 'draft' | 'cancelled'>('all');
   const [filteredPayments, setFilteredPayments] = useState<Payment[]>([]);
@@ -185,8 +187,8 @@ export default function PaymentsScreen() {
     return (
       <View style={styles.container}>
         <ModernHeader
-          title="Payments"
-          subtitle="Track all transactions"
+          title={t('title')}
+          subtitle={t('subtitle')}
           variant="dark"
           showNotifications={true}
           showMenu={true}
@@ -204,8 +206,8 @@ export default function PaymentsScreen() {
   return (
     <View style={styles.container}>
       <ModernHeader
-        title="Payments"
-        subtitle="Track all transactions"
+        title={t('title')}
+        subtitle={t('subtitle')}
         variant="dark"
         showNotifications={true}
         showMenu={true}
