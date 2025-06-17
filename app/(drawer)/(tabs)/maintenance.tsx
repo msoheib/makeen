@@ -79,6 +79,18 @@ export default function MaintenanceScreen() {
     refetch();
   }, [refetch]);
 
+  // Create dynamic styles with access to theme
+  const dynamicStyles = StyleSheet.create({
+    searchbar: {
+      marginBottom: spacing.m,
+      backgroundColor: theme.colors.surface,
+    },
+    segmentedButtons: {
+      backgroundColor: theme.colors.surface,
+    },
+    
+  });
+
   // Show loading screen while data is being fetched
   if (loading && !requests) {
     return (
@@ -200,7 +212,7 @@ export default function MaintenanceScreen() {
           placeholder={t('searchPlaceholder')}
           onChangeText={setSearchQuery}
           value={searchQuery}
-          style={styles.searchbar}
+          style={dynamicStyles.searchbar}
           iconColor={theme.colors.onSurfaceVariant}
         />
         
@@ -213,7 +225,7 @@ export default function MaintenanceScreen() {
             { value: 'in_progress', label: t('statuses.inProgress') },
             { value: 'completed', label: t('statuses.completed') },
           ]}
-          style={styles.segmentedButtons}
+          style={dynamicStyles.segmentedButtons}
         />
       </View>
 
@@ -223,6 +235,7 @@ export default function MaintenanceScreen() {
         renderItem={({ item }) => (
           <MaintenanceRequestCard
             request={item}
+            theme={theme}
             onPress={() => router.push(`/maintenance/${item.id}`)}
           />
         )}
@@ -252,7 +265,7 @@ export default function MaintenanceScreen() {
 
       {/* Add Button */}
       <View style={styles.fabContainer}>
-        <ModernCard style={styles.fab}>
+        <ModernCard style={dynamicStyles.fab}>
           <Text
             style={styles.fabText}
             onPress={() => router.push('/maintenance/add')}
@@ -362,13 +375,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.m,
     marginBottom: spacing.m,
   },
-  searchbar: {
-    marginBottom: spacing.m,
-    backgroundColor: theme.colors.surface,
-  },
-  segmentedButtons: {
-    backgroundColor: theme.colors.surface,
-  },
+
   listContent: {
     paddingHorizontal: spacing.m,
     paddingBottom: spacing.xxxl,
@@ -381,27 +388,16 @@ const styles = StyleSheet.create({
   emptyStateTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: theme.colors.onSurface,
     marginTop: spacing.m,
     marginBottom: spacing.s,
   },
   emptyStateSubtitle: {
     fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
   },
   fabContainer: {
     position: 'absolute',
     bottom: spacing.m,
     right: spacing.m,
-  },
-  fab: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: theme.colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 0,
   },
   fabText: {
     color: 'white',

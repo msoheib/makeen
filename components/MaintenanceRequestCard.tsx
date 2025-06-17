@@ -4,30 +4,14 @@ import { Card, Text, Chip, TouchableRipple } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { MaintenanceRequest } from '@/lib/types';
 import { Clock, AlertCircle, ImageIcon } from 'lucide-react-native';
-import { theme, shadows } from '@/lib/theme';
+import { shadows } from '@/lib/theme';
 import { format } from 'date-fns';
 import { useMaintenanceTranslation } from '@/lib/useTranslation';
 import { getFlexDirection, getTextAlign, rtlStyles } from '@/lib/rtl';
 
-// Status color mapping
-const statusColors = {
-  pending: theme.colors.warning,
-  approved: theme.colors.primary,
-  in_progress: theme.colors.tertiary,
-  completed: theme.colors.success,
-  cancelled: theme.colors.error,
-};
-
-// Priority color mapping
-const priorityColors = {
-  low: theme.colors.success,
-  medium: theme.colors.tertiary,
-  high: theme.colors.warning,
-  urgent: theme.colors.error,
-};
-
 interface MaintenanceRequestCardProps {
   request: MaintenanceRequest;
+  theme?: any; // Add theme as optional prop
   onPress?: () => void;
 }
 
@@ -56,12 +40,12 @@ const getImageUrl = (imageName: string): string => {
 };
 
 // Component for handling image loading with error fallback
-const MaintenanceImage = ({ imageName, style }: { imageName: string; style: any }) => {
+const MaintenanceImage = ({ imageName, style, theme }: { imageName: string; style: any; theme: any }) => {
   const [imageError, setImageError] = useState(false);
   
   if (imageError) {
     return (
-      <View style={[style, styles.placeholderContainer]}>
+      <View style={[style, { backgroundColor: theme.colors.surfaceVariant, justifyContent: 'center', alignItems: 'center', borderRadius: 6 }]}>
         <ImageIcon size={24} color={theme.colors.onSurfaceVariant} />
       </View>
     );
@@ -77,9 +61,42 @@ const MaintenanceImage = ({ imageName, style }: { imageName: string; style: any 
   );
 };
 
-export default function MaintenanceRequestCard({ request, onPress }: MaintenanceRequestCardProps) {
+export default function MaintenanceRequestCard({ request, theme, onPress }: MaintenanceRequestCardProps) {
   const router = useRouter();
   const { t } = useMaintenanceTranslation();
+
+  // Use default theme if not provided (fallback)
+  const currentTheme = theme || {
+    colors: {
+      surface: '#FFFFFF',
+      onSurface: '#1C1B1F',
+      onSurfaceVariant: '#49454F',
+      surfaceVariant: '#F5F5F5',
+      primary: '#1976D2',
+      secondary: '#2196F3',
+      tertiary: '#7B1FA2',
+      success: '#4CAF50',
+      error: '#D32F2F',
+      warning: '#FF9800',
+    }
+  };
+
+  // Status color mapping - now inside component with access to theme
+  const statusColors = {
+    pending: currentTheme.colors.warning,
+    approved: currentTheme.colors.primary,
+    in_progress: currentTheme.colors.tertiary,
+    completed: currentTheme.colors.success,
+    cancelled: currentTheme.colors.error,
+  };
+
+  // Priority color mapping - now inside component with access to theme
+  const priorityColors = {
+    low: currentTheme.colors.success,
+    medium: currentTheme.colors.tertiary,
+    high: currentTheme.colors.warning,
+    urgent: currentTheme.colors.error,
+  };
 
   const handlePress = () => {
     if (onPress) {
@@ -99,6 +116,80 @@ export default function MaintenanceRequestCard({ request, onPress }: Maintenance
   const getPriorityLabel = (priority: string) => {
     return t(`priorities.${priority}`) || priority;
   };
+
+  // Create styles inside component with access to current theme
+  const styles = StyleSheet.create({
+    card: {
+      marginBottom: 16,
+      borderRadius: 12,
+      overflow: 'hidden',
+      backgroundColor: currentTheme.colors.surface,
+    },
+    content: {
+      paddingVertical: 12,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    title: {
+      flex: 1,
+      fontSize: 16,
+      fontWeight: '600',
+      color: currentTheme.colors.onSurface,
+    },
+    statusChip: {
+      height: 26,
+    },
+    description: {
+      fontSize: 14,
+      color: currentTheme.colors.onSurfaceVariant,
+      marginBottom: 12,
+    },
+    metaRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 12,
+    },
+    metaItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    metaText: {
+      fontSize: 13,
+      color: currentTheme.colors.onSurfaceVariant,
+      marginHorizontal: 4,
+    },
+    imagesRow: {
+      flexDirection: 'row',
+    },
+    imageContainer: {
+      width: '30%',
+      marginRight: '3.33%',
+      aspectRatio: 16/9,
+      borderRadius: 6,
+      overflow: 'hidden',
+    },
+    image: {
+      width: '100%',
+      height: '100%',
+    },
+    moreImagesContainer: {
+      width: '30%',
+      aspectRatio: 16/9,
+      backgroundColor: currentTheme.colors.surfaceVariant,
+      borderRadius: 6,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    moreImagesText: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: currentTheme.colors.onSurfaceVariant,
+    },
+  });
 
   return (
     <Card style={[styles.card, shadows.medium]} onPress={handlePress}>
@@ -125,7 +216,7 @@ export default function MaintenanceRequestCard({ request, onPress }: Maintenance
 
         <View style={[styles.metaRow, rtlStyles.row()]}>
           <View style={[styles.metaItem, rtlStyles.row()]}>
-            <Clock size={16} color={theme.colors.onSurfaceVariant} />
+            <Clock size={16} color={currentTheme.colors.onSurfaceVariant} />
             <Text style={styles.metaText}>
               {format(new Date(request.created_at), 'MMM d, yyyy')}
             </Text>
@@ -152,7 +243,8 @@ export default function MaintenanceRequestCard({ request, onPress }: Maintenance
               <View key={index} style={styles.imageContainer}>
                 <MaintenanceImage 
                   imageName={image}
-                  style={styles.image} 
+                  style={styles.image}
+                  theme={currentTheme}
                 />
               </View>
             ))}
@@ -167,82 +259,3 @@ export default function MaintenanceRequestCard({ request, onPress }: Maintenance
     </Card>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    marginBottom: 16,
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: theme.colors.surface,
-  },
-  content: {
-    paddingVertical: 12,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  title: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-  },
-  statusChip: {
-    height: 26,
-  },
-  description: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    marginBottom: 12,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  metaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  metaText: {
-    fontSize: 13,
-    color: theme.colors.onSurfaceVariant,
-    marginHorizontal: 4,
-  },
-  imagesRow: {
-    flexDirection: 'row',
-  },
-  imageContainer: {
-    width: '30%',
-    marginRight: '3.33%',
-    aspectRatio: 16/9,
-    borderRadius: 6,
-    overflow: 'hidden',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-  moreImagesContainer: {
-    width: '30%',
-    aspectRatio: 16/9,
-    backgroundColor: theme.colors.surfaceVariant,
-    borderRadius: 6,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  moreImagesText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.onSurfaceVariant,
-  },
-  placeholderContainer: {
-    backgroundColor: theme.colors.surfaceVariant,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 6,
-  },
-});
