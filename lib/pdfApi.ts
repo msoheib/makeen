@@ -1,17 +1,28 @@
 // PDF Generation API Service
 import Constants from 'expo-constants';
+import { supabase } from './supabase';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import { Platform, Alert } from 'react-native';
 
 export interface PDFRequest {
-  reportType: 'revenue' | 'expense' | 'property' | 'tenant' | 'maintenance';
-  dateRange?: {
-    startDate: string;
-    endDate: string;
-  };
-  propertyId?: string;
-  tenantId?: string;
-  data?: any;
-  title?: string;
+  type: string;
+  title: string;
   titleEn?: string;
+  data?: any;
+  userContext?: {
+    userId: string;
+    role: 'admin' | 'manager' | 'owner' | 'tenant';
+    ownedPropertyIds?: string[];
+  };
+  filters?: {
+    tenantId?: string;
+    ownerId?: string;
+    propertyId?: string;
+    reportType?: string;
+    startDate?: string;
+    endDate?: string;
+  };
 }
 
 export interface PDFResponse {
@@ -40,6 +51,37 @@ class PDFGeneratorAPI {
   }
 
   /**
+   * Map frontend report types to backend expected types
+   */
+  private mapReportType(type: string): 'revenue' | 'expense' | 'property' | 'tenant' | 'maintenance' {
+    const mapping: Record<string, 'revenue' | 'expense' | 'property' | 'tenant' | 'maintenance'> = {
+      // Financial Reports
+      'revenue-report': 'revenue',
+      'expense-report': 'expense',
+      'account-statement': 'revenue',
+      'financial-statements': 'revenue',
+      
+      // Property Reports
+      'property-report': 'property',
+      'property-performance': 'property',
+      'owner-financial': 'property',
+      
+      // Tenant Reports
+      'tenant-statement': 'tenant',
+      'payments-late-tenants': 'tenant',
+      
+      // Operations/Maintenance Reports
+      'electrical-meter': 'maintenance',
+      'maintenance-report': 'maintenance',
+      
+      // Summary Reports (default to revenue)
+      'summary-report': 'revenue',
+    };
+    
+    return mapping[type] || 'revenue'; // Default fallback
+  }
+
+  /**
    * Generate HTML report using Supabase Edge Function
    */
   async generateReport(request: PDFRequest): Promise<PDFResponse> {
@@ -49,6 +91,19 @@ class PDFGeneratorAPI {
       if (!this.anonKey) {
         throw new Error('Missing Supabase authentication key');
       }
+
+      // Transform the request to match backend expectations
+      const backendRequest = {
+        reportType: this.mapReportType(request.type),
+        dateRange: request.filters?.startDate && request.filters?.endDate ? {
+          startDate: request.filters.startDate,
+          endDate: request.filters.endDate
+        } : undefined,
+        propertyId: request.filters?.propertyId,
+        tenantId: request.filters?.tenantId,
+      };
+
+      console.log('Transformed backend request:', backendRequest);
       
       const response = await fetch(this.edgeFunctionUrl, {
         method: 'POST',
@@ -57,7 +112,7 @@ class PDFGeneratorAPI {
           'Authorization': `Bearer ${this.anonKey}`,
           'apikey': this.anonKey
         },
-        body: JSON.stringify(request)
+        body: JSON.stringify(backendRequest)
       });
 
       console.log('Report API response status:', response.status);
@@ -94,7 +149,7 @@ class PDFGeneratorAPI {
         // Success: HTML response
         const htmlContent = await response.text();
         const filename = this.extractFilenameFromHeaders(response.headers) || 
-                        `report-${request.reportType}-${new Date().toISOString().split('T')[0]}.html`;
+                        `report-${request.type}-${new Date().toISOString().split('T')[0]}.html`;
         
         console.log('Report generated successfully:', filename);
         
@@ -139,12 +194,74 @@ class PDFGeneratorAPI {
         return true;
       }
       
-      // For React Native - would need file system API
-      console.log('HTML download not implemented for React Native yet');
+      // For React Native - use expo-file-system and expo-sharing
+      if (Platform.OS !== 'web') {
+        return await this.downloadHTMLNative(htmlContent, filename);
+      }
+      
       return false;
       
     } catch (error) {
       console.error('HTML download failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Download HTML file on React Native using expo-file-system
+   */
+  private async downloadHTMLNative(htmlContent: string, filename: string): Promise<boolean> {
+    try {
+      // Ensure filename has .html extension
+      const htmlFilename = filename.endsWith('.html') ? filename : `${filename}.html`;
+      
+      // Create file path in document directory
+      const fileUri = `${FileSystem.documentDirectory}${htmlFilename}`;
+      
+      // Write HTML content to file with UTF-8 encoding for Arabic support
+      await FileSystem.writeAsStringAsync(fileUri, htmlContent, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+
+      // Check if sharing is available
+      const isAvailable = await Sharing.isAvailableAsync();
+      
+      if (isAvailable) {
+        // Share the file (this allows user to save, email, etc.)
+        await Sharing.shareAsync(fileUri, {
+          mimeType: 'text/html',
+          dialogTitle: 'حفظ التقرير',
+          UTI: 'public.html',
+        });
+        
+        // Show success message
+        Alert.alert(
+          '✅ تم إنشاء التقرير بنجاح',
+          `تم إنشاء وحفظ التقرير:\n${htmlFilename}\n\nيمكنك الآن مشاركته أو حفظه على جهازك.`,
+          [{ text: 'موافق', style: 'default' }]
+        );
+        
+        return true;
+      } else {
+        // Fallback - just save to app directory
+        Alert.alert(
+          '✅ تم حفظ التقرير',
+          `تم حفظ التقرير في:\n${fileUri}\n\nيمكنك العثور عليه في مجلد المستندات.`,
+          [{ text: 'موافق', style: 'default' }]
+        );
+        
+        return true;
+      }
+      
+    } catch (error) {
+      console.error('Native HTML download failed:', error);
+      
+      Alert.alert(
+        '❌ خطأ في التحميل',
+        'فشل في حفظ التقرير. يرجى المحاولة مرة أخرى.',
+        [{ text: 'موافق', style: 'default' }]
+      );
+      
       return false;
     }
   }
@@ -185,6 +302,11 @@ class PDFGeneratorAPI {
           files: [file]
         });
         return true;
+      }
+      
+      // For React Native - use the native download which includes sharing
+      if (Platform.OS !== 'web') {
+        return await this.downloadHTMLNative(htmlContent, filename);
       }
       
       // Fallback to download
@@ -235,17 +357,30 @@ class PDFGeneratorAPI {
     const result = await this.generateReport(request);
     
     if (result.success && result.htmlContent && result.filename) {
-      // Try to open in new tab first, fallback to download
-      const opened = await this.openHTML(result.htmlContent, this.getReportTypeLabel(request.reportType));
-      
-      if (!opened) {
+      // For web - try to open in new tab first, fallback to download
+      if (typeof window !== 'undefined') {
+        const opened = await this.openHTML(result.htmlContent, this.getReportTypeLabel(request.type));
+        
+        if (!opened) {
+          const downloaded = await this.downloadHTML(result.htmlContent, result.filename);
+          
+          if (!downloaded) {
+            return {
+              ...result,
+              success: false,
+              error: 'تم إنشاء التقرير بنجاح ولكن فشل التحميل'
+            };
+          }
+        }
+      } else {
+        // For React Native - directly download/share
         const downloaded = await this.downloadHTML(result.htmlContent, result.filename);
         
         if (!downloaded) {
           return {
             ...result,
             success: false,
-            error: 'تم إنشاء التقرير بنجاح ولكن فشل التحميل'
+            error: 'تم إنشاء التقرير بنجاح ولكن فشل في الحفظ أو المشاركة'
           };
         }
       }
@@ -276,6 +411,82 @@ class PDFGeneratorAPI {
   async generatePDF(request: PDFRequest): Promise<PDFResponse> {
     console.warn('generatePDF is deprecated. Use generateAndDownload instead.');
     return this.generateAndDownload(request);
+  }
+
+  // Enhanced helper method for generating filtered reports
+  async generateFilteredReport(
+    reportType: string, 
+    title: string, 
+    userContext: PDFRequest['userContext'], 
+    filters: PDFRequest['filters'] = {}
+  ): Promise<{ success: boolean; url?: string; error?: string }> {
+    return this.generatePDF({
+      type: reportType,
+      title,
+      userContext,
+      filters
+    });
+  }
+
+  // Helper method for property-specific reports
+  async generatePropertyReport(
+    propertyId: string,
+    userContext: PDFRequest['userContext']
+  ): Promise<{ success: boolean; url?: string; error?: string }> {
+    return this.generatePDF({
+      type: 'property-report',
+      title: 'Property Report',
+      titleEn: 'Property Report',
+      userContext,
+      filters: { propertyId }
+    });
+  }
+
+  // Helper method for tenant-specific reports
+  async generateTenantStatement(
+    tenantId: string,
+    userContext: PDFRequest['userContext']
+  ): Promise<{ success: boolean; url?: string; error?: string }> {
+    return this.generatePDF({
+      type: 'tenant-statement',
+      title: 'كشف حساب المستأجر',
+      titleEn: 'Tenant Statement',
+      userContext,
+      filters: { tenantId }
+    });
+  }
+
+  // Helper method for owner-specific reports
+  async generateOwnerReport(
+    ownerId: string,
+    userContext: PDFRequest['userContext']
+  ): Promise<{ success: boolean; url?: string; error?: string }> {
+    return this.generatePDF({
+      type: 'owner-financial',
+      title: 'التقرير المالي للمالك',
+      titleEn: 'Owner Financial Report',
+      userContext,
+      filters: { ownerId }
+    });
+  }
+
+  // Helper method for expense reports with type filtering
+  async generateExpenseReport(
+    reportType: 'sales' | 'maintenance' | 'all',
+    userContext: PDFRequest['userContext'],
+    filters: PDFRequest['filters'] = {}
+  ): Promise<{ success: boolean; url?: string; error?: string }> {
+    return this.generatePDF({
+      type: 'expense-report',
+      title: reportType === 'maintenance' ? 'تقرير مصاريف الصيانة' : 
+             reportType === 'sales' ? 'تقرير مصاريف المبيعات' : 
+             'تقرير المصاريف',
+      titleEn: reportType === 'maintenance' ? 'Maintenance Expense Report' : 
+               reportType === 'sales' ? 'Sales Expense Report' : 
+               'Expense Report',
+      userContext,
+      filters: { ...filters, reportType }
+    });
   }
 }
 
