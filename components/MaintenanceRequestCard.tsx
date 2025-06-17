@@ -6,6 +6,8 @@ import { MaintenanceRequest } from '@/lib/types';
 import { Clock, AlertCircle, ImageIcon } from 'lucide-react-native';
 import { theme, shadows } from '@/lib/theme';
 import { format } from 'date-fns';
+import { useMaintenanceTranslation } from '@/lib/useTranslation';
+import { getFlexDirection, getTextAlign, rtlStyles } from '@/lib/rtl';
 
 // Status color mapping
 const statusColors = {
@@ -77,6 +79,7 @@ const MaintenanceImage = ({ imageName, style }: { imageName: string; style: any 
 
 export default function MaintenanceRequestCard({ request, onPress }: MaintenanceRequestCardProps) {
   const router = useRouter();
+  const { t } = useMaintenanceTranslation();
 
   const handlePress = () => {
     if (onPress) {
@@ -86,11 +89,22 @@ export default function MaintenanceRequestCard({ request, onPress }: Maintenance
     }
   };
 
+  // Function to get translated status
+  const getStatusLabel = (status: string) => {
+    const statusKey = status === 'in_progress' ? 'inProgress' : status;
+    return t(`statuses.${statusKey}`) || status;
+  };
+
+  // Function to get translated priority
+  const getPriorityLabel = (priority: string) => {
+    return t(`priorities.${priority}`) || priority;
+  };
+
   return (
     <Card style={[styles.card, shadows.medium]} onPress={handlePress}>
       <Card.Content style={styles.content}>
-        <View style={styles.headerRow}>
-          <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
+        <View style={[styles.headerRow, rtlStyles.row()]}>
+          <Text style={[styles.title, { textAlign: getTextAlign() }]} numberOfLines={1} ellipsizeMode="tail">
             {request.title}
           </Text>
           <Chip
@@ -101,24 +115,22 @@ export default function MaintenanceRequestCard({ request, onPress }: Maintenance
             ]}
             textStyle={{ color: statusColors[request.status], fontWeight: '500' }}
           >
-            {request.status.split('_').map(word => 
-              word.charAt(0).toUpperCase() + word.slice(1)
-            ).join(' ')}
+            {getStatusLabel(request.status)}
           </Chip>
         </View>
 
-        <Text style={styles.description} numberOfLines={2} ellipsizeMode="tail">
+        <Text style={[styles.description, { textAlign: getTextAlign() }]} numberOfLines={2} ellipsizeMode="tail">
           {request.description}
         </Text>
 
-        <View style={styles.metaRow}>
-          <View style={styles.metaItem}>
+        <View style={[styles.metaRow, rtlStyles.row()]}>
+          <View style={[styles.metaItem, rtlStyles.row()]}>
             <Clock size={16} color={theme.colors.onSurfaceVariant} />
             <Text style={styles.metaText}>
               {format(new Date(request.created_at), 'MMM d, yyyy')}
             </Text>
           </View>
-          <View style={styles.metaItem}>
+          <View style={[styles.metaItem, rtlStyles.row()]}>
             <AlertCircle 
               size={16} 
               color={priorityColors[request.priority]} 
@@ -129,13 +141,13 @@ export default function MaintenanceRequestCard({ request, onPress }: Maintenance
                 { color: priorityColors[request.priority] }
               ]}
             >
-              {request.priority.charAt(0).toUpperCase() + request.priority.slice(1)} Priority
+              {getPriorityLabel(request.priority)}
             </Text>
           </View>
         </View>
 
         {request.images && request.images.length > 0 && (
-          <View style={styles.imagesRow}>
+          <View style={[styles.imagesRow, rtlStyles.row()]}>
             {request.images.slice(0, 3).map((image, index) => (
               <View key={index} style={styles.imageContainer}>
                 <MaintenanceImage 
@@ -176,7 +188,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: '600',
-    marginRight: 8,
     color: theme.colors.onSurface,
   },
   statusChip: {
@@ -199,7 +210,7 @@ const styles = StyleSheet.create({
   metaText: {
     fontSize: 13,
     color: theme.colors.onSurfaceVariant,
-    marginLeft: 4,
+    marginHorizontal: 4,
   },
   imagesRow: {
     flexDirection: 'row',

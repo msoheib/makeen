@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView, SafeAreaView, Alert, Platform, I18nManager } from 'react-native';
+import { View, StyleSheet, ScrollView, SafeAreaView, Alert, Platform, I18nManager, TouchableOpacity, Pressable } from 'react-native';
 import { Text, List, Switch, Divider } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { lightTheme, darkTheme } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
+import { supabase } from '@/lib/supabase';
 import { 
   User, 
   Bell, 
@@ -21,9 +22,11 @@ import ModernHeader from '@/components/ModernHeader';
 export default function SettingsScreen() {
   const router = useRouter();
   const { isDarkMode, toggleDarkMode, language, setLanguage } = useAppStore();
+  const setUser = useAppStore(state => state.setUser);
+  const setAuthenticated = useAppStore(state => state.setAuthenticated);
   const theme = isDarkMode ? darkTheme : lightTheme;
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     Alert.alert(
       'تسجيل الخروج',
       'هل أنت متأكد من رغبتك في تسجيل الخروج؟',
@@ -35,11 +38,32 @@ export default function SettingsScreen() {
         {
           text: 'تسجيل الخروج',
           style: 'destructive',
-          onPress: () => {
-            // Clear any stored data and navigate to login
-            console.log('User logged out');
-            // In a real app, you would clear the authentication token
-            // and navigate to the login screen
+          onPress: async () => {
+            try {
+              console.log('Logging out user...');
+              
+              // Sign out from Supabase
+              const { error } = await supabase.auth.signOut();
+              
+              if (error) {
+                console.error('Error signing out:', error);
+                Alert.alert('خطأ', 'حدث خطأ أثناء تسجيل الخروج. يرجى المحاولة مرة أخرى.');
+                return;
+              }
+              
+              // Clear user state
+              setUser(null);
+              setAuthenticated(false);
+              
+              console.log('User logged out successfully');
+              
+              // Navigate to auth screen
+              router.replace('/(auth)');
+              
+            } catch (error: any) {
+              console.error('Unexpected error during logout:', error);
+              Alert.alert('خطأ', 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.');
+            }
           }
         }
       ]
@@ -51,21 +75,21 @@ export default function SettingsScreen() {
       title: 'الملف الشخصي',
       description: 'إدارة معلوماتك الشخصية',
       icon: User,
-      onPress: () => console.log('Navigate to profile'),
+      onPress: () => router.push('/profile'),
       showSwitch: false
     },
     {
       title: 'الإشعارات',
       description: 'إعدادات التنبيهات والإشعارات',
       icon: Bell,
-      onPress: () => console.log('Navigate to notifications'),
+      onPress: () => router.push('/notifications'),
       showSwitch: false
     },
     {
       title: 'اللغة',
       description: 'العربية',
       icon: Globe,
-      onPress: () => console.log('Navigate to language'),
+      onPress: () => router.push('/language'),
       showSwitch: false
     },
     {
@@ -80,7 +104,7 @@ export default function SettingsScreen() {
       title: 'العملة',
       description: 'ريال سعودي (SAR)',
       icon: DollarSign,
-      onPress: () => console.log('Navigate to currency'),
+      onPress: () => router.push('/currency'),
       showSwitch: false
     }
   ];
@@ -90,19 +114,19 @@ export default function SettingsScreen() {
       title: 'المساعدة والدعم',
       description: 'الحصول على المساعدة',
       icon: HelpCircle,
-      onPress: () => console.log('Navigate to support')
+      onPress: () => router.push('/support')
     },
     {
       title: 'الخصوصية',
       description: 'سياسة الخصوصية',
       icon: Shield,
-      onPress: () => console.log('Navigate to privacy')
+      onPress: () => router.push('/privacy')
     },
     {
       title: 'الشروط والأحكام',
       description: 'شروط الاستخدام',
       icon: FileText,
-      onPress: () => console.log('Navigate to terms')
+      onPress: () => router.push('/terms')
     }
   ];
 
@@ -150,22 +174,20 @@ export default function SettingsScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* User Profile Section */}
         <View style={styles.profileSection}>
-          <View style={[styles.profileCard, { backgroundColor: theme.colors.surface }]}>
-            <View style={styles.profileInfo}>
+          <List.Item
+            style={[styles.profileCard, { backgroundColor: theme.colors.surface }]}
+            onPress={() => router.push('/profile')}
+            left={() => (
               <View style={[styles.profileAvatar, { backgroundColor: theme.colors.primaryContainer }]}>
                 <User size={32} color={theme.colors.primary} />
               </View>
-              <View style={styles.profileDetails}>
-                <Text style={[styles.profileName, { color: theme.colors.onSurface }]}>
-                  مدير النظام
-                </Text>
-                <Text style={[styles.profileEmail, { color: theme.colors.onSurfaceVariant }]}>
-                  admin@realestate.com
-                </Text>
-              </View>
-            </View>
-            <ChevronRight size={20} color={theme.colors.onSurfaceVariant} />
-          </View>
+            )}
+            title="مدير النظام"
+            description="admin@realestate.com"
+            titleStyle={[styles.profileName, { color: theme.colors.onSurface }]}
+            descriptionStyle={[styles.profileEmail, { color: theme.colors.onSurfaceVariant }]}
+            right={() => <ChevronRight size={20} color={theme.colors.onSurfaceVariant} />}
+          />
         </View>
 
         {/* General Settings */}

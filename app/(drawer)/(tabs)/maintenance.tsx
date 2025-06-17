@@ -11,6 +11,7 @@ import ModernCard from '@/components/ModernCard';
 import StatCard from '@/components/StatCard';
 import MaintenanceRequestCard from '@/components/MaintenanceRequestCard';
 import { useTranslation } from '@/lib/useTranslation';
+import { getFlexDirection, getTextAlign, rtlStyles } from '@/lib/rtl';
 
 export default function MaintenanceScreen() {
   const router = useRouter();
@@ -103,19 +104,19 @@ export default function MaintenanceScreen() {
 
       {/* Stats Overview */}
       <View style={styles.statsSection}>
-        <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+        <Text style={[styles.sectionTitle, { color: theme.colors.onBackground, textAlign: getTextAlign() }]}>
           إحصائيات الصيانة
         </Text>
         <View style={[styles.horizontalStatsCard, { backgroundColor: theme.colors.surface }]}>
-          <View style={styles.horizontalStatsRow}>
+          <View style={[styles.horizontalStatsRow, rtlStyles.row()]}>
             <View style={styles.horizontalStatItem}>
               <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
                 <Tool size={24} color={theme.colors.primary} />
               </View>
-              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
                 إجمالي الطلبات
               </Text>
-              <Text style={[styles.horizontalStatValue, { color: theme.colors.primary }]}>
+              <Text style={[styles.horizontalStatValue, { color: theme.colors.primary, textAlign: 'center' }]}>
                 {loading ? '...' : stats.total.toString()}
               </Text>
             </View>
@@ -124,10 +125,10 @@ export default function MaintenanceScreen() {
               <View style={[styles.horizontalStatIcon, { backgroundColor: '#FF980020' }]}>
                 <Clock size={24} color="#FF9800" />
               </View>
-              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
                 قيد الانتظار
               </Text>
-              <Text style={[styles.horizontalStatValue, { color: '#FF9800' }]}>
+              <Text style={[styles.horizontalStatValue, { color: '#FF9800', textAlign: 'center' }]}>
                 {loading ? '...' : stats.pending.toString()}
               </Text>
             </View>
@@ -136,10 +137,10 @@ export default function MaintenanceScreen() {
               <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.secondary}20` }]}>
                 <AlertTriangle size={24} color={theme.colors.secondary} />
               </View>
-              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
                 قيد التنفيذ
               </Text>
-              <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary }]}>
+              <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary, textAlign: 'center' }]}>
                 {loading ? '...' : stats.inProgress.toString()}
               </Text>
             </View>
@@ -148,10 +149,10 @@ export default function MaintenanceScreen() {
               <View style={[styles.horizontalStatIcon, { backgroundColor: '#4CAF5020' }]}>
                 <CheckCircle size={24} color="#4CAF50" />
               </View>
-              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
                 مكتملة
               </Text>
-              <Text style={[styles.horizontalStatValue, { color: '#4CAF50' }]}>
+              <Text style={[styles.horizontalStatValue, { color: '#4CAF50', textAlign: 'center' }]}>
                 {loading ? '...' : stats.completed.toString()}
               </Text>
             </View>
@@ -197,8 +198,8 @@ export default function MaintenanceScreen() {
         ListEmptyComponent={
           <ModernCard style={styles.emptyState}>
             <Plus size={48} color={theme.colors.onSurfaceVariant} />
-            <Text style={styles.emptyStateTitle}>{t('noMaintenanceRequests')}</Text>
-            <Text style={styles.emptyStateSubtitle}>
+            <Text style={[styles.emptyStateTitle, { textAlign: getTextAlign() }]}>{t('noMaintenanceRequests')}</Text>
+            <Text style={[styles.emptyStateSubtitle, { textAlign: getTextAlign() }]}>
               {searchQuery || activeFilter !== 'all' 
                 ? t('adjustSearchOrFilters') 
                 : t('addFirstRequest')}
@@ -235,7 +236,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     marginBottom: 16,
-    textAlign: 'right',
   },
   statsGrid: {
     flexDirection: 'row',
@@ -316,7 +316,6 @@ const styles = StyleSheet.create({
   emptyStateSubtitle: {
     fontSize: 14,
     color: theme.colors.onSurfaceVariant,
-    textAlign: 'center',
   },
   fabContainer: {
     position: 'absolute',

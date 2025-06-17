@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { Property } from '@/lib/types';
 import { Building2, MapPin } from 'lucide-react-native';
 import { theme, shadows } from '@/lib/theme';
+import { getFlexDirection, getTextAlign, rtlStyles } from '@/lib/rtl';
 
 // Status color mapping
 const statusColors = {
@@ -37,20 +38,22 @@ export default function PropertyCard({ property, onPress, compact = false }: Pro
       onPress={handlePress}
     >
       {!compact && property.images && property.images.length > 0 && (
-        <Card.Cover source={{ uri: property.images[0] }} style={styles.image} />
-      )}
-      <Card.Content style={[styles.content, compact ? styles.compactContent : null]}>
-        <View style={styles.headerRow}>
+        <View style={styles.imageContainer}>
+          <Card.Cover source={{ uri: property.images[0] }} style={styles.image} />
           <Chip
             mode="flat"
             style={[
-              styles.statusChip,
-              { backgroundColor: `${statusColors[property.status]}20` },
+              styles.statusChipOverlay,
+              { backgroundColor: `${statusColors[property.status]}` },
             ]}
-            textStyle={{ color: statusColors[property.status], fontWeight: '500' }}
+            textStyle={{ color: 'white', fontWeight: '600', fontSize: 11 }}
           >
             {property.status.charAt(0).toUpperCase() + property.status.slice(1)}
           </Chip>
+        </View>
+      )}
+      <Card.Content style={[styles.content, compact ? styles.compactContent : null]}>
+        <View style={[styles.headerRow, rtlStyles.row()]}>
           <Chip
             mode="outlined"
             style={styles.typeChip}
@@ -60,43 +63,43 @@ export default function PropertyCard({ property, onPress, compact = false }: Pro
           </Chip>
         </View>
 
-        <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
+        <Text style={[styles.title, rtlStyles.textAlign()]} numberOfLines={1} ellipsizeMode="tail">
           {property.title}
         </Text>
 
-        <View style={styles.locationRow}>
+        <View style={[styles.locationRow, rtlStyles.row()]}>
           <MapPin size={16} color={theme.colors.onSurfaceVariant} />
-          <Text style={styles.locationText} numberOfLines={1} ellipsizeMode="tail">
+          <Text style={[styles.locationText, rtlStyles.textAlign()]} numberOfLines={1} ellipsizeMode="tail">
             {property.address}, {property.city}
           </Text>
         </View>
 
         {!compact && (
           <>
-            <View style={styles.detailsRow}>
+            <View style={[styles.detailsRow, rtlStyles.row()]}>
               {property.bedrooms !== undefined && (
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailValue}>{property.bedrooms}</Text>
-                  <Text style={styles.detailLabel}>Beds</Text>
+                <View style={[styles.detailItem, rtlStyles.row()]}>
+                  <Text style={[styles.detailValue, rtlStyles.textAlign()]}>{property.bedrooms}</Text>
+                  <Text style={[styles.detailLabel, rtlStyles.textAlign()]}>Beds</Text>
                 </View>
               )}
               {property.bathrooms !== undefined && (
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailValue}>{property.bathrooms}</Text>
-                  <Text style={styles.detailLabel}>Baths</Text>
+                <View style={[styles.detailItem, rtlStyles.row()]}>
+                  <Text style={[styles.detailValue, rtlStyles.textAlign()]}>{property.bathrooms}</Text>
+                  <Text style={[styles.detailLabel, rtlStyles.textAlign()]}>Baths</Text>
                 </View>
               )}
-              <View style={styles.detailItem}>
-                <Text style={styles.detailValue}>{property.area_sqm}</Text>
-                <Text style={styles.detailLabel}>Sqm</Text>
+              <View style={[styles.detailItem, rtlStyles.row()]}>
+                <Text style={[styles.detailValue, rtlStyles.textAlign()]}>{property.area_sqm}</Text>
+                <Text style={[styles.detailLabel, rtlStyles.textAlign()]}>Sqm</Text>
               </View>
             </View>
 
-            <View style={styles.priceContainer}>
-              <Text style={styles.price}>
+            <View style={[styles.priceContainer, rtlStyles.row()]}>
+              <Text style={[styles.price, rtlStyles.textAlign()]}>
                 ${property.price.toLocaleString()}
               </Text>
-              <Text style={styles.paymentMethod}>
+              <Text style={[styles.paymentMethod, rtlStyles.textAlign()]}>
                 {property.payment_method === 'cash' ? 'Cash' : 'Installment'}
               </Text>
             </View>
@@ -117,6 +120,9 @@ const styles = StyleSheet.create({
   compactCard: {
     marginBottom: 8,
   },
+  imageContainer: {
+    position: 'relative',
+  },
   image: {
     height: 180,
   },
@@ -128,11 +134,23 @@ const styles = StyleSheet.create({
   },
   headerRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
+    justifyContent: 'flex-start', // Align both chips to the left
+    marginBottom: 16,
   },
-  statusChip: {
-    height: 26,
+  statusChipOverlay: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    padding: 4,
+    borderRadius: 4,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
   },
   typeChip: {
     height: 26,
@@ -143,6 +161,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 8,
     color: theme.colors.onSurface,
+    textAlign: 'right',
   },
   locationRow: {
     flexDirection: 'row',
@@ -153,6 +172,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: theme.colors.onSurfaceVariant,
     marginLeft: 4,
+    flex: 1,
+    textAlign: 'right',
   },
   detailsRow: {
     flexDirection: 'row',
@@ -168,11 +189,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: theme.colors.onSurface,
+    textAlign: 'right',
   },
   detailLabel: {
     fontSize: 13,
     color: theme.colors.onSurfaceVariant,
     marginLeft: 4,
+    textAlign: 'right',
   },
   priceContainer: {
     flexDirection: 'row',
@@ -183,9 +206,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: theme.colors.primary,
+    textAlign: 'right',
   },
   paymentMethod: {
     fontSize: 14,
     color: theme.colors.onSurfaceVariant,
+    textAlign: 'right',
   },
 });

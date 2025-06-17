@@ -10,7 +10,9 @@ import { reportsApi } from '@/lib/api';
 import { pdfApi, PDFRequest } from '@/lib/pdfApi';
 import { useStore } from '@/lib/store';
 import { useTranslation } from '@/lib/useTranslation';
-import { rtlStyles } from '@/lib/rtl';
+import { rtlStyles, getFlexDirection } from '@/lib/rtl';
+import { profilesApi } from '@/lib/api';
+import { propertiesApi } from '@/lib/api';
 
 interface FilterModalProps {
   visible: boolean;
@@ -18,9 +20,10 @@ interface FilterModalProps {
   onApply: (filter: any) => void;
   filterType: string;
   options: any[];
+  loading?: boolean;
 }
 
-const FilterModal: React.FC<FilterModalProps> = ({ visible, onClose, onApply, filterType, options }) => {
+const FilterModal: React.FC<FilterModalProps> = ({ visible, onClose, onApply, filterType, options, loading = false }) => {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const [selectedOption, setSelectedOption] = useState<any>(null);
@@ -32,53 +35,132 @@ const FilterModal: React.FC<FilterModalProps> = ({ visible, onClose, onApply, fi
     onSurfaceVariant: '#757575',
     primary: '#1976D2',
     primaryContainer: '#E3F2FD',
-    onPrimary: '#FFFFFF'
+    onPrimary: '#FFFFFF',
+    outline: '#E0E0E0'
+  };
+
+  // Reset selected option when modal opens
+  React.useEffect(() => {
+    if (visible) {
+      setSelectedOption(null);
+    }
+  }, [visible]);
+
+  const getFilterTypeLabel = (type: string) => {
+    switch (type) {
+      case 'tenant':
+        return t('reports:selectTenant');
+      case 'owner':
+        return t('reports:selectOwner');
+      case 'property':
+        return t('reports:selectProperty');
+      case 'expense-type':
+        return t('reports:selectExpenseType');
+      default:
+        return t('reports:selectFilter');
+    }
   };
 
   return (
     <Modal visible={visible} transparent animationType="slide">
       <View style={styles.modalOverlay}>
         <View style={[styles.modalContent, { backgroundColor: lightColors.surface }]}>
-          <Text style={[styles.modalTitle, { color: lightColors.onSurface }]}>
-            {t('reports:selectFilter')} {filterType}
-            </Text>
-          <FlatList
-            data={options}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[
-                  styles.modalOption,
-                  selectedOption?.id === item.id && { backgroundColor: lightColors.primaryContainer }
-                ]}
-                onPress={() => setSelectedOption(item)}
-              >
-                <Text style={[styles.modalOptionText, { color: lightColors.onSurface }]}>
-                  {item.name}
-                </Text>
-              </TouchableOpacity>
-            )}
-          />
-          <View style={styles.modalActions}>
-                  <TouchableOpacity
-              style={[styles.modalButton, { backgroundColor: lightColors.primary }]}
+          <Text style={[styles.modalTitle, rtlStyles.textAlign(), { color: lightColors.onSurface }]}>
+            {getFilterTypeLabel(filterType)}
+          </Text>
+          
+          {loading ? (
+            <View style={styles.modalLoadingContainer}>
+              <ActivityIndicator size="large" color={lightColors.primary} />
+              <Text style={[styles.modalLoadingText, rtlStyles.textAlign(), { color: lightColors.onSurfaceVariant }]}>
+                {t('common:loading')}
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={options}
+              keyExtractor={(item) => item.id}
+              style={styles.modalOptionsList}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.modalOption,
+                    selectedOption?.id === item.id && { backgroundColor: lightColors.primaryContainer }
+                  ]}
+                  onPress={() => setSelectedOption(item)}
+                >
+                  <View style={styles.modalOptionContent}>
+                    <Text style={[
+                      styles.modalOptionText, 
+                      rtlStyles.textAlign(),
+                      { color: lightColors.onSurface }
+                    ]}>
+                      {item.name}
+                    </Text>
+                    {item.email && (
+                      <Text style={[
+                        styles.modalOptionSubtext, 
+                        rtlStyles.textAlign(),
+                        { color: lightColors.onSurfaceVariant }
+                      ]}>
+                        {item.email}
+                      </Text>
+                    )}
+                    {item.address && (
+                      <Text style={[
+                        styles.modalOptionSubtext, 
+                        rtlStyles.textAlign(),
+                        { color: lightColors.onSurfaceVariant }
+                      ]}>
+                        {item.address}
+                      </Text>
+                    )}
+                  </View>
+                  {selectedOption?.id === item.id && (
+                    <MaterialIcons name="check" size={20} color={lightColors.primary} />
+                  )}
+                </TouchableOpacity>
+              )}
+              ListEmptyComponent={
+                <View style={styles.modalEmptyContainer}>
+                  <Text style={[styles.modalEmptyText, rtlStyles.textAlign(), { color: lightColors.onSurfaceVariant }]}>
+                    {t('common:noData')}
+                  </Text>
+                </View>
+              }
+            />
+          )}
+          
+          <View style={[styles.modalActions, rtlStyles.rowReverse()]}>
+            <TouchableOpacity
+              style={[
+                styles.modalButton, 
+                { 
+                  backgroundColor: selectedOption ? lightColors.primary : lightColors.onSurfaceVariant,
+                  opacity: selectedOption ? 1 : 0.6
+                }, 
+                rtlStyles.marginLeft(8)
+              ]}
               onPress={() => {
-                onApply(selectedOption);
-                onClose();
+                if (selectedOption) {
+                  onApply(selectedOption);
+                  onClose();
+                }
               }}
-                  >
+              disabled={!selectedOption}
+            >
               <Text style={[styles.modalButtonText, { color: lightColors.onPrimary }]}>
                 {t('common:apply')}
-                    </Text>
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.modalButton, { backgroundColor: lightColors.surface }]}
+              style={[styles.modalButton, { backgroundColor: lightColors.surface, borderWidth: 1, borderColor: lightColors.outline }]}
               onPress={onClose}
             >
               <Text style={[styles.modalButtonText, { color: lightColors.onSurface }]}>
                 {t('common:cancel')}
-                      </Text>
-                  </TouchableOpacity>
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -101,8 +183,10 @@ export default function ReportsScreen() {
   const [currentFilterType, setCurrentFilterType] = useState<string | null>(null);
   const [currentReportId, setCurrentReportId] = useState<string>('');
   const [appliedFilters, setAppliedFilters] = useState({});
+  const [filterOptions, setFilterOptions] = useState<any[]>([]);
+  const [loadingFilterOptions, setLoadingFilterOptions] = useState(false);
 
-  // Force light theme colors for testing
+  // Force light theme colors for consistency with other screens
   const lightColors = {
     surface: '#FFFFFF',
     onSurface: '#212121',
@@ -111,7 +195,8 @@ export default function ReportsScreen() {
     primary: '#1976D2',
     onPrimary: '#FFFFFF',
     outline: '#E0E0E0',
-    background: '#F8F9FA'
+    background: '#F8F9FA',
+    primaryContainer: '#E3F2FD'
   };
 
   // Get user context for role-based filtering
@@ -130,6 +215,67 @@ export default function ReportsScreen() {
     error: statsError, 
     refetch: refetchStats 
   } = useApi(() => reportsApi.getStats(), []);
+
+  // Fetch filter options based on filter type
+  const fetchFilterOptions = async (filterType: string) => {
+    setLoadingFilterOptions(true);
+    try {
+      let options = [];
+      
+      switch (filterType) {
+        case 'tenant':
+          const tenantsResponse = await profilesApi.getTenants();
+          if (tenantsResponse.success && tenantsResponse.data) {
+            options = tenantsResponse.data.map((tenant: any) => ({
+              id: tenant.id,
+              name: `${tenant.first_name} ${tenant.last_name}`,
+              email: tenant.email
+            }));
+          }
+          break;
+          
+        case 'owner':
+          const ownersResponse = await profilesApi.getOwners();
+          if (ownersResponse.success && ownersResponse.data) {
+            options = ownersResponse.data.map((owner: any) => ({
+              id: owner.id,
+              name: `${owner.first_name} ${owner.last_name}`,
+              email: owner.email
+            }));
+          }
+          break;
+          
+        case 'property':
+          const propertiesResponse = await propertiesApi.getAll();
+          if (propertiesResponse.success && propertiesResponse.data) {
+            options = propertiesResponse.data.map((property: any) => ({
+              id: property.id,
+              name: property.title,
+              address: property.address
+            }));
+          }
+          break;
+          
+        case 'expense-type':
+          options = [
+            { id: 'sales', name: t('reports:salesExpenses') },
+            { id: 'maintenance', name: t('reports:maintenanceExpenses') },
+            { id: 'all', name: t('reports:allExpenses') }
+          ];
+          break;
+          
+        default:
+          options = [];
+      }
+      
+      setFilterOptions(options);
+    } catch (error) {
+      console.error('Error fetching filter options:', error);
+      setFilterOptions([]);
+    } finally {
+      setLoadingFilterOptions(false);
+    }
+  };
 
   const availableReports = [
     { 
@@ -321,6 +467,9 @@ export default function ReportsScreen() {
         setCurrentReportId(report.id);
         setCurrentFilterType(report.filterType);
         setFilterModalVisible(true);
+        
+        // Fetch filter options based on the filter type
+        await fetchFilterOptions(report.filterType);
         return;
       }
 
@@ -406,19 +555,19 @@ export default function ReportsScreen() {
   // Render Quick Statistics (matching dashboard's horizontal stats container)
   const renderQuickStats = () => (
     <View style={styles.quickStatsSection}>
-      <Text style={[styles.sectionTitle, { color: lightColors.onBackground }]}>
+      <Text style={[styles.sectionTitle, rtlStyles.textAlign(), { color: lightColors.onBackground }]}>
         {t('reports:quickStatistics')}
       </Text>
       <View style={[styles.horizontalStatsCard, { backgroundColor: lightColors.surface }]}>
-        <View style={styles.horizontalStatsRow}>
+        <View style={[styles.horizontalStatsRow, { flexDirection: getFlexDirection('row') }]}>
           <View style={styles.horizontalStatItem}>
             <View style={[styles.horizontalStatIcon, { backgroundColor: `${lightColors.primary}20` }]}>
               <MaterialIcons name="assessment" size={24} color={lightColors.primary} />
             </View>
-            <Text style={[styles.horizontalStatLabel, { color: lightColors.onSurfaceVariant }]}>
+            <Text style={[styles.horizontalStatLabel, rtlStyles.textAlign(), { color: lightColors.onSurfaceVariant }]}>
               {t('reports:totalReports')}
             </Text>
-            <Text style={[styles.horizontalStatValue, { color: lightColors.primary }]}>
+            <Text style={[styles.horizontalStatValue, rtlStyles.textAlign(), { color: lightColors.primary }]}>
               {statsLoading ? '...' : (stats?.data?.totalReports || '12')}
             </Text>
           </View>
@@ -427,10 +576,10 @@ export default function ReportsScreen() {
             <View style={[styles.horizontalStatIcon, { backgroundColor: '#4CAF5020' }]}>
               <MaterialIcons name="file-download" size={24} color="#4CAF50" />
             </View>
-            <Text style={[styles.horizontalStatLabel, { color: lightColors.onSurfaceVariant }]}>
+            <Text style={[styles.horizontalStatLabel, rtlStyles.textAlign(), { color: lightColors.onSurfaceVariant }]}>
               {t('reports:generatedThisMonth')}
             </Text>
-            <Text style={[styles.horizontalStatValue, { color: '#4CAF50' }]}>
+            <Text style={[styles.horizontalStatValue, rtlStyles.textAlign(), { color: '#4CAF50' }]}>
               {statsLoading ? '...' : (stats?.data?.generatedThisMonth || '8')}
             </Text>
           </View>
@@ -439,10 +588,10 @@ export default function ReportsScreen() {
             <View style={[styles.horizontalStatIcon, { backgroundColor: '#FF980020' }]}>
               <MaterialIcons name="schedule" size={24} color="#FF9800" />
             </View>
-            <Text style={[styles.horizontalStatLabel, { color: lightColors.onSurfaceVariant }]}>
+            <Text style={[styles.horizontalStatLabel, rtlStyles.textAlign(), { color: lightColors.onSurfaceVariant }]}>
               {t('reports:avgGenerationTime')}
             </Text>
-            <Text style={[styles.horizontalStatValue, { color: '#FF9800' }]}>
+            <Text style={[styles.horizontalStatValue, rtlStyles.textAlign(), { color: '#FF9800' }]}>
               {statsLoading ? '...' : (stats?.data?.avgGenerationTime || '2.1s')}
             </Text>
           </View>
@@ -453,14 +602,14 @@ export default function ReportsScreen() {
 
   if (!hasReportAccess) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: lightColors.background }]}>
         <ModernHeader title={t('reports:title')} />
         <View style={styles.noAccessContainer}>
           <MaterialIcons name="lock" size={64} color={lightColors.onSurfaceVariant} />
-          <Text style={[styles.noAccessText, { color: lightColors.onSurface }]}>
+          <Text style={[styles.noAccessText, rtlStyles.textAlign(), { color: lightColors.onSurface }]}>
             {t('reports:noAccessMessage')}
           </Text>
-          <Text style={[styles.noAccessSubtext, { color: lightColors.onSurfaceVariant }]}>
+          <Text style={[styles.noAccessSubtext, rtlStyles.textAlign(), { color: lightColors.onSurfaceVariant }]}>
             {t('reports:noAccessSuggestion')}
           </Text>
         </View>
@@ -479,42 +628,45 @@ export default function ReportsScreen() {
         {renderQuickStats()}
 
         <View style={styles.categoryContainer}>
-          <Text style={[styles.mainTitle, rtlStyles.textAlign(), { color: lightColors.onBackground, marginBottom: 16 }]}>{t('common:categories')}</Text>
+          <Text style={[styles.mainTitle, rtlStyles.textAlign(), { color: lightColors.onBackground, marginBottom: 16 }]}>
+            {t('common:categories')}
+          </Text>
           <View style={styles.categoryGrid}>
-          {categories.map((category) => (
-            <TouchableOpacity
-              key={category.id}
-              style={[
+            {categories.map((category) => (
+              <TouchableOpacity
+                key={category.id}
+                style={[
                   styles.categoryCard,
-                {
+                  {
                     backgroundColor: selectedCategory === category.id ? lightColors.primary : lightColors.surface,
                     borderColor: lightColors.outline,
-                }
-              ]}
-              onPress={() => setSelectedCategory(category.id)}
-            >
-              <MaterialIcons
-                name={category.icon as any}
-                  size={24}
-                  color={selectedCategory === category.id ? lightColors.onPrimary : lightColors.onSurface}
-              />
-              <Text
-                style={[
-                  styles.categoryChipText,
-                  {
-                      color: selectedCategory === category.id ? lightColors.onPrimary : lightColors.onSurface,
                   }
                 ]}
+                onPress={() => setSelectedCategory(category.id)}
               >
-                {category.title}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                <MaterialIcons
+                  name={category.icon as any}
+                  size={24}
+                  color={selectedCategory === category.id ? lightColors.onPrimary : lightColors.onSurface}
+                />
+                <Text
+                  style={[
+                    styles.categoryChipText,
+                    rtlStyles.textAlign(),
+                    {
+                      color: selectedCategory === category.id ? lightColors.onPrimary : lightColors.onSurface,
+                    }
+                  ]}
+                >
+                  {category.title}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
 
         <View style={styles.reportsContainer}>
-           <Text style={[styles.mainTitle, rtlStyles.textAlign(), { color: lightColors.onBackground, marginBottom: 16, marginTop: 24 }]}>
+          <Text style={[styles.mainTitle, rtlStyles.textAlign(), { color: lightColors.onBackground, marginBottom: 16, marginTop: 24 }]}>
             {t('reports:availableReportsCount', { count: filteredReports.length })}
           </Text>
           
@@ -522,22 +674,26 @@ export default function ReportsScreen() {
             data={filteredReports}
             renderItem={({ item }) => (
               <View style={[styles.reportCard, { backgroundColor: lightColors.surface }]}>
-                <View style={[styles.reportHeader, rtlStyles.rowReverse()]}>
-                  <View style={[styles.reportInfo, rtlStyles.rowReverse()]}>
-                    <View style={[styles.iconContainer, { backgroundColor: `${item.color}20` }, rtlStyles.marginLeft(12)]}>
+                <View style={[styles.reportHeader, { flexDirection: getFlexDirection('row') }]}>
+                  <View style={[styles.reportInfo, { flexDirection: getFlexDirection('row') }]}>
+                    <View style={[
+                      styles.iconContainer, 
+                      { backgroundColor: `${item.color}20` }, 
+                      rtlStyles.marginRight(12)
+                    ]}>
                       <MaterialIcons name={item.iconName as any} size={24} color={item.color} />
                     </View>
                     <View style={styles.reportDetails}>
-                      <Text style={[styles.reportTitle, { color: lightColors.onSurface, textAlign: I18nManager.isRTL ? 'right' : 'left' }]}>
+                      <Text style={[styles.reportTitle, rtlStyles.textAlign(), { color: lightColors.onSurface }]}>
                         {item.title}
                       </Text>
-                      <Text style={[styles.reportDescription, { color: lightColors.onSurfaceVariant, textAlign: I18nManager.isRTL ? 'right' : 'left' }]}>
+                      <Text style={[styles.reportDescription, rtlStyles.textAlign(), { color: lightColors.onSurfaceVariant }]}>
                         {item.description}
                       </Text>
                       {item.requiresFilter && (
-                        <View style={[styles.filterBadge, rtlStyles.rowReverse()]}>
+                        <View style={[styles.filterBadge, { flexDirection: getFlexDirection('row') }]}>
                           <MaterialIcons name="filter-list" size={12} color={lightColors.primary} />
-                          <Text style={[styles.filterText, { color: lightColors.primary }]}>
+                          <Text style={[styles.filterText, rtlStyles.marginLeft(4), { color: lightColors.primary }]}>
                             {t('reports:requiresFilter', { filterType: t(`reports:filterType_${item.filterType}`) })}
                           </Text>
                         </View>
@@ -559,13 +715,13 @@ export default function ReportsScreen() {
                 </View>
 
                 <View style={styles.reportData}>
-                  <Text style={[styles.reportTime, { color: lightColors.onSurfaceVariant, textAlign: I18nManager.isRTL ? 'right' : 'left' }]}>
+                  <Text style={[styles.reportTime, rtlStyles.textAlign(), { color: lightColors.onSurfaceVariant }]}>
                     {t('reports:downloadAvailable')}
                   </Text>
                 </View>
 
                 <View style={[styles.reportFooter, { borderTopColor: lightColors.outline }]}>
-                  <Text style={[styles.lastGenerated, { color: lightColors.onSurfaceVariant, textAlign: I18nManager.isRTL ? 'right' : 'left' }]}>
+                  <Text style={[styles.lastGenerated, rtlStyles.textAlign(), { color: lightColors.onSurfaceVariant }]}>
                     {t('reports:lastUpdated', { date: formatDate(item.lastGenerated) })}
                   </Text>
                 </View>
@@ -580,15 +736,22 @@ export default function ReportsScreen() {
 
       <FilterModal
         visible={filterModalVisible}
-        onClose={() => setFilterModalVisible(false)}
-        onApply={(filter) => {
-          setAppliedFilters(prev => ({
-            ...prev,
-            [currentFilterType]: filter
-          }));
+        onClose={() => {
+          setFilterModalVisible(false);
+          setCurrentFilterType(null);
+          setCurrentReportId('');
+          setFilterOptions([]);
         }}
-        filterType={currentFilterType}
-        options={[]} // This would be populated based on filter type
+        onApply={(filter) => {
+          generatePDFReport(currentReportId, '', '', filter.id, currentFilterType);
+          setFilterModalVisible(false);
+          setCurrentFilterType(null);
+          setCurrentReportId('');
+          setFilterOptions([]);
+        }}
+        filterType={currentFilterType || ''}
+        options={filterOptions}
+        loading={loadingFilterOptions}
       />
     </SafeAreaView>
   );
@@ -597,148 +760,163 @@ export default function ReportsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
   },
   content: {
     flex: 1,
-    padding: 16,
-    backgroundColor: '#F8F9FA',
+    paddingHorizontal: 16,
   },
-  noAccessContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-    backgroundColor: '#F8F9FA',
-  },
-  noAccessText: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginTop: 16,
-    textAlign: 'center',
-  },
-  noAccessSubtext: {
-    fontSize: 14,
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  
-  // Section styles (matching dashboard)
   quickStatsSection: {
-    marginBottom: 20,
-  },
-  categorySection: {
-    marginBottom: 24,
-  },
-  reportsSection: {
     marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 12,
-    textAlign: rtlStyles.textAlign,
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    marginTop: 16,
   },
-
-  // Stats grid styles (matching dashboard)
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  horizontalStatsCard: {
+    borderRadius: 12,
+    padding: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  horizontalStatsRow: {
     justifyContent: 'space-between',
-    gap: 12,
+    alignItems: 'center',
   },
-  statCardWrapper: {
-    width: '30%',
-    minHeight: 120,
+  horizontalStatItem: {
+    alignItems: 'center',
+    flex: 1,
   },
-
-  // Category filter styles
-  categoryScroll: {
+  horizontalStatIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 8,
   },
-  categoryChip: {
+  horizontalStatLabel: {
+    fontSize: 12,
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  horizontalStatValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  categoryContainer: {
+    marginBottom: 24,
+  },
+  mainTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  categoryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  categoryCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
-    marginRight: 8,
-  },
-  categoryChipIcon: {
-    marginRight: 6,
+    borderWidth: 1,
+    marginBottom: 8,
   },
   categoryChipText: {
     fontSize: 14,
     fontWeight: '500',
+    marginHorizontal: 8,
   },
-
-  // Report card styles
+  reportsContainer: {
+    marginBottom: 24,
+  },
   reportCard: {
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    flexDirection: rtlStyles.flexDirection,
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   reportHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
   },
   reportInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
     flex: 1,
-  },
-  reportIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
     alignItems: 'center',
-    marginRight: rtlStyles.marginRight(12),
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   reportDetails: {
     flex: 1,
   },
   reportTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
     marginBottom: 4,
-    textAlign: rtlStyles.textAlign,
   },
   reportDescription: {
     fontSize: 14,
-    textAlign: rtlStyles.textAlign,
+    marginBottom: 8,
   },
-  reportMeta: {
-    alignItems: rtlStyles.alignItems,
-  },
-  reportLastGenerated: {
-    fontSize: 12,
-    marginBottom: 4,
-    textAlign: rtlStyles.textAlign,
-  },
-  reportActions: {
-    flexDirection: 'row',
+  filterBadge: {
     alignItems: 'center',
-  },
-  filterRequirement: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    marginTop: 4,
   },
   filterText: {
     fontSize: 12,
-    marginLeft: 4,
-    textAlign: 'right',
   },
-
-  // Modal styles
+  loadingContainer: {
+    padding: 8,
+  },
+  reportData: {
+    marginBottom: 12,
+  },
+  reportTime: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  reportFooter: {
+    borderTopWidth: 1,
+    paddingTop: 8,
+  },
+  lastGenerated: {
+    fontSize: 12,
+  },
+  noAccessContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  noAccessText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 16,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  noAccessSubtext: {
+    fontSize: 14,
+    textAlign: 'center',
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -748,123 +926,67 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '80%',
     maxHeight: '70%',
-    borderRadius: 16,
+    borderRadius: 12,
     padding: 20,
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    textAlign: 'center',
+    fontWeight: 'bold',
     marginBottom: 16,
   },
   modalOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     padding: 12,
     borderRadius: 8,
     marginBottom: 8,
+  },
+  modalOptionContent: {
+    flex: 1,
+  },
+  modalOptionsList: {
+    maxHeight: 300,
+    marginBottom: 16,
+  },
+  modalLoadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+  },
+  modalLoadingText: {
+    marginTop: 12,
+    fontSize: 14,
+  },
+  modalEmptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+  },
+  modalEmptyText: {
+    fontSize: 14,
   },
   modalOptionText: {
     fontSize: 16,
-    textAlign: 'center',
+    fontWeight: '500',
+  },
+  modalOptionSubtext: {
+    fontSize: 14,
+    marginTop: 2,
   },
   modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 16,
+    marginTop: 20,
+    gap: 8,
   },
   modalButton: {
-    paddingHorizontal: 24,
     paddingVertical: 12,
+    paddingHorizontal: 20,
     borderRadius: 8,
-    minWidth: 100,
+    alignItems: 'center',
+    flex: 1,
   },
   modalButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  mainTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  categoryContainer: {
-    marginBottom: 24,
-  },
-  categoryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  categoryCard: {
-    width: '48%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginBottom: 12,
-    gap: 12,
-  },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  reportData: {
-    marginBottom: 8,
-  },
-  reportTime: {
-    fontSize: 12,
-    fontStyle: 'italic',
-  },
-  reportFooter: {
-    borderTopWidth: 1,
-    paddingTop: 8,
-  },
-  filterBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-    gap: 4,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 12,
-  },
-  horizontalStatsCard: {
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-  },
-  horizontalStatsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  horizontalStatItem: {
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  horizontalStatIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  horizontalStatLabel: {
-    fontSize: 14,
     fontWeight: '500',
-  },
-  horizontalStatValue: {
-    fontSize: 16,
-    fontWeight: '600',
   },
 });

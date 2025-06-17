@@ -148,5 +148,7 @@
   "shared": "تم المشاركة",
   "exported": "تم التصدير",
   "imported": "تم الاستيراد",
-  "synchronized": "تم التزامن"
+  "synchronized": "تم التزامن",
+  "categories": "الفئات",
+  "apply": "تطبيق"
 } 
