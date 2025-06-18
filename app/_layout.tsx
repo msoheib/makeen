@@ -10,7 +10,7 @@ import { useFonts } from 'expo-font';
 import { Inter_400Regular, Inter_500Medium, Inter_700Bold } from '@expo-google-fonts/inter';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Updates from 'expo-updates';
-import i18n from '@/lib/i18n';
+import i18n, { manualInitializeI18n } from '@/lib/i18n';
 import { useAppStore } from '@/lib/store';
 import CustomSplashScreen from '@/components/SplashScreen';
 
@@ -32,43 +32,55 @@ export default function RootLayout() {
   useEffect(() => {
     async function prepare() {
       try {
-        console.log('[Layout] Starting app preparation...');
+        console.log('[Layout] ========== APP PREPARATION START ==========');
+        console.log('[Layout] Build type:', __DEV__ ? 'development' : 'production');
+        console.log('[Layout] Platform:', Platform.OS);
         console.log('[Layout] Store hydrated:', isHydrated);
         console.log('[Layout] Current settings:', settings);
+        console.log('[Layout] Updates available:', Updates.isAvailableAsync ? 'Yes' : 'No');
         
         // This effect should only run once the store has been rehydrated
         if (!isHydrated) {
-          console.log('[Layout] Waiting for store hydration...');
+          console.log('[Layout] ❌ Waiting for store hydration...');
           return;
         }
 
+        // First, initialize i18n properly
+        console.log('[Layout] 🔧 Initializing i18n...');
+        await manualInitializeI18n();
+        
         const currentLanguage = settings?.language || 'ar'; // Default to Arabic
         const isRTL = currentLanguage === 'ar';
         
-        console.log('[Layout] Language config:', { currentLanguage, isRTL, nativeIsRTL: I18nManager.isRTL });
+        console.log('[Layout] 🌐 Language config:', { 
+          currentLanguage, 
+          isRTL, 
+          nativeIsRTL: I18nManager.isRTL,
+          i18nLanguage: i18n.language 
+        });
 
-        // Set the i18next language
-        await i18n.changeLanguage(currentLanguage);
-        console.log('[Layout] i18n language set to:', currentLanguage);
-
-        // Check if layout direction needs to be changed
+        // Check if layout direction needs to be changed (this should be rare after i18n init)
         if (I18nManager.isRTL !== isRTL) {
-          console.log('[Layout] Layout direction mismatch detected. Native:', I18nManager.isRTL, 'Desired:', isRTL);
+          console.log('[Layout] ⚠️  MISMATCH! Layout direction needs correction!');
+          console.log('[Layout] Native RTL:', I18nManager.isRTL, '-> Desired RTL:', isRTL);
           
           // Apply the RTL change and reload the app.
-          // This will cause a flicker on the first run after a language change.
           I18nManager.allowRTL(true);
           I18nManager.forceRTL(isRTL);
           
-          console.log('[Layout] Reloading app to apply RTL changes...');
+          console.log('[Layout] 🔄 RELOADING APP to apply RTL changes...');
           await Updates.reloadAsync();
+          return; // App will restart, code below won't execute
         } else {
           // If the direction is already correct, we're ready to show the app.
-          console.log('[Layout] Layout direction is correct, app ready');
+          console.log('[Layout] ✅ Layout direction is correct, app ready!');
           setI18nReady(true);
         }
+        
+        console.log('[Layout] ========== APP PREPARATION COMPLETE ==========');
       } catch (e) {
-        console.warn('[Layout] Error during app preparation:', e);
+        console.error('[Layout] ❌ Error during app preparation:', e);
+        console.error('[Layout] Stack trace:', e.stack);
         // Even if there's an error, we should proceed to avoid getting stuck.
         setI18nReady(true);
       }
