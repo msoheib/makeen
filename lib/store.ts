@@ -60,6 +60,10 @@ const defaultNotificationPreferences: NotificationPreferences = {
 
 // Define the state store structure
 interface AppState {
+  // Hydration state
+  isHydrated: boolean;
+  setHydrated: (hydrated: boolean) => void;
+  
   // Auth state
   user: User | null;
   isAuthenticated: boolean;
@@ -179,6 +183,10 @@ interface AppState {
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
+      // Hydration state
+      isHydrated: false,
+      setHydrated: (isHydrated) => set({ isHydrated }),
+      
       // Auth state
       user: null,
       isAuthenticated: false,
@@ -418,6 +426,10 @@ export const useAppStore = create<AppState>()(
         theme: state.theme,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        console.log('[Store] Hydration completed');
+        state?.setHydrated(true);
+      },
     }
   )
 );
