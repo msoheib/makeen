@@ -69,7 +69,7 @@ export const CustomSplashScreen: React.FC<SplashScreenProps> = ({
   };
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+    <Animated.View style={[styles.container, { opacity: fadeAnim }]} testID="splash-screen">
       <View style={styles.content}>
         {/* Logo Section */}
         <Animated.View style={[styles.logoContainer, { transform: [{ scale: logoScale }] }]}>
