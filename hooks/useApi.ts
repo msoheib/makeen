@@ -13,7 +13,7 @@ interface ApiResponse<T> {
 }
 
 export function useApi<T>(
-  apiCall: () => Promise<ApiResponse<T>>,
+  apiCall: () => Promise<ApiResponse<T>> | Promise<T>,
   dependencies: any[] = []
 ): UseApiState<T> {
   const [data, setData] = useState<T | null>(null);
@@ -26,11 +26,19 @@ export function useApi<T>(
       setError(null);
       const response = await apiCall();
       
-      if (response.error) {
-        setError(response.error.message);
-        setData(null);
+      // Check if response is in ApiResponse format
+      if (response && typeof response === 'object' && 'data' in response && 'error' in response) {
+        const apiResponse = response as ApiResponse<T>;
+        if (apiResponse.error) {
+          setError(apiResponse.error.message);
+          setData(null);
+        } else {
+          setData(apiResponse.data);
+          setError(null);
+        }
       } else {
-        setData(response.data);
+        // Direct data response
+        setData(response as T);
         setError(null);
       }
     } catch (err: any) {

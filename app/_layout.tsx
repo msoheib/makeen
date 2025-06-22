@@ -59,23 +59,15 @@ export default function RootLayout() {
           i18nLanguage: i18n.language 
         });
 
-        // Check if layout direction needs to be changed (this should be rare after i18n init)
-        if (I18nManager.isRTL !== isRTL) {
-          console.log('[Layout] ⚠️  MISMATCH! Layout direction needs correction!');
-          console.log('[Layout] Native RTL:', I18nManager.isRTL, '-> Desired RTL:', isRTL);
-          
-          // Apply the RTL change and reload the app.
-          I18nManager.allowRTL(true);
-          I18nManager.forceRTL(isRTL);
-          
-          console.log('[Layout] 🔄 RELOADING APP to apply RTL changes...');
-          await Updates.reloadAsync();
-          return; // App will restart, code below won't execute
-        } else {
-          // If the direction is already correct, we're ready to show the app.
-          console.log('[Layout] ✅ Layout direction is correct, app ready!');
-          setI18nReady(true);
-        }
+        // Check layout direction (simplified for production compatibility)
+        console.log('[Layout] ✅ Layout direction check:', {
+          nativeRTL: I18nManager.isRTL,
+          desiredRTL: isRTL,
+          match: I18nManager.isRTL === isRTL
+        });
+        
+        // Always set as ready since RTL is now applied during i18n initialization
+        setI18nReady(true);
         
         console.log('[Layout] ========== APP PREPARATION COMPLETE ==========');
       } catch (e) {

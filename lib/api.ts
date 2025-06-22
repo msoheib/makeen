@@ -22,15 +22,66 @@ async function handleApiCall<T>(
 ): Promise<ApiResponse<T>> {
   try {
     const result = await operation();
+    
+    // Handle authentication errors specifically
+    if (result.error) {
+      const errorMessage = result.error.message || 'Unknown error';
+      
+      // Check for authentication-related errors
+      if (errorMessage.includes('JWT expired') || 
+          errorMessage.includes('Invalid Refresh Token') ||
+          errorMessage.includes('refresh_token_not_found') ||
+          errorMessage.includes('invalid_grant')) {
+        
+        console.warn('[API] Authentication error detected:', errorMessage);
+        
+        // Import clearSession dynamically to avoid circular dependency
+        const { clearSession } = await import('./supabase');
+        await clearSession();
+        
+        return {
+          data: null,
+          error: { 
+            message: 'Session expired. Please sign in again.', 
+            details: 'AUTH_ERROR',
+            hint: 'Redirect to login' 
+          }
+        };
+      }
+      
+      return {
+        data: result.data,
+        error: { 
+          message: errorMessage, 
+          details: result.error.details, 
+          hint: result.error.hint 
+        },
+        count: result.count
+      };
+    }
+    
     return {
       data: result.data,
-      error: result.error ? { message: result.error.message, details: result.error.details, hint: result.error.hint } : null,
+      error: null,
       count: result.count
     };
   } catch (error: any) {
+    console.error('[API] Unexpected error:', error);
+    
+    // Check if it's a network error
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      return {
+        data: null,
+        error: { 
+          message: 'Network error. Please check your connection and try again.',
+          details: 'NETWORK_ERROR'
+        }
+      };
+    }
+    
     return {
       data: null,
-      error: { message: error.message }
+      error: { message: error.message || 'An unexpected error occurred' }
     };
   }
 }
@@ -462,12 +513,22 @@ export const contractsApi = {
 
 // Maintenance API
 export const maintenanceApi = {
-  // Get all maintenance requests
+  // Get maintenance requests with role-based access control
   async getRequests(filters?: {
     status?: string;
     priority?: string;
     property_id?: string;
   }): Promise<ApiResponse<any[]>> {
+    // **SECURITY**: Get current user context for role-based filtering
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext) {
+      return {
+        data: null,
+        error: { message: 'Authentication required to access maintenance requests' }
+      };
+    }
+
     let query = supabase
       .from('maintenance_requests')
       .select(`
@@ -478,15 +539,73 @@ export const maintenanceApi = {
       `)
       .order('created_at', { ascending: false });
 
+    // **SECURITY**: Apply role-based filtering FIRST
+    if (userContext.role === 'tenant') {
+      // Tenants can ONLY see maintenance requests for properties they are renting
+      const rentedPropertyIds = userContext.rentedPropertyIds || [];
+      if (rentedPropertyIds.length > 0) {
+        query = query.in('property_id', rentedPropertyIds);
+      } else {
+        // If tenant has no rented properties, return empty result
+        query = query.eq('property_id', 'no-properties-for-tenant');
+      }
+    } else if (userContext.role === 'owner') {
+      // Owners see maintenance requests for their properties only
+      const ownedPropertyIds = userContext.ownedPropertyIds || [];
+      if (ownedPropertyIds.length > 0) {
+        query = query.in('property_id', ownedPropertyIds);
+      } else {
+        // If owner has no properties, return empty result
+        query = query.eq('property_id', 'no-properties-for-owner');
+      }
+    }
+    // Admins and managers see all requests (no additional filtering)
+
+    // Apply additional filters
     if (filters?.status) query = query.eq('status', filters.status);
     if (filters?.priority) query = query.eq('priority', filters.priority);
     if (filters?.property_id) query = query.eq('property_id', filters.property_id);
 
+    console.log(`[Security] Maintenance requests query for user ${userContext.userId} (${userContext.role})`);
     return handleApiCall(() => query);
   },
 
-  // Create maintenance request
+  // Create maintenance request with access control
   async createRequest(request: TablesInsert<'maintenance_requests'>): Promise<ApiResponse<Tables<'maintenance_requests'>>> {
+    // **SECURITY**: Get current user context for access validation
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext) {
+      return {
+        data: null,
+        error: { message: 'Authentication required to create maintenance request' }
+      };
+    }
+
+    // **SECURITY**: Validate that user can create request for this property
+    if (userContext.role === 'tenant') {
+      const rentedPropertyIds = userContext.rentedPropertyIds || [];
+      if (!rentedPropertyIds.includes(request.property_id!)) {
+        return {
+          data: null,
+          error: { message: 'Access denied: You can only create maintenance requests for properties you are renting' }
+        };
+      }
+      // Ensure tenant_id is set to current user for tenant requests
+      request.tenant_id = userContext.userId;
+    } else if (userContext.role === 'owner') {
+      const ownedPropertyIds = userContext.ownedPropertyIds || [];
+      if (!ownedPropertyIds.includes(request.property_id!)) {
+        return {
+          data: null,
+          error: { message: 'Access denied: You can only create maintenance requests for properties you own' }
+        };
+      }
+    }
+    // Admins and managers can create requests for any property
+
+    console.log(`[Security] Creating maintenance request for property ${request.property_id} by user ${userContext.userId} (${userContext.role})`);
+    
     return handleApiCall(() => 
       supabase
         .from('maintenance_requests')
@@ -496,8 +615,58 @@ export const maintenanceApi = {
     );
   },
 
-  // Update maintenance request
+  // Update maintenance request with access control
   async updateRequest(id: string, updates: TablesUpdate<'maintenance_requests'>): Promise<ApiResponse<Tables<'maintenance_requests'>>> {
+    // **SECURITY**: Get current user context for access validation
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext) {
+      return {
+        data: null,
+        error: { message: 'Authentication required to update maintenance request' }
+      };
+    }
+
+    // **SECURITY**: First check if the maintenance request exists and user has access
+    const { data: existingRequest } = await supabase
+      .from('maintenance_requests')
+      .select('property_id, tenant_id')
+      .eq('id', id)
+      .single();
+
+    if (!existingRequest) {
+      return {
+        data: null,
+        error: { message: 'Maintenance request not found' }
+      };
+    }
+
+    // **SECURITY**: Validate access based on user role
+    let hasAccess = false;
+    
+    if (userContext.role === 'tenant') {
+      // Tenants can only update requests they created for their rented properties
+      const rentedPropertyIds = userContext.rentedPropertyIds || [];
+      hasAccess = existingRequest.tenant_id === userContext.userId && 
+                  rentedPropertyIds.includes(existingRequest.property_id);
+    } else if (userContext.role === 'owner') {
+      // Owners can update requests for their properties
+      const ownedPropertyIds = userContext.ownedPropertyIds || [];
+      hasAccess = ownedPropertyIds.includes(existingRequest.property_id);
+    } else if (userContext.role === 'admin' || userContext.role === 'manager') {
+      // Admins and managers can update any request
+      hasAccess = true;
+    }
+
+    if (!hasAccess) {
+      return {
+        data: null,
+        error: { message: 'Access denied: You do not have permission to update this maintenance request' }
+      };
+    }
+
+    console.log(`[Security] Updating maintenance request ${id} by user ${userContext.userId} (${userContext.role})`);
+
     return handleApiCall(() => 
       supabase
         .from('maintenance_requests')
@@ -4822,4 +4991,63 @@ export default {
   notifications: notificationsApi,
   utilityPayments: utilityPaymentsApi,
   enhancedReports: enhancedReportsApi,
+}; 
+
+// Add specialized methods for report filters (bypass security for dropdown options)
+export const reportFiltersApi = {
+  // Get all tenants for report filtering (bypasses security)
+  async getAllTenantsForReports(): Promise<ApiResponse<any[]>> {
+    return handleApiCall(() => 
+      supabase
+        .from('profiles')
+        .select(`
+          id,
+          first_name,
+          last_name,
+          email,
+          phone,
+          status
+        `)
+        .eq('role', 'tenant')
+        .eq('status', 'active')
+        .order('first_name')
+    );
+  },
+
+  // Get all owners for report filtering (bypasses security)
+  async getAllOwnersForReports(): Promise<ApiResponse<any[]>> {
+    return handleApiCall(() => 
+      supabase
+        .from('profiles')
+        .select(`
+          id,
+          first_name,
+          last_name,
+          email,
+          phone,
+          status
+        `)
+        .eq('role', 'owner')
+        .eq('status', 'active')
+        .order('first_name')
+    );
+  },
+
+  // Get all properties for report filtering (bypasses security)
+  async getAllPropertiesForReports(): Promise<ApiResponse<any[]>> {
+    return handleApiCall(() => 
+      supabase
+        .from('properties')
+        .select(`
+          id,
+          title,
+          address,
+          city,
+          status,
+          property_type
+        `)
+        .neq('status', 'deleted')
+        .order('title')
+    );
+  }
 }; 

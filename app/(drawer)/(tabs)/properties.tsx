@@ -388,14 +388,16 @@ export default function PropertiesScreen() {
         </View>
       </ScrollView>
 
-      {/* Add Property FAB */}
-      <FAB
-        icon="plus"
-        style={[styles.fab, { backgroundColor: theme.colors.primary }]}
-        size="medium"
-        onPress={() => router.push('/properties/add')}
-        label="إضافة عقار"
-      />
+      {/* Add Property FAB - Only visible for admin, manager, or owner */}
+      {userContext && ['admin', 'manager', 'owner'].includes(userContext.role) && (
+        <FAB
+          icon="plus"
+          style={[styles.fab, { backgroundColor: theme.colors.primary }]}
+          size="medium"
+          onPress={() => router.push('/properties/add')}
+          label="إضافة عقار"
+        />
+      )}
     </SafeAreaView>
   );
 }

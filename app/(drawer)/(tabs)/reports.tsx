@@ -6,7 +6,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import ModernHeader from '@/components/ModernHeader';
 import { useApi } from '@/hooks/useApi';
-import { reportsApi } from '@/lib/api';
+import { reportsApi, reportFiltersApi } from '@/lib/api';
 import { pdfApi, PDFRequest } from '@/lib/pdfApi';
 import { useStore } from '@/lib/store';
 import { useTranslation } from '@/lib/useTranslation';
@@ -254,8 +254,10 @@ export default function ReportsScreen() {
       
       switch (filterType) {
         case 'tenant':
-          const tenantsResponse = await profilesApi.getTenants();
-          if (tenantsResponse.success && tenantsResponse.data) {
+          console.log('[Reports Debug] Fetching tenants for filter...');
+          const tenantsResponse = await reportFiltersApi.getAllTenantsForReports();
+          console.log('[Reports Debug] Tenants response:', tenantsResponse);
+          if (tenantsResponse.data) {
             options = tenantsResponse.data.map((tenant: any) => ({
               id: tenant.id,
               name: `${tenant.first_name} ${tenant.last_name}`,
@@ -265,8 +267,10 @@ export default function ReportsScreen() {
           break;
           
         case 'owner':
-          const ownersResponse = await profilesApi.getOwners();
-          if (ownersResponse.success && ownersResponse.data) {
+          console.log('[Reports Debug] Fetching owners for filter...');
+          const ownersResponse = await reportFiltersApi.getAllOwnersForReports();
+          console.log('[Reports Debug] Owners response:', ownersResponse);
+          if (ownersResponse.data) {
             options = ownersResponse.data.map((owner: any) => ({
               id: owner.id,
               name: `${owner.first_name} ${owner.last_name}`,
@@ -276,8 +280,10 @@ export default function ReportsScreen() {
           break;
           
         case 'property':
-          const propertiesResponse = await propertiesApi.getAll();
-          if (propertiesResponse.success && propertiesResponse.data) {
+          console.log('[Reports Debug] Fetching properties for filter...');
+          const propertiesResponse = await reportFiltersApi.getAllPropertiesForReports();
+          console.log('[Reports Debug] Properties response:', propertiesResponse);
+          if (propertiesResponse.data) {
             options = propertiesResponse.data.map((property: any) => ({
               id: property.id,
               name: property.title,
@@ -298,6 +304,7 @@ export default function ReportsScreen() {
           options = [];
       }
       
+      console.log(`[Reports Debug] Filter options for ${filterType}:`, options);
       setFilterOptions(options);
     } catch (error) {
       console.error('Error fetching filter options:', error);

@@ -28,13 +28,6 @@
       "allowBackup": false,
       "config": {
         "supportsRtl": true
-      },
-      "androidManifest": {
-        "supportsRtl": true,
-        "application": {
-          "android:supportsRtl": "true",
-          "android:layoutDirection": "rtl"
-        }
       }
     },
     "web": {

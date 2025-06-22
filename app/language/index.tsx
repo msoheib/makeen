@@ -43,13 +43,26 @@ export default function LanguageSelectionScreen() {
       return;
     }
     
-    // Test simple alert first
+    setLoading(true);
+    
     try {
-      console.log('About to show Alert...');
-      Alert.alert('Test', 'This is a test alert');
-      console.log('Alert shown successfully');
+      console.log('Changing language to:', languageCode);
+      await changeLanguage(languageCode);
+      console.log('Language changed successfully');
+      
+      // Small delay to let the user see the change
+      setTimeout(() => {
+        setLoading(false);
+        router.back();
+      }, 500);
     } catch (error) {
-      console.error('Alert error:', error);
+      console.error('Failed to change language:', error);
+      setLoading(false);
+      Alert.alert(
+        t('language.error.title'),
+        t('language.error.message'),
+        [{ text: t('common.ok') }]
+      );
     }
   };
 

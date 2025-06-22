@@ -291,27 +291,16 @@ export const useAppStore = create<AppState>()(
         try {
           console.log('Store: Starting language change to:', language);
           
-          // Update i18n language (this will also persist it)
+          // Update i18n language and RTL (this will also persist it)
           await changeI18nLanguage(language);
           console.log('Store: i18n language changed successfully');
           
-          // Update store state first
+          // Update store state
           set((state) => ({
             settings: { ...state.settings, language },
             locale: language, // Update legacy state too
           }));
           console.log('Store: State updated successfully');
-          
-          // Apply RTL layout changes (non-blocking)
-          setTimeout(() => {
-            try {
-              applyRTL(language === 'ar');
-              console.log('Store: RTL applied successfully');
-            } catch (rtlError) {
-              console.warn('Store: RTL application failed:', rtlError);
-              // Don't throw, RTL is not critical
-            }
-          }, 100);
           
           console.log('Store: Language change completed successfully');
         } catch (error) {

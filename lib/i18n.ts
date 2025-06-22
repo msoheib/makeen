@@ -95,32 +95,20 @@ const resources = {
 };
 
 /**
- * Applies the RTL layout direction natively with reload support for Android.
+ * Applies the RTL layout direction natively - simplified for production compatibility.
  * @param isRTLLanguage - Whether the language requires RTL layout.
  */
-const applyRTLWithReload = async (isRTLLanguage: boolean): Promise<void> => {
+const applyRTLDirectly = (isRTLLanguage: boolean): void => {
   try {
     console.log(`[i18n] Applying RTL config: isRTLLanguage=${isRTLLanguage}, Platform=${Platform.OS}`);
     
-    // Check if there's a layout direction mismatch on Android
-    if (Platform.OS === 'android' && I18nManager.isRTL !== isRTLLanguage) {
-      console.log(`[i18n] Layout mismatch on Android. Native: ${I18nManager.isRTL}, Desired: ${isRTLLanguage}.`);
-      
-      // Apply the new direction
-      I18nManager.allowRTL(true);
-      I18nManager.forceRTL(isRTLLanguage);
-      
-      // Force a native reload of the app for the change to take effect
-      console.log('[i18n] Forcing app reload to apply RTL layout...');
-      await Updates.reloadAsync();
-      // The app will restart here, and the code below will not run until the next load.
-    } else {
-      // For iOS and Web, or when no mismatch, apply without reload
-      I18nManager.allowRTL(true);
-      I18nManager.forceRTL(isRTLLanguage);
-    }
+    // Always enable RTL support first
+    I18nManager.allowRTL(true);
     
-    console.log(`[i18n] Final state: I18nManager.isRTL=${I18nManager.isRTL}`);
+    // Force the RTL direction
+    I18nManager.forceRTL(isRTLLanguage);
+    
+    console.log(`[i18n] RTL applied. Final state: I18nManager.isRTL=${I18nManager.isRTL}`);
   } catch (error) {
     console.error('[i18n] Error applying RTL configuration:', error);
   }
@@ -160,7 +148,7 @@ const getStoredLanguage = async (): Promise<'en' | 'ar'> => {
   return 'ar';
 };
 
-// Initialize i18next with improved RTL handling
+// Initialize i18next with simplified RTL handling for production compatibility
 const initializeI18n = async () => {
   try {
     console.log('[i18n] ========== I18N INITIALIZATION START ==========');
@@ -177,39 +165,11 @@ const initializeI18n = async () => {
       currentNativeRTL: I18nManager.isRTL
     });
 
-    // This is the critical fix for Android RTL layout issues
-    if (Platform.OS === 'android') {
-      // Check if the current native layout direction mismatches the desired direction
-      if (I18nManager.isRTL !== isRTLLanguage) {
-        console.log(`[i18n] ⚠️  ANDROID RTL MISMATCH DETECTED!`);
-        console.log(`[i18n] Native: ${I18nManager.isRTL} -> Desired: ${isRTLLanguage}`);
-        
-        // Apply the new direction
-        console.log('[i18n] 🔧 Applying RTL configuration...');
-        I18nManager.allowRTL(true);
-        I18nManager.forceRTL(isRTLLanguage);
-        
-        // Force a native reload of the app for the change to take effect
-        console.log('[i18n] 🔄 FORCING APP RELOAD for RTL layout...');
-        try {
-          await Updates.reloadAsync();
-        } catch (reloadError) {
-          console.error('[i18n] ❌ Reload failed:', reloadError);
-          // Continue anyway
-        }
-        // The app will restart here, and the code below will not run until the next load.
-        return false; // Indicate reload occurred
-      } else {
-        console.log('[i18n] ✅ Android RTL layout already correct');
-      }
-    } else {
-      // For iOS and Web, changes can be applied without a reload
-      console.log('[i18n] 🍎 iOS/Web: Applying RTL without reload');
-      I18nManager.allowRTL(true);
-      I18nManager.forceRTL(isRTLLanguage);
-    }
+    // Apply RTL configuration immediately without reload
+    console.log('[i18n] 🔧 Applying RTL configuration directly...');
+    applyRTLDirectly(isRTLLanguage);
     
-    // The rest of the i18n initialization
+    // Initialize i18next
     console.log('[i18n] 🔧 Initializing i18next with language:', desiredLanguage);
     await i18n
       .use(initReactI18next)
@@ -236,8 +196,8 @@ const initializeI18n = async () => {
     });
     return true;
   } catch (error) {
-    console.error('[i18n] ❌ I18N INITIALIZATION FAILED:', error);
-    console.error('[i18n] Stack trace:', error.stack);
+    console.log('[i18n] ❌ I18N INITIALIZATION FAILED:', error);
+    console.log('[i18n] Stack trace:', error.stack);
     return false;
   }
 };
@@ -260,12 +220,11 @@ export const isRTL = (): boolean => {
   return getCurrentLanguage() === 'ar';
 };
 
-// Change language function with proper RTL reload handling
+// Change language function with direct RTL application (no reload for production compatibility)
 export const changeLanguage = async (language: 'en' | 'ar'): Promise<void> => {
   try {
     console.log('[i18n] Changing language to:', language);
     
-    const currentIsRTL = I18nManager.isRTL;
     const newIsRTL = language === 'ar';
     
     // Change i18next language
@@ -274,15 +233,9 @@ export const changeLanguage = async (language: 'en' | 'ar'): Promise<void> => {
     // Store the language preference using consistent key
     await safeStorage.setItem('app-language', language);
     
-    // Apply RTL changes with reload if necessary
-    if (Platform.OS === 'android' && currentIsRTL !== newIsRTL) {
-      console.log('[i18n] RTL direction change detected on Android, applying with reload...');
-      await applyRTLWithReload(newIsRTL);
-    } else {
-      // For iOS or when RTL direction doesn't change, apply immediately
-      I18nManager.allowRTL(true);
-      I18nManager.forceRTL(newIsRTL);
-    }
+    // Apply RTL changes immediately without reload
+    console.log('[i18n] Applying RTL direction directly...');
+    applyRTLDirectly(newIsRTL);
     
     console.log('[i18n] Language changed successfully to:', language);
   } catch (error) {

@@ -16,7 +16,16 @@
     "detox:build:android:release": "detox build --configuration android.emu.release",
     "detox:test:android:release": "detox test --configuration android.emu.release",
     "e2e:test": "npm run detox:build:android && npm run detox:test:android",
-    "e2e:test:rtl": "detox test --configuration android.emu.debug e2e/rtl.test.js"
+    "e2e:test:rtl": "detox test --configuration android.emu.debug e2e/rtl.test.js",
+    "e2e:test:forms": "detox test --configuration android.emu.debug e2e/forms/",
+    "e2e:test:auth": "detox test --configuration android.emu.debug e2e/forms/auth.test.js",
+    "e2e:test:property": "detox test --configuration android.emu.debug e2e/forms/property.test.js",
+    "e2e:test:tenant": "detox test --configuration android.emu.debug e2e/forms/tenant.test.js",
+    "e2e:test:maintenance": "detox test --configuration android.emu.debug e2e/forms/maintenance.test.js",
+    "e2e:test:financial": "detox test --configuration android.emu.debug e2e/forms/financial.test.js",
+    "e2e:test:all-forms": "detox test --configuration android.emu.debug e2e/forms/all-forms.test.js",
+    "e2e:test:full": "npm run detox:build:android && npm run e2e:test:forms",
+    "clear-auth": "node scripts/clear-auth.js"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.2.3",
@@ -80,7 +89,8 @@
     "react-native-web": "^0.20.0",
     "react-native-webview": "13.13.5",
     "use-latest-callback": "^0.2.4",
-    "zustand": "^4.5.7"
+    "zustand": "^4.5.7",
+    "expo-dev-client": "~5.2.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

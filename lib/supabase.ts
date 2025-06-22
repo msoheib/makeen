@@ -54,7 +54,7 @@ class ReactNativeStorage {
   }
 }
 
-// Initialize Supabase client
+// Initialize Supabase client with enhanced error handling
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: new ReactNativeStorage(),
@@ -69,13 +69,131 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-// Export hooks for session management
+// Session management with error handling
 export const getSession = async () => {
-  const { data, error } = await supabase.auth.getSession();
-  return { session: data.session, error };
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    
+    if (error) {
+      console.warn('[Auth] Session retrieval error:', error.message);
+      // If it's a refresh token error, clear the session
+      if (error.message.includes('refresh') || error.message.includes('token')) {
+        await clearSession();
+        return { session: null, error };
+      }
+    }
+    
+    return { session: data.session, error };
+  } catch (error: any) {
+    console.error('[Auth] Unexpected session error:', error);
+    await clearSession();
+    return { session: null, error };
+  }
 };
 
 export const signOut = async () => {
-  const { error } = await supabase.auth.signOut();
-  return { error };
+  try {
+    const { error } = await supabase.auth.signOut();
+    
+    if (error) {
+      console.warn('[Auth] Sign out error:', error.message);
+      // Even if sign out fails, clear local session
+      await clearSession();
+    }
+    
+    return { error };
+  } catch (error: any) {
+    console.error('[Auth] Unexpected sign out error:', error);
+    await clearSession();
+    return { error };
+  }
 };
+
+// Clear local session data
+export const clearSession = async () => {
+  try {
+    console.log('[Auth] Clearing local session data');
+    
+    const storage = new ReactNativeStorage();
+    
+    // Clear Supabase auth tokens
+    await storage.removeItem('supabase.auth.token');
+    await storage.removeItem('sb-' + supabaseUrl.replace('https://', '').replace('.supabase.co', '') + '-auth-token');
+    
+    // Clear any other auth-related storage
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      // Clear localStorage keys that might contain auth data
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.includes('supabase') || key.includes('auth') || key.includes('session'))) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+    }
+    
+    console.log('[Auth] Local session data cleared');
+  } catch (error) {
+    console.error('[Auth] Error clearing session:', error);
+  }
+};
+
+// Check if user is authenticated with error handling
+export const isAuthenticated = async (): Promise<boolean> => {
+  try {
+    const { session, error } = await getSession();
+    
+    if (error || !session) {
+      return false;
+    }
+    
+    // Check if session is expired
+    if (session.expires_at && new Date(session.expires_at * 1000) < new Date()) {
+      console.log('[Auth] Session expired');
+      await clearSession();
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('[Auth] Authentication check failed:', error);
+    return false;
+  }
+};
+
+// Refresh session with error handling
+export const refreshSession = async () => {
+  try {
+    console.log('[Auth] Attempting to refresh session');
+    
+    const { data, error } = await supabase.auth.refreshSession();
+    
+    if (error) {
+      console.warn('[Auth] Session refresh failed:', error.message);
+      await clearSession();
+      return { session: null, error };
+    }
+    
+    console.log('[Auth] Session refreshed successfully');
+    return { session: data.session, error: null };
+  } catch (error: any) {
+    console.error('[Auth] Unexpected refresh error:', error);
+    await clearSession();
+    return { session: null, error };
+  }
+};
+
+// Handle auth state changes
+supabase.auth.onAuthStateChange(async (event, session) => {
+  console.log('[Auth] State change:', event, session ? 'Session exists' : 'No session');
+  
+  if (event === 'TOKEN_REFRESHED') {
+    console.log('[Auth] Token refreshed successfully');
+  } else if (event === 'SIGNED_OUT') {
+    console.log('[Auth] User signed out');
+    await clearSession();
+  } else if (event === 'SIGNED_IN') {
+    console.log('[Auth] User signed in');
+  }
+});

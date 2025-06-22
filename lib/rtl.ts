@@ -1,5 +1,4 @@
-import { I18nManager, Platform, Alert } from 'react-native';
-import { Updates } from 'expo-modules-core';
+import { I18nManager, Platform } from 'react-native';
 import { changeLanguage, isRTL, SupportedLanguage } from './i18n';
 
 /**
@@ -18,31 +17,20 @@ export const applyRTL = (isRTLLanguage: boolean): void => {
 };
 
 /**
- * Changes the app's language and reloads the app if required for RTL changes.
- * This is the main function to use when switching languages from the UI.
+ * Changes the app's language with immediate RTL application.
  * @param language - The new language to switch to.
  */
-export const switchLanguageAndReload = async (language: SupportedLanguage): Promise<void> => {
+export const switchLanguage = async (language: SupportedLanguage): Promise<void> => {
   try {
-    const currentIsRTL = I18nManager.isRTL;
-    const newIsRTL = language === 'ar';
-
+    console.log(`[RTL] Switching to language: ${language}`);
+    
     // Use the centralized language change function from i18n.ts
     await changeLanguage(language);
-
-    // On Android, RTL changes require an app restart to fully take effect
-    if (Platform.OS === 'android' && currentIsRTL !== newIsRTL) {
-      Alert.alert(
-        'Restart Required',
-        'The app needs to restart to apply the new language direction.',
-        [{ text: 'OK', onPress: async () => await Updates.reloadAsync() }]
-      );
-    } else {
-      // For iOS or when RTL direction doesn't change, apply immediately
-      applyRTL(newIsRTL);
-    }
+    
+    console.log('[RTL] Language switched successfully');
   } catch (error) {
     console.error('[RTL] Error switching language:', error);
+    throw error;
   }
 };
 

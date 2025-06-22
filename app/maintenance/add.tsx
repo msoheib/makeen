@@ -4,8 +4,9 @@ import { Text, TextInput, Button, SegmentedButtons, ActivityIndicator, Chip, Mod
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
 import { useApi } from '@/hooks/useApi';
-import { maintenanceApi, propertiesApi } from '@/lib/api';
+import { maintenanceApi, propertiesApi, tenantApi } from '@/lib/api';
 import { Tables, TablesInsert } from '@/lib/database.types';
+import { getCurrentUserContext } from '@/lib/security';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import PhotoCapture from '@/components/PhotoCapture';
@@ -41,13 +42,37 @@ export default function AddMaintenanceRequestScreen() {
   
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Load properties for selection
+  // Load properties for selection - tenant sees only their rented properties
   const { 
-    data: properties, 
+    data: userProperties, 
     loading: propertiesLoading, 
     error: propertiesError,
     refetch: refetchProperties 
-  } = useApi(() => propertiesApi.getAll(), []);
+  } = useApi(async () => {
+    const userContext = await getCurrentUserContext();
+    console.log('[Maintenance Form] User context:', userContext?.role);
+    
+    if (userContext && userContext.role === 'tenant') {
+      // For tenants, get only their rented properties through contracts
+      console.log('[Maintenance Form] Fetching tenant contracts...');
+      const contractsResponse = await tenantApi.getMyContracts();
+      if (contractsResponse.data) {
+        const activeContracts = contractsResponse.data.filter(contract => contract.status === 'active');
+        const rentedProperties = activeContracts.map(contract => contract.property).filter(property => property);
+        console.log('[Maintenance Form] Found rented properties:', rentedProperties.length);
+        return rentedProperties;
+      }
+      return [];
+    } else {
+      // For non-tenants (admin, manager, owner), show all properties
+      console.log('[Maintenance Form] Fetching all properties for non-tenant user...');
+      const response = await propertiesApi.getAll();
+      return response.data || [];
+    }
+  }, []);
+
+  // Use userProperties instead of properties
+  const properties = userProperties;
 
   // Filter properties based on search
   const filteredProperties = properties?.filter(property =>
@@ -86,17 +111,29 @@ export default function AddMaintenanceRequestScreen() {
 
     setLoading(true);
     try {
+      // Get current user context to set tenant_id
+      const userContext = await getCurrentUserContext();
+      
       const requestData: MaintenanceRequest = {
         title: formData.title.trim(),
         description: formData.description.trim(),
         priority: formData.priority,
         status: 'pending',
         property_id: formData.property_id,
-        tenant_id: null, // Will be set based on property/contract later
+        tenant_id: userContext?.role === 'tenant' ? userContext.userId : null,
         images: formData.images
       };
 
-      const response = await maintenanceApi.createRequest(requestData);
+      // Use tenant-specific API if user is a tenant, otherwise use general API
+      const response = userContext?.role === 'tenant' 
+        ? await tenantApi.createMaintenanceRequest({
+            property_id: formData.property_id,
+            title: formData.title.trim(),
+            description: formData.description.trim(),
+            priority: formData.priority,
+            images: formData.images
+          })
+        : await maintenanceApi.createRequest(requestData);
 
       if (response.error) {
         throw new Error(response.error.message);
@@ -368,7 +405,13 @@ export default function AddMaintenanceRequestScreen() {
               <View style={styles.emptyContainer}>
                 <Building size={48} color={theme.colors.onSurfaceVariant} />
                 <Text style={styles.emptyText}>
-                  {propertySearch ? t('noPropertiesMatch') : t('noPropertiesAvailable')}
+                  {propertySearch 
+                    ? t('noPropertiesMatch') 
+                    : (properties?.length === 0 
+                        ? 'You currently have no active rental contracts. Contact your property manager to rent a property first.' 
+                        : t('noPropertiesAvailable')
+                      )
+                  }
                 </Text>
               </View>
             ) : (

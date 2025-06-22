@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, FlatList, SafeAreaView, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, StyleSheet, FlatList, SafeAreaView, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
 import { Text, Searchbar, SegmentedButtons } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { lightTheme, darkTheme, spacing } from '@/lib/theme';
@@ -88,7 +88,19 @@ export default function MaintenanceScreen() {
     segmentedButtons: {
       backgroundColor: theme.colors.surface,
     },
-    
+    fab: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: theme.colors.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+      elevation: 6,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.3,
+      shadowRadius: 4,
+    },
   });
 
   // Show loading screen while data is being fetched
@@ -265,14 +277,13 @@ export default function MaintenanceScreen() {
 
       {/* Add Button */}
       <View style={styles.fabContainer}>
-        <ModernCard style={dynamicStyles.fab}>
-          <Text
-            style={styles.fabText}
-            onPress={() => router.push('/maintenance/add')}
-          >
-            <Plus size={24} color="white" />
-          </Text>
-        </ModernCard>
+        <TouchableOpacity onPress={() => router.push('/maintenance/add')}>
+          <ModernCard style={dynamicStyles.fab}>
+            <View style={styles.fabText}>
+              <Plus size={24} color="white" />
+            </View>
+          </ModernCard>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
