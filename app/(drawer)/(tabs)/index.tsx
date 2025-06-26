@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, RefreshControl } from 'react-native';
 import { Text } from 'react-native-paper';
+import { useTranslation } from 'react-i18next';
 import { lightTheme } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
 import { rtlStyles, getTextAlign, getFlexDirection } from '@/lib/rtl';
@@ -79,6 +80,7 @@ const staticData = {
 
 export default function DashboardScreen() {
   const theme = lightTheme;
+  const { t } = useTranslation('common');
 
   // Check if user has access to dashboard
   const { hasAccess: canAccessDashboard, loading: permissionLoading, userContext } = useScreenAccess('dashboard');
@@ -127,7 +129,7 @@ export default function DashboardScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={[styles.loadingText, { color: theme.colors.onSurfaceVariant }]}>
-            Loading dashboard...
+            {t('loading')}
           </Text>
         </View>
       </SafeAreaView>

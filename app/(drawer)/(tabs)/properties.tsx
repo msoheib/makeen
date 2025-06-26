@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, FlatList, ScrollView, SafeAreaView, TouchableOpacity, RefreshControl, ActivityIndicator, Alert } from 'react-native';
 import { Text, Searchbar, FAB, Button, IconButton } from 'react-native-paper';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { lightTheme, darkTheme, spacing } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
@@ -16,6 +17,7 @@ export default function PropertiesScreen() {
   const router = useRouter();
   const { isDarkMode } = useAppStore();
   const theme = isDarkMode ? darkTheme : lightTheme;
+  const { t } = useTranslation('common');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Get current user context for role-based functionality
@@ -120,7 +122,7 @@ export default function PropertiesScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={[styles.loadingText, { color: theme.colors.onBackground }]}>
-            جاري تحميل العقارات...
+            {t('loading')}
           </Text>
         </View>
       </SafeAreaView>

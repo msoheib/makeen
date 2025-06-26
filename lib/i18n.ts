@@ -3,6 +3,7 @@ import { initReactI18next } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform, I18nManager } from 'react-native';
 import * as RNLocalize from 'react-native-localize';
+import { getLocales } from 'expo-localization';
 import * as Updates from 'expo-updates';
 
 // Import translation files
@@ -95,20 +96,49 @@ const resources = {
 };
 
 /**
- * Applies the RTL layout direction natively - simplified for production compatibility.
+ * Applies the RTL layout direction using expo-localization and native I18nManager.
  * @param isRTLLanguage - Whether the language requires RTL layout.
  */
 const applyRTLDirectly = (isRTLLanguage: boolean): void => {
   try {
     console.log(`[i18n] Applying RTL config: isRTLLanguage=${isRTLLanguage}, Platform=${Platform.OS}`);
+    console.log(`[i18n] Current RTL state BEFORE: ${I18nManager.isRTL}`);
     
-    // Always enable RTL support first
+    // Get device locale information from expo-localization
+    const locales = getLocales();
+    const deviceTextDirection = locales[0]?.textDirection;
+    console.log(`[i18n] Device locale info:`, {
+      textDirection: deviceTextDirection,
+      languageCode: locales[0]?.languageCode,
+      isRTLDevice: deviceTextDirection === 'rtl'
+    });
+    
+    // Step 1: Always allow RTL support (required for Expo RTL)
     I18nManager.allowRTL(true);
     
-    // Force the RTL direction
+    // Step 2: Force RTL direction
     I18nManager.forceRTL(isRTLLanguage);
     
-    console.log(`[i18n] RTL applied. Final state: I18nManager.isRTL=${I18nManager.isRTL}`);
+    // Step 3: Immediate verification and retry if needed
+    setTimeout(() => {
+      if (I18nManager.isRTL !== isRTLLanguage) {
+        console.log('[i18n] ⚠️ Immediate RTL verification failed, retrying...');
+        I18nManager.forceRTL(isRTLLanguage);
+      }
+    }, 1);
+    
+    console.log(`[i18n] RTL applied. Final state AFTER: ${I18nManager.isRTL}`);
+    
+    // Log detailed state for debugging
+    console.log(`[i18n] RTL Configuration Details:`, {
+      isRTLLanguage,
+      'I18nManager.isRTL': I18nManager.isRTL,
+      'Platform.OS': Platform.OS,
+      '__DEV__': __DEV__,
+      'Direction': I18nManager.isRTL ? 'RTL' : 'LTR',
+      'DeviceDirection': deviceTextDirection
+    });
+    
   } catch (error) {
     console.error('[i18n] Error applying RTL configuration:', error);
   }
@@ -148,7 +178,7 @@ const getStoredLanguage = async (): Promise<'en' | 'ar'> => {
   return 'ar';
 };
 
-// Initialize i18next with simplified RTL handling for production compatibility
+// Initialize i18next with aggressive RTL handling for production compatibility
 const initializeI18n = async () => {
   try {
     console.log('[i18n] ========== I18N INITIALIZATION START ==========');
@@ -165,9 +195,35 @@ const initializeI18n = async () => {
       currentNativeRTL: I18nManager.isRTL
     });
 
-    // Apply RTL configuration immediately without reload
-    console.log('[i18n] 🔧 Applying RTL configuration directly...');
+    // AGGRESSIVE RTL SETUP - Multiple attempts to ensure it works in production
+    console.log('[i18n] 🔧 Applying aggressive RTL configuration...');
+    
+    // Step 1: Initial RTL setup
     applyRTLDirectly(isRTLLanguage);
+    
+    // Step 2: For production builds, apply multiple times with delays
+    if (!__DEV__ && Platform.OS === 'android') {
+      console.log('[i18n] 🔧 Production mode: Applying aggressive RTL configuration...');
+      
+      // Multiple attempts with increasing delays
+      setTimeout(() => applyRTLDirectly(isRTLLanguage), 10);
+      setTimeout(() => applyRTLDirectly(isRTLLanguage), 100);
+      setTimeout(() => applyRTLDirectly(isRTLLanguage), 500);
+      setTimeout(() => applyRTLDirectly(isRTLLanguage), 1000);
+      
+      // Final verification after 2 seconds
+      setTimeout(() => {
+        console.log('[i18n] 🔧 Final RTL verification:', {
+          expected: isRTLLanguage,
+          actual: I18nManager.isRTL,
+          match: I18nManager.isRTL === isRTLLanguage
+        });
+        if (I18nManager.isRTL !== isRTLLanguage) {
+          console.log('[i18n] ⚠️ RTL mismatch detected, applying one more time...');
+          applyRTLDirectly(isRTLLanguage);
+        }
+      }, 2000);
+    }
     
     // Initialize i18next
     console.log('[i18n] 🔧 Initializing i18next with language:', desiredLanguage);

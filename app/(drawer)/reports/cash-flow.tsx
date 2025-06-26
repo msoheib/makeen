@@ -49,11 +49,11 @@ export default function CashFlowReportScreen() {
 
   // Prepare chart data with proper validation  
   const cashFlowData = {
-    labels: revenueData?.monthlyData?.map(item => item.month) || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+    labels: revenueData?.monthlyBreakdown?.map(item => item.month) || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
     datasets: [{
-      data: revenueData?.monthlyData?.map((item, index) => {
-        const inflow = item.amount || 0;
-        const outflow = expenseData?.monthlyData?.[index]?.amount || 0;
+      data: revenueData?.monthlyBreakdown?.map((item, index) => {
+        const inflow = item.revenue || 0;
+        const outflow = expenseData?.monthlyBreakdown?.[index]?.expenses || 0;
         return 50000 + (inflow - outflow); // Cumulative cash position
       }) || [50000, 50000, 50000, 50000, 50000, 50000],
       color: (opacity = 1) => `rgba(33, 150, 243, ${opacity})`,
@@ -62,14 +62,14 @@ export default function CashFlowReportScreen() {
   };
 
   const inflowOutflowData = {
-    labels: revenueData?.monthlyData?.map(item => item.month) || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+    labels: revenueData?.monthlyBreakdown?.map(item => item.month) || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
     datasets: [
       {
-        data: revenueData?.monthlyData?.map(item => item.amount) || [0, 0, 0, 0, 0, 0],
+        data: revenueData?.monthlyBreakdown?.map(item => item.revenue) || [0, 0, 0, 0, 0, 0],
         color: (opacity = 1) => `rgba(46, 213, 115, ${opacity})`,
       },
       {
-        data: expenseData?.monthlyData?.map(item => item.amount) || [0, 0, 0, 0, 0, 0],
+        data: expenseData?.monthlyBreakdown?.map(item => item.expenses) || [0, 0, 0, 0, 0, 0],
         color: (opacity = 1) => `rgba(255, 107, 107, ${opacity})`,
       },
     ],

@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { View, StyleSheet, FlatList, ScrollView, SafeAreaView, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
 import { Text, Searchbar, Avatar, FAB } from 'react-native-paper';
+import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { lightTheme, darkTheme, spacing } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
@@ -18,6 +19,7 @@ export default function TenantsScreen() {
   const router = useRouter();
   const { isDarkMode } = useAppStore();
   const theme = isDarkMode ? darkTheme : lightTheme;
+  const { t } = useTranslation('common');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Check if user has access to tenants data
@@ -75,7 +77,7 @@ export default function TenantsScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={[styles.loadingText, { color: theme.colors.onSurfaceVariant }]}>
-            Loading tenants...
+            {t('loading')}
           </Text>
         </View>
       </SafeAreaView>
