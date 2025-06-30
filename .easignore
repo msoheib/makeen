@@ -1,0 +1,5 @@
+__tests__/components/NotificationCard.test.tsx
+__tests__/lib/notificationCategories.test.ts
+__tests__/lib/notificationStorage.test.ts
+supabase/functions/
+requirements/
