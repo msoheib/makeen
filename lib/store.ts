@@ -124,8 +124,6 @@ interface AppState {
   
   // Theme and preferences
   isDarkMode: boolean;
-  language: string;
-  currency: string;
   
  // Notifications
   notificationsEnabled: boolean;
@@ -137,8 +135,6 @@ interface AppState {
   
   // Actions
   toggleDarkMode: () => void;
-  setLanguage: (language: string) => void;
-  setCurrency: (currency: string) => void;
   setNotificationsEnabled: (enabled: boolean) => void;
   setEmailNotifications: (enabled: boolean) => void;
   setPushNotifications: (enabled: boolean) => void;
@@ -351,8 +347,6 @@ export const useAppStore = create<AppState>()(
       
       // Actions
       toggleDarkMode: () => set((state) => ({ isDarkMode: !state.isDarkMode })),
-      setLanguage: (language) => set({ language }),
-      setCurrency: (currency) => set({ currency }),
       setNotificationsEnabled: (enabled) => set({ notificationsEnabled: enabled }),
       setEmailNotifications: (enabled) => set({ emailNotifications: enabled }),
       setPushNotifications: (enabled) => set({ pushNotifications: enabled }),
@@ -421,19 +415,13 @@ export const useAppStore = create<AppState>()(
 export const useStore = () => {
   const store = useAppStore();
   return {
+    ...store,
     user: store.user ? {
       ...store.user,
       ownedPropertyIds: store.properties
         .filter(p => p.owner_id === store.user?.id)
         .map(p => p.id)
     } : null,
-    // Keep other needed properties
-    settings: store.settings,
-    isAuthenticated: store.isAuthenticated,
-    isLoading: store.isLoading,
-    properties: store.properties,
-    // Keep all the methods
-    ...store
   };
 };
 
