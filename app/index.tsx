@@ -86,7 +86,7 @@ export default function AppIndex() {
   }
 
   if (isAuthenticated) {
-    return <Redirect href="/(drawer)" />;
+    return <Redirect href="/(tabs)" />;
   } else {
     return <Redirect href="/(auth)" />;
   }

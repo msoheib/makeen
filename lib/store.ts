@@ -134,8 +134,6 @@ interface AppState {
   maintenanceNotifications: boolean;
   financialNotifications: boolean;
   
-  // Sidebar state for modal implementation
-  sidebarOpen: boolean;
   
   // Actions
   toggleDarkMode: () => void;
@@ -146,7 +144,6 @@ interface AppState {
   setPushNotifications: (enabled: boolean) => void;
   setMaintenanceNotifications: (enabled: boolean) => void;
   setFinancialNotifications: (enabled: boolean) => void;
-  setSidebarOpen: (open: boolean) => void;
   
   // Language settings
   language: SupportedLanguage;
@@ -351,8 +348,6 @@ export const useAppStore = create<AppState>()(
       maintenanceNotifications: true,
       financialNotifications: true,
       
-      // Sidebar state
-      sidebarOpen: false,
       
       // Actions
       toggleDarkMode: () => set((state) => ({ isDarkMode: !state.isDarkMode })),
@@ -363,7 +358,6 @@ export const useAppStore = create<AppState>()(
       setPushNotifications: (enabled) => set({ pushNotifications: enabled }),
       setMaintenanceNotifications: (enabled) => set({ maintenanceNotifications: enabled }),
       setFinancialNotifications: (enabled) => set({ financialNotifications: enabled }),
-      setSidebarOpen: (open) => set({ sidebarOpen: open }),
       
       // Language settings
       language: 'ar' as SupportedLanguage,

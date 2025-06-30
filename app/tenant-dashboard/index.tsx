@@ -395,7 +395,6 @@ export default function TenantDashboardScreen() {
       <ModernHeader 
         title="لوحة المستأجر" 
         showNotifications={true}
-        showMenu={true}
         variant="dark"
       />
 

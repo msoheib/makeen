@@ -150,7 +150,7 @@ export default function AddContractScreen() {
           },
           {
             text: 'Back to Contracts',
-            onPress: () => router.replace('/(drawer)/(tabs)/tenants')
+            onPress: () => router.replace('/(tabs)/tenants')
           }
         ]
       );

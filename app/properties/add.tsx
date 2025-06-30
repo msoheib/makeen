@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/lib/store';
-import { PropertyType, PropertyStatus, PaymentMethod } from '@/lib/types';
+import { PropertyType, PropertyStatus } from '@/lib/types';
 import { ArrowLeft, Building2, MapPin, DollarSign, Chrome as Home } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
@@ -29,7 +29,6 @@ export default function AddPropertyScreen() {
     bathrooms: '',
     price: '',
     annual_rent: '',
-    payment_method: 'cash' as PaymentMethod,
     is_accepting_bids: true,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -47,7 +46,10 @@ export default function AddPropertyScreen() {
       newErrors.city = 'المدينة مطلوبة';
     }
     if (!formData.country.trim()) {
-      newErrors.country = 'الدولة مطلوبة';
+      newErrors.country = 'الحي مطلوب';
+    }
+    if (!formData.neighborhood.trim()) {
+      newErrors.neighborhood = 'الشارع مطلوب';
     }
     if (!formData.area_sqm || isNaN(Number(formData.area_sqm)) || Number(formData.area_sqm) <= 0) {
       newErrors.area_sqm = 'مساحة صحيحة مطلوبة';
@@ -104,14 +106,14 @@ export default function AddPropertyScreen() {
         listing_type: formData.listing_type,
         address: formData.address.trim(),
         city: formData.city.trim(),
-        country: formData.country.trim(),
-        neighborhood: formData.neighborhood.trim() || null,
+        country: 'السعودية',
+        neighborhood: formData.neighborhood.trim(),
         area_sqm: Number(formData.area_sqm),
         bedrooms: formData.bedrooms ? Number(formData.bedrooms) : null,
         bathrooms: formData.bathrooms ? Number(formData.bathrooms) : null,
         price: Number(formData.price),
         annual_rent: formData.annual_rent ? Number(formData.annual_rent) : null,
-        payment_method: formData.payment_method,
+        payment_method: 'cash',
         owner_id: ownerId,
         images: [], // Empty array for now
         is_accepting_bids: formData.is_accepting_bids,
@@ -140,14 +142,14 @@ export default function AddPropertyScreen() {
         [
           {
             text: 'موافق',
-            onPress: () => router.replace('/(drawer)/(tabs)/properties'),
+            onPress: () => router.replace('/(tabs)/properties'),
           },
         ]
       );
       
       // Automatically navigate back after a short delay
       setTimeout(() => {
-        router.replace('/(drawer)/(tabs)/properties');
+        router.replace('/(tabs)/properties');
       }, 1500);
     } catch (error: any) {
       console.error('Error adding property:', error);
@@ -180,9 +182,8 @@ export default function AddPropertyScreen() {
       <ModernHeader
         title="إضافة عقار"
         showBackButton={true}
-        showMenu={false}
         showNotifications={false}
-        onBackPress={() => router.push('/(drawer)/(tabs)/properties')}
+        onBackPress={() => router.push('/(tabs)/properties')}
       />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -216,18 +217,20 @@ export default function AddPropertyScreen() {
           />
 
           <Text style={styles.fieldLabel}>نوع العقار *</Text>
-          <SegmentedButtons
-            value={formData.property_type}
-            onValueChange={(value) => setFormData({ ...formData, property_type: value as PropertyType })}
-            buttons={[
-              { value: 'apartment', label: 'شقة' },
-              { value: 'villa', label: 'فيلا' },
-              { value: 'office', label: 'مكتب' },
-              { value: 'retail', label: 'متجر' },
-              { value: 'warehouse', label: 'مستودع' },
-            ]}
-            style={styles.segmentedButtons}
-          />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.propertyTypeScroll}>
+            <SegmentedButtons
+              value={formData.property_type}
+              onValueChange={(value) => setFormData({ ...formData, property_type: value as PropertyType })}
+              buttons={[
+                { value: 'apartment', label: 'شقة' },
+                { value: 'villa', label: 'فيلا' },
+                { value: 'office', label: 'مكتب' },
+                { value: 'retail', label: 'متجر' },
+                { value: 'warehouse', label: 'مستودع' },
+              ]}
+              style={styles.segmentedButtons}
+            />
+          </ScrollView>
 
           <Text style={styles.fieldLabel}>الحالة *</Text>
           <SegmentedButtons
@@ -284,7 +287,7 @@ export default function AddPropertyScreen() {
               textAlign="right"
             />
             <TextInput
-              label="الدولة *"
+              label="الحي *"
               value={formData.country}
               onChangeText={(text) => setFormData({ ...formData, country: text })}
               mode="outlined"
@@ -298,13 +301,15 @@ export default function AddPropertyScreen() {
           )}
 
           <TextInput
-            label="الحي"
+            label="الشارع *"
             value={formData.neighborhood}
             onChangeText={(text) => setFormData({ ...formData, neighborhood: text })}
             mode="outlined"
             style={styles.input}
+            error={!!errors.neighborhood}
             textAlign="right"
           />
+          {errors.neighborhood && <Text style={styles.errorText}>{errors.neighborhood}</Text>}
         </ModernCard>
 
         {/* Property Details */}
@@ -388,16 +393,6 @@ export default function AddPropertyScreen() {
             </>
           )}
 
-          <Text style={styles.fieldLabel}>طريقة الدفع *</Text>
-          <SegmentedButtons
-            value={formData.payment_method}
-            onValueChange={(value) => setFormData({ ...formData, payment_method: value as PaymentMethod })}
-            buttons={[
-              { value: 'cash', label: 'نقداً' },
-              { value: 'installment', label: 'أقساط' },
-            ]}
-            style={styles.segmentedButtons}
-          />
         </ModernCard>
 
         {/* Submit Button */}
@@ -463,6 +458,9 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   segmentedButtons: {
+    marginBottom: spacing.m,
+  },
+  propertyTypeScroll: {
     marginBottom: spacing.m,
   },
   errorText: {

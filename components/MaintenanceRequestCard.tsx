@@ -259,3 +259,68 @@ export default function MaintenanceRequestCard({ request, theme, onPress }: Main
     </Card>
   );
 }
+
+// Static styles (moved outside component for performance)
+const staticStyles = StyleSheet.create({
+  card: {
+    marginBottom: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  content: {
+    paddingVertical: 12,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  title: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  description: {
+    fontSize: 14,
+    marginBottom: 12,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  metaText: {
+    fontSize: 13,
+    marginHorizontal: 4,
+  },
+  imagesRow: {
+    flexDirection: 'row',
+  },
+  imageContainer: {
+    width: '30%',
+    marginRight: '3.33%',
+    aspectRatio: 16/9,
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  moreImagesContainer: {
+    width: '30%',
+    aspectRatio: 16/9,
+    borderRadius: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  moreImagesText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+});

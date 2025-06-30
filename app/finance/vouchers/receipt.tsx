@@ -212,14 +212,14 @@ export default function ReceiptVoucherScreen() {
         [
           {
             text: 'OK',
-            onPress: () => router.replace('/(drawer)/(tabs)/payments'),
+            onPress: () => router.replace('/(tabs)/payments'),
           },
         ]
       );
       
       // Automatically navigate back after a short delay
       setTimeout(() => {
-        router.replace('/(drawer)/(tabs)/payments');
+        router.replace('/(tabs)/payments');
       }, 1500);
     } catch (error: any) {
       console.error('Error creating receipt voucher:', error);

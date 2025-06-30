@@ -145,14 +145,14 @@ export default function AddMaintenanceRequestScreen() {
         [
           {
             text: t('common:ok'),
-            onPress: () => router.replace('/(drawer)/(tabs)/maintenance'),
+            onPress: () => router.replace('/(tabs)/maintenance'),
           },
         ]
       );
       
       // Automatically navigate back after a short delay
       setTimeout(() => {
-        router.replace('/(drawer)/(tabs)/maintenance');
+        router.replace('/(tabs)/maintenance');
       }, 1500);
     } catch (error: any) {
       console.error('Error submitting maintenance request:', error);
@@ -202,7 +202,6 @@ export default function AddMaintenanceRequestScreen() {
       <ModernHeader 
         title={t('addRequest')}
         showBackButton={true}
-        showMenu={false}
         showNotifications={false}
         onBackPress={() => router.back()}
       />

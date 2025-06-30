@@ -72,14 +72,14 @@ export default function AddPersonScreen() {
         [
           {
             text: 'OK',
-            onPress: () => router.replace('/(drawer)/(tabs)/people'),
+            onPress: () => router.replace('/(tabs)/people'),
           },
         ]
       );
       
       // Automatically navigate back after a short delay
       setTimeout(() => {
-        router.replace('/(drawer)/(tabs)/people');
+        router.replace('/(tabs)/people');
       }, 1500);
     } catch (error: any) {
       console.error('Error adding person:', error);
@@ -98,7 +98,6 @@ export default function AddPersonScreen() {
       <ModernHeader
         title="Add Person"
         showBackButton={true}
-        showMenu={false}
         showNotifications={false}
         onBackPress={() => router.back()}
       />

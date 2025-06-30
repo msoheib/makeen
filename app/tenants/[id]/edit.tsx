@@ -106,7 +106,6 @@ export default function EditTenantScreen() {
           title={t('edit.title')}
           subtitle={t('edit.loading')}
           showBackButton={true}
-          showMenu={false}
           showNotifications={false}
           onBackPress={() => router.back()}
         />
@@ -125,7 +124,6 @@ export default function EditTenantScreen() {
           title={t('edit.title')}
           subtitle={t('edit.error')}
           showBackButton={true}
-          showMenu={false}
           showNotifications={false}
           onBackPress={() => router.back()}
         />
@@ -145,7 +143,6 @@ export default function EditTenantScreen() {
         title={t('edit.title')}
         subtitle={`${t('common:edit')} ${tenant.first_name} ${tenant.last_name}`}
         showBackButton={true}
-        showMenu={false}
         showNotifications={false}
         onBackPress={() => router.back()}
       />

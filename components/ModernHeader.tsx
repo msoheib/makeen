@@ -2,8 +2,8 @@ import React from 'react';
 import { View, StyleSheet, Platform, StatusBar, TouchableOpacity } from 'react-native';
 import { Text, IconButton, Badge } from 'react-native-paper';
 import { lightTheme, darkTheme, spacing } from '@/lib/theme';
-import { Bell, Search, Menu, ArrowRight, ArrowLeft } from 'lucide-react-native';
-import { useNavigation, DrawerActions } from '@react-navigation/native';
+import { Bell, Search, ArrowRight, ArrowLeft } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { useAppStore } from '@/lib/store';
 import { useApi } from '@/hooks/useApi';
@@ -17,11 +17,9 @@ interface ModernHeaderProps {
   subtitle?: string;
   showNotifications?: boolean;
   showSearch?: boolean;
-  showMenu?: boolean;
   showBackButton?: boolean;
   onNotificationPress?: () => void;
   onSearchPress?: () => void;
-  onMenuPress?: () => void;
   onBackPress?: () => void;
   variant?: 'light' | 'dark';
 }
@@ -31,11 +29,9 @@ export default function ModernHeader({
   subtitle,
   showNotifications = true,
   showSearch = false,
-  showMenu = true,
   showBackButton = false,
   onNotificationPress,
   onSearchPress,
-  onMenuPress,
   onBackPress,
   variant = 'dark'
 }: ModernHeaderProps) {
@@ -46,9 +42,9 @@ export default function ModernHeader({
   
   const theme = isDarkMode ? darkTheme : lightTheme;
   const isDark = variant === 'dark';
-  const textColor = isDark ? '#FFFFFF' : theme.colors.onSurface;
-  const iconColor = isDark ? '#FFFFFF' : theme.colors.onSurfaceVariant;
-  const backgroundColor = isDark ? '#1E293B' : theme.colors.surface;
+  const textColor = isDark ? '#FFFFFF' : theme.colors.onPrimary;
+  const iconColor = isDark ? '#FFFFFF' : theme.colors.onPrimary;
+  const backgroundColor = isDark ? '#3A1D4E' : theme.colors.primary;
 
   // Get unread notifications count
   const { data: unreadCount } = useApi(() => notificationsApi.getUnreadCount(), []);
@@ -57,13 +53,6 @@ export default function ModernHeader({
   // Base: safe area top inset + Additional padding for better spacing  
   const safeAreaPadding = Math.max(insets.top + 16, 24); // Minimum 24px, safe area + 16px extra for generous spacing
 
-  const handleMenuPress = () => {
-    if (onMenuPress) {
-      onMenuPress();
-    } else {
-      navigation.dispatch(DrawerActions.openDrawer());
-    }
-  };
 
   const handleBackPress = () => {
     if (onBackPress) {
@@ -71,7 +60,7 @@ export default function ModernHeader({
     } else if (router.canGoBack()) {
       router.back();
     } else {
-      router.push('/(drawer)/(tabs)/');
+      router.push('/(tabs)/');
     }
   };
 
@@ -84,7 +73,7 @@ export default function ModernHeader({
   };
 
   // Determine if we should show back button based on navigation state
-  const shouldShowBackButton = showBackButton || (router.canGoBack() && !showMenu);
+  const shouldShowBackButton = showBackButton || router.canGoBack();
 
   // Use proper RTL-aware arrow direction
   const BackArrowIcon = isRTL() ? ArrowRight : ArrowLeft;
@@ -106,13 +95,6 @@ export default function ModernHeader({
                 onPress={handleBackPress}
                 style={styles.navButton}
                 accessibilityLabel="العودة"
-              />
-            ) : showMenu ? (
-              <IconButton
-                icon={() => <Menu size={24} color={iconColor} />}
-                onPress={handleMenuPress}
-                style={styles.navButton}
-                accessibilityLabel="القائمة"
               />
             ) : null}
           </View>

@@ -1,20 +1,20 @@
 import { MD3LightTheme } from 'react-native-paper';
 import { isRTL } from './i18n';
 
-// Define light colors
+// Define light colors with purple theme
 export const lightColors = {
-  primary: '#1976D2', // Primary Blue (consistent with app icon and splash)
+  primary: '#4C2661', // Primary Purple
   onPrimary: '#FFFFFF',
-  primaryContainer: '#BBDEFB', // Light blue container
-  onPrimaryContainer: '#0D47A1', // Dark blue text
-  secondary: '#2196F3', // Light Blue for secondary elements
+  primaryContainer: '#E8D5F0', // Light purple container
+  onPrimaryContainer: '#2A1436', // Dark purple text
+  secondary: '#6B4C93', // Secondary purple
   onSecondary: '#FFFFFF',
-  secondaryContainer: '#E3F2FD', // Very light blue container
-  onSecondaryContainer: '#0D47A1',
-  tertiary: '#7B1FA2', // Purple
+  secondaryContainer: '#F0E8F7', // Very light purple container
+  onSecondaryContainer: '#3A2452',
+  tertiary: '#8E6BA8', // Lighter purple tertiary
   onTertiary: '#FFFFFF',
-  tertiaryContainer: '#E1BEE7',
-  onTertiaryContainer: '#4A148C',
+  tertiaryContainer: '#F4EFFF',
+  onTertiaryContainer: '#4A3860',
   error: '#D32F2F',
   onError: '#FFFFFF',
   errorContainer: '#FFCDD2',
@@ -28,7 +28,11 @@ export const lightColors = {
   onWarning: '#FFFFFF', 
   warningContainer: '#FFE0B2',
   onWarningContainer: '#E65100',
-  notification: '#2196F3',
+  notification: '#4C2661',
+  // Tab bar colors (fixing broken references)
+  tabBarActive: '#4C2661',
+  tabBarInactive: '#A892B8',
+  tabBarBackground: '#F8F5FA',
   background: '#FAFAFA',
   onBackground: '#1C1B1F',
   surface: '#FFFFFF',
@@ -41,7 +45,7 @@ export const lightColors = {
   scrim: '#000000',
   inverseSurface: '#313033',
   inverseOnSurface: '#F4EFF4',
-  inversePrimary: '#42A5F5', // Light blue for inverse elements
+  inversePrimary: '#B388D1', // Light purple for inverse elements
   elevation: {
     level0: 'transparent',
     level1: '#FFFFFF',

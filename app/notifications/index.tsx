@@ -112,7 +112,6 @@ export default function NotificationsScreen() {
         <ModernHeader 
           title="الإشعارات" 
           showBackButton={true}
-          showMenu={false}
           onBackPress={() => router.back()}
         />
         <View style={styles.loadingContainer}>
@@ -132,7 +131,6 @@ export default function NotificationsScreen() {
         <ModernHeader 
           title="الإشعارات" 
           showBackButton={true}
-          showMenu={false}
           onBackPress={() => router.back()}
         />
         <View style={styles.errorContainer}>
@@ -227,7 +225,6 @@ export default function NotificationsScreen() {
       <ModernHeader 
         title="الإشعارات" 
         showBackButton={true}
-        showMenu={false}
         onBackPress={() => router.back()}
         rightElement={
           <TouchableOpacity 

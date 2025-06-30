@@ -176,14 +176,14 @@ export default function AssignTenantScreen() {
         [
           {
             text: 'موافق',
-            onPress: () => router.replace('/(drawer)/(tabs)/tenants')
+            onPress: () => router.replace('/(tabs)/tenants')
           }
         ]
       );
       
       // Automatically navigate back after a short delay
       setTimeout(() => {
-        router.replace('/(drawer)/(tabs)/tenants');
+        router.replace('/(tabs)/tenants');
       }, 1500);
 
     } catch (error) {
@@ -202,7 +202,7 @@ export default function AssignTenantScreen() {
       <ModernHeader
         title="تخصيص مستأجر لعقار"
         showBackButton
-        onBackPress={() => router.push('/(drawer)/(tabs)/tenants')}
+        onBackPress={() => router.push('/(tabs)/tenants')}
       />
 
       <View style={styles.content}>

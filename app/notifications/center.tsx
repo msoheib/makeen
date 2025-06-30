@@ -136,10 +136,10 @@ export default function NotificationCenter() {
           router.push('/finance');
           break;
         case 'tenant':
-          router.push('/(drawer)/(tabs)/tenants');
+          router.push('/(tabs)/tenants');
           break;
         case 'property':
-          router.push('/(drawer)/(tabs)/properties');
+          router.push('/(tabs)/properties');
           break;
         default:
           // Show notification detail or stay in center
