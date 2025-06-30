@@ -5,10 +5,12 @@ import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || 
-                   Constants.expoConfig?.extra?.EXPO_PUBLIC_SUPABASE_URL;
+                   Constants.expoConfig?.extra?.EXPO_PUBLIC_SUPABASE_URL ||
+                   'https://fbabpaorcvatejkrelrf.supabase.co';
 
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 
-                       Constants.expoConfig?.extra?.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+                       Constants.expoConfig?.extra?.EXPO_PUBLIC_SUPABASE_ANON_KEY ||
+                       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZiYWJwYW9yY3ZhdGVqa3JlbHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyNjYzMzMsImV4cCI6MjA2Mzg0MjMzM30.L_DLnMQUw7cepGKjtrbkFZ_E6Rsz4pecAtnUrbc0F5w';
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables. Please check your .env files or app.json configuration.');
