@@ -25,6 +25,13 @@ import { useApi } from '@/hooks/useApi';
 import { propertiesApi, profilesApi, contractsApi } from '@/lib/api';
 import { useScreenAccess, SCREEN_PERMISSIONS } from '@/lib/permissions';
 import { formatCurrency } from '@/lib/formatters';
+import { 
+  HorizontalStatsShimmer, 
+  RentCardShimmer, 
+  CashflowCardShimmer,
+  PropertyOverviewShimmer,
+  RecentActivityShimmer 
+} from '@/components/shimmer';
 
 // Static data to prevent loading issues
 const staticData = {
@@ -340,57 +347,61 @@ export default function DashboardScreen() {
       <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
         الإحصائيات السريعة
       </Text>
-      <View style={[styles.horizontalStatsCard, { backgroundColor: theme.colors.surface }]}>
-        <View style={[styles.horizontalStatsRow, { flexDirection: getFlexDirection('row') }]}>
-          <View style={styles.horizontalStatItem}>
-            <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
-              <Building2 size={24} color={theme.colors.primary} />
+      {isLoading ? (
+        <HorizontalStatsShimmer />
+      ) : (
+        <View style={[styles.horizontalStatsCard, { backgroundColor: theme.colors.surface }]}>
+          <View style={[styles.horizontalStatsRow, { flexDirection: getFlexDirection('row') }]}>
+            <View style={styles.horizontalStatItem}>
+              <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
+                <Building2 size={24} color={theme.colors.primary} />
+              </View>
+              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                إجمالي العقارات
+              </Text>
+              <Text style={[styles.horizontalStatValue, { color: theme.colors.primary }]}>
+                {propertyStats.totalProperties}
+              </Text>
             </View>
-            <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-              إجمالي العقارات
-            </Text>
-            <Text style={[styles.horizontalStatValue, { color: theme.colors.primary }]}>
-              {isLoading ? '...' : propertyStats.totalProperties}
-            </Text>
-          </View>
-          
-          <View style={styles.horizontalStatItem}>
-            <View style={[styles.horizontalStatIcon, { backgroundColor: '#4CAF5020' }]}>
-              <Home size={24} color="#4CAF50" />
+            
+            <View style={styles.horizontalStatItem}>
+              <View style={[styles.horizontalStatIcon, { backgroundColor: '#4CAF5020' }]}>
+                <Home size={24} color="#4CAF50" />
+              </View>
+              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                العقارات المشغولة
+              </Text>
+              <Text style={[styles.horizontalStatValue, { color: '#4CAF50' }]}>
+                {propertyStats.occupied}
+              </Text>
             </View>
-            <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-              العقارات المشغولة
-            </Text>
-            <Text style={[styles.horizontalStatValue, { color: '#4CAF50' }]}>
-              {isLoading ? '...' : propertyStats.occupied}
-            </Text>
-          </View>
-          
-          <View style={styles.horizontalStatItem}>
-            <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.secondary}20` }]}>
-              <Users size={24} color={theme.colors.secondary} />
+            
+            <View style={styles.horizontalStatItem}>
+              <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.secondary}20` }]}>
+                <Users size={24} color={theme.colors.secondary} />
+              </View>
+              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                إجمالي المستأجرين
+              </Text>
+              <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary }]}>
+                {tenantStats.totalTenants}
+              </Text>
             </View>
-            <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-              إجمالي المستأجرين
-            </Text>
-            <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary }]}>
-              {isLoading ? '...' : tenantStats.totalTenants}
-            </Text>
-          </View>
-          
-          <View style={styles.horizontalStatItem}>
-            <View style={[styles.horizontalStatIcon, { backgroundColor: '#FF980020' }]}>
-              <AlertCircle size={24} color="#FF9800" />
+            
+            <View style={styles.horizontalStatItem}>
+              <View style={[styles.horizontalStatIcon, { backgroundColor: '#FF980020' }]}>
+                <AlertCircle size={24} color="#FF9800" />
+              </View>
+              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                المستأجرين الأجانب
+              </Text>
+              <Text style={[styles.horizontalStatValue, { color: '#FF9800' }]}>
+                {tenantStats.foreignTenants}
+              </Text>
             </View>
-            <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-              المستأجرين الأجانب
-            </Text>
-            <Text style={[styles.horizontalStatValue, { color: '#FF9800' }]}>
-              {isLoading ? '...' : tenantStats.foreignTenants}
-            </Text>
           </View>
         </View>
-      </View>
+      )}
     </View>
   );
 
@@ -400,20 +411,29 @@ export default function DashboardScreen() {
         الملخص المالي
       </Text>
       <View style={styles.financialCards}>
-        <RentCard 
-          totalRent={financialSummary.totalIncome}
-          collectedRent={Math.floor(financialSummary.totalIncome * 0.9)}
-          pendingRent={Math.floor(financialSummary.totalIncome * 0.1)}
-          theme={theme}
-          loading={isLoading}
-        />
-        <CashflowCard
-          income={financialSummary.totalIncome}
-          expenses={financialSummary.totalExpenses}
-          netIncome={financialSummary.netProfit}
-          theme={theme}
-          loading={isLoading}
-        />
+        {isLoading ? (
+          <>
+            <RentCardShimmer />
+            <CashflowCardShimmer />
+          </>
+        ) : (
+          <>
+            <RentCard 
+              totalRent={financialSummary.totalIncome}
+              collectedRent={Math.floor(financialSummary.totalIncome * 0.9)}
+              pendingRent={Math.floor(financialSummary.totalIncome * 0.1)}
+              theme={theme}
+              loading={false}
+            />
+            <CashflowCard
+              income={financialSummary.totalIncome}
+              expenses={financialSummary.totalExpenses}
+              netIncome={financialSummary.netProfit}
+              theme={theme}
+              loading={false}
+            />
+          </>
+        )}
       </View>
     </View>
   );
@@ -423,54 +443,58 @@ export default function DashboardScreen() {
       <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
         نظرة عامة على العقارات
       </Text>
-      <View style={[styles.propertyOverviewCard, { backgroundColor: theme.colors.surface }]}>
-        <View style={[styles.propertyRow, { flexDirection: getFlexDirection('row') }]}>
-          <View style={styles.propertyItem}>
-            <View style={[styles.propertyIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
-              <Building2 size={24} color={theme.colors.primary} />
+      {isLoading ? (
+        <PropertyOverviewShimmer />
+      ) : (
+        <View style={[styles.propertyOverviewCard, { backgroundColor: theme.colors.surface }]}>
+          <View style={[styles.propertyRow, { flexDirection: getFlexDirection('row') }]}>
+            <View style={styles.propertyItem}>
+              <View style={[styles.propertyIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
+                <Building2 size={24} color={theme.colors.primary} />
+              </View>
+              <Text style={[styles.propertyLabel, { color: theme.colors.onSurfaceVariant }]}>
+                مشغولة
+              </Text>
+              <Text style={[styles.propertyValue, { color: theme.colors.onSurface }]}>
+                {propertyStats.occupied}
+              </Text>
             </View>
-            <Text style={[styles.propertyLabel, { color: theme.colors.onSurfaceVariant }]}>
-              مشغولة
-            </Text>
-            <Text style={[styles.propertyValue, { color: theme.colors.onSurface }]}>
-              {isLoading ? '...' : propertyStats.occupied}
-            </Text>
+            
+            <View style={styles.propertyItem}>
+              <View style={[styles.propertyIcon, { backgroundColor: '#4CAF5020' }]}>
+                <Home size={24} color="#4CAF50" />
+              </View>
+              <Text style={[styles.propertyLabel, { color: theme.colors.onSurfaceVariant }]}>
+                شاغرة
+              </Text>
+              <Text style={[styles.propertyValue, { color: theme.colors.onSurface }]}>
+                {propertyStats.available}
+              </Text>
+            </View>
+            
+            <View style={styles.propertyItem}>
+              <View style={[styles.propertyIcon, { backgroundColor: '#FF980020' }]}>
+                <AlertCircle size={24} color="#FF9800" />
+              </View>
+              <Text style={[styles.propertyLabel, { color: theme.colors.onSurfaceVariant }]}>
+                صيانة
+              </Text>
+              <Text style={[styles.propertyValue, { color: theme.colors.onSurface }]}>
+                {propertyStats.maintenance}
+              </Text>
+            </View>
           </View>
           
-          <View style={styles.propertyItem}>
-            <View style={[styles.propertyIcon, { backgroundColor: '#4CAF5020' }]}>
-              <Home size={24} color="#4CAF50" />
-            </View>
-            <Text style={[styles.propertyLabel, { color: theme.colors.onSurfaceVariant }]}>
-              شاغرة
+          <View style={styles.occupancyRate}>
+            <Text style={[styles.occupancyLabel, { color: theme.colors.onSurfaceVariant }]}>
+              معدل الإشغال
             </Text>
-            <Text style={[styles.propertyValue, { color: theme.colors.onSurface }]}>
-              {isLoading ? '...' : propertyStats.available}
-            </Text>
-          </View>
-          
-          <View style={styles.propertyItem}>
-            <View style={[styles.propertyIcon, { backgroundColor: '#FF980020' }]}>
-              <AlertCircle size={24} color="#FF9800" />
-            </View>
-            <Text style={[styles.propertyLabel, { color: theme.colors.onSurfaceVariant }]}>
-              صيانة
-            </Text>
-            <Text style={[styles.propertyValue, { color: theme.colors.onSurface }]}>
-              {isLoading ? '...' : propertyStats.maintenance}
+            <Text style={[styles.occupancyValue, { color: theme.colors.primary }]}>
+              {propertyStats.occupancyRate}%
             </Text>
           </View>
         </View>
-        
-        <View style={styles.occupancyRate}>
-          <Text style={[styles.occupancyLabel, { color: theme.colors.onSurfaceVariant }]}>
-            معدل الإشغال
-          </Text>
-          <Text style={[styles.occupancyValue, { color: theme.colors.primary }]}>
-            {isLoading ? '...' : propertyStats.occupancyRate}%
-          </Text>
-        </View>
-      </View>
+      )}
     </View>
   );
 
@@ -479,44 +503,48 @@ export default function DashboardScreen() {
       <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
         النشاطات الأخيرة
       </Text>
-      {recentActivities.map((activity) => (
-        <View key={activity.id} style={[styles.activityCard, { backgroundColor: theme.colors.surface }]}>
-          <View style={[styles.activityHeader, { flexDirection: getFlexDirection('row') }]}>
-            <View style={styles.activityLeft}>
-              <Text style={[styles.activityAmount, { color: theme.colors.primary }]}>
-                {formatCurrency(activity.amount)}
-              </Text>
-              <Text style={[styles.activityDate, { color: theme.colors.onSurfaceVariant }]}>
-                {activity.date}
-              </Text>
-            </View>
-            <View style={styles.activityInfo}>
-              <View style={styles.activityDetails}>
-                <Text style={[styles.activityTitle, { color: theme.colors.onSurface }]}>
-                  {activity.title}
+      {isLoading ? (
+        <RecentActivityShimmer count={3} />
+      ) : (
+        recentActivities.map((activity) => (
+          <View key={activity.id} style={[styles.activityCard, { backgroundColor: theme.colors.surface }]}>
+            <View style={[styles.activityHeader, { flexDirection: getFlexDirection('row') }]}>
+              <View style={styles.activityLeft}>
+                <Text style={[styles.activityAmount, { color: theme.colors.primary }]}>
+                  {formatCurrency(activity.amount)}
                 </Text>
-                <Text style={[styles.activityDescription, { color: theme.colors.onSurfaceVariant }]}>
-                  {activity.description}
+                <Text style={[styles.activityDate, { color: theme.colors.onSurfaceVariant }]}>
+                  {activity.date}
                 </Text>
               </View>
-              <View style={[
-                styles.activityIcon,
-                {
-                  backgroundColor: activity.type === 'payment' 
-                    ? '#4CAF5020'
-                    : activity.type === 'maintenance'
-                    ? '#FF980020'
-                    : '#2196F320'
-                }
-              ]}>
-                {activity.type === 'payment' && <DollarSign size={20} color="#4CAF50" />}
-                {activity.type === 'maintenance' && <AlertCircle size={20} color="#FF9800" />}
-                {activity.type === 'contract' && <FileText size={20} color="#2196F3" />}
+              <View style={styles.activityInfo}>
+                <View style={styles.activityDetails}>
+                  <Text style={[styles.activityTitle, { color: theme.colors.onSurface }]}>
+                    {activity.title}
+                  </Text>
+                  <Text style={[styles.activityDescription, { color: theme.colors.onSurfaceVariant }]}>
+                    {activity.description}
+                  </Text>
+                </View>
+                <View style={[
+                  styles.activityIcon,
+                  {
+                    backgroundColor: activity.type === 'payment' 
+                      ? '#4CAF5020'
+                      : activity.type === 'maintenance'
+                      ? '#FF980020'
+                      : '#2196F320'
+                  }
+                ]}>
+                  {activity.type === 'payment' && <DollarSign size={20} color="#4CAF50" />}
+                  {activity.type === 'maintenance' && <AlertCircle size={20} color="#FF9800" />}
+                  {activity.type === 'contract' && <FileText size={20} color="#2196F3" />}
+                </View>
               </View>
             </View>
           </View>
-        </View>
-      ))}
+        ))
+      )}
     </View>
   );
 

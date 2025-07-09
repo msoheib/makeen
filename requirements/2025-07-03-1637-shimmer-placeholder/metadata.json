@@ -1,0 +1,26 @@
+{
+  "id": "shimmer-placeholder",
+  "started": "2025-07-03T16:37:00Z",
+  "lastUpdated": "2025-07-03T16:40:00Z",
+  "status": "complete",
+  "phase": "complete",
+  "progress": {
+    "discovery": { "answered": 5, "total": 5 },
+    "detail": { "answered": 5, "total": 5 }
+  },
+  "contextFiles": [
+    "/app/(tabs)/index.tsx",
+    "/app/(tabs)/properties.tsx", 
+    "/components/StatCard.tsx",
+    "/components/RentCard.tsx",
+    "/components/PropertyCard.tsx",
+    "/lib/rtl.ts",
+    "/components/SplashScreen.tsx"
+  ],
+  "relatedFeatures": [
+    "Loading states",
+    "Theme support",
+    "RTL layout",
+    "Card components"
+  ]
+}

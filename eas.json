@@ -20,6 +20,20 @@
         "NODE_ENV": "staging"
       }
     },
+    "production-debug": {
+      "autoIncrement": true,
+      "distribution": "store",
+      "android": {
+        "buildType": "app-bundle",
+        "gradleCommand": ":app:bundleRelease",
+        "env": {
+          "GRADLE_OPTS": "-Dorg.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=512m"
+        }
+      },
+      "env": {
+        "NODE_ENV": "staging"
+      }
+    },
     "production": {
       "autoIncrement": true,
       "env": {

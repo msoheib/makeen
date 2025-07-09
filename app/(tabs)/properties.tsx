@@ -12,6 +12,7 @@ import ModernCard from '@/components/ModernCard';
 import { useApi } from '@/hooks/useApi';
 import { propertiesApi, bidsApi } from '@/lib/api';
 import { getCurrentUserContext } from '@/lib/security';
+import { HorizontalStatsShimmer, PropertyListShimmer } from '@/components/shimmer';
 
 export default function PropertiesScreen() {
   const router = useRouter();
@@ -109,24 +110,8 @@ export default function PropertiesScreen() {
            property.is_accepting_bids;
   };
 
-  // Loading state
-  if (propertiesLoading || statsLoading) {
-    return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <ModernHeader 
-          title="العقارات" 
-          showNotifications={true}
-            variant="dark"
-        />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={[styles.loadingText, { color: theme.colors.onBackground }]}>
-            {t('loading')}
-          </Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  // Loading state - show shimmer if no data yet
+  const showInitialLoading = (propertiesLoading && !properties) || (statsLoading && !dashboardStats);
 
   // Error state
   if (propertiesError || statsError) {
@@ -294,57 +279,61 @@ export default function PropertiesScreen() {
           <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
             إحصائيات العقارات
           </Text>
-          <View style={[styles.horizontalStatsCard, { backgroundColor: theme.colors.surface }]}>
-            <View style={styles.horizontalStatsRow}>
-              <View style={styles.horizontalStatItem}>
-                <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
-                  <Building2 size={24} color={theme.colors.primary} />
+          {showInitialLoading ? (
+            <HorizontalStatsShimmer />
+          ) : (
+            <View style={[styles.horizontalStatsCard, { backgroundColor: theme.colors.surface }]}>
+              <View style={styles.horizontalStatsRow}>
+                <View style={styles.horizontalStatItem}>
+                  <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
+                    <Building2 size={24} color={theme.colors.primary} />
+                  </View>
+                  <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                    إجمالي العقارات
+                  </Text>
+                  <Text style={[styles.horizontalStatValue, { color: theme.colors.primary }]}>
+                    {statsLoading ? '...' : stats.total}
+                  </Text>
                 </View>
-                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                  إجمالي العقارات
-                </Text>
-                <Text style={[styles.horizontalStatValue, { color: theme.colors.primary }]}>
-                  {(propertiesLoading || statsLoading) ? '...' : stats.total}
-                </Text>
-              </View>
-              
-              <View style={styles.horizontalStatItem}>
-                <View style={[styles.horizontalStatIcon, { backgroundColor: '#4CAF5020' }]}>
-                  <Home size={24} color="#4CAF50" />
+                
+                <View style={styles.horizontalStatItem}>
+                  <View style={[styles.horizontalStatIcon, { backgroundColor: '#4CAF5020' }]}>
+                    <Home size={24} color="#4CAF50" />
+                  </View>
+                  <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                    عقارات متاحة
+                  </Text>
+                  <Text style={[styles.horizontalStatValue, { color: '#4CAF50' }]}>
+                    {statsLoading ? '...' : stats.available}
+                  </Text>
                 </View>
-                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                  عقارات متاحة
-                </Text>
-                <Text style={[styles.horizontalStatValue, { color: '#4CAF50' }]}>
-                  {(propertiesLoading || statsLoading) ? '...' : stats.available}
-                </Text>
-              </View>
-              
-              <View style={styles.horizontalStatItem}>
-                <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.secondary}20` }]}>
-                  <Users size={24} color={theme.colors.secondary} />
+                
+                <View style={styles.horizontalStatItem}>
+                  <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.secondary}20` }]}>
+                    <Users size={24} color={theme.colors.secondary} />
+                  </View>
+                  <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                    عقارات مؤجرة
+                  </Text>
+                  <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary }]}>
+                    {statsLoading ? '...' : stats.rented}
+                  </Text>
                 </View>
-                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                  عقارات مؤجرة
-                </Text>
-                <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary }]}>
-                  {(propertiesLoading || statsLoading) ? '...' : stats.rented}
-                </Text>
-              </View>
-              
-              <View style={styles.horizontalStatItem}>
-                <View style={[styles.horizontalStatIcon, { backgroundColor: '#F4433620' }]}>
-                  <MessageSquare size={24} color="#F44336" />
+                
+                <View style={styles.horizontalStatItem}>
+                  <View style={[styles.horizontalStatIcon, { backgroundColor: '#F4433620' }]}>
+                    <MessageSquare size={24} color="#F44336" />
+                  </View>
+                  <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                    تحت الصيانة
+                  </Text>
+                  <Text style={[styles.horizontalStatValue, { color: '#F44336' }]}>
+                    {statsLoading ? '...' : stats.maintenance}
+                  </Text>
                 </View>
-                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                  تحت الصيانة
-                </Text>
-                <Text style={[styles.horizontalStatValue, { color: '#F44336' }]}>
-                  {(propertiesLoading || statsLoading) ? '...' : stats.maintenance}
-                </Text>
               </View>
             </View>
-          </View>
+          )}
         </View>
 
         {/* Search Section */}
@@ -362,17 +351,23 @@ export default function PropertiesScreen() {
         {/* Properties List */}
         <View style={styles.propertiesSection}>
           <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
-            قائمة العقارات ({filteredProperties.length})
+            قائمة العقارات {!showInitialLoading && `(${filteredProperties.length})`}
           </Text>
           
-          {filteredProperties.length > 0 ? (
-            <FlatList
-              data={filteredProperties}
-              renderItem={renderProperty}
-              keyExtractor={item => item.id}
-              scrollEnabled={false}
-              showsVerticalScrollIndicator={false}
-            />
+          {showInitialLoading ? (
+            <PropertyListShimmer count={5} />
+          ) : filteredProperties.length > 0 ? (
+            <>
+              <FlatList
+                data={filteredProperties}
+                renderItem={renderProperty}
+                keyExtractor={item => item.id}
+                scrollEnabled={false}
+                showsVerticalScrollIndicator={false}
+              />
+              {/* Show additional shimmer for progressive loading */}
+              {propertiesLoading && <PropertyListShimmer count={1} />}
+            </>
           ) : (
             <View style={[styles.emptyState, { backgroundColor: theme.colors.surface }]}>
               <Home size={48} color={theme.colors.onSurfaceVariant} />
