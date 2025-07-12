@@ -112,8 +112,21 @@ export default function DashboardScreen() {
     refetch: refetchTenants 
   } = useApi(() => profilesApi.getTenants(), []);
 
+  // Fetch tenant contracts for payment information
+  const { 
+    data: tenantContracts, 
+    loading: contractsLoading, 
+    refetch: refetchContracts 
+  } = useApi(() => {
+    // Only fetch contracts for tenant users
+    if (userContext?.role === 'tenant' && userContext?.userId) {
+      return contractsApi.getAll({ tenant_id: userContext.userId });
+    }
+    return Promise.resolve([]);
+  }, [userContext?.role, userContext?.userId]);
+
   // Loading state
-  const isLoading = permissionLoading || summaryLoading || propertiesLoading || tenantsLoading;
+  const isLoading = permissionLoading || summaryLoading || propertiesLoading || tenantsLoading || contractsLoading;
 
   // Handle refresh
   const [refreshing, setRefreshing] = React.useState(false);
@@ -123,10 +136,11 @@ export default function DashboardScreen() {
     await Promise.all([
       refetchSummary(),
       refetchProperties(),
-      refetchTenants()
+      refetchTenants(),
+      refetchContracts()
     ]);
     setRefreshing(false);
-  }, [refetchSummary, refetchProperties, refetchTenants]);
+  }, [refetchSummary, refetchProperties, refetchTenants, refetchContracts]);
 
   // Show loading state while checking permissions
   if (permissionLoading) {
@@ -287,6 +301,42 @@ export default function DashboardScreen() {
   const isOwner = userRole === 'owner';
   const isTenant = userRole === 'tenant';
 
+  // Calculate tenant payment information from real contract data
+  const getTenantPaymentInfo = () => {
+    if (!tenantContracts || tenantContracts.length === 0) {
+      return {
+        amount: 0,
+        hasPayment: false,
+        dueDate: null,
+        description: null
+      };
+    }
+
+    // Get the first active contract (assuming tenant has one primary contract)
+    const activeContract = tenantContracts.find(contract => contract.status === 'active') || tenantContracts[0];
+    
+    if (!activeContract) {
+      return {
+        amount: 0,
+        hasPayment: false,
+        dueDate: null,
+        description: null
+      };
+    }
+
+    // Calculate monthly rent amount
+    const monthlyRent = activeContract.rent_amount || 0;
+    
+    return {
+      amount: monthlyRent,
+      hasPayment: monthlyRent > 0,
+      dueDate: '30 يناير 2025', // This would come from actual payment due calculation
+      description: `إيجار شهر يناير 2025`
+    };
+  };
+
+  const tenantPayment = getTenantPaymentInfo();
+
   // Tenant-specific dashboard content
   const renderTenantDashboard = () => (
     <View style={styles.tenantSection}>
@@ -305,16 +355,24 @@ export default function DashboardScreen() {
               الدفعة المستحقة
             </Text>
             <Text style={[styles.paymentAmount, { color: '#FF9800' }]}>
-              5,000 ريال
+              {tenantPayment.amount.toLocaleString('ar-SA')} ريال
             </Text>
           </View>
         </View>
-        <Text style={[styles.paymentDue, { color: theme.colors.onSurfaceVariant }]}>
-          تاريخ الاستحقاق: 30 يناير 2025
-        </Text>
-        <Text style={[styles.paymentDescription, { color: theme.colors.onSurfaceVariant }]}>
-          إيجار شهر يناير 2025
-        </Text>
+        {tenantPayment.hasPayment ? (
+          <>
+            <Text style={[styles.paymentDue, { color: theme.colors.onSurfaceVariant }]}>
+              تاريخ الاستحقاق: {tenantPayment.dueDate}
+            </Text>
+            <Text style={[styles.paymentDescription, { color: theme.colors.onSurfaceVariant }]}>
+              {tenantPayment.description}
+            </Text>
+          </>
+        ) : (
+          <Text style={[styles.paymentDescription, { color: theme.colors.onSurfaceVariant }]}>
+            لا توجد مدفوعات مستحقة حالياً
+          </Text>
+        )}
       </View>
 
       {/* Current Property Section */}

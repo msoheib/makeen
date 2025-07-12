@@ -162,6 +162,10 @@
     "sessionExpired": "Session Expired",
     "sessionExpiredMessage": "Your session has expired for security reasons. Please sign in again to continue.",
     "retryConnection": "Retry Connection",
-    "signInAgain": "Sign In Again"
+    "signInAgain": "Sign In Again",
+    "noPropertiesAssigned": "No Properties Assigned",
+    "noPropertiesAssignedDesc": "You haven't been assigned to any properties yet. Contact your property manager for assistance.",
+    "noMaintenanceAccess": "No Maintenance Access",
+    "noMaintenanceAccessDesc": "You haven't been assigned to any properties for maintenance. Contact your property manager."
   }
 } 

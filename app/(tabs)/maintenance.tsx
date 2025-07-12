@@ -13,6 +13,8 @@ import { useTranslation } from '@/lib/useTranslation';
 import { getFlexDirection, getTextAlign, rtlStyles } from '@/lib/rtl';
 import { useApi } from '@/hooks/useApi';
 import { maintenanceApi } from '@/lib/api';
+import { getCurrentUserContext } from '@/lib/security';
+import TenantEmptyState from '@/components/TenantEmptyState';
 
 export default function MaintenanceScreen() {
   const router = useRouter();
@@ -22,6 +24,13 @@ export default function MaintenanceScreen() {
   
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
+
+  // Get current user context for role-based functionality
+  const { 
+    data: userContext, 
+    loading: userLoading, 
+    error: userError 
+  } = useApi(() => getCurrentUserContext(), []);
 
   // API Calls using useApi hook
   const { 
@@ -104,7 +113,7 @@ export default function MaintenanceScreen() {
   });
 
   // Show loading screen while data is being fetched
-  if (loading && !requests) {
+  if ((loading && !requests) || userLoading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <ModernHeader
@@ -123,8 +132,8 @@ export default function MaintenanceScreen() {
     );
   }
 
-  // Show error state if there's an error
-  if (error) {
+  // Show error state if there's an error - tenant-friendly for tenants
+  if (error || userError) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <ModernHeader
@@ -133,20 +142,24 @@ export default function MaintenanceScreen() {
           onNotificationPress={() => router.push('/notifications')}
           onSearchPress={() => router.push('/search')}
         />
-        <ModernCard style={styles.errorCard}>
-          <Text style={[styles.errorTitle, { color: theme.colors.error }]}>
-            {t('common:error')}
-          </Text>
-          <Text style={[styles.errorMessage, { color: theme.colors.onSurfaceVariant }]}>
-            {error.message || t('common:errorLoadingData')}
-          </Text>
-          <Text 
-            style={[styles.retryButton, { color: theme.colors.primary }]}
-            onPress={refetch}
-          >
-            {t('common:retry')}
-          </Text>
-        </ModernCard>
+        {userContext?.role === 'tenant' ? (
+          <TenantEmptyState type="maintenance" />
+        ) : (
+          <ModernCard style={styles.errorCard}>
+            <Text style={[styles.errorTitle, { color: theme.colors.error }]}>
+              {t('common:error')}
+            </Text>
+            <Text style={[styles.errorMessage, { color: theme.colors.onSurfaceVariant }]}>
+              {error?.message || userError?.message || t('common:errorLoadingData')}
+            </Text>
+            <Text 
+              style={[styles.retryButton, { color: theme.colors.primary }]}
+              onPress={refetch}
+            >
+              {t('common:retry')}
+            </Text>
+          </ModernCard>
+        )}
       </SafeAreaView>
     );
   }
@@ -263,15 +276,19 @@ export default function MaintenanceScreen() {
           />
         }
         ListEmptyComponent={
-          <ModernCard style={styles.emptyState}>
-            <Plus size={48} color={theme.colors.onSurfaceVariant} />
-            <Text style={[styles.emptyStateTitle, { color: theme.colors.onSurface, textAlign: getTextAlign() }]}>{t('noMaintenanceRequests')}</Text>
-            <Text style={[styles.emptyStateSubtitle, { color: theme.colors.onSurfaceVariant, textAlign: getTextAlign() }]}>
-              {searchQuery || activeFilter !== 'all' 
-                ? t('adjustSearchOrFilters') 
-                : t('addFirstRequest')}
-            </Text>
-          </ModernCard>
+          userContext?.role === 'tenant' ? (
+            <TenantEmptyState type="maintenance" />
+          ) : (
+            <ModernCard style={styles.emptyState}>
+              <Plus size={48} color={theme.colors.onSurfaceVariant} />
+              <Text style={[styles.emptyStateTitle, { color: theme.colors.onSurface, textAlign: getTextAlign() }]}>{t('noMaintenanceRequests')}</Text>
+              <Text style={[styles.emptyStateSubtitle, { color: theme.colors.onSurfaceVariant, textAlign: getTextAlign() }]}>
+                {searchQuery || activeFilter !== 'all' 
+                  ? t('adjustSearchOrFilters') 
+                  : t('addFirstRequest')}
+              </Text>
+            </ModernCard>
+          )
         }
       />
 

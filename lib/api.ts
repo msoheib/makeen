@@ -125,8 +125,12 @@ export const propertiesApi = {
         if (rentedPropertyIds.length > 0) {
           query = query.in('id', rentedPropertyIds);
         } else {
-          // If tenant has no properties, return empty result
-          query = query.eq('id', 'no-properties-for-tenant');
+          // If tenant has no properties, return empty result immediately
+          return {
+            data: [],
+            error: null,
+            count: 0
+          };
         }
       }
     }
@@ -257,8 +261,16 @@ export const propertiesApi = {
         if (rentedPropertyIds.length > 0) {
           propertiesQuery = propertiesQuery.in('id', rentedPropertyIds);
         } else {
-          // If tenant has no properties, return empty result
-          propertiesQuery = propertiesQuery.eq('id', 'no-properties-for-tenant');
+          // If tenant has no properties, return empty summary immediately
+          const emptySummary = {
+            total_properties: 0,
+            available: 0,
+            occupied: 0,
+            maintenance: 0,
+            total_monthly_rent: 0,
+            active_contracts: 0
+          };
+          return { data: emptySummary, error: null };
         }
         contractsQuery = contractsQuery.eq('tenant_id', userContext.userId);
       }
@@ -546,8 +558,12 @@ export const maintenanceApi = {
       if (rentedPropertyIds.length > 0) {
         query = query.in('property_id', rentedPropertyIds);
       } else {
-        // If tenant has no rented properties, return empty result
-        query = query.eq('property_id', 'no-properties-for-tenant');
+        // If tenant has no rented properties, return empty result immediately
+        return {
+          data: [],
+          error: null,
+          count: 0
+        };
       }
     } else if (userContext.role === 'owner') {
       // Owners see maintenance requests for their properties only

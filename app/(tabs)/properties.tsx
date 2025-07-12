@@ -13,6 +13,7 @@ import { useApi } from '@/hooks/useApi';
 import { propertiesApi, bidsApi } from '@/lib/api';
 import { getCurrentUserContext } from '@/lib/security';
 import { HorizontalStatsShimmer, PropertyListShimmer } from '@/components/shimmer';
+import TenantEmptyState from '@/components/TenantEmptyState';
 
 export default function PropertiesScreen() {
   const router = useRouter();
@@ -113,7 +114,7 @@ export default function PropertiesScreen() {
   // Loading state - show shimmer if no data yet
   const showInitialLoading = (propertiesLoading && !properties) || (statsLoading && !dashboardStats);
 
-  // Error state
+  // Error state - show tenant-friendly message for tenants
   if (propertiesError || statsError) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -122,19 +123,23 @@ export default function PropertiesScreen() {
           showNotifications={true}
             variant="dark"
         />
-        <View style={styles.errorContainer}>
-          <Text style={[styles.errorText, { color: theme.colors.error }]}>
-            خطأ في تحميل البيانات: {propertiesError || statsError}
-          </Text>
-          <TouchableOpacity 
-            style={[styles.retryButton, { backgroundColor: theme.colors.primary }]}
-            onPress={handleRefresh}
-          >
-            <Text style={[styles.retryButtonText, { color: theme.colors.onPrimary }]}>
-              إعادة المحاولة
+        {userContext?.role === 'tenant' ? (
+          <TenantEmptyState type="properties" />
+        ) : (
+          <View style={styles.errorContainer}>
+            <Text style={[styles.errorText, { color: theme.colors.error }]}>
+              خطأ في تحميل البيانات: {propertiesError || statsError}
             </Text>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity 
+              style={[styles.retryButton, { backgroundColor: theme.colors.primary }]}
+              onPress={handleRefresh}
+            >
+              <Text style={[styles.retryButtonText, { color: theme.colors.onPrimary }]}>
+                إعادة المحاولة
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </SafeAreaView>
     );
   }
@@ -369,15 +374,19 @@ export default function PropertiesScreen() {
               {propertiesLoading && <PropertyListShimmer count={1} />}
             </>
           ) : (
-            <View style={[styles.emptyState, { backgroundColor: theme.colors.surface }]}>
-              <Home size={48} color={theme.colors.onSurfaceVariant} />
-              <Text style={[styles.emptyStateTitle, { color: theme.colors.onSurface }]}>
-                لا توجد عقارات
-              </Text>
-              <Text style={[styles.emptyStateSubtitle, { color: theme.colors.onSurfaceVariant }]}>
-                {searchQuery ? 'جرب البحث بكلمات أخرى' : 'ابدأ بإضافة عقار جديد'}
-              </Text>
-            </View>
+            userContext?.role === 'tenant' ? (
+              <TenantEmptyState type="properties" />
+            ) : (
+              <View style={[styles.emptyState, { backgroundColor: theme.colors.surface }]}>
+                <Home size={48} color={theme.colors.onSurfaceVariant} />
+                <Text style={[styles.emptyStateTitle, { color: theme.colors.onSurface }]}>
+                  لا توجد عقارات
+                </Text>
+                <Text style={[styles.emptyStateSubtitle, { color: theme.colors.onSurfaceVariant }]}>
+                  {searchQuery ? 'جرب البحث بكلمات أخرى' : 'ابدأ بإضافة عقار جديد'}
+                </Text>
+              </View>
+            )
           )}
         </View>
       </ScrollView>

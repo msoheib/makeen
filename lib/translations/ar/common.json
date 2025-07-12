@@ -185,6 +185,10 @@
     "sessionExpired": "انتهت صلاحية الجلسة",
     "sessionExpiredMessage": "انتهت صلاحية جلستك لأسباب أمنية. يرجى تسجيل الدخول مرة أخرى للمتابعة.",
     "retryConnection": "إعادة محاولة الاتصال",
-    "signInAgain": "تسجيل الدخول مرة أخرى"
+    "signInAgain": "تسجيل الدخول مرة أخرى",
+    "noPropertiesAssigned": "لم يتم تعيين عقارات",
+    "noPropertiesAssignedDesc": "لم يتم تعيينك إلى أي عقار بعد. تواصل مع مدير العقارات للحصول على المساعدة.",
+    "noMaintenanceAccess": "لا يمكن الوصول إلى طلبات الصيانة",
+    "noMaintenanceAccessDesc": "لم يتم تعيينك إلى أي عقار للصيانة. تواصل مع مدير العقارات."
   }
 } 
