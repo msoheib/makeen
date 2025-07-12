@@ -144,11 +144,11 @@ export default function SignUpScreen() {
               style={styles.roleButtons}
               theme={{
                 colors: {
-                  primary: '#663399',
+                  primary: '#4C2661',
                   onPrimary: '#FFFFFF',
-                  outline: '#663399',
+                  outline: '#4C2661',
                   surface: '#FFFFFF',
-                  onSurface: '#663399',
+                  onSurface: '#4C2661',
                 }
               }}
             />
@@ -229,7 +229,7 @@ export default function SignUpScreen() {
             style={styles.signUpButton}
             loading={loading}
             disabled={loading}
-            buttonColor="#663399"
+            buttonColor="#4C2661"
             textColor="#FFFFFF"
           >
             {t('createAccount')}
@@ -245,7 +245,7 @@ export default function SignUpScreen() {
             mode="outlined"
             onPress={() => router.replace('/(auth)')}
             style={styles.signInButton}
-            textColor="#663399"
+            textColor="#4C2661"
           >
             {t('signup.signIn')}
           </Button>
@@ -258,7 +258,7 @@ export default function SignUpScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#663399', // Purple background to match login page
+    backgroundColor: '#4C2661', // Updated to match primary theme color (button color)
   },
   scrollContent: {
     flexGrow: 1,
@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
   },
   signInButton: {
     marginTop: spacing.s,
-    borderColor: '#663399', // Purple border to match theme
+    borderColor: '#4C2661', // Updated to match primary color
     paddingVertical: 4,
   },
 });

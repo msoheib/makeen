@@ -215,7 +215,7 @@ export default function SignInScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#663399', // Purple background to match splash screen
+    backgroundColor: '#4C2661', // Updated to match primary theme color (button color)
   },
   scrollContent: {
     flexGrow: 1,

@@ -10,18 +10,19 @@
     "splash": {
       "image": "./assets/images/splash-logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#663399"
+      "backgroundColor": "#4C2661"
     },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.decimaldrown.propertymanagement"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
-        "backgroundColor": "#663399"
+        "backgroundColor": "#4C2661"
       },
       "package": "com.decimaldrown.propertymanagement",
       "supportsRtl": true,

@@ -109,7 +109,7 @@ export const CustomSplashScreen: React.FC<SplashScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#663399', // Purple background to match Makeen branding
+    backgroundColor: '#4C2661', // Updated to match primary theme color (button color)
     justifyContent: 'center',
     alignItems: 'center',
     position: 'absolute',
