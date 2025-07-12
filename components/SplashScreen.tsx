@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Animated, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Animated, Dimensions, Image } from 'react-native';
 import { ActivityIndicator } from 'react-native-paper';
 import * as SplashScreen from 'expo-splash-screen';
 
@@ -73,28 +73,13 @@ export const CustomSplashScreen: React.FC<SplashScreenProps> = ({
       <View style={styles.content}>
         {/* Logo Section */}
         <Animated.View style={[styles.logoContainer, { transform: [{ scale: logoScale }] }]}>
-          {/* Building Icon */}
-          <View style={styles.buildingIcon}>
-            <View style={styles.building}>
-              {/* Roof */}
-              <View style={styles.roof} />
-              {/* Building Body */}
-              <View style={styles.buildingBody}>
-                {/* Windows */}
-                <View style={styles.windowRow}>
-                  <View style={styles.window} />
-                  <View style={styles.window} />
-                </View>
-                <View style={styles.windowRow}>
-                  <View style={styles.window} />
-                  <View style={styles.window} />
-                </View>
-                {/* Door */}
-                <View style={styles.door}>
-                  <View style={styles.doorHandle} />
-                </View>
-              </View>
-            </View>
+          {/* Logo Image */}
+          <View style={styles.logoImageContainer}>
+            <Image 
+              source={require('@/assets/images/splash-logo.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
           </View>
 
           {/* App Title */}
@@ -124,7 +109,7 @@ export const CustomSplashScreen: React.FC<SplashScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1976D2', // Strong blue background
+    backgroundColor: '#663399', // Purple background to match Makeen branding
     justifyContent: 'center',
     alignItems: 'center',
     position: 'absolute',
@@ -144,56 +129,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 60,
   },
-  buildingIcon: {
+  logoImageContainer: {
+    width: 200, // Increased size for better visibility
+    height: 200, // Increased size for better visibility  
     marginBottom: 20,
     alignItems: 'center',
-  },
-  building: {
-    alignItems: 'center',
-  },
-  roof: {
-    width: 0,
-    height: 0,
-    borderLeftWidth: 25,
-    borderRightWidth: 25,
-    borderBottomWidth: 20,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderBottomColor: '#FFFFFF',
-  },
-  buildingBody: {
-    width: 50,
-    height: 45,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    paddingTop: 5,
-  },
-  windowRow: {
-    flexDirection: 'row',
-    marginBottom: 4,
-  },
-  window: {
-    width: 8,
-    height: 8,
-    backgroundColor: '#1976D2',
-    marginHorizontal: 4,
-    borderRadius: 1,
-  },
-  door: {
-    width: 12,
-    height: 18,
-    backgroundColor: '#1976D2',
-    marginTop: 2,
-    borderRadius: 1,
     justifyContent: 'center',
-    alignItems: 'flex-end',
-    paddingRight: 2,
   },
-  doorHandle: {
-    width: 2,
-    height: 2,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 1,
+  logoImage: {
+    width: '100%',
+    height: '100%',
   },
   mainTitle: {
     fontSize: 32,
