@@ -273,8 +273,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   logo: {
-    width: 150, // Made bigger as requested
-    height: 150, // Made bigger as requested
+    width: 200, // Increased size for more prominence as requested
+    height: 200, // Increased size for more prominence as requested
     marginBottom: spacing.m,
   },
   title: {
