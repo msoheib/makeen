@@ -240,7 +240,7 @@ export default function SignUpScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#663399', // Purple background to match login page
   },
   scrollContent: {
     flexGrow: 1,
@@ -257,12 +257,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: theme.colors.primary,
+    color: '#FFFFFF', // White text for better contrast on purple background
     marginBottom: spacing.xs,
   },
   subtitle: {
     fontSize: 16,
-    color: theme.colors.onSurfaceVariant,
+    color: '#FFFFFF', // White text for better contrast on purple background
+    opacity: 0.9,
   },
   roleContainer: {
     marginBottom: spacing.m,
