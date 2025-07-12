@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
+import { View, StyleSheet, KeyboardAvoidingView, ScrollView, Platform, Image } from 'react-native';
 import { Text, TextInput, Button, Divider, SegmentedButtons } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
@@ -104,14 +104,20 @@ export default function SignUpScreen() {
           onPress={() => router.back()}
           style={styles.backButton}
           contentStyle={{ flexDirection: 'row-reverse' }}
+          textColor="#FFFFFF"
           icon={({ size, color }) => (
-            <ChevronLeft size={size} color={color} />
+            <ChevronLeft size={size} color="#FFFFFF" />
           )}
         >
           {t('signup.backToSignIn')}
         </Button>
         
         <View style={styles.header}>
+          <Image 
+            source={require('@/assets/images/splash-logo.png')} 
+            style={styles.logo}
+            resizeMode="contain"
+          />
           <Text style={styles.title}>{t('signup.createYourAccount')}</Text>
           <Text style={styles.subtitle}>{t('signup.enterDetailsToGetStarted')}</Text>
         </View>
@@ -136,6 +142,15 @@ export default function SignUpScreen() {
                 { value: 'manager', label: t('signup.manager') }
               ]}
               style={styles.roleButtons}
+              theme={{
+                colors: {
+                  primary: '#663399',
+                  onPrimary: '#FFFFFF',
+                  outline: '#663399',
+                  surface: '#FFFFFF',
+                  onSurface: '#663399',
+                }
+              }}
             />
           </View>
           
@@ -214,6 +229,8 @@ export default function SignUpScreen() {
             style={styles.signUpButton}
             loading={loading}
             disabled={loading}
+            buttonColor="#663399"
+            textColor="#FFFFFF"
           >
             {t('createAccount')}
           </Button>
@@ -228,6 +245,7 @@ export default function SignUpScreen() {
             mode="outlined"
             onPress={() => router.replace('/(auth)')}
             style={styles.signInButton}
+            textColor="#663399"
           >
             {t('signup.signIn')}
           </Button>
@@ -254,6 +272,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.xl,
   },
+  logo: {
+    width: 150, // Made bigger as requested
+    height: 150, // Made bigger as requested
+    marginBottom: spacing.m,
+  },
   title: {
     fontSize: 24,
     fontWeight: '700',
@@ -272,7 +295,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     marginBottom: spacing.s,
-    color: theme.colors.onSurface,
+    color: '#FFFFFF', // White text for better contrast on purple background
   },
   roleButtons: {
     marginBottom: spacing.m,
@@ -325,7 +348,7 @@ const styles = StyleSheet.create({
   },
   signInButton: {
     marginTop: spacing.s,
-    borderColor: theme.colors.primary,
+    borderColor: '#663399', // Purple border to match theme
     paddingVertical: 4,
   },
 });
