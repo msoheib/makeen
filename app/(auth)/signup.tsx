@@ -273,14 +273,10 @@ const styles = StyleSheet.create({
     width: '100%', // Ensure full width is available
   },
   logo: {
-    width: '80%', // Use 80% of available width to ensure it's big but fits
-    height: undefined, // Let height scale proportionally
-    aspectRatio: 1, // Keep square aspect ratio
-    maxWidth: 400, // Max size of 400px on larger screens
-    maxHeight: 400, // Max size of 400px on larger screens
-    minWidth: 250, // Minimum size to ensure it's bigger than before
-    minHeight: 250, // Minimum size to ensure it's bigger than before
+    width: 300, // Start with 300px fixed size - much bigger than original 200px
+    height: 300, // Start with 300px fixed size - much bigger than original 200px
     marginBottom: spacing.m,
+    backgroundColor: 'rgba(255,255,255,0.1)', // Add slight background to see the actual logo area
   },
   title: {
     fontSize: 24,
