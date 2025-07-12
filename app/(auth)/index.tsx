@@ -117,7 +117,6 @@ export default function SignInScreen() {
           <Image 
             source={require('@/assets/images/splash-logo.png')} 
             style={styles.logo}
-            resizeMode="contain"
           />
           <Text style={[styles.title, rtlStyles.textAlignCenter]}>
             {t('propertyManagementSystem', 'نظام إدارة العقارات')}
@@ -219,18 +218,19 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    padding: spacing.xl,
+    padding: spacing.m, // Reduced from spacing.xl to give more space for larger logo
     justifyContent: 'center',
   },
   header: {
     alignItems: 'center',
     marginBottom: spacing.xl,
+    width: '100%', // Ensure full width is available for logo
   },
   logo: {
-    width: 120,
-    height: 120,
+    width: 300, // Updated to match signup page size (was 120)
+    height: 300, // Updated to match signup page size (was 120)
     marginBottom: spacing.m,
-    // Removed borderRadius and shadow as the logo image has its own design
+    backgroundColor: 'rgba(255,255,255,0.1)', // Add slight background to match signup page
   },
   title: {
     fontSize: 24,
