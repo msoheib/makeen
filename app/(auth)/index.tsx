@@ -115,8 +115,9 @@ export default function SignInScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Image 
-            source={{ uri: 'https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg' }} 
-            style={styles.logo} 
+            source={require('@/assets/images/splash-logo.png')} 
+            style={styles.logo}
+            resizeMode="contain"
           />
           <Text style={[styles.title, rtlStyles.textAlignCenter]}>
             {t('propertyManagementSystem', 'نظام إدارة العقارات')}
@@ -214,7 +215,7 @@ export default function SignInScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#663399', // Purple background to match splash screen
   },
   scrollContent: {
     flexGrow: 1,
@@ -226,21 +227,21 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   logo: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 120,
+    height: 120,
     marginBottom: spacing.m,
-    ...shadows.medium,
+    // Removed borderRadius and shadow as the logo image has its own design
   },
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: theme.colors.primary,
+    color: '#FFFFFF', // White text for better contrast on purple background
     marginBottom: spacing.xs,
   },
   subtitle: {
     fontSize: 16,
-    color: theme.colors.onSurfaceVariant,
+    color: '#FFFFFF', // White text for better contrast on purple background
+    opacity: 0.9,
   },
   formContainer: {
     width: '100%',
