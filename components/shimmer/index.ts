@@ -25,3 +25,9 @@ export {
   PropertyOverviewShimmer,
   RecentActivityShimmer
 } from './DashboardCardShimmer';
+
+// Maintenance components
+export { 
+  MaintenanceCardShimmer, 
+  MaintenanceListShimmer 
+} from './MaintenanceCardShimmer';

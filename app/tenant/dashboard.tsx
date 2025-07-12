@@ -19,7 +19,8 @@ import {
   Car,
   Plus,
   Eye,
-  Calendar
+  Calendar,
+  Building2
 } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import StatCard from '@/components/StatCard';
@@ -91,6 +92,40 @@ export default function TenantDashboardScreen() {
     maintenanceRequests: maintenanceRequests?.data?.length || 0,
     activeContracts: myContracts?.data?.filter(contract => contract.status === 'active')?.length || 0
   };
+
+  // Calculate tenant property information from real contract data
+  const getTenantPropertyInfo = () => {
+    if (!myContracts || !myContracts.data || myContracts.data.length === 0) {
+      return {
+        hasProperty: false,
+        propertyName: null,
+        propertyAddress: null,
+        propertySpecs: null
+      };
+    }
+
+    // Get the first active contract (assuming tenant has one primary contract)
+    const activeContract = myContracts.data.find(contract => contract.status === 'active') || myContracts.data[0];
+    const property = activeContract?.property;
+    
+    if (!property) {
+      return {
+        hasProperty: false,
+        propertyName: null,
+        propertyAddress: null,
+        propertySpecs: null
+      };
+    }
+
+    return {
+      hasProperty: true,
+      propertyName: property.title,
+      propertyAddress: `${property.address}, ${property.city}`,
+      propertySpecs: `${property.bedrooms || 0} غرف • ${property.bathrooms || 0} حمام • ${property.area_sqm || 0} م²`
+    };
+  };
+
+  const tenantProperty = getTenantPropertyInfo();
 
   const handlePlaceBid = (property: any) => {
     router.push({
@@ -410,6 +445,54 @@ export default function TenantDashboardScreen() {
           />
         }
       >
+        {/* Current Property Section */}
+        <View style={styles.currentPropertySection}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+            العقار الحالي
+          </Text>
+          <View style={[styles.currentPropertyCard, { backgroundColor: theme.colors.surface }]}>
+            {contractsLoading ? (
+              <View style={styles.propertyLoadingContainer}>
+                <ActivityIndicator size="large" color={theme.colors.primary} />
+                <Text style={[styles.propertyLoadingText, { color: theme.colors.onSurfaceVariant }]}>
+                  جاري تحميل معلومات العقار...
+                </Text>
+              </View>
+            ) : tenantProperty.hasProperty ? (
+              <View style={styles.propertyDetails}>
+                <View style={[styles.propertyIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
+                  <Building2 size={24} color={theme.colors.primary} />
+                </View>
+                <View style={styles.propertyInfo}>
+                  <Text style={[styles.propertyName, { color: theme.colors.onSurface }]}>
+                    {tenantProperty.propertyName}
+                  </Text>
+                  <Text style={[styles.propertyAddress, { color: theme.colors.onSurfaceVariant }]}>
+                    {tenantProperty.propertyAddress}
+                  </Text>
+                  <Text style={[styles.propertySpecs, { color: theme.colors.onSurfaceVariant }]}>
+                    {tenantProperty.propertySpecs}
+                  </Text>
+                </View>
+              </View>
+            ) : (
+              <View style={styles.noPropertyContainer}>
+                <View style={[styles.propertyIcon, { backgroundColor: '#FF980020' }]}>
+                  <AlertCircle size={24} color="#FF9800" />
+                </View>
+                <View style={styles.propertyInfo}>
+                  <Text style={[styles.noPropertyTitle, { color: theme.colors.onSurface }]}>
+                    لا يوجد عقار حتى الآن
+                  </Text>
+                  <Text style={[styles.noPropertyMessage, { color: theme.colors.onSurfaceVariant }]}>
+                    يرجى التواصل مع المدير للحصول على التعيين
+                  </Text>
+                </View>
+              </View>
+            )}
+          </View>
+        </View>
+
         {/* Stats Section */}
         <View style={styles.statsSection}>
           <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
@@ -842,5 +925,72 @@ const styles = StyleSheet.create({
     margin: 16,
     right: 0,
     bottom: 0,
+  },
+  currentPropertySection: {
+    marginVertical: 16,
+  },
+  currentPropertyCard: {
+    borderRadius: 16,
+    padding: 20,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  propertyDetails: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  propertyIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 12,
+  },
+  propertyInfo: {
+    flex: 1,
+  },
+  propertyName: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'right',
+    marginBottom: 4,
+  },
+  propertyAddress: {
+    fontSize: 14,
+    textAlign: 'right',
+    marginBottom: 2,
+  },
+  propertySpecs: {
+    fontSize: 12,
+    textAlign: 'right',
+  },
+  propertyLoadingContainer: {
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  propertyLoadingText: {
+    fontSize: 14,
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  noPropertyContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  noPropertyTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'right',
+    marginBottom: 4,
+  },
+  noPropertyMessage: {
+    fontSize: 14,
+    textAlign: 'right',
+    lineHeight: 20,
   },
 }); 

@@ -337,6 +337,40 @@ export default function DashboardScreen() {
 
   const tenantPayment = getTenantPaymentInfo();
 
+  // Calculate tenant property information from real contract data
+  const getTenantPropertyInfo = () => {
+    if (!tenantContracts || tenantContracts.length === 0) {
+      return {
+        hasProperty: false,
+        propertyName: null,
+        propertyAddress: null,
+        propertySpecs: null
+      };
+    }
+
+    // Get the first active contract (assuming tenant has one primary contract)
+    const activeContract = tenantContracts.find(contract => contract.status === 'active') || tenantContracts[0];
+    const property = activeContract?.property;
+    
+    if (!property) {
+      return {
+        hasProperty: false,
+        propertyName: null,
+        propertyAddress: null,
+        propertySpecs: null
+      };
+    }
+
+    return {
+      hasProperty: true,
+      propertyName: property.title,
+      propertyAddress: `${property.address}, ${property.city}`,
+      propertySpecs: `${property.bedrooms || 0} غرف • ${property.bathrooms || 0} حمام • ${property.area_sqm || 0} م²`
+    };
+  };
+
+  const tenantProperty = getTenantPropertyInfo();
+
   // Tenant-specific dashboard content
   const renderTenantDashboard = () => (
     <View style={styles.tenantSection}>
@@ -380,22 +414,45 @@ export default function DashboardScreen() {
         <Text style={[styles.subsectionTitle, { color: theme.colors.onSurface }]}>
           العقار الحالي
         </Text>
-        <View style={styles.propertyDetails}>
-          <View style={[styles.propertyIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
-            <Building2 size={24} color={theme.colors.primary} />
-          </View>
-          <View style={styles.propertyInfo}>
-            <Text style={[styles.propertyName, { color: theme.colors.onSurface }]}>
-              شقة حديثة في جدة
-            </Text>
-            <Text style={[styles.propertyAddress, { color: theme.colors.onSurfaceVariant }]}>
-              الكورنيش الشمالي، جدة
-            </Text>
-            <Text style={[styles.propertySpecs, { color: theme.colors.onSurfaceVariant }]}>
-              3 غرف • 2 حمام • 150 م²
+        {contractsLoading ? (
+          <View style={styles.propertyLoadingContainer}>
+            <ActivityIndicator size="large" color={theme.colors.primary} />
+            <Text style={[styles.propertyLoadingText, { color: theme.colors.onSurfaceVariant }]}>
+              جاري تحميل معلومات العقار...
             </Text>
           </View>
-        </View>
+        ) : tenantProperty.hasProperty ? (
+          <View style={styles.propertyDetails}>
+            <View style={[styles.propertyIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
+              <Building2 size={24} color={theme.colors.primary} />
+            </View>
+            <View style={styles.propertyInfo}>
+              <Text style={[styles.propertyName, { color: theme.colors.onSurface }]}>
+                {tenantProperty.propertyName}
+              </Text>
+              <Text style={[styles.propertyAddress, { color: theme.colors.onSurfaceVariant }]}>
+                {tenantProperty.propertyAddress}
+              </Text>
+              <Text style={[styles.propertySpecs, { color: theme.colors.onSurfaceVariant }]}>
+                {tenantProperty.propertySpecs}
+              </Text>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.noPropertyContainer}>
+            <View style={[styles.propertyIcon, { backgroundColor: '#FF980020' }]}>
+              <AlertCircle size={24} color="#FF9800" />
+            </View>
+            <View style={styles.propertyInfo}>
+              <Text style={[styles.noPropertyTitle, { color: theme.colors.onSurface }]}>
+                لا يوجد عقار حتى الآن
+              </Text>
+              <Text style={[styles.noPropertyMessage, { color: theme.colors.onSurfaceVariant }]}>
+                يرجى التواصل مع المدير للحصول على التعيين
+              </Text>
+            </View>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -937,5 +994,30 @@ const styles = StyleSheet.create({
   propertySpecs: {
     fontSize: 12,
     ...rtlStyles.textAlignEnd,
+  },
+  propertyLoadingContainer: {
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  propertyLoadingText: {
+    fontSize: 14,
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  noPropertyContainer: {
+    ...rtlStyles.row(),
+    alignItems: 'center',
+  },
+  noPropertyTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    ...rtlStyles.textAlignEnd,
+    marginBottom: 4,
+  },
+  noPropertyMessage: {
+    fontSize: 14,
+    ...rtlStyles.textAlignEnd,
+    lineHeight: 20,
   },
 });

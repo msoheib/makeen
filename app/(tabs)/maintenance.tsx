@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, FlatList, SafeAreaView, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, FlatList, SafeAreaView, RefreshControl, TouchableOpacity } from 'react-native';
 import { Text, Searchbar, SegmentedButtons } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { lightTheme, darkTheme, spacing } from '@/lib/theme';
@@ -15,6 +15,7 @@ import { useApi } from '@/hooks/useApi';
 import { maintenanceApi } from '@/lib/api';
 import { getCurrentUserContext } from '@/lib/security';
 import TenantEmptyState from '@/components/TenantEmptyState';
+import { HorizontalStatsShimmer, MaintenanceListShimmer } from '@/components/shimmer';
 
 export default function MaintenanceScreen() {
   const router = useRouter();
@@ -112,25 +113,6 @@ export default function MaintenanceScreen() {
     },
   });
 
-  // Show loading screen while data is being fetched
-  if ((loading && !requests) || userLoading) {
-    return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <ModernHeader
-          title={t('title')}
-          subtitle={t('subtitle')}
-          onNotificationPress={() => router.push('/notifications')}
-          onSearchPress={() => router.push('/search')}
-        />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={[styles.loadingText, { color: theme.colors.onSurfaceVariant }]}>
-            {t('common:loading')}
-          </Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   // Show error state if there's an error - tenant-friendly for tenants
   if (error || userError) {
@@ -178,57 +160,61 @@ export default function MaintenanceScreen() {
         <Text style={[styles.sectionTitle, { color: theme.colors.onBackground, textAlign: getTextAlign() }]}>
           إحصائيات الصيانة
         </Text>
-        <View style={[styles.horizontalStatsCard, { backgroundColor: theme.colors.surface }]}>
-          <View style={[styles.horizontalStatsRow, rtlStyles.row()]}>
-            <View style={styles.horizontalStatItem}>
-              <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
-                <Tool size={24} color={theme.colors.primary} />
+        {(loading && !requests) || userLoading ? (
+          <HorizontalStatsShimmer />
+        ) : (
+          <View style={[styles.horizontalStatsCard, { backgroundColor: theme.colors.surface }]}>
+            <View style={[styles.horizontalStatsRow, rtlStyles.row()]}>
+              <View style={styles.horizontalStatItem}>
+                <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
+                  <Tool size={24} color={theme.colors.primary} />
+                </View>
+                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
+                  إجمالي الطلبات
+                </Text>
+                <Text style={[styles.horizontalStatValue, { color: theme.colors.primary, textAlign: 'center' }]}>
+                  {stats.total.toString()}
+                </Text>
               </View>
-              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
-                إجمالي الطلبات
-              </Text>
-              <Text style={[styles.horizontalStatValue, { color: theme.colors.primary, textAlign: 'center' }]}>
-                {stats.total.toString()}
-              </Text>
-            </View>
-            
-            <View style={styles.horizontalStatItem}>
-              <View style={[styles.horizontalStatIcon, { backgroundColor: '#FF980020' }]}>
-                <Clock size={24} color="#FF9800" />
+              
+              <View style={styles.horizontalStatItem}>
+                <View style={[styles.horizontalStatIcon, { backgroundColor: '#FF980020' }]}>
+                  <Clock size={24} color="#FF9800" />
+                </View>
+                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
+                  قيد الانتظار
+                </Text>
+                <Text style={[styles.horizontalStatValue, { color: '#FF9800', textAlign: 'center' }]}>
+                  {stats.pending.toString()}
+                </Text>
               </View>
-              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
-                قيد الانتظار
-              </Text>
-              <Text style={[styles.horizontalStatValue, { color: '#FF9800', textAlign: 'center' }]}>
-                {stats.pending.toString()}
-              </Text>
-            </View>
-            
-            <View style={styles.horizontalStatItem}>
-              <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.secondary}20` }]}>
-                <AlertTriangle size={24} color={theme.colors.secondary} />
+              
+              <View style={styles.horizontalStatItem}>
+                <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.secondary}20` }]}>
+                  <AlertTriangle size={24} color={theme.colors.secondary} />
+                </View>
+                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
+                  قيد التنفيذ
+                </Text>
+                <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary, textAlign: 'center' }]}>
+                  {stats.inProgress.toString()}
+                </Text>
               </View>
-              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
-                قيد التنفيذ
-              </Text>
-              <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary, textAlign: 'center' }]}>
-                {stats.inProgress.toString()}
-              </Text>
-            </View>
-            
-            <View style={styles.horizontalStatItem}>
-              <View style={[styles.horizontalStatIcon, { backgroundColor: '#4CAF5020' }]}>
-                <CheckCircle size={24} color="#4CAF50" />
+              
+              <View style={styles.horizontalStatItem}>
+                <View style={[styles.horizontalStatIcon, { backgroundColor: '#4CAF5020' }]}>
+                  <CheckCircle size={24} color="#4CAF50" />
+                </View>
+                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
+                  مكتملة
+                </Text>
+                <Text style={[styles.horizontalStatValue, { color: '#4CAF50', textAlign: 'center' }]}>
+                  {stats.completed.toString()}
+                </Text>
               </View>
-              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
-                مكتملة
-              </Text>
-              <Text style={[styles.horizontalStatValue, { color: '#4CAF50', textAlign: 'center' }]}>
-                {stats.completed.toString()}
-              </Text>
             </View>
           </View>
-        </View>
+        )}
       </View>
 
       {/* Search and Filters */}
@@ -255,42 +241,46 @@ export default function MaintenanceScreen() {
       </View>
 
       {/* Requests List */}
-      <FlatList
-        data={filteredRequests}
-        renderItem={({ item }) => (
-          <MaintenanceRequestCard
-            request={item}
-            theme={theme}
-            onPress={() => router.push(`/maintenance/${item.id}`)}
-          />
-        )}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={loading}
-            onRefresh={onRefresh}
-            colors={[theme.colors.primary]}
-            tintColor={theme.colors.primary}
-          />
-        }
-        ListEmptyComponent={
-          userContext?.role === 'tenant' ? (
-            <TenantEmptyState type="maintenance" />
-          ) : (
-            <ModernCard style={styles.emptyState}>
-              <Plus size={48} color={theme.colors.onSurfaceVariant} />
-              <Text style={[styles.emptyStateTitle, { color: theme.colors.onSurface, textAlign: getTextAlign() }]}>{t('noMaintenanceRequests')}</Text>
-              <Text style={[styles.emptyStateSubtitle, { color: theme.colors.onSurfaceVariant, textAlign: getTextAlign() }]}>
-                {searchQuery || activeFilter !== 'all' 
-                  ? t('adjustSearchOrFilters') 
-                  : t('addFirstRequest')}
-              </Text>
-            </ModernCard>
-          )
-        }
-      />
+      {(loading && !requests) || userLoading ? (
+        <MaintenanceListShimmer />
+      ) : (
+        <FlatList
+          data={filteredRequests}
+          renderItem={({ item }) => (
+            <MaintenanceRequestCard
+              request={item}
+              theme={theme}
+              onPress={() => router.push(`/maintenance/${item.id}`)}
+            />
+          )}
+          keyExtractor={item => item.id}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={loading}
+              onRefresh={onRefresh}
+              colors={[theme.colors.primary]}
+              tintColor={theme.colors.primary}
+            />
+          }
+          ListEmptyComponent={
+            userContext?.role === 'tenant' ? (
+              <TenantEmptyState type="maintenance" />
+            ) : (
+              <ModernCard style={styles.emptyState}>
+                <Plus size={48} color={theme.colors.onSurfaceVariant} />
+                <Text style={[styles.emptyStateTitle, { color: theme.colors.onSurface, textAlign: getTextAlign() }]}>{t('noMaintenanceRequests')}</Text>
+                <Text style={[styles.emptyStateSubtitle, { color: theme.colors.onSurfaceVariant, textAlign: getTextAlign() }]}>
+                  {searchQuery || activeFilter !== 'all' 
+                    ? t('adjustSearchOrFilters') 
+                    : t('addFirstRequest')}
+                </Text>
+              </ModernCard>
+            )
+          }
+        />
+      )}
 
       {/* Add Button */}
       <View style={styles.fabContainer}>
@@ -309,16 +299,6 @@ export default function MaintenanceScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing.m,
-  },
-  loadingText: {
-    marginTop: spacing.m,
-    fontSize: 16,
   },
   errorCard: {
     margin: spacing.m,

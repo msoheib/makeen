@@ -1,0 +1,24 @@
+{
+  "id": "maintenance-shimmer",
+  "started": "2025-01-12T20:30:00Z",
+  "lastUpdated": "2025-01-12T20:30:00Z",
+  "status": "complete",
+  "phase": "complete",
+  "progress": {
+    "discovery": { "answered": 5, "total": 5 },
+    "detail": { "answered": 5, "total": 5 }
+  },
+  "contextFiles": [
+    "app/(tabs)/maintenance.tsx",
+    "components/MaintenanceRequestCard.tsx",
+    "components/shimmer/index.ts",
+    "components/shimmer/StatCardShimmer.tsx",
+    "app/(tabs)/index.tsx"
+  ],
+  "relatedFeatures": [
+    "HorizontalStatsShimmer usage in dashboard",
+    "useApi hook loading states",
+    "RefreshControl functionality",
+    "MaintenanceRequestCard component structure"
+  ]
+}

@@ -2,8 +2,19 @@
   "permissions": {
     "allow": [
       "Bash(grep:*)",
-      "Bash(npm run test:ci:*)"
+      "Bash(npm run test:ci:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm run lint)"
     ],
     "deny": []
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "context7",
+    "Magic MCP",
+    "filesystem",
+    "memory",
+    "puppeteer",
+    "supabase"
+  ]
 }
