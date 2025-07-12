@@ -116,7 +116,6 @@ export default function SignUpScreen() {
           <Image 
             source={require('@/assets/images/splash-logo.png')} 
             style={styles.logo}
-            resizeMode="contain"
           />
           <Text style={styles.title}>{t('signup.createYourAccount')}</Text>
           <Text style={styles.subtitle}>{t('signup.enterDetailsToGetStarted')}</Text>
@@ -262,7 +261,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    padding: spacing.xl,
+    padding: spacing.m, // Reduced from spacing.xl to give more space for logo
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -271,10 +270,16 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: spacing.xl,
+    width: '100%', // Ensure full width is available
   },
   logo: {
-    width: 400, // Made 2x bigger as requested (200 → 400)
-    height: 400, // Made 2x bigger as requested (200 → 400)
+    width: '80%', // Use 80% of available width to ensure it's big but fits
+    height: undefined, // Let height scale proportionally
+    aspectRatio: 1, // Keep square aspect ratio
+    maxWidth: 400, // Max size of 400px on larger screens
+    maxHeight: 400, // Max size of 400px on larger screens
+    minWidth: 250, // Minimum size to ensure it's bigger than before
+    minHeight: 250, // Minimum size to ensure it's bigger than before
     marginBottom: spacing.m,
   },
   title: {
