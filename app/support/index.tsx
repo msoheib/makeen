@@ -38,8 +38,8 @@ export default function ContactSupportScreen() {
 
       const result = await MailComposer.composeAsync({
         recipients: [settings.supportEmail],
-        subject: `[Real Estate App] ${subject}`,
-        body: `${message}\n\n---\nSent from Real Estate Management App\nApp Version: 1.0.0\nDevice Info: Mobile App`,
+        subject: `[Makeen App] ${subject}`,
+        body: `${message}\n\n---\nSent from Makeen App\nApp Version: 1.0.0\nDevice Info: Mobile App`,
       });
 
       if (result.status === 'sent') {

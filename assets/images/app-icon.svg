@@ -33,6 +33,6 @@
   <rect x="0" y="800" width="1024" height="224" fill="#4CAF50"/>
   
   <!-- App Title -->
-  <text x="512" y="900" text-anchor="middle" fill="#FFF" font-family="Arial, sans-serif" font-size="60" font-weight="bold">Real Estate</text>
-  <text x="512" y="960" text-anchor="middle" fill="#FFF" font-family="Arial, sans-serif" font-size="48">Management</text>
+  <text x="512" y="900" text-anchor="middle" fill="#FFF" font-family="Arial, sans-serif" font-size="60" font-weight="bold">Makeen</text>
+  <text x="512" y="960" text-anchor="middle" fill="#FFF" font-family="Arial, sans-serif" font-size="48">مكين</text>
 </svg> 

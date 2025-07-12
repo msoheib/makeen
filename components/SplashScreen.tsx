@@ -98,8 +98,8 @@ export const CustomSplashScreen: React.FC<SplashScreenProps> = ({
           </View>
 
           {/* App Title */}
-          <Text style={styles.mainTitle}>Real Estate</Text>
-          <Text style={styles.subtitle}>MG</Text>
+          <Text style={styles.mainTitle}>Makeen</Text>
+          <Text style={styles.subtitle}>مكين</Text>
         </Animated.View>
 
         {/* Loading Section */}

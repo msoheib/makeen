@@ -39,12 +39,12 @@ export default function TermsOfServiceScreen() {
         <ModernCard style={styles.termsCard}>
           <Text style={styles.sectionTitle}>1. Acceptance of Terms</Text>
           <Text style={styles.sectionContent}>
-            By downloading, installing, or using the Real Estate Management App ("App"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use the App.
+            By downloading, installing, or using the Makeen App ("App"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use the App.
           </Text>
 
           <Text style={styles.sectionTitle}>2. Description of Service</Text>
           <Text style={styles.sectionContent}>
-            The Real Estate Management App provides tools and features for managing real estate properties, including but not limited to:
+            The Makeen App provides tools and features for managing real estate properties, including but not limited to:
             {'\n'}• Property listings and management
             {'\n'}• Tenant and owner management
             {'\n'}• Financial tracking and reporting
