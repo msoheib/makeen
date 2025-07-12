@@ -8,9 +8,9 @@
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/images/icon.png",
+      "image": "./assets/images/splash-logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1976D2"
+      "backgroundColor": "#663399"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -21,7 +21,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#663399"
       },
       "package": "com.decimaldrown.propertymanagement",
       "supportsRtl": true,
