@@ -91,15 +91,36 @@ export async function getCurrentUserContext(): Promise<UserContext | null> {
       userContext.ownedPropertyIds = ownedProperties?.map(p => p.id) || [];
     }
 
-    // For tenants, get their rented property IDs
+    // For tenants, get their rented property IDs with strict validation
     if (profile.role === 'tenant') {
+      const currentDate = new Date().toISOString();
+      
       const { data: contracts } = await supabase
         .from('contracts')
-        .select('property_id')
+        .select('property_id, start_date, end_date, status')
         .eq('tenant_id', user.id)
-        .eq('status', 'active');
+        .eq('status', 'active')
+        .lte('start_date', currentDate)  // Contract must have started
+        .gte('end_date', currentDate);   // Contract must not have expired
       
-      userContext.rentedPropertyIds = contracts?.map(c => c.property_id) || [];
+      // Additional validation: ensure contracts are actually current
+      const validContracts = contracts?.filter(contract => {
+        const startDate = new Date(contract.start_date);
+        const endDate = new Date(contract.end_date);
+        const now = new Date();
+        
+        return startDate <= now && endDate >= now && contract.status === 'active';
+      }) || [];
+      
+      userContext.rentedPropertyIds = validContracts.map(c => c.property_id);
+      
+      if (SECURITY_CONFIG.logAccessAttempts && contracts?.length !== validContracts.length) {
+        console.log('[Security] Filtered out expired/invalid contracts for tenant:', {
+          totalContracts: contracts?.length || 0,
+          validContracts: validContracts.length,
+          filteredOut: (contracts?.length || 0) - validContracts.length
+        });
+      }
     }
 
     if (SECURITY_CONFIG.logAccessAttempts) {

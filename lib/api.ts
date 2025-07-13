@@ -202,14 +202,39 @@ export const propertiesApi = {
   },
 
   // Create property
-  async create(property: TablesInsert<'properties'>): Promise<ApiResponse<Tables<'properties'>>> {
-    return handleApiCall(() => 
-      supabase
+  async create(property: TablesInsert<'properties'>, createdByUserId?: string): Promise<ApiResponse<Tables<'properties'>>> {
+    return handleApiCall(async () => {
+      // Insert the property
+      const { data: newProperty, error } = await supabase
         .from('properties')
         .insert(property)
         .select()
-        .single()
-    );
+        .single();
+
+      if (error) throw error;
+
+      // Send notification if property was created by someone other than the owner
+      if (createdByUserId && property.owner_id && createdByUserId !== property.owner_id) {
+        try {
+          await notificationsApi.create({
+            recipient_id: property.owner_id,
+            sender_id: createdByUserId,
+            notification_type: 'property_created',
+            title: 'تم إضافة عقار جديد',
+            message: `تم إضافة عقار جديد "${property.title}" إلى محفظتك بواسطة مدير العقار`,
+            priority: 'medium',
+            related_entity_type: 'property',
+            related_entity_id: newProperty.id
+          });
+          console.log('Property creation notification sent to owner:', property.owner_id);
+        } catch (notificationError) {
+          console.warn('Failed to send property creation notification:', notificationError);
+          // Don't fail the property creation if notification fails
+        }
+      }
+
+      return { data: newProperty, error: null };
+    });
   },
 
   // Update property
@@ -4457,6 +4482,30 @@ export const notificationsApi = {
         .update({ is_read: true, updated_at: new Date().toISOString() })
         .eq('recipient_id', userContext.userId)
         .eq('is_read', false)
+    );
+  },
+
+  // Create notification
+  async create(notification: {
+    recipient_id: string;
+    sender_id?: string;
+    notification_type: string;
+    title: string;
+    message: string;
+    priority?: 'low' | 'medium' | 'high';
+    related_entity_type?: string;
+    related_entity_id?: string;
+  }): Promise<ApiResponse<any>> {
+    return handleApiCall(() =>
+      supabase
+        .from('notifications')
+        .insert({
+          ...notification,
+          is_read: false,
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single()
     );
   }
 };

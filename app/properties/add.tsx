@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert, I18nManager } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, I18nManager, TouchableOpacity } from 'react-native';
 import { Text, TextInput, Button, SegmentedButtons, IconButton } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/lib/store';
 import { PropertyType, PropertyStatus } from '@/lib/types';
+import { getCurrentUserContext } from '@/lib/security';
+import { useApi } from '@/hooks/useApi';
+import { profilesApi, propertiesApi } from '@/lib/api';
 import { ArrowLeft, Building2, MapPin, DollarSign, Chrome as Home } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
@@ -14,6 +17,24 @@ export default function AddPropertyScreen() {
   const router = useRouter();
   const user = useAppStore(state => state.user);
   const [loading, setLoading] = useState(false);
+  const [selectedOwnerId, setSelectedOwnerId] = useState<string>('');
+
+  // Get user context for role-based functionality
+  const { 
+    data: userContext, 
+    loading: userLoading 
+  } = useApi(() => getCurrentUserContext(), []);
+
+  // Get owner profiles for manager/admin selection
+  const { 
+    data: ownerProfiles, 
+    loading: ownersLoading 
+  } = useApi(() => {
+    if (userContext?.role === 'manager' || userContext?.role === 'admin') {
+      return profilesApi.getAll({ role: 'owner' });
+    }
+    return Promise.resolve({ data: [], error: null });
+  }, [userContext?.role]);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -87,15 +108,23 @@ export default function AddPropertyScreen() {
     setErrors({}); // Clear previous errors
 
     try {
-      // Get all profiles to find a valid owner_id (temporary workaround)
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name')
-        .eq('role', 'owner')
-        .limit(1);
-
-      const ownerId = profiles && profiles.length > 0 ? profiles[0].id : user.id;
-      console.log('Using owner_id:', ownerId);
+      // Determine owner ID based on user role
+      let ownerId: string;
+      
+      if (userContext?.role === 'manager' || userContext?.role === 'admin') {
+        // Property managers/admins can select any owner
+        if (!selectedOwnerId) {
+          Alert.alert('خطأ', 'يجب اختيار مالك العقار');
+          setLoading(false);
+          return;
+        }
+        ownerId = selectedOwnerId;
+      } else {
+        // Property owners can only create for themselves
+        ownerId = user.id;
+      }
+      
+      console.log('Using owner_id:', ownerId, 'for user role:', userContext?.role);
 
       // Prepare property data
       const propertyData = {
@@ -121,17 +150,15 @@ export default function AddPropertyScreen() {
 
       console.log('Submitting property data:', propertyData);
 
-      // Insert into database
-      const { data, error } = await supabase
-        .from('properties')
-        .insert([propertyData])
-        .select()
-        .single();
+      // Insert into database using enhanced API with notification support
+      const result = await propertiesApi.create(propertyData, user.id);
 
-      if (error) {
-        console.error('Supabase error:', error);
-        throw error;
+      if (result.error) {
+        console.error('Property creation error:', result.error);
+        throw new Error(result.error.message);
       }
+
+      const data = result.data;
 
       console.log('Property added successfully:', data);
 
@@ -256,6 +283,41 @@ export default function AddPropertyScreen() {
             ]}
             style={styles.segmentedButtons}
           />
+
+          {/* Owner Selection for Managers/Admins */}
+          {(userContext?.role === 'manager' || userContext?.role === 'admin') && (
+            <>
+              <Text style={styles.fieldLabel}>مالك العقار *</Text>
+              <View style={styles.ownerSelectionContainer}>
+                {ownersLoading ? (
+                  <Text style={styles.loadingText}>جاري تحميل قائمة الملاك...</Text>
+                ) : (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.ownerScroll}>
+                    {ownerProfiles?.data?.map((owner: any) => (
+                      <TouchableOpacity
+                        key={owner.id}
+                        style={[
+                          styles.ownerOption,
+                          selectedOwnerId === owner.id && styles.selectedOwnerOption
+                        ]}
+                        onPress={() => setSelectedOwnerId(owner.id)}
+                      >
+                        <Text style={[
+                          styles.ownerText,
+                          selectedOwnerId === owner.id && styles.selectedOwnerText
+                        ]}>
+                          {owner.first_name} {owner.last_name}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                )}
+              </View>
+              {!selectedOwnerId && (userContext?.role === 'manager' || userContext?.role === 'admin') && (
+                <Text style={styles.errorText}>يجب اختيار مالك العقار</Text>
+              )}
+            </>
+          )}
         </ModernCard>
 
         {/* Location */}
@@ -479,5 +541,39 @@ const styles = StyleSheet.create({
   },
   submitButtonContent: {
     paddingVertical: spacing.s,
+  },
+  ownerSelectionContainer: {
+    marginBottom: spacing.m,
+  },
+  ownerScroll: {
+    marginBottom: spacing.s,
+  },
+  ownerOption: {
+    paddingHorizontal: spacing.m,
+    paddingVertical: spacing.s,
+    marginRight: spacing.s,
+    borderRadius: 8,
+    backgroundColor: theme.colors.surfaceVariant,
+    borderWidth: 1,
+    borderColor: theme.colors.outline,
+  },
+  selectedOwnerOption: {
+    backgroundColor: theme.colors.primaryContainer,
+    borderColor: theme.colors.primary,
+  },
+  ownerText: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    textAlign: 'center',
+  },
+  selectedOwnerText: {
+    color: theme.colors.primary,
+    fontWeight: '600',
+  },
+  loadingText: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    textAlign: 'center',
+    padding: spacing.m,
   },
 });

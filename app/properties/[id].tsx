@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Image } from 'react-native';
-import { Text, Button, IconButton, Chip } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, Image, Alert, TouchableOpacity } from 'react-native';
+import { Text, Button, IconButton, Chip, Modal, Portal } from 'react-native-paper';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { Property } from '@/lib/types';
+import { getCurrentUserContext } from '@/lib/security';
+import { useApi } from '@/hooks/useApi';
+import { profilesApi, propertiesApi } from '@/lib/api';
 import { ArrowLeft, LocationEdit as Edit, Share, MapPin, Chrome as Home, Bath, Bed, Square, DollarSign, Calendar, User, Phone, Mail } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
@@ -15,6 +18,26 @@ export default function PropertyDetailsScreen() {
   const { id } = useLocalSearchParams();
   const [loading, setLoading] = useState(true);
   const [property, setProperty] = useState<Property | null>(null);
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [selectedNewOwner, setSelectedNewOwner] = useState<string>('');
+  const [transferring, setTransferring] = useState(false);
+
+  // Get user context for role-based functionality
+  const { 
+    data: userContext, 
+    loading: userLoading 
+  } = useApi(() => getCurrentUserContext(), []);
+
+  // Get owner profiles for transfer selection
+  const { 
+    data: ownerProfiles, 
+    loading: ownersLoading 
+  } = useApi(() => {
+    if (userContext?.role === 'manager' || userContext?.role === 'admin') {
+      return profilesApi.getAll({ role: 'owner' });
+    }
+    return Promise.resolve({ data: [], error: null });
+  }, [userContext?.role]);
 
   useEffect(() => {
     if (id) {
@@ -39,6 +62,52 @@ export default function PropertyDetailsScreen() {
       console.error('Error fetching property:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOwnershipTransfer = async () => {
+    if (!selectedNewOwner || !property) {
+      Alert.alert('خطأ', 'يجب اختيار المالك الجديد');
+      return;
+    }
+
+    setTransferring(true);
+    try {
+      const result = await propertiesApi.update(property.id, {
+        owner_id: selectedNewOwner
+      });
+
+      if (result.error) {
+        throw new Error(result.error.message);
+      }
+
+      // Send notification to new owner
+      const newOwner = ownerProfiles?.data?.find(owner => owner.id === selectedNewOwner);
+      if (newOwner) {
+        // Update local property state
+        setProperty(prev => prev ? {
+          ...prev,
+          owner_id: selectedNewOwner,
+          owner: {
+            id: selectedNewOwner,
+            first_name: newOwner.first_name,
+            last_name: newOwner.last_name,
+            email: newOwner.email,
+            phone_number: newOwner.phone
+          }
+        } : null);
+
+        Alert.alert(
+          'نجح',
+          `تم نقل ملكية العقار إلى ${newOwner.first_name} ${newOwner.last_name}`,
+          [{ text: 'موافق', onPress: () => setShowTransferModal(false) }]
+        );
+      }
+    } catch (error: any) {
+      console.error('Error transferring ownership:', error);
+      Alert.alert('خطأ', error.message || 'فشل في نقل الملكية');
+    } finally {
+      setTransferring(false);
     }
   };
 
@@ -246,9 +315,88 @@ export default function PropertyDetailsScreen() {
             >
               New Contract
             </Button>
+            
+            {/* Ownership Transfer Button for Managers/Admins */}
+            {(userContext?.role === 'manager' || userContext?.role === 'admin') && (
+              <Button
+                mode="contained"
+                onPress={() => setShowTransferModal(true)}
+                style={[styles.actionButton, { backgroundColor: theme.colors.error }]}
+                icon={() => <User size={20} color="white" />}
+              >
+                Transfer Ownership
+              </Button>
+            )}
           </View>
         </ModernCard>
       </ScrollView>
+
+      {/* Ownership Transfer Modal */}
+      <Portal>
+        <Modal
+          visible={showTransferModal}
+          onDismiss={() => setShowTransferModal(false)}
+          contentContainerStyle={styles.modalContainer}
+        >
+          <Text style={styles.modalTitle}>Transfer Property Ownership</Text>
+          <Text style={styles.modalSubtitle}>
+            Select the new owner for "{property?.title}"
+          </Text>
+
+          <View style={styles.ownerSelectionContainer}>
+            {ownersLoading ? (
+              <Text style={styles.loadingText}>Loading owners...</Text>
+            ) : (
+              <ScrollView style={styles.ownersList} showsVerticalScrollIndicator={false}>
+                {ownerProfiles?.data?.filter(owner => owner.id !== property?.owner_id).map((owner: any) => (
+                  <TouchableOpacity
+                    key={owner.id}
+                    style={[
+                      styles.ownerOptionModal,
+                      selectedNewOwner === owner.id && styles.selectedOwnerOptionModal
+                    ]}
+                    onPress={() => setSelectedNewOwner(owner.id)}
+                  >
+                    <View style={styles.ownerInfo}>
+                      <Text style={[
+                        styles.ownerNameModal,
+                        selectedNewOwner === owner.id && styles.selectedOwnerNameModal
+                      ]}>
+                        {owner.first_name} {owner.last_name}
+                      </Text>
+                      {owner.email && (
+                        <Text style={styles.ownerEmailModal}>{owner.email}</Text>
+                      )}
+                    </View>
+                    {selectedNewOwner === owner.id && (
+                      <IconButton icon="check" size={20} iconColor={theme.colors.primary} />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+          </View>
+
+          <View style={styles.modalButtons}>
+            <Button
+              mode="outlined"
+              onPress={() => setShowTransferModal(false)}
+              style={styles.cancelButton}
+            >
+              Cancel
+            </Button>
+            <Button
+              mode="contained"
+              onPress={handleOwnershipTransfer}
+              disabled={!selectedNewOwner || transferring}
+              loading={transferring}
+              style={styles.transferButton}
+            >
+              Transfer
+            </Button>
+          </View>
+        </Modal>
+      </Portal>
     </View>
   );
 }
@@ -385,5 +533,72 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     paddingVertical: 4,
+  },
+  modalContainer: {
+    backgroundColor: theme.colors.surface,
+    margin: spacing.lg,
+    borderRadius: 12,
+    padding: spacing.lg,
+    maxHeight: '80%',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginBottom: spacing.s,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    marginBottom: spacing.lg,
+  },
+  ownerSelectionContainer: {
+    marginBottom: spacing.lg,
+  },
+  ownersList: {
+    maxHeight: 300,
+  },
+  ownerOptionModal: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing.m,
+    marginBottom: spacing.s,
+    borderRadius: 8,
+    backgroundColor: theme.colors.surfaceVariant,
+    borderWidth: 1,
+    borderColor: theme.colors.outline,
+  },
+  selectedOwnerOptionModal: {
+    backgroundColor: theme.colors.primaryContainer,
+    borderColor: theme.colors.primary,
+  },
+  ownerNameModal: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.onSurfaceVariant,
+  },
+  selectedOwnerNameModal: {
+    color: theme.colors.primary,
+  },
+  ownerEmailModal: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
+    marginTop: 2,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: spacing.m,
+  },
+  cancelButton: {
+    flex: 1,
+  },
+  transferButton: {
+    flex: 1,
+  },
+  loadingText: {
+    textAlign: 'center',
+    color: theme.colors.onSurfaceVariant,
+    padding: spacing.lg,
   },
 });

@@ -15,6 +15,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '../../lib/theme';
 import { useApi } from '../../hooks/useApi';
 import { api } from '../../lib/api';
+import { getCurrentUserContext } from '../../lib/security';
 import ModernHeader from '../../components/ModernHeader';
 
 interface MyPropertiesProps {}
@@ -24,15 +25,25 @@ export default function MyProperties({}: MyPropertiesProps) {
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<'all' | 'available' | 'rented' | 'maintenance' | 'pending'>('all');
   
-  // Mock owner ID - in real app, get from auth context
-  const ownerId = '1'; // Replace with actual owner ID from auth
+  // Get user context for proper owner authentication
+  const { 
+    data: userContext, 
+    loading: userLoading, 
+    error: userError 
+  } = useApi(() => getCurrentUserContext(), []);
 
   const { 
     data: properties, 
-    loading, 
-    error,
+    loading: propertiesLoading, 
+    error: propertiesError,
     refetch 
-  } = useApi(() => api.ownerProperty.getMyProperties(ownerId), [ownerId]);
+  } = useApi(() => {
+    if (!userContext?.userId) return Promise.resolve(null);
+    return api.ownerProperty.getMyProperties(userContext.userId);
+  }, [userContext?.userId]);
+
+  const loading = userLoading || propertiesLoading;
+  const error = userError || propertiesError;
 
   const styles = getStyles(theme);
 
