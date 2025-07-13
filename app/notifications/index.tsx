@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, FlatList, ScrollView, SafeAreaView, TouchableOpacity, RefreshControl } from 'react-native';
 import { Text, Card, Chip, IconButton, Button, Divider, ActivityIndicator, Icon } from 'react-native-paper';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useTheme } from '@/hooks/useTheme';
 import { useApi } from '@/hooks/useApi';
 import { notificationsApi } from '@/lib/api';
 import ModernHeader from '@/components/ModernHeader';
+import { useNotificationBadges } from '@/hooks/useNotificationBadges';
 
 export default function NotificationsScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const [filter, setFilter] = useState<'all' | 'unread' | 'bid_submitted' | 'bid_approved'>('all');
+  const { markAllAsRead } = useNotificationBadges();
 
   // Fetch notifications
   const { 
@@ -32,6 +34,22 @@ export default function NotificationsScreen() {
   } = useApi(() => notificationsApi.getUnreadCount(), []);
 
   const styles = getStyles(theme);
+
+  // Automatically mark all notifications as read when screen is focused
+  useFocusEffect(
+    React.useCallback(() => {
+      // Mark all notifications as read when user views the notifications page
+      const markNotificationsAsViewed = async () => {
+        try {
+          await markAllAsRead();
+        } catch (error) {
+          console.error('Error marking notifications as read:', error);
+        }
+      };
+      
+      markNotificationsAsViewed();
+    }, [markAllAsRead])
+  );
 
   // Handle refresh
   const handleRefresh = () => {
