@@ -26,15 +26,39 @@ export default function AddPropertyScreen() {
   } = useApi(() => getCurrentUserContext(), []);
 
   // Get owner profiles for manager/admin selection
-  const { 
-    data: ownerProfiles, 
-    loading: ownersLoading 
-  } = useApi(() => {
-    if (userContext?.role === 'manager' || userContext?.role === 'admin') {
-      return profilesApi.getAll({ role: 'owner' });
+  const [ownerProfiles, setOwnerProfiles] = useState<any[]>([]);
+  const [ownersLoading, setOwnersLoading] = useState(false);
+  const [ownersError, setOwnersError] = useState<string | null>(null);
+
+  // Fetch owners when user context loads and user is manager/admin
+  React.useEffect(() => {
+    if (userContext && (userContext.role === 'manager' || userContext.role === 'admin')) {
+      setOwnersLoading(true);
+      setOwnersError(null);
+      
+      supabase
+        .from('profiles')
+        .select('id, first_name, last_name, email, role')
+        .eq('role', 'owner')
+        .then(({ data, error }) => {
+          if (error) {
+            console.error('Error fetching owners:', error);
+            setOwnersError(error.message);
+            setOwnerProfiles([]);
+          } else {
+            setOwnerProfiles(data || []);
+          }
+          setOwnersLoading(false);
+        })
+        .catch(err => {
+          console.error('Exception fetching owners:', err);
+          setOwnersError(err.message);
+          setOwnerProfiles([]);
+          setOwnersLoading(false);
+        });
     }
-    return Promise.resolve({ data: [], error: null });
   }, [userContext?.role]);
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -291,24 +315,28 @@ export default function AddPropertyScreen() {
               <View style={styles.ownerSelectionContainer}>
                 {ownersLoading ? (
                   <Text style={styles.loadingText}>جاري تحميل قائمة الملاك...</Text>
+                ) : ownersError ? (
+                  <Text style={styles.errorText}>خطأ في تحميل قائمة الملاك: {ownersError}</Text>
+                ) : !ownerProfiles || ownerProfiles.length === 0 ? (
+                  <Text style={styles.loadingText}>لا يوجد ملاك متاحون</Text>
                 ) : (
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.ownerScroll}>
-                    {ownerProfiles?.data?.map((owner: any) => (
-                      <TouchableOpacity
-                        key={owner.id}
-                        style={[
-                          styles.ownerOption,
-                          selectedOwnerId === owner.id && styles.selectedOwnerOption
-                        ]}
-                        onPress={() => setSelectedOwnerId(owner.id)}
-                      >
-                        <Text style={[
-                          styles.ownerText,
-                          selectedOwnerId === owner.id && styles.selectedOwnerText
-                        ]}>
-                          {owner.first_name} {owner.last_name}
-                        </Text>
-                      </TouchableOpacity>
+                    {ownerProfiles.map((owner: any) => (
+                        <TouchableOpacity
+                          key={owner.id}
+                          style={[
+                            styles.ownerOption,
+                            selectedOwnerId === owner.id && styles.selectedOwnerOption
+                          ]}
+                          onPress={() => setSelectedOwnerId(owner.id)}
+                        >
+                          <Text style={[
+                            styles.ownerText,
+                            selectedOwnerId === owner.id && styles.selectedOwnerText
+                          ]}>
+                            {owner.first_name} {owner.last_name}
+                          </Text>
+                        </TouchableOpacity>
                     ))}
                   </ScrollView>
                 )}
