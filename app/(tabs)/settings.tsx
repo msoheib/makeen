@@ -19,6 +19,7 @@ import {
   LogOut
 } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -26,6 +27,7 @@ export default function SettingsScreen() {
   const { isDarkMode, toggleDarkMode, language, setLanguage } = useAppStore();
   const setUser = useAppStore(state => state.setUser);
   const setAuthenticated = useAppStore(state => state.setAuthenticated);
+  const { profile } = useUserProfile();
   const theme = isDarkMode ? darkTheme : lightTheme;
 
   const handleLogout = async () => {
@@ -233,7 +235,7 @@ export default function SettingsScreen() {
               </View>
             )}
             title={t('profile.myProfile')}
-            description="admin@realestate.com"
+            description={profile?.email || t('profile.loadingEmail')}
             titleStyle={[styles.profileName, { color: theme.colors.onSurface }]}
             descriptionStyle={[styles.profileEmail, { color: theme.colors.onSurfaceVariant }]}
             right={() => <ChevronRight size={20} color={theme.colors.onSurfaceVariant} />}

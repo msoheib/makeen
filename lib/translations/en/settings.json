@@ -49,7 +49,19 @@
     "deleteAccountDesc": "Account deletion functionality will be available in a future update. Please contact support for assistance.",
     "save": "Save",
     "edit": "Edit",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "nameRequired": "Name is required",
+    "emailRequired": "Email is required",
+    "error": "Error",
+    "updateFailed": "Profile update failed",
+    "loadingProfile": "Loading profile...",
+    "loadingEmail": "Loading email...",
+    "noEmail": "No email address",
+    "saving": "Saving...",
+    "firstName": "First Name",
+    "enterFirstName": "Enter your first name",
+    "lastName": "Last Name",
+    "enterLastName": "Enter your last name"
   },
   "notifications": {
     "title": "Notifications",

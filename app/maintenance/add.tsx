@@ -6,6 +6,20 @@ import { theme, spacing } from '@/lib/theme';
 import { useApi } from '@/hooks/useApi';
 import { maintenanceApi, propertiesApi, tenantApi } from '@/lib/api';
 import { Tables, TablesInsert } from '@/lib/database.types';
+
+// TypeScript interface for contract with property response
+interface ContractWithProperty {
+  id: string;
+  status: string;
+  property: {
+    id: string;
+    title: string;
+    address: string;
+    city?: string;
+    neighborhood?: string;
+    property_type?: string;
+  };
+}
 import { getCurrentUserContext } from '@/lib/security';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
@@ -56,10 +70,33 @@ export default function AddMaintenanceRequestScreen() {
       // For tenants, get only their rented properties through contracts
       console.log('[Maintenance Form] Fetching tenant contracts...');
       const contractsResponse = await tenantApi.getMyContracts();
+      
+      // Enhanced logging for debugging
+      console.log('[Maintenance Form] Contract response structure:', JSON.stringify(contractsResponse, null, 2));
+      console.log('[Maintenance Form] Contract response data:', contractsResponse.data);
+      
       if (contractsResponse.data) {
-        const activeContracts = contractsResponse.data.filter(contract => contract.status === 'active');
-        const rentedProperties = activeContracts.map(contract => contract.property).filter(property => property);
+        const activeContracts = (contractsResponse.data as ContractWithProperty[]).filter(contract => contract.status === 'active');
+        console.log('[Maintenance Form] Active contracts count:', activeContracts.length);
+        console.log('[Maintenance Form] First active contract structure:', JSON.stringify(activeContracts[0], null, 2));
+        
+        // Fix property extraction with improved data handling
+        const rentedProperties = activeContracts.map(contract => {
+          // The API returns property data in 'property' field based on the query
+          const property = contract.property;
+          console.log('[Maintenance Form] Extracted property from contract:', property);
+          
+          // Validate property data exists and has required fields
+          if (property && property.id && property.title) {
+            return property;
+          } else {
+            console.warn('[Maintenance Form] Invalid property data in contract:', contract.id, property);
+            return null;
+          }
+        }).filter(property => property !== null);
+        
         console.log('[Maintenance Form] Found rented properties:', rentedProperties.length);
+        console.log('[Maintenance Form] Rented properties data:', rentedProperties);
         return rentedProperties;
       }
       return [];
@@ -73,6 +110,16 @@ export default function AddMaintenanceRequestScreen() {
 
   // Use userProperties instead of properties
   const properties = userProperties;
+
+  // Auto-select property if tenant has only one
+  React.useEffect(() => {
+    if (properties?.length === 1 && !selectedProperty) {
+      const singleProperty = properties[0];
+      console.log('[Maintenance Form] Auto-selecting single property:', singleProperty);
+      setSelectedProperty(singleProperty);
+      setFormData(prev => ({ ...prev, property_id: singleProperty.id }));
+    }
+  }, [properties, selectedProperty]);
 
   // Filter properties based on search
   const filteredProperties = properties?.filter(property =>
@@ -407,7 +454,7 @@ export default function AddMaintenanceRequestScreen() {
                   {propertySearch 
                     ? t('noPropertiesMatch') 
                     : (properties?.length === 0 
-                        ? 'You currently have no active rental contracts. Contact your property manager to rent a property first.' 
+                        ? t('noActiveContracts') 
                         : t('noPropertiesAvailable')
                       )
                   }

@@ -4,7 +4,11 @@
       "Bash(grep:*)",
       "Bash(npm run test:ci:*)",
       "Bash(mkdir:*)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Bash(npm run build:web:*)",
+      "mcp__supabase__list_projects",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__execute_sql"
     ],
     "deny": []
   },

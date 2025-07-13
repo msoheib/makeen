@@ -3514,8 +3514,7 @@ export const tenantApi = {
         .from('contracts')
         .select(`
           *,
-          property:properties(id, title, address, city, neighborhood, property_type),
-          maintenance_requests:maintenance_requests(id, title, status, priority, created_at)
+          property:properties(id, title, address, city, neighborhood, property_type)
         `)
         .eq('tenant_id', userContext.userId)
         .order('start_date', { ascending: false })

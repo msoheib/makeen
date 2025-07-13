@@ -14,25 +14,12 @@ const SECURITY_CONFIG: SecurityConfig = {
  */
 export async function getCurrentUserContext(): Promise<UserContext | null> {
   try {
-    // For demo purposes, create a default admin user context if no auth
     // Get current authenticated user from Supabase
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
-      console.log('[Security] No authenticated user found, using demo admin context:', authError?.message);
-      
-      // Return demo admin context for development/demo purposes
-      const demoContext = {
-        userId: 'demo-admin-id',
-        role: 'admin' as UserRole,
-        profileType: 'admin',
-        isAuthenticated: true,
-        ownedPropertyIds: [],
-        rentedPropertyIds: []
-      };
-      
-      console.log('[Security] Demo admin context created:', demoContext);
-      return demoContext;
+      console.log('[Security] No authenticated user found:', authError?.message);
+      return null;
     }
 
     // Get user profile with role information
@@ -67,15 +54,7 @@ export async function getCurrentUserContext(): Promise<UserContext | null> {
 
       if (createError) {
         console.error('[Security] Failed to create user profile:', createError.message);
-        // Return demo admin context as fallback
-        return {
-          userId: 'demo-admin-id',
-          role: 'admin' as UserRole,
-          profileType: 'admin',
-          isAuthenticated: true,
-          ownedPropertyIds: [],
-          rentedPropertyIds: []
-        };
+        return null;
       }
 
       profile = newProfile;
@@ -86,28 +65,12 @@ export async function getCurrentUserContext(): Promise<UserContext | null> {
       });
     } else if (profileError) {
       console.error('[Security] Failed to fetch user profile:', profileError.message);
-      // Return demo admin context as fallback
-      return {
-        userId: 'demo-admin-id',
-        role: 'admin' as UserRole,
-        profileType: 'admin',
-        isAuthenticated: true,
-        ownedPropertyIds: [],
-        rentedPropertyIds: []
-      };
+      return null;
     }
 
     if (!profile) {
       console.error('[Security] No profile data available');
-      // Return demo admin context as fallback
-      return {
-        userId: 'demo-admin-id',
-        role: 'admin' as UserRole,
-        profileType: 'admin',
-        isAuthenticated: true,
-        ownedPropertyIds: [],
-        rentedPropertyIds: []
-      };
+      return null;
     }
 
     // Build user context
@@ -152,15 +115,7 @@ export async function getCurrentUserContext(): Promise<UserContext | null> {
     return userContext;
   } catch (error) {
     console.error('[Security] Error getting user context:', error);
-    // Return demo admin context as fallback
-    return {
-      userId: 'demo-admin-id',
-      role: 'admin' as UserRole,
-      profileType: 'admin',
-      isAuthenticated: true,
-      ownedPropertyIds: [],
-      rentedPropertyIds: []
-    };
+    return null;
   }
 }
 

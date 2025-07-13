@@ -7,50 +7,92 @@ import { useAppStore } from '@/lib/store';
 import { useTranslation } from '@/lib/useTranslation';
 import { ArrowLeft, User, Mail, Phone, MapPin, Edit3, Save, X, Camera, Shield } from 'lucide-react-native';
 import ModernCard from '@/components/ModernCard';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { ActivityIndicator } from 'react-native';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { settings, updateSettings } = useAppStore();
   const { t } = useTranslation('settings');
+  const { profile, loading, error, updateProfile } = useUserProfile();
   const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [editedProfile, setEditedProfile] = useState({
-    name: settings.userProfile?.name || '',
-    email: settings.userProfile?.email || '',
-    phone: settings.userProfile?.phone || '',
-    company: settings.userProfile?.company || '',
-    address: settings.userProfile?.address || '',
-    city: settings.userProfile?.city || '',
-    country: settings.userProfile?.country || 'Saudi Arabia',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    company: '',
+    address: '',
+    city: '',
+    country: 'Saudi Arabia',
   });
 
-  const handleSave = () => {
-    if (!editedProfile.name.trim() || !editedProfile.email.trim()) {
-      Alert.alert(t('profile.missingInformation'), t('profile.nameEmailRequired'));
+  // Update edited profile when database profile loads
+  React.useEffect(() => {
+    if (profile) {
+      setEditedProfile({
+        firstName: profile.first_name || '',
+        lastName: profile.last_name || '',
+        email: profile.email || '',
+        phone: profile.phone || '',
+        company: '', // Not in database schema
+        address: profile.address || '',
+        city: profile.city || '',
+        country: profile.country || 'Saudi Arabia',
+      });
+    }
+  }, [profile]);
+
+  const handleSave = async () => {
+    if (!editedProfile.firstName.trim() && !editedProfile.lastName.trim()) {
+      Alert.alert(t('profile.missingInformation'), t('profile.nameRequired'));
       return;
     }
 
-    updateSettings({
-      userProfile: {
-        ...settings.userProfile,
-        ...editedProfile,
-        updatedAt: new Date().toISOString(),
-      },
-    });
-    
-    setIsEditing(false);
-    Alert.alert(t('profile.success'), t('profile.profileUpdateSuccess'));
+    if (!editedProfile.email.trim()) {
+      Alert.alert(t('profile.missingInformation'), t('profile.emailRequired'));
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const success = await updateProfile({
+        first_name: editedProfile.firstName,
+        last_name: editedProfile.lastName,
+        email: editedProfile.email,
+        phone: editedProfile.phone,
+        address: editedProfile.address,
+        city: editedProfile.city,
+        country: editedProfile.country,
+      });
+
+      if (success) {
+        setIsEditing(false);
+        Alert.alert(t('profile.success'), t('profile.profileUpdateSuccess'));
+      } else {
+        Alert.alert(t('profile.error'), t('profile.updateFailed'));
+      }
+    } catch (err) {
+      console.error('Profile save error:', err);
+      Alert.alert(t('profile.error'), t('profile.updateFailed'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => {
-    setEditedProfile({
-      name: settings.userProfile?.name || '',
-      email: settings.userProfile?.email || '',
-      phone: settings.userProfile?.phone || '',
-      company: settings.userProfile?.company || '',
-      address: settings.userProfile?.address || '',
-      city: settings.userProfile?.city || '',
-      country: settings.userProfile?.country || 'Saudi Arabia',
-    });
+    if (profile) {
+      setEditedProfile({
+        firstName: profile.first_name || '',
+        lastName: profile.last_name || '',
+        email: profile.email || '',
+        phone: profile.phone || '',
+        company: '',
+        address: profile.address || '',
+        city: profile.city || '',
+        country: profile.country || 'Saudi Arabia',
+      });
+    }
     setIsEditing(false);
   };
 
@@ -62,14 +104,45 @@ export default function ProfileScreen() {
     );
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
+  const getInitials = (firstName: string, lastName: string) => {
+    const first = firstName.trim()[0] || '';
+    const last = lastName.trim()[0] || '';
+    return (first + last).toUpperCase() || 'U';
   };
+
+  const getFullName = () => {
+    return `${editedProfile.firstName} ${editedProfile.lastName}`.trim() || t('common:user');
+  };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={[styles.loadingText, { color: theme.colors.onSurface }]}>
+          {t('profile.loadingProfile')}
+        </Text>
+      </View>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <View style={[styles.container, styles.errorContainer]}>
+        <Text style={[styles.errorText, { color: theme.colors.error }]}>
+          {error}
+        </Text>
+        <Button
+          mode="contained"
+          onPress={() => window.location.reload()}
+          style={styles.retryButton}
+        >
+          {t('common:retry')}
+        </Button>
+      </View>
+    );
+  }
 
   const profileStats = [
     { label: t('profile.propertiesManaged'), value: '0', icon: MapPin },
@@ -100,7 +173,7 @@ export default function ProfileScreen() {
             <View style={styles.avatarContainer}>
               <Avatar.Text 
                 size={80} 
-                label={getInitials(editedProfile.name || 'U')}
+                label={getInitials(editedProfile.firstName, editedProfile.lastName)}
                 style={[styles.avatar, { backgroundColor: theme.colors.primary }]}
                 labelStyle={{ color: 'white', fontSize: 24, fontWeight: '600' }}
               />
@@ -113,13 +186,13 @@ export default function ProfileScreen() {
             </View>
             <View style={styles.profileInfo}>
               <Text style={styles.profileName}>
-                {editedProfile.name || t('common:user')}
+                {getFullName()}
               </Text>
               <Text style={styles.profileEmail}>
-                {editedProfile.email || 'user@example.com'}
+                {editedProfile.email || t('profile.noEmail')}
               </Text>
               <Text style={styles.profileCompany}>
-                {editedProfile.company || t('profile.realEstateProfessional')}
+                {profile?.role || t('profile.realEstateProfessional')}
               </Text>
             </View>
           </View>
@@ -149,12 +222,14 @@ export default function ProfileScreen() {
               <Button
                 mode="contained"
                 onPress={handleSave}
+                loading={saving}
+                disabled={saving}
                 style={styles.saveButton}
                 buttonColor={theme.colors.primary}
                 icon={() => <Save size={16} color="white" />}
                 compact
               >
-                {t('profile.save')}
+                {saving ? t('profile.saving') : t('profile.save')}
               </Button>
             )}
           </View>
@@ -165,19 +240,45 @@ export default function ProfileScreen() {
                 <User size={20} color={theme.colors.onSurfaceVariant} />
               </View>
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>{t('profile.fullName')}</Text>
+                <Text style={styles.detailLabel}>{t('profile.firstName')}</Text>
                 {isEditing ? (
                   <TextInput
                     mode="outlined"
-                    value={editedProfile.name}
-                    onChangeText={(text) => setEditedProfile(prev => ({ ...prev, name: text }))}
-                    placeholder={t('profile.enterFullName')}
+                    value={editedProfile.firstName}
+                    onChangeText={(text) => setEditedProfile(prev => ({ ...prev, firstName: text }))}
+                    placeholder={t('profile.enterFirstName')}
                     style={styles.textInput}
                     outlineColor={theme.colors.outline}
                     activeOutlineColor={theme.colors.primary}
                   />
                 ) : (
-                  <Text style={styles.detailValue}>{editedProfile.name || t('profile.notSet')}</Text>
+                  <Text style={styles.detailValue}>
+                    {editedProfile.firstName || ''}
+                  </Text>
+                )}
+              </View>
+            </View>
+
+            <View style={styles.detailRow}>
+              <View style={styles.detailIcon}>
+                <User size={20} color={theme.colors.onSurfaceVariant} />
+              </View>
+              <View style={styles.detailContent}>
+                <Text style={styles.detailLabel}>{t('profile.lastName')}</Text>
+                {isEditing ? (
+                  <TextInput
+                    mode="outlined"
+                    value={editedProfile.lastName}
+                    onChangeText={(text) => setEditedProfile(prev => ({ ...prev, lastName: text }))}
+                    placeholder={t('profile.enterLastName')}
+                    style={styles.textInput}
+                    outlineColor={theme.colors.outline}
+                    activeOutlineColor={theme.colors.primary}
+                  />
+                ) : (
+                  <Text style={styles.detailValue}>
+                    {editedProfile.lastName || ''}
+                  </Text>
                 )}
               </View>
             </View>
@@ -200,7 +301,9 @@ export default function ProfileScreen() {
                     activeOutlineColor={theme.colors.primary}
                   />
                 ) : (
-                  <Text style={styles.detailValue}>{editedProfile.email || t('profile.notSet')}</Text>
+                  <Text style={styles.detailValue}>
+                    {editedProfile.email || ''}
+                  </Text>
                 )}
               </View>
             </View>
@@ -223,7 +326,9 @@ export default function ProfileScreen() {
                     activeOutlineColor={theme.colors.primary}
                   />
                 ) : (
-                  <Text style={styles.detailValue}>{editedProfile.phone || t('profile.notSet')}</Text>
+                  <Text style={styles.detailValue}>
+                    {editedProfile.phone || ''}
+                  </Text>
                 )}
               </View>
             </View>
@@ -245,7 +350,9 @@ export default function ProfileScreen() {
                     activeOutlineColor={theme.colors.primary}
                   />
                 ) : (
-                  <Text style={styles.detailValue}>{editedProfile.company || t('profile.notSet')}</Text>
+                  <Text style={styles.detailValue}>
+                    {editedProfile.company || ''}
+                  </Text>
                 )}
               </View>
             </View>
@@ -276,7 +383,9 @@ export default function ProfileScreen() {
                     activeOutlineColor={theme.colors.primary}
                   />
                 ) : (
-                  <Text style={styles.detailValue}>{editedProfile.address || t('profile.notSet')}</Text>
+                  <Text style={styles.detailValue}>
+                    {editedProfile.address || ''}
+                  </Text>
                 )}
               </View>
             </View>
@@ -295,7 +404,9 @@ export default function ProfileScreen() {
                     activeOutlineColor={theme.colors.primary}
                   />
                 ) : (
-                  <Text style={styles.detailValue}>{editedProfile.city || t('profile.notSet')}</Text>
+                  <Text style={styles.detailValue}>
+                    {editedProfile.city || ''}
+                  </Text>
                 )}
               </View>
 
@@ -363,6 +474,29 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  loadingText: {
+    marginTop: spacing.m,
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  errorContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  errorText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: spacing.l,
+  },
+  retryButton: {
+    paddingHorizontal: spacing.l,
   },
   header: {
     flexDirection: 'row',

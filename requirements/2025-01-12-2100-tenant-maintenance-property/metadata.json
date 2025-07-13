@@ -1,0 +1,23 @@
+{
+  "id": "tenant-maintenance-property",
+  "started": "2025-01-12T21:00:00Z",
+  "lastUpdated": "2025-01-12T21:00:00Z",
+  "status": "ready-for-implementation",
+  "phase": "complete",
+  "progress": {
+    "discovery": { "answered": 5, "total": 5 },
+    "detail": { "answered": 5, "total": 5 }
+  },
+  "contextFiles": [
+    "app/maintenance/add.tsx",
+    "app/(tabs)/maintenance.tsx",
+    "lib/api.ts",
+    "contracts table structure",
+    "profiles table structure"
+  ],
+  "relatedFeatures": [
+    "maintenance-requests",
+    "tenant-property-assignment",
+    "role-based-access"
+  ]
+}
