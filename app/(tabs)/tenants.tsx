@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, FlatList, ScrollView, SafeAreaView, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, FlatList, ScrollView, SafeAreaView, ActivityIndicator, RefreshControl, TouchableOpacity, Platform } from 'react-native';
 import { Text, Searchbar, Avatar, FAB } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
@@ -146,7 +146,26 @@ export default function TenantsScreen() {
   };
 
   const renderTenant = ({ item }: { item: any }) => (
-    <View style={[styles.tenantCard, { backgroundColor: theme.colors.surface }]}>
+    <TouchableOpacity 
+      style={[
+        styles.tenantCard, 
+        { backgroundColor: theme.colors.surface },
+        Platform.select({
+          web: { cursor: 'pointer' },
+          default: {}
+        })
+      ]}
+      onPress={() => router.push(`/tenants/${item.id}`)}
+      {...Platform.select({
+        web: {
+          onTouchStart: (e: any) => {
+            // Allow touch events to bubble up for scrolling
+            e.stopPropagation = () => {};
+          },
+        },
+        default: {}
+      })}
+    >
       <View style={[styles.tenantHeader, { flexDirection: getFlexDirection('row') }]}>
         <View style={[styles.tenantInfo, { flexDirection: getFlexDirection('row') }]}>
           <Avatar.Text
@@ -216,7 +235,7 @@ export default function TenantsScreen() {
           معلومات العقد ستكون متوفرة قريباً
         </Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -227,119 +246,118 @@ export default function TenantsScreen() {
         variant="dark"
       />
 
-      <ScrollView 
-        style={styles.content} 
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={[theme.colors.primary]}
-            tintColor={theme.colors.primary}
-          />
-        }
-      >
-        {/* Stats Section */}
-        <View style={styles.statsSection}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
-            إحصائيات المستأجرين
+      {/* Tenants List with FlatList */}
+      {isLoading ? (
+        <View style={[styles.loadingState, { backgroundColor: theme.colors.surface }]}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={[styles.loadingText, { color: theme.colors.onSurfaceVariant }]}>
+            جاري تحميل المستأجرين...
           </Text>
-          <View style={[styles.horizontalStatsCard, { backgroundColor: theme.colors.surface }]}>
-            <View style={[styles.horizontalStatsRow, { flexDirection: getFlexDirection('row') }]}>
-              <View style={styles.horizontalStatItem}>
-                <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
-                  <Users size={24} color={theme.colors.primary} />
-                </View>
-                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                  إجمالي المستأجرين
-                </Text>
-                <Text style={[styles.horizontalStatValue, { color: theme.colors.primary }]}>
-                  {isLoading ? '...' : String(tenantStats.total || 0)}
-                </Text>
-              </View>
-              
-              <View style={styles.horizontalStatItem}>
-                <View style={[styles.horizontalStatIcon, { backgroundColor: '#4CAF5020' }]}>
-                  <Phone size={24} color="#4CAF50" />
-                </View>
-                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                  مستأجرين نشطين
-                </Text>
-                <Text style={[styles.horizontalStatValue, { color: '#4CAF50' }]}>
-                  {isLoading ? '...' : String(tenantStats.active || 0)}
-                </Text>
-              </View>
-              
-              <View style={styles.horizontalStatItem}>
-                <View style={[styles.horizontalStatIcon, { backgroundColor: '#FF980020' }]}>
-                  <Mail size={24} color="#FF9800" />
-                </View>
-                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                  مستأجرين معلقين
-                </Text>
-                <Text style={[styles.horizontalStatValue, { color: '#FF9800' }]}>
-                  {isLoading ? '...' : String(tenantStats.pending || 0)}
-                </Text>
-              </View>
-              
-              <View style={styles.horizontalStatItem}>
-                <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.secondary}20` }]}>
-                  <MapPin size={24} color={theme.colors.secondary} />
-                </View>
-                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                  مستأجرين أجانب
-                </Text>
-                <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary }]}>
-                  {isLoading ? '...' : String(tenantStats.foreign || 0)}
-                </Text>
-              </View>
-            </View>
-          </View>
         </View>
-
-        {/* Search Section */}
-        <View style={styles.searchSection}>
-          <Searchbar
-            placeholder="البحث في المستأجرين..."
-            onChangeText={setSearchQuery}
-            value={searchQuery}
-            style={[styles.searchbar, { backgroundColor: theme.colors.surface }]}
-            iconColor={theme.colors.onSurfaceVariant}
-            placeholderTextColor={theme.colors.onSurfaceVariant}
-          />
-        </View>
-
-        {/* Tenants List */}
-        <View style={styles.tenantsSection}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
-            قائمة المستأجرين ({filteredTenants.length})
+      ) : hasError ? (
+        <View style={[styles.errorState, { backgroundColor: theme.colors.surface }]}>
+          <Text style={[styles.errorText, { color: theme.colors.error }]}>
+            خطأ في تحميل البيانات
           </Text>
-          
-          {isLoading ? (
-            <View style={[styles.loadingState, { backgroundColor: theme.colors.surface }]}>
-              <ActivityIndicator size="large" color={theme.colors.primary} />
-              <Text style={[styles.loadingText, { color: theme.colors.onSurfaceVariant }]}>
-                جاري تحميل المستأجرين...
-              </Text>
-            </View>
-          ) : hasError ? (
-            <View style={[styles.errorState, { backgroundColor: theme.colors.surface }]}>
-              <Text style={[styles.errorText, { color: theme.colors.error }]}>
-                خطأ في تحميل البيانات
-              </Text>
-              <Text style={[styles.errorSubtext, { color: theme.colors.onSurfaceVariant }]}>
-                {tenantsError?.message || allTenantsError?.message || 'حدث خطأ غير متوقع'}
-              </Text>
-            </View>
-          ) : filteredTenants.length > 0 ? (
-            <FlatList
-              data={filteredTenants}
-              renderItem={renderTenant}
-              keyExtractor={item => item.id}
-              scrollEnabled={false}
-              showsVerticalScrollIndicator={false}
+          <Text style={[styles.errorSubtext, { color: theme.colors.onSurfaceVariant }]}>
+            {tenantsError?.message || allTenantsError?.message || 'حدث خطأ غير متوقع'}
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={filteredTenants}
+          renderItem={renderTenant}
+          keyExtractor={item => item.id}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[theme.colors.primary]}
+              tintColor={theme.colors.primary}
             />
-          ) : (
+          }
+          ListHeaderComponent={() => (
+            <View>
+              {/* Stats Section */}
+              <View style={styles.statsSection}>
+                <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+                  إحصائيات المستأجرين
+                </Text>
+                <View style={[styles.horizontalStatsCard, { backgroundColor: theme.colors.surface }]}>
+                  <View style={[styles.horizontalStatsRow, { flexDirection: getFlexDirection('row') }]}>
+                    <View style={styles.horizontalStatItem}>
+                      <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
+                        <Users size={24} color={theme.colors.primary} />
+                      </View>
+                      <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                        إجمالي المستأجرين
+                      </Text>
+                      <Text style={[styles.horizontalStatValue, { color: theme.colors.primary }]}>
+                        {isLoading ? '...' : String(tenantStats.total || 0)}
+                      </Text>
+                    </View>
+                    
+                    <View style={styles.horizontalStatItem}>
+                      <View style={[styles.horizontalStatIcon, { backgroundColor: '#4CAF5020' }]}>
+                        <Phone size={24} color="#4CAF50" />
+                      </View>
+                      <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                        مستأجرين نشطين
+                      </Text>
+                      <Text style={[styles.horizontalStatValue, { color: '#4CAF50' }]}>
+                        {isLoading ? '...' : String(tenantStats.active || 0)}
+                      </Text>
+                    </View>
+                    
+                    <View style={styles.horizontalStatItem}>
+                      <View style={[styles.horizontalStatIcon, { backgroundColor: '#FF980020' }]}>
+                        <Mail size={24} color="#FF9800" />
+                      </View>
+                      <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                        مستأجرين معلقين
+                      </Text>
+                      <Text style={[styles.horizontalStatValue, { color: '#FF9800' }]}>
+                        {isLoading ? '...' : String(tenantStats.pending || 0)}
+                      </Text>
+                    </View>
+                    
+                    <View style={styles.horizontalStatItem}>
+                      <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.secondary}20` }]}>
+                        <MapPin size={24} color={theme.colors.secondary} />
+                      </View>
+                      <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                        مستأجرين أجانب
+                      </Text>
+                      <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary }]}>
+                        {isLoading ? '...' : String(tenantStats.foreign || 0)}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              {/* Search Section */}
+              <View style={styles.searchSection}>
+                <Searchbar
+                  placeholder="البحث في المستأجرين..."
+                  onChangeText={setSearchQuery}
+                  value={searchQuery}
+                  style={[styles.searchbar, { backgroundColor: theme.colors.surface }]}
+                  iconColor={theme.colors.onSurfaceVariant}
+                  placeholderTextColor={theme.colors.onSurfaceVariant}
+                />
+              </View>
+
+              {/* Tenants List Header */}
+              <View style={styles.tenantsSection}>
+                <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+                  قائمة المستأجرين ({filteredTenants.length})
+                </Text>
+              </View>
+            </View>
+          )}
+          ListEmptyComponent={
             <View style={[styles.emptyState, { backgroundColor: theme.colors.surface }]}>
               <Users size={48} color={theme.colors.onSurfaceVariant} />
               <Text style={[styles.emptyStateTitle, { color: theme.colors.onSurface }]}>
@@ -349,9 +367,10 @@ export default function TenantsScreen() {
                 {searchQuery ? 'جرب البحث بكلمات أخرى' : 'ابدأ بإضافة مستأجر جديد'}
               </Text>
             </View>
-          )}
-        </View>
-      </ScrollView>
+          }
+          contentContainerStyle={styles.listContent}
+        />
+      )}
 
       {/* Add Tenant FAB - only show if user can access tenants */}
       {canAccessTenants && (
@@ -374,6 +393,10 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 16,
+  },
+  listContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 100,
   },
   loadingContainer: {
     flex: 1,

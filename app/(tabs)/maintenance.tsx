@@ -155,91 +155,6 @@ export default function MaintenanceScreen() {
         onSearchPress={() => router.push('/search')}
       />
 
-      {/* Stats Overview */}
-      <View style={styles.statsSection}>
-        <Text style={[styles.sectionTitle, { color: theme.colors.onBackground, textAlign: getTextAlign() }]}>
-          إحصائيات الصيانة
-        </Text>
-        {(loading && !requests) || userLoading ? (
-          <HorizontalStatsShimmer />
-        ) : (
-          <View style={[styles.horizontalStatsCard, { backgroundColor: theme.colors.surface }]}>
-            <View style={[styles.horizontalStatsRow, rtlStyles.row()]}>
-              <View style={styles.horizontalStatItem}>
-                <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
-                  <Tool size={24} color={theme.colors.primary} />
-                </View>
-                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
-                  إجمالي الطلبات
-                </Text>
-                <Text style={[styles.horizontalStatValue, { color: theme.colors.primary, textAlign: 'center' }]}>
-                  {stats.total.toString()}
-                </Text>
-              </View>
-              
-              <View style={styles.horizontalStatItem}>
-                <View style={[styles.horizontalStatIcon, { backgroundColor: '#FF980020' }]}>
-                  <Clock size={24} color="#FF9800" />
-                </View>
-                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
-                  قيد الانتظار
-                </Text>
-                <Text style={[styles.horizontalStatValue, { color: '#FF9800', textAlign: 'center' }]}>
-                  {stats.pending.toString()}
-                </Text>
-              </View>
-              
-              <View style={styles.horizontalStatItem}>
-                <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.secondary}20` }]}>
-                  <AlertTriangle size={24} color={theme.colors.secondary} />
-                </View>
-                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
-                  قيد التنفيذ
-                </Text>
-                <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary, textAlign: 'center' }]}>
-                  {stats.inProgress.toString()}
-                </Text>
-              </View>
-              
-              <View style={styles.horizontalStatItem}>
-                <View style={[styles.horizontalStatIcon, { backgroundColor: '#4CAF5020' }]}>
-                  <CheckCircle size={24} color="#4CAF50" />
-                </View>
-                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
-                  مكتملة
-                </Text>
-                <Text style={[styles.horizontalStatValue, { color: '#4CAF50', textAlign: 'center' }]}>
-                  {stats.completed.toString()}
-                </Text>
-              </View>
-            </View>
-          </View>
-        )}
-      </View>
-
-      {/* Search and Filters */}
-      <View style={styles.filtersSection}>
-        <Searchbar
-          placeholder={t('searchPlaceholder')}
-          onChangeText={setSearchQuery}
-          value={searchQuery}
-          style={dynamicStyles.searchbar}
-          iconColor={theme.colors.onSurfaceVariant}
-        />
-        
-        <SegmentedButtons
-          value={activeFilter}
-          onValueChange={setActiveFilter}
-          buttons={[
-            { value: 'all', label: t('common:all') },
-            { value: 'pending', label: t('statuses.pending') },
-            { value: 'in_progress', label: t('statuses.inProgress') },
-            { value: 'completed', label: t('statuses.completed') },
-          ]}
-          style={dynamicStyles.segmentedButtons}
-        />
-      </View>
-
       {/* Requests List */}
       {(loading && !requests) || userLoading ? (
         <MaintenanceListShimmer />
@@ -264,6 +179,94 @@ export default function MaintenanceScreen() {
               tintColor={theme.colors.primary}
             />
           }
+          ListHeaderComponent={() => (
+            <View>
+              {/* Stats Overview */}
+              <View style={styles.statsSection}>
+                <Text style={[styles.sectionTitle, { color: theme.colors.onBackground, textAlign: getTextAlign() }]}>
+                  إحصائيات الصيانة
+                </Text>
+                {(loading && !requests) || userLoading ? (
+                  <HorizontalStatsShimmer />
+                ) : (
+                  <View style={[styles.horizontalStatsCard, { backgroundColor: theme.colors.surface }]}>
+                    <View style={[styles.horizontalStatsRow, rtlStyles.row()]}>
+                      <View style={styles.horizontalStatItem}>
+                        <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
+                          <Tool size={24} color={theme.colors.primary} />
+                        </View>
+                        <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
+                          إجمالي الطلبات
+                        </Text>
+                        <Text style={[styles.horizontalStatValue, { color: theme.colors.primary, textAlign: 'center' }]}>
+                          {stats.total.toString()}
+                        </Text>
+                      </View>
+                      
+                      <View style={styles.horizontalStatItem}>
+                        <View style={[styles.horizontalStatIcon, { backgroundColor: '#FF980020' }]}>
+                          <Clock size={24} color="#FF9800" />
+                        </View>
+                        <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
+                          قيد الانتظار
+                        </Text>
+                        <Text style={[styles.horizontalStatValue, { color: '#FF9800', textAlign: 'center' }]}>
+                          {stats.pending.toString()}
+                        </Text>
+                      </View>
+                      
+                      <View style={styles.horizontalStatItem}>
+                        <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.secondary}20` }]}>
+                          <AlertTriangle size={24} color={theme.colors.secondary} />
+                        </View>
+                        <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
+                          قيد التنفيذ
+                        </Text>
+                        <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary, textAlign: 'center' }]}>
+                          {stats.inProgress.toString()}
+                        </Text>
+                      </View>
+                      
+                      <View style={styles.horizontalStatItem}>
+                        <View style={[styles.horizontalStatIcon, { backgroundColor: '#4CAF5020' }]}>
+                          <CheckCircle size={24} color="#4CAF50" />
+                        </View>
+                        <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
+                          مكتملة
+                        </Text>
+                        <Text style={[styles.horizontalStatValue, { color: '#4CAF50', textAlign: 'center' }]}>
+                          {stats.completed.toString()}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                )}
+              </View>
+
+              {/* Search and Filters */}
+              <View style={styles.filtersSection}>
+                <Searchbar
+                  placeholder={t('searchPlaceholder')}
+                  onChangeText={setSearchQuery}
+                  value={searchQuery}
+                  style={dynamicStyles.searchbar}
+                  iconColor={theme.colors.onSurfaceVariant}
+                />
+                
+                <SegmentedButtons
+                  value={activeFilter}
+                  onValueChange={setActiveFilter}
+                  buttons={[
+                    { value: 'all', label: t('common:all') },
+                    { value: 'pending', label: t('statuses.pending') },
+                    { value: 'in_progress', label: t('statuses.inProgress') },
+                    { value: 'completed', label: t('statuses.completed') },
+                  ]}
+                  style={dynamicStyles.segmentedButtons}
+                />
+              </View>
+            </View>
+          )}
           ListEmptyComponent={
             userContext?.role === 'tenant' ? (
               <TenantEmptyState type="maintenance" />

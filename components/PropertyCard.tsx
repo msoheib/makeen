@@ -32,10 +32,32 @@ export default function PropertyCard({ property, onPress, compact = false }: Pro
     }
   };
 
+  // Web-specific touch optimizations
+  const webTouchProps = Platform.select({
+    web: {
+      style: { cursor: 'pointer' },
+      // Enable touch events to propagate for scrolling while maintaining press functionality
+      onTouchStart: (e: any) => {
+        // Allow touch events to bubble up for scrolling
+        e.stopPropagation = () => {};
+      },
+    },
+    default: {}
+  });
+
   return (
     <Card
-      style={[styles.card, compact ? styles.compactCard : null, shadows.medium]}
+      style={[
+        styles.card, 
+        compact ? styles.compactCard : null, 
+        shadows.medium,
+        Platform.select({
+          web: { cursor: 'pointer' },
+          default: {}
+        })
+      ]}
       onPress={handlePress}
+      {...webTouchProps}
     >
       {!compact && property.images && property.images.length > 0 && (
         <View style={styles.imageContainer}>

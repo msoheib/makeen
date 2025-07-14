@@ -265,115 +265,110 @@ export default function PropertiesScreen() {
         variant="dark"
       />
 
-      <ScrollView 
-        style={styles.content} 
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={propertiesLoading || statsLoading}
-            onRefresh={handleRefresh}
-            colors={[theme.colors.primary]}
-            tintColor={theme.colors.primary}
-            title="سحب للتحديث"
-            titleColor={theme.colors.onBackground}
-          />
-        }
-      >
-        {/* Stats Section */}
-        <View style={styles.statsSection}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
-            إحصائيات العقارات
-          </Text>
-          {showInitialLoading ? (
-            <HorizontalStatsShimmer />
-          ) : (
-            <View style={[styles.horizontalStatsCard, { backgroundColor: theme.colors.surface }]}>
-              <View style={styles.horizontalStatsRow}>
-                <View style={styles.horizontalStatItem}>
-                  <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
-                    <Building2 size={24} color={theme.colors.primary} />
+      {/* Properties List with FlatList */}
+      {showInitialLoading ? (
+        <PropertyListShimmer count={5} />
+      ) : (
+        <FlatList
+          data={filteredProperties}
+          renderItem={renderProperty}
+          keyExtractor={item => item.id}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={propertiesLoading || statsLoading}
+              onRefresh={handleRefresh}
+              colors={[theme.colors.primary]}
+              tintColor={theme.colors.primary}
+              title="سحب للتحديث"
+              titleColor={theme.colors.onBackground}
+            />
+          }
+          ListHeaderComponent={() => (
+            <View>
+              {/* Stats Section */}
+              <View style={styles.statsSection}>
+                <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+                  إحصائيات العقارات
+                </Text>
+                {showInitialLoading ? (
+                  <HorizontalStatsShimmer />
+                ) : (
+                  <View style={[styles.horizontalStatsCard, { backgroundColor: theme.colors.surface }]}>
+                    <View style={styles.horizontalStatsRow}>
+                      <View style={styles.horizontalStatItem}>
+                        <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
+                          <Building2 size={24} color={theme.colors.primary} />
+                        </View>
+                        <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                          إجمالي العقارات
+                        </Text>
+                        <Text style={[styles.horizontalStatValue, { color: theme.colors.primary }]}>
+                          {statsLoading ? '...' : stats.total}
+                        </Text>
+                      </View>
+                      
+                      <View style={styles.horizontalStatItem}>
+                        <View style={[styles.horizontalStatIcon, { backgroundColor: '#4CAF5020' }]}>
+                          <Home size={24} color="#4CAF50" />
+                        </View>
+                        <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                          عقارات متاحة
+                        </Text>
+                        <Text style={[styles.horizontalStatValue, { color: '#4CAF50' }]}>
+                          {statsLoading ? '...' : stats.available}
+                        </Text>
+                      </View>
+                      
+                      <View style={styles.horizontalStatItem}>
+                        <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.secondary}20` }]}>
+                          <Users size={24} color={theme.colors.secondary} />
+                        </View>
+                        <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                          عقارات مؤجرة
+                        </Text>
+                        <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary }]}>
+                          {statsLoading ? '...' : stats.rented}
+                        </Text>
+                      </View>
+                      
+                      <View style={styles.horizontalStatItem}>
+                        <View style={[styles.horizontalStatIcon, { backgroundColor: '#F4433620' }]}>
+                          <MessageSquare size={24} color="#F44336" />
+                        </View>
+                        <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                          تحت الصيانة
+                        </Text>
+                        <Text style={[styles.horizontalStatValue, { color: '#F44336' }]}>
+                          {statsLoading ? '...' : stats.maintenance}
+                        </Text>
+                      </View>
+                    </View>
                   </View>
-                  <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                    إجمالي العقارات
-                  </Text>
-                  <Text style={[styles.horizontalStatValue, { color: theme.colors.primary }]}>
-                    {statsLoading ? '...' : stats.total}
-                  </Text>
-                </View>
-                
-                <View style={styles.horizontalStatItem}>
-                  <View style={[styles.horizontalStatIcon, { backgroundColor: '#4CAF5020' }]}>
-                    <Home size={24} color="#4CAF50" />
-                  </View>
-                  <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                    عقارات متاحة
-                  </Text>
-                  <Text style={[styles.horizontalStatValue, { color: '#4CAF50' }]}>
-                    {statsLoading ? '...' : stats.available}
-                  </Text>
-                </View>
-                
-                <View style={styles.horizontalStatItem}>
-                  <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.secondary}20` }]}>
-                    <Users size={24} color={theme.colors.secondary} />
-                  </View>
-                  <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                    عقارات مؤجرة
-                  </Text>
-                  <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary }]}>
-                    {statsLoading ? '...' : stats.rented}
-                  </Text>
-                </View>
-                
-                <View style={styles.horizontalStatItem}>
-                  <View style={[styles.horizontalStatIcon, { backgroundColor: '#F4433620' }]}>
-                    <MessageSquare size={24} color="#F44336" />
-                  </View>
-                  <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                    تحت الصيانة
-                  </Text>
-                  <Text style={[styles.horizontalStatValue, { color: '#F44336' }]}>
-                    {statsLoading ? '...' : stats.maintenance}
-                  </Text>
-                </View>
+                )}
+              </View>
+
+              {/* Search Section */}
+              <View style={styles.searchSection}>
+                <Searchbar
+                  placeholder="البحث في العقارات..."
+                  onChangeText={setSearchQuery}
+                  value={searchQuery}
+                  style={[styles.searchbar, { backgroundColor: theme.colors.surface }]}
+                  iconColor={theme.colors.onSurfaceVariant}
+                  placeholderTextColor={theme.colors.onSurfaceVariant}
+                />
+              </View>
+
+              {/* Properties List Header */}
+              <View style={styles.propertiesSection}>
+                <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+                  قائمة العقارات {!showInitialLoading && `(${filteredProperties.length})`}
+                </Text>
               </View>
             </View>
           )}
-        </View>
-
-        {/* Search Section */}
-        <View style={styles.searchSection}>
-          <Searchbar
-            placeholder="البحث في العقارات..."
-            onChangeText={setSearchQuery}
-            value={searchQuery}
-            style={[styles.searchbar, { backgroundColor: theme.colors.surface }]}
-            iconColor={theme.colors.onSurfaceVariant}
-            placeholderTextColor={theme.colors.onSurfaceVariant}
-          />
-        </View>
-
-        {/* Properties List */}
-        <View style={styles.propertiesSection}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
-            قائمة العقارات {!showInitialLoading && `(${filteredProperties.length})`}
-          </Text>
-          
-          {showInitialLoading ? (
-            <PropertyListShimmer count={5} />
-          ) : filteredProperties.length > 0 ? (
-            <>
-              <FlatList
-                data={filteredProperties}
-                renderItem={renderProperty}
-                keyExtractor={item => item.id}
-                scrollEnabled={false}
-                showsVerticalScrollIndicator={false}
-              />
-              {/* Show additional shimmer for progressive loading */}
-              {propertiesLoading && <PropertyListShimmer count={1} />}
-            </>
-          ) : (
+          ListEmptyComponent={
             userContext?.role === 'tenant' ? (
               <TenantEmptyState type="properties" />
             ) : (
@@ -387,9 +382,10 @@ export default function PropertiesScreen() {
                 </Text>
               </View>
             )
-          )}
-        </View>
-      </ScrollView>
+          }
+          contentContainerStyle={styles.listContent}
+        />
+      )}
 
       {/* Add Property FAB - Only visible for admin, manager, or owner */}
       {userContext && ['admin', 'manager', 'owner'].includes(userContext.role) && (
@@ -412,6 +408,10 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 16,
+  },
+  listContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 100,
   },
   statsSection: {
     marginVertical: 16,

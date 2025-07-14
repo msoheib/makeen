@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Image } from 'react-native';
+import { View, StyleSheet, Image, Platform } from 'react-native';
 import { Card, Text, Chip, TouchableRipple } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { MaintenanceRequest } from '@/lib/types';
@@ -117,6 +117,19 @@ export default function MaintenanceRequestCard({ request, theme, onPress }: Main
     return t(`priorities.${priority}`) || priority;
   };
 
+  // Web-specific touch optimizations
+  const webTouchProps = Platform.select({
+    web: {
+      style: { cursor: 'pointer' },
+      // Enable touch events to propagate for scrolling while maintaining press functionality
+      onTouchStart: (e: any) => {
+        // Allow touch events to bubble up for scrolling
+        e.stopPropagation = () => {};
+      },
+    },
+    default: {}
+  });
+
   // Create styles inside component with access to current theme
   const styles = StyleSheet.create({
     card: {
@@ -192,7 +205,18 @@ export default function MaintenanceRequestCard({ request, theme, onPress }: Main
   });
 
   return (
-    <Card style={[styles.card, shadows.medium]} onPress={handlePress}>
+    <Card 
+      style={[
+        styles.card, 
+        shadows.medium,
+        Platform.select({
+          web: { cursor: 'pointer' },
+          default: {}
+        })
+      ]} 
+      onPress={handlePress}
+      {...webTouchProps}
+    >
       <Card.Content style={styles.content}>
         <View style={[styles.headerRow, rtlStyles.row()]}>
           <Text style={[styles.title, { textAlign: getTextAlign() }]} numberOfLines={1} ellipsizeMode="tail">
