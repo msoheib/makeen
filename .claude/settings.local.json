@@ -9,7 +9,15 @@
       "mcp__supabase__list_projects",
       "mcp__supabase__list_tables",
       "mcp__supabase__execute_sql",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(tail:*)",
+      "Bash(npx expo lint:*)",
+      "Bash(powershell:*)",
+      "Bash(npm run lint:*)",
+      "Bash(timeout 30s npm run dev)",
+      "Bash(npx tsc:*)",
+      "Bash(npm test:*)",
+      "mcp__supabase__apply_migration"
     ],
     "deny": []
   },
@@ -17,8 +25,8 @@
   "enabledMcpjsonServers": [
     "context7",
     "Magic MCP",
-    "filesystem",
     "memory",
+    "playwright",
     "puppeteer",
     "supabase"
   ]

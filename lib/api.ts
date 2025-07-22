@@ -3311,149 +3311,216 @@ export const bidsApi = {
 
 // User Approvals API - User signup and transaction approval workflow
 export const userApprovalsApi = {
-  // Get all approval requests (for managers)
-  async getAll(filters?: {
-    approval_type?: string;
-    approval_status?: string;
-    priority_level?: string;
+  // Get pending users for approval
+  async getPendingUsers(): Promise<ApiResponse<any[]>> {
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext || !['admin', 'manager'].includes(userContext.role)) {
+      return {
+        data: null,
+        error: { message: 'Only managers can view pending users' }
+      };
+    }
+
+    return handleApiCall(() => 
+      supabase
+        .from('profiles')
+        .select(`
+          id,
+          first_name,
+          last_name,
+          email,
+          phone,
+          role,
+          status,
+          created_at,
+          profile_type
+        `)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+    );
+  },
+
+  // Get all users with filtering for user management
+  async getAllUsers(filters?: {
+    role?: string;
+    status?: string;
+    search?: string;
   }): Promise<ApiResponse<any[]>> {
     const userContext = await getCurrentUserContext();
     
-    if (!userContext || userContext.role !== 'manager') {
+    if (!userContext || !['admin', 'manager'].includes(userContext.role)) {
       return {
         data: null,
-        error: { message: 'Only managers can view approval requests' }
+        error: { message: 'Only managers can view all users' }
       };
     }
 
     let query = supabase
-      .from('user_approvals')
+      .from('profiles')
       .select(`
-        *,
-        requested_by:profiles!user_approvals_requested_by_fkey(id, first_name, last_name, email, phone, role, profile_type),
-        approved_by:profiles!user_approvals_approved_by_fkey(id, first_name, last_name, email)
+        id,
+        first_name,
+        last_name,
+        email,
+        phone,
+        role,
+        status,
+        created_at,
+        approved_at,
+        approved_by,
+        rejected_reason,
+        profile_type
       `)
       .order('created_at', { ascending: false });
 
-    if (filters?.approval_type) query = query.eq('approval_type', filters.approval_type);
-    if (filters?.approval_status) query = query.eq('approval_status', filters.approval_status);
-    if (filters?.priority_level) query = query.eq('priority_level', filters.priority_level);
+    if (filters?.role) query = query.eq('role', filters.role);
+    if (filters?.status) query = query.eq('status', filters.status);
+    if (filters?.search) {
+      query = query.or(`first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`);
+    }
 
     return handleApiCall(() => query);
   },
 
-  // Create user signup approval request
-  async createUserSignupApproval(userId: string, notes?: string): Promise<ApiResponse<any>> {
+  // Approve user
+  async approveUser(userId: string): Promise<ApiResponse<any>> {
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext || !['admin', 'manager'].includes(userContext.role)) {
+      return {
+        data: null,
+        error: { message: 'Only managers can approve users' }
+      };
+    }
+
+    return handleApiCall(async () => {
+      // Use the database function for approval
+      const { data, error } = await supabase.rpc('approve_user', {
+        user_id: userId,
+        manager_id: userContext.userId
+      });
+
+      if (error) throw error;
+
+      // Return the updated user profile
+      return await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+    });
+  },
+
+  // Reject user
+  async rejectUser(userId: string, reason: string): Promise<ApiResponse<any>> {
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext || !['admin', 'manager'].includes(userContext.role)) {
+      return {
+        data: null,
+        error: { message: 'Only managers can reject users' }
+      };
+    }
+
+    return handleApiCall(async () => {
+      // Use the database function for rejection
+      const { data, error } = await supabase.rpc('reject_user', {
+        user_id: userId,
+        manager_id: userContext.userId,
+        reason: reason
+      });
+
+      if (error) throw error;
+
+      // Return the updated user profile
+      return await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+    });
+  },
+
+  // Delete user (soft delete)
+  async deleteUser(userId: string): Promise<ApiResponse<any>> {
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext || !['admin', 'manager'].includes(userContext.role)) {
+      return {
+        data: null,
+        error: { message: 'Only managers can delete users' }
+      };
+    }
+
+    return handleApiCall(async () => {
+      // Use the database function for soft deletion
+      const { data, error } = await supabase.rpc('soft_delete_user', {
+        user_id: userId,
+        deleted_by: userContext.userId
+      });
+
+      if (error) throw error;
+
+      return { data: { success: true }, error: null };
+    });
+  },
+
+  // Get user approval history
+  async getUserApprovalHistory(userId: string): Promise<ApiResponse<any[]>> {
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext || !['admin', 'manager'].includes(userContext.role)) {
+      return {
+        data: null,
+        error: { message: 'Only managers can view approval history' }
+      };
+    }
+
     return handleApiCall(() => 
       supabase
         .from('user_approvals')
-        .insert({
-          approval_type: 'user_signup',
-          requested_by: userId,
-          related_entity_type: 'profile',
-          related_entity_id: userId,
-          approval_notes: notes,
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days
-        })
-        .select()
-        .single()
+        .select(`
+          *,
+          performed_by_profile:profiles!user_approvals_performed_by_fkey(
+            first_name,
+            last_name,
+            email
+          )
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
     );
   },
 
-  // Approve user signup
-  async approveUserSignup(approvalId: string, notes?: string): Promise<ApiResponse<any>> {
+  // Get audit logs
+  async getAuditLogs(entityType?: string, entityId?: string): Promise<ApiResponse<any[]>> {
     const userContext = await getCurrentUserContext();
     
-    if (!userContext || userContext.role !== 'manager') {
+    if (!userContext || !['admin', 'manager'].includes(userContext.role)) {
       return {
         data: null,
-        error: { message: 'Only managers can approve user signups' }
+        error: { message: 'Only managers can view audit logs' }
       };
     }
 
-    // Update approval record
-    const { data: approval, error: approvalError } = await supabase
-      .from('user_approvals')
-      .update({
-        approval_status: 'approved',
-        approved_by: userContext.userId,
-        approval_date: new Date().toISOString(),
-        approval_notes: notes
-      })
-      .eq('id', approvalId)
-      .eq('approval_status', 'pending')
-      .select()
-      .single();
+    let query = supabase
+      .from('audit_logs')
+      .select(`
+        *,
+        performed_by_profile:profiles!audit_logs_performed_by_fkey(
+          first_name,
+          last_name,
+          email
+        )
+      `)
+      .order('created_at', { ascending: false })
+      .limit(100);
 
-    if (approvalError) {
-      return { data: null, error: { message: approvalError.message } };
-    }
+    if (entityType) query = query.eq('entity_type', entityType);
+    if (entityId) query = query.eq('entity_id', entityId);
 
-    // Update user profile
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .update({
-        approval_status: 'approved',
-        approved_by: userContext.userId,
-        approval_date: new Date().toISOString(),
-        can_bid: true,
-        kyc_status: 'verified'
-      })
-      .eq('id', approval.related_entity_id);
-
-    if (profileError) {
-      return { data: null, error: { message: profileError.message } };
-    }
-
-    return { data: approval, error: null };
-  },
-
-  // Reject user signup
-  async rejectUserSignup(approvalId: string, reason: string): Promise<ApiResponse<any>> {
-    const userContext = await getCurrentUserContext();
-    
-    if (!userContext || userContext.role !== 'manager') {
-      return {
-        data: null,
-        error: { message: 'Only managers can reject user signups' }
-      };
-    }
-
-    // Update approval record
-    const { data: approval, error: approvalError } = await supabase
-      .from('user_approvals')
-      .update({
-        approval_status: 'rejected',
-        approved_by: userContext.userId,
-        approval_date: new Date().toISOString(),
-        rejection_reason: reason
-      })
-      .eq('id', approvalId)
-      .eq('approval_status', 'pending')
-      .select()
-      .single();
-
-    if (approvalError) {
-      return { data: null, error: { message: approvalError.message } };
-    }
-
-    // Update user profile
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .update({
-        approval_status: 'rejected',
-        approved_by: userContext.userId,
-        approval_date: new Date().toISOString(),
-        rejection_reason: reason,
-        can_bid: false
-      })
-      .eq('id', approval.related_entity_id);
-
-    if (profileError) {
-      return { data: null, error: { message: profileError.message } };
-    }
-
-    return { data: approval, error: null };
+    return handleApiCall(() => query);
   }
 };
 

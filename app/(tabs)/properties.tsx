@@ -64,10 +64,10 @@ export default function PropertiesScreen() {
     rented: (dashboardStats.occupied || 0).toString(),
     maintenance: dashboardStats.maintenance.toString()
   } : {
-    total: '٠',
-    available: '٠', 
-    rented: '٠',
-    maintenance: '٠'
+    total: statsLoading ? '...' : '0',
+    available: statsLoading ? '...' : '0', 
+    rented: statsLoading ? '...' : '0',
+    maintenance: statsLoading ? '...' : '0'
   };
 
   // Handle refresh
@@ -145,7 +145,10 @@ export default function PropertiesScreen() {
   }
 
   const renderProperty = ({ item }: { item: any }) => (
-    <View style={[styles.propertyCard, { backgroundColor: theme.colors.surface }]}>
+    <TouchableOpacity 
+      style={[styles.propertyCard, { backgroundColor: theme.colors.surface }]}
+      onPress={() => router.push(`/properties/${item.id}`)}
+    >
       <View style={styles.propertyHeader}>
         <Text style={[styles.propertyTitle, { color: theme.colors.onSurface }]}>
           {item.title}
@@ -254,7 +257,7 @@ export default function PropertiesScreen() {
           </View>
         )}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (

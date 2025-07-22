@@ -47,19 +47,38 @@ export default function PropertyDetailsScreen() {
 
   const fetchProperty = async () => {
     try {
-      const { data, error } = await supabase
-        .from('properties')
-        .select(`
-          *,
-          owner:profiles!properties_owner_id_fkey(first_name, last_name, email, phone_number)
-        `)
-        .eq('id', id)
-        .single();
+      setLoading(true);
+      // Use proper API with security and error handling - FIX for Issue #29
+      const response = await propertiesApi.getById(id as string);
+      
+      if (response.error) {
+        // Handle specific error types with user-friendly messages
+        if (response.error.details === 'AUTH_ERROR') {
+          Alert.alert('خطأ المصادقة', 'انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى.');
+          return;
+        } else if (response.error.details === 'NETWORK_ERROR') {
+          Alert.alert('خطأ في الشبكة', 'يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.');
+          return;
+        } else if (response.error.message.includes('No rows returned')) {
+          Alert.alert('العقار غير موجود', 'لم يتم العثور على العقار المطلوب أو قد تم حذفه.');
+          return;
+        } else if (response.error.message.includes('access denied') || response.error.message.includes('permission')) {
+          Alert.alert('ممنوع الوصول', 'ليس لديك الصلاحية لعرض تفاصيل هذا العقار.');
+          return;
+        } else {
+          Alert.alert('خطأ', response.error.message || 'فشل في تحميل تفاصيل العقار.');
+          return;
+        }
+      }
 
-      if (error) throw error;
-      if (data) setProperty(data);
-    } catch (error) {
+      if (response.data) {
+        setProperty(response.data);
+      } else {
+        Alert.alert('خطأ', 'لم يتم العثور على العقار.');
+      }
+    } catch (error: any) {
       console.error('Error fetching property:', error);
+      Alert.alert('خطأ غير متوقع', 'حدث خطأ أثناء تحميل العقار. يرجى المحاولة مرة أخرى.');
     } finally {
       setLoading(false);
     }

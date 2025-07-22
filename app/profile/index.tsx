@@ -4,11 +4,14 @@ import { Text, IconButton, Button, TextInput, Avatar } from 'react-native-paper'
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
+import { supabase } from '@/lib/supabase';
 import { useTranslation } from '@/lib/useTranslation';
 import { ArrowLeft, User, Mail, Phone, MapPin, Edit3, Save, X, Camera, Shield } from 'lucide-react-native';
 import ModernCard from '@/components/ModernCard';
+import ProfilePictureUpload from '@/components/ProfilePictureUpload';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { ActivityIndicator } from 'react-native';
+import ChangePasswordModal from '@/components/ChangePasswordModal';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -16,6 +19,8 @@ export default function ProfileScreen() {
   const { profile, loading, error, updateProfile } = useUserProfile();
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
   const [editedProfile, setEditedProfile] = useState({
     firstName: '',
     lastName: '',
@@ -96,12 +101,37 @@ export default function ProfileScreen() {
     setIsEditing(false);
   };
 
-  const handleChangePhoto = () => {
-    Alert.alert(
-      t('profile.changeProfilePhoto'),
-      t('profile.photoUploadComingSoon'),
-      [{ text: t('common:ok') }]
-    );
+  const handleProfilePictureChange = async (imageUrl: string | null) => {
+    try {
+      const success = await updateProfile({
+        profile_picture_url: imageUrl,
+      });
+
+      if (!success) {
+        Alert.alert('Error', 'Failed to update profile picture. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Profile picture update error:', error);
+      Alert.alert('Error', 'Failed to update profile picture. Please try again.');
+    }
+  };
+
+  const handleChangePassword = async (newPassword: string) => {
+    setChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+      
+      if (error) throw error;
+      
+      Alert.alert('Success', 'Password changed successfully');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to change password');
+      throw error; // Re-throw to let modal handle the error state
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   const getInitials = (firstName: string, lastName: string) => {
@@ -170,20 +200,13 @@ export default function ProfileScreen() {
         {/* Profile Header */}
         <ModernCard style={styles.profileCard}>
           <View style={styles.profileHeader}>
-            <View style={styles.avatarContainer}>
-              <Avatar.Text 
-                size={80} 
-                label={getInitials(editedProfile.firstName, editedProfile.lastName)}
-                style={[styles.avatar, { backgroundColor: theme.colors.primary }]}
-                labelStyle={{ color: 'white', fontSize: 24, fontWeight: '600' }}
-              />
-              <IconButton
-                icon={() => <Camera size={18} color={theme.colors.onSurface} />}
-                onPress={handleChangePhoto}
-                style={styles.cameraButton}
-                size={18}
-              />
-            </View>
+            <ProfilePictureUpload
+              currentImageUrl={profile?.profile_picture_url}
+              onImageChange={handleProfilePictureChange}
+              userId={profile?.id || ''}
+              disabled={!profile}
+              size={80}
+            />
             <View style={styles.profileInfo}>
               <Text style={styles.profileName}>
                 {getFullName()}
@@ -436,7 +459,7 @@ export default function ProfileScreen() {
           
           <Button
             mode="outlined"
-            onPress={() => Alert.alert(t('profile.changePassword'), t('profile.changePasswordDesc'), [{ text: t('common:ok') }])}
+            onPress={() => setShowPasswordModal(true)}
             style={styles.actionButton}
             icon={() => <Shield size={20} color={theme.colors.primary} />}
           >
@@ -466,6 +489,14 @@ export default function ProfileScreen() {
           </Button>
         </ModernCard>
       </ScrollView>
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        visible={showPasswordModal}
+        onDismiss={() => setShowPasswordModal(false)}
+        onChangePassword={handleChangePassword}
+        loading={changingPassword}
+      />
     </View>
   );
 }
@@ -536,32 +567,7 @@ const styles = StyleSheet.create({
   profileHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  avatarContainer: {
-    position: 'relative',
-    marginRight: spacing.m,
-  },
-  avatar: {
-    elevation: 4,
-    ...Platform.select({
-      web: {
-        boxShadow: `0 2px 8px ${theme.colors.primary}1A`,
-      },
-      default: {
-        shadowColor: theme.colors.primary,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-    }),
-  },
-  cameraButton: {
-    position: 'absolute',
-    bottom: -5,
-    right: -5,
-    backgroundColor: theme.colors.surface,
-    borderWidth: 2,
-    borderColor: theme.colors.outline,
+    gap: spacing.m,
   },
   profileInfo: {
     flex: 1,

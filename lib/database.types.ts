@@ -563,9 +563,12 @@ export type Database = {
       profiles: {
         Row: {
           address: string | null
+          approved_at: string | null
+          approved_by: string | null
           city: string | null
           country: string | null
           created_at: string | null
+          deleted_at: string | null
           email: string | null
           first_name: string | null
           id: string
@@ -574,16 +577,21 @@ export type Database = {
           last_name: string | null
           nationality: string | null
           phone: string | null
+          profile_picture_url: string | null
           profile_type: string | null
+          rejected_reason: string | null
           role: string | null
           status: string | null
           updated_at: string | null
         }
         Insert: {
           address?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           city?: string | null
           country?: string | null
           created_at?: string | null
+          deleted_at?: string | null
           email?: string | null
           first_name?: string | null
           id?: string
@@ -592,16 +600,21 @@ export type Database = {
           last_name?: string | null
           nationality?: string | null
           phone?: string | null
+          profile_picture_url?: string | null
           profile_type?: string | null
+          rejected_reason?: string | null
           role?: string | null
           status?: string | null
           updated_at?: string | null
         }
         Update: {
           address?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           city?: string | null
           country?: string | null
           created_at?: string | null
+          deleted_at?: string | null
           email?: string | null
           first_name?: string | null
           id?: string
@@ -610,7 +623,9 @@ export type Database = {
           last_name?: string | null
           nationality?: string | null
           phone?: string | null
+          profile_picture_url?: string | null
           profile_type?: string | null
+          rejected_reason?: string | null
           role?: string | null
           status?: string | null
           updated_at?: string | null
@@ -919,6 +934,86 @@ export type Database = {
           },
         ]
       }
+      user_approvals: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          performed_by: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          performed_by: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          performed_by?: string
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_approvals_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_approvals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_logs: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          details: Json | null
+          entity_id: string
+          entity_type: string
+          id: string
+          performed_by: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          details?: Json | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          performed_by: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          details?: Json | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          performed_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_performed_by_fkey"
+            columns: ["performed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1070,4 +1165,6 @@ export type Issue = Tables<'issues'>
 export type Letter = Tables<'letters'>
 export type Account = Tables<'accounts'>
 export type CostCenter = Tables<'cost_centers'>
-export type FixedAsset = Tables<'fixed_assets'> 
+export type FixedAsset = Tables<'fixed_assets'>
+export type UserApproval = Tables<'user_approvals'>
+export type AuditLog = Tables<'audit_logs'>

@@ -24,7 +24,13 @@ export function useApi<T>(
     try {
       setLoading(true);
       setError(null);
-      const response = await apiCall();
+      
+      // Add timeout handling - PERFORMANCE FIX for Issue #32
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('API call timed out after 15 seconds')), 15000)
+      );
+      
+      const response = await Promise.race([apiCall(), timeoutPromise]);
       
       // Check if response is in ApiResponse format
       if (response && typeof response === 'object' && 'data' in response && 'error' in response) {

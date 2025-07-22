@@ -3,9 +3,10 @@ import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, ActivityIndicator, Button, List, Chip, Divider } from 'react-native-paper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
-import { ModernHeader } from '@/components/ModernHeader';
-import { ModernCard } from '@/components/ModernCard';
+import ModernHeader from '@/components/ModernHeader';
+import ModernCard from '@/components/ModernCard';
 import { profilesApi } from '@/lib/api';
+import { Tables } from '@/lib/database.types';
 import { 
   User, 
   Mail, 
@@ -21,7 +22,7 @@ export default function TenantDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { t } = useTranslation('tenants');
-  const [tenant, setTenant] = useState<any>(null);
+  const [tenant, setTenant] = useState<Tables<'profiles'> | null>(null);
   const [contracts, setContracts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,12 +38,37 @@ export default function TenantDetailsScreen() {
       setLoading(true);
       setError(null);
       
-      // TODO: Implement API calls when ready
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Fetch tenant profile with related data using existing API
+      const response = await profilesApi.getById(id);
       
-      setError('API not implemented yet');
-    } catch (err) {
-      setError('Failed to load tenant details');
+      if (response.error) {
+        if (response.error.details === 'AUTH_ERROR') {
+          setError(t('details.authError', { default: 'Session expired. Please sign in again.' }));
+        } else if (response.error.details === 'NETWORK_ERROR') {
+          setError(t('details.networkError', { default: 'Network error. Please check your connection.' }));
+        } else if (response.error.message.includes('No rows returned')) {
+          setError(t('details.notFound', { default: 'Tenant not found.' }));
+        } else {
+          setError(response.error.message || t('details.loadError', { default: 'Failed to load tenant details.' }));
+        }
+        return;
+      }
+
+      if (!response.data) {
+        setError(t('details.notFound', { default: 'Tenant not found.' }));
+        return;
+      }
+
+      // Set tenant data
+      setTenant(response.data);
+      
+      // Extract contracts data if available (from the nested API response)
+      const contractsData = (response.data as any)?.contracts || [];
+      setContracts(contractsData);
+      
+    } catch (err: any) {
+      console.error('Error fetching tenant details:', err);
+      setError(t('details.loadError', { default: 'An unexpected error occurred. Please try again.' }));
     } finally {
       setLoading(false);
     }

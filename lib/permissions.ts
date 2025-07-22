@@ -36,8 +36,8 @@ export const SCREEN_PERMISSIONS: ScreenPermission[] = [
     condition: (ctx) => ctx.role === 'admin' || ctx.role === 'manager' || (ctx.role === 'owner' && !!ctx.ownedPropertyIds?.length) },
   { screen: 'property-details', roles: ['admin', 'manager', 'owner', 'tenant'] },
   
-  // People Management
-  { screen: 'tenants', roles: ['admin', 'manager'] },
+  // People Management  
+  { screen: 'tenants', roles: ['admin', 'manager', 'owner'] },
   { screen: 'owners', roles: ['admin', 'manager'] },
   { screen: 'buyers', roles: ['admin', 'manager', 'owner'] },
   { screen: 'suppliers', roles: ['admin', 'manager'] },

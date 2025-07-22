@@ -1,15 +1,21 @@
 // User types
 export type UserRole = 'admin' | 'manager' | 'owner' | 'tenant' | 'buyer' | 'staff';
+export type UserStatus = 'pending' | 'approved' | 'rejected' | 'inactive';
 
 export interface User {
   id: string;
   email: string;
   role: UserRole;
+  status: UserStatus;
   first_name: string;
   last_name: string;
   phone_number?: string;
   created_at: string;
   avatar_url?: string;
+  approved_by?: string;
+  approved_at?: string;
+  rejected_reason?: string;
+  deleted_at?: string;
 }
 
 // Security Context Types
@@ -135,4 +141,41 @@ export interface Contract {
   created_at: string;
   updated_at: string;
   documents?: string[];
+}
+
+// User approval types
+export interface UserApproval {
+  id: string;
+  user_id: string;
+  action: 'approved' | 'rejected' | 'reactivated' | 'deactivated';
+  performed_by: string;
+  reason?: string;
+  created_at: string;
+}
+
+export interface AuditLog {
+  id: string;
+  action_type: string;
+  entity_type: string;
+  entity_id: string;
+  performed_by: string;
+  details?: Record<string, any>;
+  created_at: string;
+}
+
+// Manager dashboard types
+export interface PendingUser {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  role: UserRole;
+  created_at: string;
+  phone?: string;
+}
+
+export interface UserManagementFilters {
+  role?: UserRole;
+  status?: UserStatus;
+  search?: string;
 }

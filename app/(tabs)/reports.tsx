@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, SafeAreaView, FlatList, RefreshControl, Alert, ActivityIndicator, Modal, TouchableOpacity, I18nManager, Text } from 'react-native';
 import { IconButton } from 'react-native-paper';
 import { useRouter } from 'expo-router';
@@ -13,6 +13,7 @@ import { useTranslation } from '@/lib/useTranslation';
 import { rtlStyles, getFlexDirection } from '@/lib/rtl';
 import { profilesApi } from '@/lib/api';
 import { propertiesApi } from '@/lib/api';
+import { useScreenAccess } from '@/lib/permissions';
 
 interface FilterModalProps {
   visible: boolean;
@@ -177,6 +178,9 @@ export default function ReportsScreen() {
   const router = useRouter();
   const { user } = useStore();
   const [selectedCategory, setSelectedCategory] = useState('all');
+  
+  // Check if user has access to reports
+  const { hasAccess: canAccessReports, loading: permissionLoading, userContext } = useScreenAccess('reports');
   const [refreshing, setRefreshing] = useState(false);
   const [generatingPDF, setGeneratingPDF] = useState<string | null>(null);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
@@ -199,15 +203,8 @@ export default function ReportsScreen() {
     primaryContainer: '#E3F2FD'
   };
 
-  // Get user context for role-based filtering
-  const userContext = {
-    userId: user?.id || '',
-    role: (user?.role as 'admin' | 'manager' | 'owner' | 'tenant') || 'tenant',
-    ownedPropertyIds: user?.ownedPropertyIds || []
-  };
-
-  // Check if user has access to reports
-  const hasReportAccess = user?.role === 'admin' || user?.role === 'manager' || user?.role === 'owner';
+  // User context is already available from useScreenAccess hook
+  // Removed redundant hasReportAccess check - rely on formal permission system only
 
   const { 
     data: stats, 
@@ -231,8 +228,8 @@ export default function ReportsScreen() {
     loading: propertiesLoading 
   } = useApi(() => propertiesApi.getAll(), []);
 
-  // Enhanced statistics that connect to dashboard
-  const connectedStats = {
+  // Enhanced statistics that connect to dashboard - MEMOIZED for performance
+  const connectedStats = useMemo(() => ({
     totalReports: stats?.data?.totalReports || 12,
     generatedThisMonth: stats?.data?.generatedThisMonth || 8,
     avgGenerationTime: stats?.data?.avgGenerationTime || '2.1s',
@@ -244,7 +241,7 @@ export default function ReportsScreen() {
     activeTenants: tenants?.data?.filter(t => t.status === 'active').length || 0,
     occupiedProperties: dashboardData?.data?.occupied || 0,
     monthlyRevenue: dashboardData?.data?.total_monthly_rent || 0
-  };
+  }), [stats, dashboardData, tenants]);
 
   // Fetch filter options based on filter type
   const fetchFilterOptions = async (filterType: string) => {
@@ -314,7 +311,8 @@ export default function ReportsScreen() {
     }
   };
 
-  const availableReports = [
+  // Memoized available reports calculation - PERFORMANCE OPTIMIZATION
+  const availableReports = useMemo(() => [
     { 
       id: 'summary-report', 
       type: 'summary',
@@ -451,8 +449,8 @@ export default function ReportsScreen() {
       accessRoles: ['admin', 'manager', 'owner']
     }
   ].filter(report => 
-    report.accessRoles.includes(userContext.role)
-  );
+    userContext?.role && report.accessRoles.includes(userContext.role)
+  ), [t, theme.colors, stats, userContext?.role]);
 
   const categories = [
     { id: 'all', title: t('reports:allReports'), icon: 'dashboard' },
@@ -464,15 +462,28 @@ export default function ReportsScreen() {
     { id: 'operations', title: t('reports:operations'), icon: 'build' }
   ];
 
-  const filteredReports = availableReports.filter(report => 
-    selectedCategory === 'all' || report.category === selectedCategory
-  );
+  // Memoized filtered reports - PERFORMANCE OPTIMIZATION  
+  const filteredReports = useMemo(() => 
+    availableReports.filter(report => 
+      selectedCategory === 'all' || report.category === selectedCategory
+    ), [availableReports, selectedCategory]);
 
-  const formatDate = (isoString?: string) => {
+  // Memoized formatDate function - PERFORMANCE OPTIMIZATION
+  const formatDate = useCallback((isoString?: string) => {
     if (!isoString) return t('common:notAvailable');
     return new Date(isoString).toLocaleDateString(I18nManager.isRTL ? 'ar-SA' : 'en-US');
-  };
+  }, [t]);
 
+  // Memoized FlatList callback functions - PERFORMANCE OPTIMIZATION
+  const getItemKey = useCallback((item: any) => item.id, []);
+  
+  const getItemLayout = useCallback((_: any, index: number) => ({
+    length: 200, // Estimated item height
+    offset: 200 * index,
+    index,
+  }), []);
+
+  // Helper functions defined before they are used
   const formatLastGenerated = (isoString?: string) => {
     if (!isoString) return 'Never generated';
     const date = new Date(isoString);
@@ -531,7 +542,7 @@ export default function ReportsScreen() {
             Alert.alert('Error', 'Please select a property for this report');
             return;
           }
-          result = await pdfApi.generatePropertyReport(filterId, userContext);
+          result = await pdfApi.generatePropertyReport(filterId, userContext!);
           break;
 
         case 'tenant-statement':
@@ -539,7 +550,7 @@ export default function ReportsScreen() {
             Alert.alert('Error', 'Please select a tenant for this report');
             return;
           }
-          result = await pdfApi.generateTenantStatement(filterId, userContext);
+          result = await pdfApi.generateTenantStatement(filterId, userContext!);
           break;
 
         case 'owner-financial':
@@ -547,17 +558,17 @@ export default function ReportsScreen() {
             Alert.alert('Error', 'Please select an owner for this report');
             return;
           }
-          result = await pdfApi.generateOwnerReport(filterId, userContext);
+          result = await pdfApi.generateOwnerReport(filterId, userContext!);
           break;
 
         case 'expense-report':
           const expenseType = filterType as 'sales' | 'maintenance' | 'all' || 'all';
-          result = await pdfApi.generateExpenseReport(expenseType, userContext);
+          result = await pdfApi.generateExpenseReport(expenseType, userContext!);
           break;
 
         default:
           // Use the general filtered report method
-          result = await pdfApi.generateFilteredReport(reportId, title, userContext, {
+          result = await pdfApi.generateFilteredReport(reportId, title, userContext!, {
             ...(filterId && { [currentFilterType + 'Id']: filterId }),
             ...(filterType && { reportType: filterType })
           });
@@ -592,6 +603,62 @@ export default function ReportsScreen() {
     ]);
     setRefreshing(false);
   }, [refetchStats]);
+
+  const renderReportItem = useCallback(({ item }: { item: any }) => (
+    <View style={[styles.reportCard, { backgroundColor: lightColors.surface }]}>
+      <View style={[styles.reportHeader, { flexDirection: getFlexDirection('row') }]}>
+        <View style={[styles.reportInfo, { flexDirection: getFlexDirection('row') }]}>
+          <View style={[
+            styles.iconContainer, 
+            { backgroundColor: `${item.color}20` }, 
+            rtlStyles.marginRight(12)
+          ]}>
+            <MaterialIcons name={item.iconName as any} size={24} color={item.color} />
+          </View>
+          <View style={styles.reportDetails}>
+            <Text style={[styles.reportTitle, rtlStyles.textAlignStart, { color: lightColors.onSurface }]}>
+              {item.title}
+            </Text>
+            <Text style={[styles.reportDescription, rtlStyles.textAlignStart, { color: lightColors.onSurfaceVariant }]}>
+              {item.description}
+            </Text>
+            {item.requiresFilter && (
+              <View style={[styles.filterBadge, { flexDirection: getFlexDirection('row') }]}>
+                <MaterialIcons name="filter-list" size={12} color={lightColors.primary} />
+                <Text style={[styles.filterText, rtlStyles.marginLeft(4), { color: lightColors.primary }]}>
+                  {t('reports:requiresFilter', { filterType: t(`reports:filterType_${item.filterType}`) })}
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
+        {generatingPDF === item.id ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color={lightColors.primary} />
+          </View>
+        ) : (
+          <IconButton
+            icon="download"
+            size={20}
+            iconColor={lightColors.primary}
+            onPress={() => handleDownloadPDF(item)}
+          />
+        )}
+      </View>
+
+      <View style={styles.reportData}>
+        <Text style={[styles.reportTime, rtlStyles.textAlign(), { color: lightColors.onSurfaceVariant }]}>
+          {t('reports:downloadAvailable')}
+        </Text>
+      </View>
+
+      <View style={[styles.reportFooter, { borderTopColor: lightColors.outline }]}>
+        <Text style={[styles.lastGenerated, rtlStyles.textAlign(), { color: lightColors.onSurfaceVariant }]}>
+          {t('reports:lastUpdated', { date: formatDate(item.lastGenerated) })}
+        </Text>
+      </View>
+    </View>
+  ), [lightColors, generatingPDF, t, handleDownloadPDF, formatDate]);
 
   // Render Quick Statistics (matching dashboard's horizontal stats container)
   const renderQuickStats = () => (
@@ -653,7 +720,7 @@ export default function ReportsScreen() {
     </View>
   );
 
-  if (!hasReportAccess) {
+  if (!canAccessReports) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: lightColors.background }]}>
         <ModernHeader title={t('reports:title')} />
@@ -664,6 +731,42 @@ export default function ReportsScreen() {
           </Text>
           <Text style={[styles.noAccessSubtext, rtlStyles.textAlign(), { color: lightColors.onSurfaceVariant }]}>
             {t('reports:noAccessSuggestion')}
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Show loading while checking permissions
+  if (permissionLoading) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: lightColors.background }]}>
+        <ModernHeader title={t('reports:title')} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={lightColors.primary} />
+          <Text style={[styles.loadingText, { color: lightColors.onSurfaceVariant }]}>
+            {t('common:loading')}
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // If user doesn't have reports access, show access denied
+  if (!canAccessReports) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: lightColors.background }]}>
+        <ModernHeader title={t('reports:title')} />
+        <View style={styles.accessDeniedContainer}>
+          <MaterialIcons name="report-off" size={64} color={lightColors.onSurfaceVariant} />
+          <Text style={[styles.accessDeniedText, { color: lightColors.onSurface }]}>
+            Access Denied
+          </Text>
+          <Text style={[styles.accessDeniedSubtext, { color: lightColors.onSurfaceVariant }]}>
+            You don't have permission to view reports. Only admins, managers, and property owners can access reports.
+          </Text>
+          <Text style={[styles.accessDeniedSubtext, { color: lightColors.onSurfaceVariant, marginTop: 16 }]}>
+            Current Role: {userContext?.role || 'None'}
           </Text>
         </View>
       </SafeAreaView>
@@ -725,64 +828,16 @@ export default function ReportsScreen() {
           
           <FlatList
             data={filteredReports}
-            renderItem={({ item }) => (
-              <View style={[styles.reportCard, { backgroundColor: lightColors.surface }]}>
-                <View style={[styles.reportHeader, { flexDirection: getFlexDirection('row') }]}>
-                  <View style={[styles.reportInfo, { flexDirection: getFlexDirection('row') }]}>
-                    <View style={[
-                      styles.iconContainer, 
-                      { backgroundColor: `${item.color}20` }, 
-                      rtlStyles.marginRight(12)
-                    ]}>
-                      <MaterialIcons name={item.iconName as any} size={24} color={item.color} />
-                    </View>
-                    <View style={styles.reportDetails}>
-                      <Text style={[styles.reportTitle, rtlStyles.textAlignStart, { color: lightColors.onSurface }]}>
-                        {item.title}
-                      </Text>
-                      <Text style={[styles.reportDescription, rtlStyles.textAlignStart, { color: lightColors.onSurfaceVariant }]}>
-                        {item.description}
-                      </Text>
-                      {item.requiresFilter && (
-                        <View style={[styles.filterBadge, { flexDirection: getFlexDirection('row') }]}>
-                          <MaterialIcons name="filter-list" size={12} color={lightColors.primary} />
-                          <Text style={[styles.filterText, rtlStyles.marginLeft(4), { color: lightColors.primary }]}>
-                            {t('reports:requiresFilter', { filterType: t(`reports:filterType_${item.filterType}`) })}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                  </View>
-                  {generatingPDF === item.id ? (
-                    <View style={styles.loadingContainer}>
-                      <ActivityIndicator size="small" color={lightColors.primary} />
-                    </View>
-                  ) : (
-                    <IconButton
-                      icon="download"
-                      size={20}
-                      iconColor={lightColors.primary}
-                      onPress={() => handleDownloadPDF(item)}
-                    />
-                  )}
-                </View>
-
-                <View style={styles.reportData}>
-                  <Text style={[styles.reportTime, rtlStyles.textAlign(), { color: lightColors.onSurfaceVariant }]}>
-                    {t('reports:downloadAvailable')}
-                  </Text>
-                </View>
-
-                <View style={[styles.reportFooter, { borderTopColor: lightColors.outline }]}>
-                  <Text style={[styles.lastGenerated, rtlStyles.textAlign(), { color: lightColors.onSurfaceVariant }]}>
-                    {t('reports:lastUpdated', { date: formatDate(item.lastGenerated) })}
-                  </Text>
-                </View>
-              </View>
-            )}
-            keyExtractor={item => item.id}
-            scrollEnabled={false}
+            renderItem={renderReportItem}
+            keyExtractor={getItemKey}
             showsVerticalScrollIndicator={false}
+            // Performance optimizations
+            removeClippedSubviews={true}
+            maxToRenderPerBatch={5}
+            windowSize={10}
+            initialNumToRender={5}
+            updateCellsBatchingPeriod={50}
+            getItemLayout={getItemLayout}
           />
         </View>
       </ScrollView>
@@ -1041,5 +1096,34 @@ const styles = StyleSheet.create({
   modalButtonText: {
     fontSize: 16,
     fontWeight: '500',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  accessDeniedContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  accessDeniedText: {
+    fontSize: 24,
+    fontWeight: '600',
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  accessDeniedSubtext: {
+    fontSize: 16,
+    marginTop: 8,
+    textAlign: 'center',
+    lineHeight: 24,
   },
 });

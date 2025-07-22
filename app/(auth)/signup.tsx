@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, KeyboardAvoidingView, ScrollView, Platform, Image } from 'react-native';
+import { View, StyleSheet, KeyboardAvoidingView, ScrollView, Platform, Image, Alert } from 'react-native';
 import { Text, TextInput, Button, Divider, SegmentedButtons } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
@@ -60,7 +60,10 @@ export default function SignUpScreen() {
       if (authError) throw authError;
       
       if (data.user) {
-        // Create user profile with selected role
+        // Determine initial status based on role
+        const initialStatus = role === 'owner' ? 'pending' : 'approved';
+        
+        // Create user profile with selected role and status
         const { error: profileError } = await supabase
           .from('profiles')
           .insert([
@@ -70,13 +73,23 @@ export default function SignUpScreen() {
               last_name: lastName,
               email: email,
               role: role, // Set the selected role
+              status: initialStatus, // Property owners require approval
             }
           ]);
           
         if (profileError) throw profileError;
         
-        // Navigate back to sign in
-        router.replace('/(auth)');
+        // Show appropriate message based on role
+        if (role === 'owner') {
+          Alert.alert(
+            'Registration Successful',
+            'Your account has been created and is pending approval. A property manager will review your registration and you will receive notification once approved.',
+            [{ text: 'OK', onPress: () => router.replace('/(auth)') }]
+          );
+        } else {
+          // Navigate back to sign in for other roles
+          router.replace('/(auth)');
+        }
       } else {
         setError(t('signup.signupInitiated'));
       }

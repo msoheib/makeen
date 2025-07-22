@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Text, TextInput, Button, SegmentedButtons, IconButton } from 'react-native-paper';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { UserRole } from '@/lib/types';
@@ -11,13 +11,14 @@ import ModernCard from '@/components/ModernCard';
 
 export default function AddPersonScreen() {
   const router = useRouter();
+  const { role: urlRole } = useLocalSearchParams<{ role?: UserRole }>();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
     email: '',
     phone_number: '',
-    role: 'tenant' as UserRole,
+    role: (urlRole as UserRole) || 'tenant' as UserRole,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -54,7 +55,7 @@ export default function AddPersonScreen() {
         first_name: formData.first_name.trim(),
         last_name: formData.last_name.trim(),
         email: formData.email.trim().toLowerCase(),
-        phone_number: formData.phone_number.trim() || null,
+        phone: formData.phone_number.trim() || null, // Fixed: use 'phone' field instead of 'phone_number'
         role: formData.role,
       };
 

@@ -8,13 +8,13 @@
       "command": "cmd",
       "args": ["/c", "npx", "-y", "@21st-dev/magic@latest", "API_KEY=\"f45ee749e3c6c323718018e27f57b891ce8e0a0bd6ba914b38c6de67c487582a\""]
     },
-    "filesystem": {
-      "command": "cmd",
-      "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-filesystem", "/mnt/c/Users/Hopef/Desktop/real-estate/real-estate-mg"]
-    },
     "memory": {
       "command": "cmd",
       "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-memory"]
+    },
+    "playwright": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "@halftheopposite/mcp-server-playwright"]
     },
     "puppeteer": {
       "command": "cmd",

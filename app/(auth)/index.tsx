@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Image, KeyboardAvoidingView, ScrollView, Platform, I18nManager } from 'react-native';
+import { View, StyleSheet, Image, KeyboardAvoidingView, ScrollView, Platform, I18nManager, Alert } from 'react-native';
 import { Text, TextInput, Button, Divider, Checkbox } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { theme, spacing, shadows } from '@/lib/theme';
@@ -67,6 +67,45 @@ export default function SignInScreen() {
         }
         
         console.log('Profile fetched successfully:', profileData);
+        
+        // Check if user is approved
+        if (profileData.status === 'pending') {
+          Alert.alert(
+            'Account Pending Approval',
+            'Your account is currently pending approval by a property manager. You will receive notification once your account is approved.',
+            [{ text: 'OK' }]
+          );
+          
+          // Sign out the user
+          await supabase.auth.signOut();
+          return;
+        }
+        
+        if (profileData.status === 'rejected') {
+          const reason = profileData.rejected_reason ? `\n\nReason: ${profileData.rejected_reason}` : '';
+          Alert.alert(
+            'Account Rejected',
+            `Your account registration has been rejected by a property manager.${reason}\n\nPlease contact support if you believe this is an error.`,
+            [{ text: 'OK' }]
+          );
+          
+          // Sign out the user
+          await supabase.auth.signOut();
+          return;
+        }
+        
+        if (profileData.status === 'inactive') {
+          Alert.alert(
+            'Account Deactivated',
+            'Your account has been deactivated. Please contact support for assistance.',
+            [{ text: 'OK' }]
+          );
+          
+          // Sign out the user
+          await supabase.auth.signOut();
+          return;
+        }
+        
         // Set user in global state
         setUser(profileData);
         setAuthenticated(true);
