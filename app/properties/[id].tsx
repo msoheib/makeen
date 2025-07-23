@@ -150,9 +150,9 @@ export default function PropertyDetailsScreen() {
       <View style={styles.container}>
         <ModernHeader
           title="Property Details"
-          showLogo={false}
-          onNotificationPress={() => router.push('/notifications')}
-          onMenuPress={() => router.back()}
+          showBackButton={true}
+          showNotifications={false}
+          onBackPress={() => router.back()}
         />
         <View style={styles.loadingContainer}>
           <Text>Loading property details...</Text>
@@ -163,23 +163,24 @@ export default function PropertyDetailsScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <IconButton
-          icon={() => <ArrowLeft size={24} color={theme.colors.onSurface} />}
-          onPress={() => router.back()}
-          style={styles.backButton}
-        />
-        <View style={styles.headerActions}>
-          <IconButton
-            icon={() => <Share size={24} color={theme.colors.onSurface} />}
-            onPress={() => console.log('Share property')}
-          />
-          <IconButton
-            icon={() => <Edit size={24} color={theme.colors.onSurface} />}
-            onPress={() => router.push(`/properties/edit/${property.id}`)}
-          />
-        </View>
-      </View>
+      <ModernHeader
+        title="Property Details"
+        showBackButton={true}
+        showNotifications={false}
+        onBackPress={() => router.back()}
+        rightContent={
+          <View style={styles.headerActions}>
+            <IconButton
+              icon={() => <Share size={24} color={theme.colors.onSurface} />}
+              onPress={() => console.log('Share property')}
+            />
+            <IconButton
+              icon={() => <Edit size={24} color={theme.colors.onSurface} />}
+              onPress={() => router.push(`/properties/edit/${property.id}`)}
+            />
+          </View>
+        }
+      />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Property Images */}
@@ -424,17 +425,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.m,
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.s,
-  },
-  backButton: {
-    margin: 0,
   },
   headerActions: {
     flexDirection: 'row',

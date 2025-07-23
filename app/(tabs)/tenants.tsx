@@ -5,9 +5,9 @@ import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { lightTheme, darkTheme, spacing } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
-import { rtlStyles, getFlexDirection } from '@/lib/rtl';
+import { getFlexDirection } from '@/lib/rtl';
 import { isRTL } from '@/lib/i18n';
-import { Users, Phone, Mail, Plus, Lock, Shield, UserClock, Globe2 } from 'lucide-react-native';
+import { Users, Phone, Mail, Plus, Lock, Shield, Clock, Globe2 } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import { useScreenAccess } from '@/lib/permissions';
 import { useApi } from '@/hooks/useApi';
@@ -18,13 +18,13 @@ export default function TenantsScreen() {
   const router = useRouter();
   const { isDarkMode } = useAppStore();
   const { t } = useTranslation('common');
+  
+  // State hooks
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
-  // Check if user has access to tenants data
+  // Permission and API hooks
   const { hasAccess: canAccessTenants, loading: permissionLoading, userContext } = useScreenAccess('tenants');
-
-  // API call for tenants (with role-based filtering)
   const { 
     data: tenants, 
     loading: tenantsLoading, 
@@ -32,20 +32,18 @@ export default function TenantsScreen() {
     refetch: refetchTenants 
   } = useApi(() => profilesApi.getTenants(), []);
 
-  // Compute theme after all hooks are called
+  // Computed values (not hooks, but derived state)
   const theme = isDarkMode ? darkTheme : lightTheme;
+  const tenantsData = tenants || [];
+  const isLoading = tenantsLoading;
+  const hasError = !!tenantsError;
   
-  // ALL CALLBACKS AND MEMOIZED VALUES
+  // ALL CALLBACKS AND MEMOIZED VALUES (these are hooks and must be consistent)
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await refetchTenants();
     setRefreshing(false);
   }, [refetchTenants]);
-
-  // Use real data from API without conflicting fallbacks
-  const tenantsData = useMemo(() => tenants || [], [tenants]);
-  const isLoading = tenantsLoading;
-  const hasError = !!tenantsError;
 
   // Filter tenants based on search
   const filteredTenants = useMemo(() => {
@@ -58,7 +56,7 @@ export default function TenantsScreen() {
     });
   }, [tenantsData, searchQuery]);
 
-  // Memoized real-time statistics - PERFORMANCE OPTIMIZATION
+  // Memoized real-time statistics
   const tenantStats = useMemo(() => ({
     total: tenantsData.length,
     active: tenantsData.filter(t => t.status === 'active').length,
@@ -154,7 +152,7 @@ export default function TenantsScreen() {
     </TouchableOpacity>
   ), [theme.colors, router]);
 
-  // Memoized ListHeaderComponent to prevent keyboard disappearing - PERFORMANCE FIX
+  // Memoized ListHeaderComponent with stable dependencies
   const ListHeaderComponent = useMemo(() => (
     <View>
       {/* Stats Section */}
@@ -190,7 +188,7 @@ export default function TenantsScreen() {
 
             <View style={styles.horizontalStatItem}>
               <View style={[styles.horizontalStatIcon, { backgroundColor: '#FF952020' }]}>
-                <UserClock size={24} color="#FF9520" />
+                <Clock size={24} color="#FF9520" />
               </View>
               <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
                 في الانتظار
@@ -240,7 +238,7 @@ export default function TenantsScreen() {
         </Text>
       </View>
     </View>
-  ), [theme.colors, tenantStats, isLoading, searchQuery, filteredTenants.length, setSearchQuery]);
+  ), [theme.colors, tenantStats, isLoading, searchQuery, filteredTenants.length]);
 
   // EARLY RETURNS AFTER ALL HOOKS ARE CALLED
   // Show loading while checking permissions
