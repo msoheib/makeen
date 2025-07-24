@@ -134,7 +134,13 @@ export default function PhotoCapture({
 
   const processImage = async (uri: string) => {
     try {
-      console.log('PhotoCapture: Starting image processing for URI:', uri);
+      console.log('PhotoCapture: Starting image processing for URI:', uri?.substring(0, 50) + '...');
+      
+      // Basic URI validation
+      if (!uri) {
+        Alert.alert(t('common:error'), 'No image selected');
+        return;
+      }
       
       // Validate image
       const validation = await validateImage(uri);
@@ -142,7 +148,10 @@ export default function PhotoCapture({
       
       if (!validation.valid) {
         console.error('PhotoCapture: Image validation failed:', validation.error);
-        Alert.alert(t('photos.invalidImage'), validation.error || t('common:tryAgain'));
+        Alert.alert(
+          t('photos.invalidImage') || 'Invalid Image', 
+          validation.error || t('common:tryAgain') || 'Please try again'
+        );
         return;
       }
 
@@ -161,18 +170,26 @@ export default function PhotoCapture({
         // Add to images array
         const newImages = [...images, uploadResult.url];
         console.log('PhotoCapture: Adding image to array. Current images:', images.length, 'New total:', newImages.length);
-        console.log('PhotoCapture: New image URL:', uploadResult.url);
         onImagesChange(newImages);
         
         // Show success message
-        Alert.alert(t('common:success'), t('photos.uploadSuccess') || 'Image uploaded successfully!');
+        Alert.alert(
+          t('common:success') || 'Success', 
+          t('photos.uploadSuccess') || 'Image uploaded successfully!'
+        );
       } else {
         console.error('PhotoCapture: Upload failed:', uploadResult.error);
-        Alert.alert(t('photos.uploadFailed'), uploadResult.error || t('common:tryAgain'));
+        Alert.alert(
+          t('photos.uploadFailed') || 'Upload Failed', 
+          uploadResult.error || t('common:tryAgain') || 'Please try again'
+        );
       }
     } catch (error: any) {
       console.error('PhotoCapture: Error processing image:', error);
-      Alert.alert(t('common:error'), error.message || t('common:tryAgain'));
+      Alert.alert(
+        t('common:error') || 'Error', 
+        error.message || t('common:tryAgain') || 'An error occurred. Please try again.'
+      );
     }
   };
 
@@ -286,7 +303,9 @@ export default function PhotoCapture({
                   ) : (
                     <>
                       <ImagePlus size={24} color={theme.colors.primary} />
-                      <Text style={styles.addButtonText}>{t('photos.addPhoto')}</Text>
+                      <Text style={styles.addButtonText}>
+                        {t('photos.addPhoto') || 'Add Photo'}
+                      </Text>
                     </>
                   )}
                 </TouchableOpacity>
@@ -294,12 +313,12 @@ export default function PhotoCapture({
             >
               <Menu.Item
                 onPress={openCamera}
-                title={t('photos.takePhoto')}
+                title={t('photos.takePhoto') || 'Take Photo'}
                 leadingIcon={() => <CameraIcon size={20} color={theme.colors.onSurface} />}
               />
               <Menu.Item
                 onPress={pickImageFromGallery}
-                title={t('photos.chooseFromGallery')}
+                title={t('photos.chooseFromGallery') || 'Choose from Gallery'}
                 leadingIcon={() => <ImageIcon size={20} color={theme.colors.onSurface} />}
               />
             </Menu>
@@ -309,10 +328,14 @@ export default function PhotoCapture({
 
       {/* Image Count */}
       <Text style={styles.imageCount}>
-        {images.length}/{maxImages} {t('photos.photoCount')}
+        {`${images.length}/${maxImages} ${t('photos.photoCount') || 'photos'}`}
       </Text>
 
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      {error && (
+        <Text style={styles.errorText}>
+          {error}
+        </Text>
+      )}
     </View>
   );
 }

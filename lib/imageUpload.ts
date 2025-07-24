@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import * as FileSystem from 'expo-file-system';
 import { decode } from 'base64-arraybuffer';
+import { Platform } from 'react-native';
 
 export interface ImageUploadResult {
   success: boolean;
@@ -21,7 +22,7 @@ export async function uploadImage(
   folder?: string
 ): Promise<ImageUploadResult> {
   try {
-    console.log('Starting image upload...', { uri, bucket, folder });
+    console.log('Starting image upload...', { uri, bucket, folder, platform: Platform.OS });
     
     // Generate unique filename
     const timestamp = Date.now();
@@ -33,17 +34,45 @@ export async function uploadImage(
     const storagePath = folder ? `${folder}/${fileName}` : fileName;
     console.log('Storage path:', storagePath);
     
-    // Read file as base64
-    const base64 = await FileSystem.readAsStringAsync(uri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
+    let arrayBuffer: ArrayBuffer;
     
-    console.log('File read as base64, length:', base64.length);
-    
-    // Convert base64 to ArrayBuffer for React Native compatibility
-    const arrayBuffer = decode(base64);
-    
-    console.log('Converted to ArrayBuffer, byteLength:', arrayBuffer.byteLength);
+    if (Platform.OS === 'web') {
+      // Web platform: Handle blob/file directly
+      console.log('Web platform: Processing image as blob...');
+      
+      // For web, the uri might be a blob URL or data URL
+      if (uri.startsWith('blob:') || uri.startsWith('data:')) {
+        const response = await fetch(uri);
+        arrayBuffer = await response.arrayBuffer();
+        console.log('Web: Converted blob to ArrayBuffer, byteLength:', arrayBuffer.byteLength);
+      } else {
+        // Fallback: try to read as base64 if FileSystem is available
+        try {
+          const base64 = await FileSystem.readAsStringAsync(uri, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          arrayBuffer = decode(base64);
+          console.log('Web: Fallback base64 conversion successful, byteLength:', arrayBuffer.byteLength);
+        } catch (fsError) {
+          console.error('Web: FileSystem not available, trying fetch fallback:', fsError);
+          const response = await fetch(uri);
+          arrayBuffer = await response.arrayBuffer();
+          console.log('Web: Fetch fallback successful, byteLength:', arrayBuffer.byteLength);
+        }
+      }
+    } else {
+      // Native platform: Use FileSystem
+      console.log('Native platform: Reading file as base64...');
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      
+      console.log('Native: File read as base64, length:', base64.length);
+      
+      // Convert base64 to ArrayBuffer
+      arrayBuffer = decode(base64);
+      console.log('Native: Converted to ArrayBuffer, byteLength:', arrayBuffer.byteLength);
+    }
     
     // Upload to Supabase Storage using ArrayBuffer
     const { data, error } = await supabase.storage
@@ -145,15 +174,55 @@ export async function getFileInfo(uri: string): Promise<{
   name: string;
   type: string;
 }> {
-  const fileInfo = await FileSystem.getInfoAsync(uri);
   const name = uri.split('/').pop() || 'image.jpg';
   const extension = name.split('.').pop() || 'jpg';
   
-  return {
-    size: fileInfo.size || 0,
-    name,
-    type: `image/${extension}`
-  };
+  if (Platform.OS === 'web') {
+    // Web platform: Handle different URI types
+    try {
+      if (uri.startsWith('blob:') || uri.startsWith('data:')) {
+        const response = await fetch(uri);
+        const blob = await response.blob();
+        return {
+          size: blob.size,
+          name,
+          type: blob.type || `image/${extension}`
+        };
+      } else {
+        // For web, when FileSystem APIs are not available, return reasonable defaults
+        console.log('Web: Using default file info for URI type:', uri.substring(0, 20) + '...');
+        return {
+          size: 0, // Size validation will be skipped
+          name,
+          type: `image/${extension}`
+        };
+      }
+    } catch (error) {
+      console.warn('Web: Error getting file info, using defaults:', error);
+      return {
+        size: 0,
+        name,
+        type: `image/${extension}`
+      };
+    }
+  } else {
+    // Native platform: Use FileSystem
+    try {
+      const fileInfo = await FileSystem.getInfoAsync(uri);
+      return {
+        size: fileInfo.size || 0,
+        name,
+        type: `image/${extension}`
+      };
+    } catch (error) {
+      console.warn('Native: Error getting file info:', error);
+      return {
+        size: 0,
+        name,
+        type: `image/${extension}`
+      };
+    }
+  }
 }
 
 /**
@@ -167,29 +236,83 @@ export async function validateImage(
   maxSizeBytes: number = 5 * 1024 * 1024 // 5MB
 ): Promise<{ valid: boolean; error?: string }> {
   try {
-    const fileInfo = await getFileInfo(uri);
+    console.log('Validating image:', { uri: uri.substring(0, 50) + '...', platform: Platform.OS });
     
-    // Check file size
-    if (fileInfo.size > maxSizeBytes) {
+    // Basic URI validation
+    if (!uri) {
       return {
         valid: false,
-        error: `File size (${(fileInfo.size / 1024 / 1024).toFixed(1)}MB) exceeds maximum allowed size (${(maxSizeBytes / 1024 / 1024).toFixed(1)}MB)`
+        error: 'No image URI provided'
       };
     }
     
-    // Check file type
-    const validTypes = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-    const extension = fileInfo.name.split('.').pop()?.toLowerCase();
-    
-    if (!extension || !validTypes.includes(extension)) {
-      return {
-        valid: false,
-        error: 'Invalid file type. Please select a valid image file (JPG, PNG, GIF, WebP)'
-      };
+    // Platform-specific validation
+    if (Platform.OS === 'web') {
+      // For web, do basic validation without file system access
+      console.log('Web: Performing basic image validation...');
+      
+      // Validate file extension from URI
+      const validExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+      const uriLower = uri.toLowerCase();
+      const hasValidExtension = validExtensions.some(ext => 
+        uriLower.includes(`.${ext}`) || uriLower.includes(`image/${ext}`)
+      );
+      
+      if (!hasValidExtension && !uri.startsWith('blob:') && !uri.startsWith('data:image')) {
+        return {
+          valid: false,
+          error: 'Invalid file type. Please select a valid image file (JPG, PNG, GIF, WebP)'
+        };
+      }
+      
+      // Try to get file info for size validation (if possible)
+      try {
+        const fileInfo = await getFileInfo(uri);
+        if (fileInfo.size > 0 && fileInfo.size > maxSizeBytes) {
+          return {
+            valid: false,
+            error: `File size (${(fileInfo.size / 1024 / 1024).toFixed(1)}MB) exceeds maximum allowed size (${(maxSizeBytes / 1024 / 1024).toFixed(1)}MB)`
+          };
+        }
+      } catch (fileInfoError) {
+        console.log('Web: Could not get file size, skipping size validation');
+      }
+      
+      console.log('Web: Image validation passed');
+      return { valid: true };
+      
+    } else {
+      // Native platform: Full validation with file system access
+      console.log('Native: Performing full image validation...');
+      
+      const fileInfo = await getFileInfo(uri);
+      console.log('Native: File info retrieved:', fileInfo);
+      
+      // Check file size
+      if (fileInfo.size > 0 && fileInfo.size > maxSizeBytes) {
+        return {
+          valid: false,
+          error: `File size (${(fileInfo.size / 1024 / 1024).toFixed(1)}MB) exceeds maximum allowed size (${(maxSizeBytes / 1024 / 1024).toFixed(1)}MB)`
+        };
+      }
+      
+      // Check file type
+      const validTypes = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+      const extension = fileInfo.name.split('.').pop()?.toLowerCase();
+      
+      if (!extension || !validTypes.includes(extension)) {
+        return {
+          valid: false,
+          error: 'Invalid file type. Please select a valid image file (JPG, PNG, GIF, WebP)'
+        };
+      }
+      
+      console.log('Native: Image validation passed');
+      return { valid: true };
     }
     
-    return { valid: true };
   } catch (error: any) {
+    console.error('Image validation error:', error);
     return {
       valid: false,
       error: error.message || 'Failed to validate image'
