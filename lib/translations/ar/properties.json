@@ -33,5 +33,49 @@
     "price": "السعر",
     "owner": "المالك",
     "amenities": "المرافق"
+  },
+  "details": {
+    "title": "تفاصيل العقار",
+    "loading": "جارٍ تحميل تفاصيل العقار...",
+    "area": "المساحة",
+    "bedrooms": "غرف النوم",
+    "bathrooms": "دورات المياه",
+    "type": "النوع",
+    "ownerInformation": "معلومات المالك",
+    "quickActions": "الإجراءات السريعة",
+    "contact": "تواصل",
+    "maintenance": "صيانة",
+    "addPayment": "إضافة دفعة",
+    "newContract": "عقد جديد",
+    "transferOwnership": "نقل الملكية",
+    "share": "مشاركة",
+    "edit": "تعديل",
+    "cashSale": "بيع نقدي",
+    "installment": "تقسيط",
+    "sqm": "متر مربع"
+  },
+  "transfer": {
+    "title": "نقل ملكية العقار",
+    "subtitle": "اختر المالك الجديد لـ",
+    "loading": "جارٍ تحميل الملاك...",
+    "cancel": "إلغاء",
+    "transfer": "نقل",
+    "success": "تم نقل ملكية العقار بنجاح إلى",
+    "error": "فشل في نقل الملكية",
+    "selectNewOwner": "يجب اختيار المالك الجديد"
+  },
+  "errors": {
+    "authError": "خطأ المصادقة",
+    "authErrorMessage": "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى.",
+    "networkError": "خطأ في الشبكة",
+    "networkErrorMessage": "يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.",
+    "notFound": "العقار غير موجود",
+    "notFoundMessage": "لم يتم العثور على العقار المطلوب أو قد تم حذفه.",
+    "accessDenied": "ممنوع الوصول",
+    "accessDeniedMessage": "ليس لديك الصلاحية لعرض تفاصيل هذا العقار.",
+    "generalError": "خطأ",
+    "generalErrorMessage": "فشل في تحميل تفاصيل العقار.",
+    "unexpectedError": "خطأ غير متوقع",
+    "unexpectedErrorMessage": "حدث خطأ أثناء تحميل العقار. يرجى المحاولة مرة أخرى."
   }
 } 

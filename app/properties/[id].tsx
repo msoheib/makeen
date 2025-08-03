@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, Image, Alert, TouchableOpacity } from 'react-native';
 import { Text, Button, IconButton, Chip, Modal, Portal } from 'react-native-paper';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
-import { supabase } from '@/lib/supabase';
 import { Property } from '@/lib/types';
 import { getCurrentUserContext } from '@/lib/security';
 import { useApi } from '@/hooks/useApi';
 import { profilesApi, propertiesApi } from '@/lib/api';
-import { ArrowLeft, LocationEdit as Edit, Share, MapPin, Chrome as Home, Bath, Bed, Square, DollarSign, Calendar, User, Phone, Mail } from 'lucide-react-native';
+import { LocationEdit as Edit, Share, MapPin, Chrome as Home, Bath, Bed, Square, DollarSign, Calendar, User, Phone, Mail } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import StatCard from '@/components/StatCard';
+import { usePropertiesTranslation, useCommonTranslation } from '@/lib/useTranslation';
 
 export default function PropertyDetailsScreen() {
   const router = useRouter();
@@ -22,30 +22,43 @@ export default function PropertyDetailsScreen() {
   const [selectedNewOwner, setSelectedNewOwner] = useState<string>('');
   const [transferring, setTransferring] = useState(false);
 
+  // Translation hooks
+  const { t: tProps } = usePropertiesTranslation();
+  const { t: tCommon } = useCommonTranslation();
+
   // Get user context for role-based functionality
   const { 
-    data: userContext, 
-    loading: userLoading 
+    data: userContext
   } = useApi(() => getCurrentUserContext(), []);
 
   // Get owner profiles for transfer selection
   const { 
     data: ownerProfiles, 
-    loading: ownersLoading 
+    loading: ownersLoading,
+    error: ownersError
   } = useApi(() => {
-    if (userContext?.role === 'manager' || userContext?.role === 'admin') {
+    // Only fetch owners if user context is loaded and user has appropriate role
+    if (userContext && (userContext.role === 'manager' || userContext.role === 'admin')) {
       return profilesApi.getAll({ role: 'owner' });
     }
     return Promise.resolve({ data: [], error: null });
-  }, [userContext?.role]);
+  }, [userContext?.role, userContext]);
 
-  useEffect(() => {
-    if (id) {
-      fetchProperty();
+  // Helper function to get the actual owners array
+  const getOwnersArray = useCallback(() => {
+    if (!ownerProfiles) return [];
+    // Check if ownerProfiles is directly an array
+    if (Array.isArray(ownerProfiles)) {
+      return ownerProfiles;
     }
-  }, [id]);
+    // Check if ownerProfiles has a data property
+    if (ownerProfiles.data && Array.isArray(ownerProfiles.data)) {
+      return ownerProfiles.data;
+    }
+    return [];
+  }, [ownerProfiles]);
 
-  const fetchProperty = async () => {
+  const fetchProperty = useCallback(async () => {
     try {
       setLoading(true);
       // Use proper API with security and error handling - FIX for Issue #29
@@ -54,19 +67,19 @@ export default function PropertyDetailsScreen() {
       if (response.error) {
         // Handle specific error types with user-friendly messages
         if (response.error.details === 'AUTH_ERROR') {
-          Alert.alert('خطأ المصادقة', 'انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى.');
+          Alert.alert(tProps('errors.authError'), tProps('errors.authErrorMessage'));
           return;
         } else if (response.error.details === 'NETWORK_ERROR') {
-          Alert.alert('خطأ في الشبكة', 'يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.');
+          Alert.alert(tProps('errors.networkError'), tProps('errors.networkErrorMessage'));
           return;
         } else if (response.error.message.includes('No rows returned')) {
-          Alert.alert('العقار غير موجود', 'لم يتم العثور على العقار المطلوب أو قد تم حذفه.');
+          Alert.alert(tProps('errors.notFound'), tProps('errors.notFoundMessage'));
           return;
         } else if (response.error.message.includes('access denied') || response.error.message.includes('permission')) {
-          Alert.alert('ممنوع الوصول', 'ليس لديك الصلاحية لعرض تفاصيل هذا العقار.');
+          Alert.alert(tProps('errors.accessDenied'), tProps('errors.accessDeniedMessage'));
           return;
         } else {
-          Alert.alert('خطأ', response.error.message || 'فشل في تحميل تفاصيل العقار.');
+          Alert.alert(tProps('errors.generalError'), response.error.message || tProps('errors.generalErrorMessage'));
           return;
         }
       }
@@ -74,34 +87,48 @@ export default function PropertyDetailsScreen() {
       if (response.data) {
         setProperty(response.data);
       } else {
-        Alert.alert('خطأ', 'لم يتم العثور على العقار.');
+        Alert.alert(tProps('errors.generalError'), tProps('errors.notFoundMessage'));
       }
     } catch (error: any) {
       console.error('Error fetching property:', error);
-      Alert.alert('خطأ غير متوقع', 'حدث خطأ أثناء تحميل العقار. يرجى المحاولة مرة أخرى.');
+      Alert.alert(tProps('errors.unexpectedError'), tProps('errors.unexpectedErrorMessage'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, tProps]);
+
+  useEffect(() => {
+    if (id) {
+      fetchProperty();
+    }
+  }, [id, fetchProperty]);
 
   const handleOwnershipTransfer = async () => {
     if (!selectedNewOwner || !property) {
-      Alert.alert('خطأ', 'يجب اختيار المالك الجديد');
+      Alert.alert(tProps('errors.generalError'), tProps('transfer.selectNewOwner'));
       return;
     }
 
     setTransferring(true);
     try {
+      console.log('Transferring ownership:', {
+        propertyId: property.id,
+        newOwnerId: selectedNewOwner,
+        currentOwnerId: property.owner_id
+      });
+
       const result = await propertiesApi.update(property.id, {
         owner_id: selectedNewOwner
       });
+
+      console.log('Update result:', result);
 
       if (result.error) {
         throw new Error(result.error.message);
       }
 
       // Send notification to new owner
-      const newOwner = ownerProfiles?.data?.find(owner => owner.id === selectedNewOwner);
+      const newOwner = getOwnersArray().find(owner => owner.id === selectedNewOwner);
       if (newOwner) {
         // Update local property state
         setProperty(prev => prev ? {
@@ -117,14 +144,14 @@ export default function PropertyDetailsScreen() {
         } : null);
 
         Alert.alert(
-          'نجح',
-          `تم نقل ملكية العقار إلى ${newOwner.first_name} ${newOwner.last_name}`,
-          [{ text: 'موافق', onPress: () => setShowTransferModal(false) }]
+          tCommon('success'),
+          `${tProps('transfer.success')} ${newOwner.first_name} ${newOwner.last_name}`,
+          [{ text: tCommon('ok'), onPress: () => setShowTransferModal(false) }]
         );
       }
     } catch (error: any) {
       console.error('Error transferring ownership:', error);
-      Alert.alert('خطأ', error.message || 'فشل في نقل الملكية');
+      Alert.alert(tProps('errors.generalError'), error.message || tProps('transfer.error'));
     } finally {
       setTransferring(false);
     }
@@ -145,17 +172,43 @@ export default function PropertyDetailsScreen() {
     }
   };
 
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'available':
+        return tProps('available');
+      case 'rented':
+        return tProps('rented');
+      case 'maintenance':
+        return tProps('maintenance');
+      case 'reserved':
+        return tProps('reserved');
+      default:
+        return status.charAt(0).toUpperCase() + status.slice(1);
+    }
+  };
+
+  const getPropertyTypeText = (type: string) => {
+    const typeMap: Record<string, string> = {
+      'villa': tProps('propertyType.villa'),
+      'apartment': tProps('propertyType.apartment'),
+      'office': tProps('propertyType.office'),
+      'retail': tProps('propertyType.retail'),
+      'warehouse': tProps('propertyType.warehouse')
+    };
+    return typeMap[type] || type.charAt(0).toUpperCase() + type.slice(1);
+  };
+
   if (loading || !property) {
     return (
       <View style={styles.container}>
         <ModernHeader
-          title="Property Details"
+          title={tProps('details.title')}
           showBackButton={true}
           showNotifications={false}
           onBackPress={() => router.back()}
         />
         <View style={styles.loadingContainer}>
-          <Text>Loading property details...</Text>
+          <Text>{tProps('details.loading')}</Text>
         </View>
       </View>
     );
@@ -164,7 +217,7 @@ export default function PropertyDetailsScreen() {
   return (
     <View style={styles.container}>
       <ModernHeader
-        title="Property Details"
+        title={tProps('details.title')}
         showBackButton={true}
         showNotifications={false}
         onBackPress={() => router.back()}
@@ -200,7 +253,7 @@ export default function PropertyDetailsScreen() {
                 ]}
                 textStyle={{ color: getStatusColor(property.status), fontWeight: '600' }}
               >
-                {property.status.charAt(0).toUpperCase() + property.status.slice(1)}
+                {getStatusText(property.status)}
               </Chip>
             </View>
           </View>
@@ -226,7 +279,7 @@ export default function PropertyDetailsScreen() {
               style={styles.paymentChip}
               textStyle={styles.paymentText}
             >
-              {property.payment_method === 'cash' ? 'Cash Sale' : 'Installment'}
+              {property.payment_method === 'cash' ? tProps('details.cashSale') : tProps('details.installment')}
             </Chip>
           </View>
 
@@ -243,32 +296,32 @@ export default function PropertyDetailsScreen() {
             contentContainerStyle={styles.statsContainer}
           >
             <StatCard
-              title="Area"
-              value={`${property.area_sqm} sqm`}
+              title={tProps('details.area')}
+              value={`${property.area_sqm} ${tProps('details.sqm')}`}
               color={theme.colors.primary}
-              icon={<Square size={20} color={theme.colors.primary} />}
+              iconElement={<Square size={20} color={theme.colors.primary} />}
             />
             {property.bedrooms !== undefined && (
               <StatCard
-                title="Bedrooms"
+                title={tProps('details.bedrooms')}
                 value={property.bedrooms.toString()}
                 color={theme.colors.secondary}
-                icon={<Bed size={20} color={theme.colors.secondary} />}
+                iconElement={<Bed size={20} color={theme.colors.secondary} />}
               />
             )}
             {property.bathrooms !== undefined && (
               <StatCard
-                title="Bathrooms"
+                title={tProps('details.bathrooms')}
                 value={property.bathrooms.toString()}
                 color={theme.colors.tertiary}
-                icon={<Bath size={20} color={theme.colors.tertiary} />}
+                iconElement={<Bath size={20} color={theme.colors.tertiary} />}
               />
             )}
             <StatCard
-              title="Type"
-              value={property.property_type.charAt(0).toUpperCase() + property.property_type.slice(1)}
+              title={tProps('details.type')}
+              value={getPropertyTypeText(property.property_type)}
               color={theme.colors.success}
-              icon={<Home size={20} color={theme.colors.success} />}
+              iconElement={<Home size={20} color={theme.colors.success} />}
             />
           </ScrollView>
         </View>
@@ -276,7 +329,7 @@ export default function PropertyDetailsScreen() {
         {/* Owner Information */}
         {property.owner && (
           <ModernCard style={styles.ownerCard}>
-            <Text style={styles.sectionTitle}>Owner Information</Text>
+            <Text style={styles.sectionTitle}>{tProps('details.ownerInformation')}</Text>
             <View style={styles.ownerInfo}>
               <View style={styles.ownerDetails}>
                 <View style={styles.ownerRow}>
@@ -301,7 +354,7 @@ export default function PropertyDetailsScreen() {
                 onPress={() => router.push(`/people/${property.owner_id}`)}
                 style={styles.contactButton}
               >
-                Contact
+                {tProps('details.contact')}
               </Button>
             </View>
           </ModernCard>
@@ -309,7 +362,7 @@ export default function PropertyDetailsScreen() {
 
         {/* Quick Actions */}
         <ModernCard style={styles.actionsCard}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <Text style={styles.sectionTitle}>{tProps('details.quickActions')}</Text>
           <View style={styles.actionButtons}>
             <Button
               mode="contained"
@@ -317,7 +370,7 @@ export default function PropertyDetailsScreen() {
               style={[styles.actionButton, { backgroundColor: theme.colors.warning }]}
               icon={() => <Home size={20} color="white" />}
             >
-              Maintenance
+              {tProps('details.maintenance')}
             </Button>
             <Button
               mode="contained"
@@ -325,7 +378,7 @@ export default function PropertyDetailsScreen() {
               style={[styles.actionButton, { backgroundColor: theme.colors.success }]}
               icon={() => <DollarSign size={20} color="white" />}
             >
-              Add Payment
+              {tProps('details.addPayment')}
             </Button>
             <Button
               mode="contained"
@@ -333,7 +386,7 @@ export default function PropertyDetailsScreen() {
               style={[styles.actionButton, { backgroundColor: theme.colors.secondary }]}
               icon={() => <Calendar size={20} color="white" />}
             >
-              New Contract
+              {tProps('details.newContract')}
             </Button>
             
             {/* Ownership Transfer Button for Managers/Admins */}
@@ -343,8 +396,14 @@ export default function PropertyDetailsScreen() {
                 onPress={() => setShowTransferModal(true)}
                 style={[styles.actionButton, { backgroundColor: theme.colors.error }]}
                 icon={() => <User size={20} color="white" />}
+                disabled={ownersLoading || getOwnersArray().length === 0}
               >
-                Transfer Ownership
+                {ownersLoading 
+                  ? tProps('transfer.loading') 
+                  : getOwnersArray().length === 0
+                  ? 'No owners available'
+                  : tProps('details.transferOwnership')
+                }
               </Button>
             )}
           </View>
@@ -358,41 +417,47 @@ export default function PropertyDetailsScreen() {
           onDismiss={() => setShowTransferModal(false)}
           contentContainerStyle={styles.modalContainer}
         >
-          <Text style={styles.modalTitle}>Transfer Property Ownership</Text>
+          <Text style={styles.modalTitle}>{tProps('transfer.title')}</Text>
           <Text style={styles.modalSubtitle}>
-            Select the new owner for "{property?.title}"
+            {tProps('transfer.subtitle')} &ldquo;{property?.title}&rdquo;
           </Text>
 
           <View style={styles.ownerSelectionContainer}>
             {ownersLoading ? (
-              <Text style={styles.loadingText}>Loading owners...</Text>
+              <Text style={styles.loadingText}>{tProps('transfer.loading')}</Text>
+            ) : ownersError ? (
+              <Text style={styles.loadingText}>Error loading owners: {ownersError.message}</Text>
+            ) : getOwnersArray().length === 0 ? (
+              <Text style={styles.loadingText}>No owners found</Text>
             ) : (
               <ScrollView style={styles.ownersList} showsVerticalScrollIndicator={false}>
-                {ownerProfiles?.data?.filter(owner => owner.id !== property?.owner_id).map((owner: any) => (
-                  <TouchableOpacity
-                    key={owner.id}
-                    style={[
-                      styles.ownerOptionModal,
-                      selectedNewOwner === owner.id && styles.selectedOwnerOptionModal
-                    ]}
-                    onPress={() => setSelectedNewOwner(owner.id)}
-                  >
-                    <View style={styles.ownerInfo}>
-                      <Text style={[
-                        styles.ownerNameModal,
-                        selectedNewOwner === owner.id && styles.selectedOwnerNameModal
-                      ]}>
-                        {owner.first_name} {owner.last_name}
-                      </Text>
-                      {owner.email && (
-                        <Text style={styles.ownerEmailModal}>{owner.email}</Text>
+                {getOwnersArray()
+                  .filter(owner => owner.id !== property?.owner_id)
+                  .map((owner: any) => (
+                    <TouchableOpacity
+                      key={owner.id}
+                      style={[
+                        styles.ownerOptionModal,
+                        selectedNewOwner === owner.id && styles.selectedOwnerOptionModal
+                      ]}
+                      onPress={() => setSelectedNewOwner(owner.id)}
+                    >
+                      <View style={styles.ownerInfo}>
+                        <Text style={[
+                          styles.ownerNameModal,
+                          selectedNewOwner === owner.id && styles.selectedOwnerNameModal
+                        ]}>
+                          {owner.first_name} {owner.last_name}
+                        </Text>
+                        {owner.email && (
+                          <Text style={styles.ownerEmailModal}>{owner.email}</Text>
+                        )}
+                      </View>
+                      {selectedNewOwner === owner.id && (
+                        <IconButton icon="check" size={20} iconColor={theme.colors.primary} />
                       )}
-                    </View>
-                    {selectedNewOwner === owner.id && (
-                      <IconButton icon="check" size={20} iconColor={theme.colors.primary} />
-                    )}
-                  </TouchableOpacity>
-                ))}
+                    </TouchableOpacity>
+                  ))}
               </ScrollView>
             )}
           </View>
@@ -403,7 +468,7 @@ export default function PropertyDetailsScreen() {
               onPress={() => setShowTransferModal(false)}
               style={styles.cancelButton}
             >
-              Cancel
+              {tProps('transfer.cancel')}
             </Button>
             <Button
               mode="contained"
@@ -412,7 +477,7 @@ export default function PropertyDetailsScreen() {
               loading={transferring}
               style={styles.transferButton}
             >
-              Transfer
+              {tProps('transfer.transfer')}
             </Button>
           </View>
         </Modal>

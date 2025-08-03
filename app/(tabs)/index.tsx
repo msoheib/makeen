@@ -103,12 +103,14 @@ export default function DashboardScreen() {
   const { 
     data: properties, 
     loading: propertiesLoading, 
+    error: propertiesError,
     refetch: refetchProperties 
   } = useApi(() => propertiesApi.getAll(), []);
 
   const { 
     data: tenants, 
     loading: tenantsLoading, 
+    error: tenantsError,
     refetch: refetchTenants 
   } = useApi(() => profilesApi.getTenants(), []);
 
@@ -168,6 +170,8 @@ export default function DashboardScreen() {
     screenPermissionCheck: SCREEN_PERMISSIONS.find(p => p.screen === 'dashboard')
   });
 
+
+
   // More detailed debug for dashboard access
   if (!canAccessDashboard && !permissionLoading) {
     console.log('[Dashboard Debug] Access Denied Details:', {
@@ -217,24 +221,15 @@ export default function DashboardScreen() {
   const tenantsData = tenants?.data || [];
   const dashboardData = dashboardSummary?.data;
   
-  console.log('[Dashboard Debug] Properties Data:', {
-    propertiesCount: propertiesData.length,
-    tenantsCount: tenantsData.length,
-    propertiesData: propertiesData.slice(0, 2), // First 2 for debugging
-    summaryLoading: summaryLoading,
-    summaryData: dashboardSummary?.data,
-    summaryError: summaryError
-  });
-  
   // Enhanced property statistics with real data
   const propertyStats = {
     totalProperties: dashboardData?.total_properties || propertiesData.length,
-    occupied: dashboardData?.occupied || propertiesData.filter(p => p.status === 'rented' || p.status === 'occupied').length,
+    occupied: dashboardData?.occupied || propertiesData.filter(p => p.status === 'rented').length,
     available: dashboardData?.available || propertiesData.filter(p => p.status === 'available').length,
     maintenance: dashboardData?.maintenance || propertiesData.filter(p => p.status === 'maintenance').length,
     occupancyRate: dashboardData?.total_properties > 0 ? 
       Math.round((dashboardData.occupied / dashboardData.total_properties) * 100) : 
-      (propertiesData.length > 0 ? Math.round((propertiesData.filter(p => p.status === 'rented' || p.status === 'occupied').length / propertiesData.length) * 100) : 0)
+      (propertiesData.length > 0 ? Math.round((propertiesData.filter(p => p.status === 'rented').length / propertiesData.length) * 100) : 0)
   };
   
   // Enhanced tenant statistics with better calculations
@@ -263,6 +258,21 @@ export default function DashboardScreen() {
     netProfit: Math.floor((dashboardData?.total_monthly_rent || 0) * 0.7),
     profitMargin: dashboardData?.total_monthly_rent > 0 ? 70 : 0 // 70% after 30% expenses
   };
+
+  // Check for errors only - always show dashboard content
+  const hasError = summaryError || propertiesError || tenantsError;
+  
+  console.log('[Dashboard Debug] Properties Data:', {
+    propertiesCount: propertiesData.length,
+    tenantsCount: tenantsData.length,
+    propertiesData: propertiesData.slice(0, 2), // First 2 for debugging
+    summaryLoading: summaryLoading,
+    summaryData: dashboardSummary?.data,
+    summaryError: summaryError,
+    propertyStats: propertyStats,
+    tenantStats: tenantStats,
+    financialSummary: financialSummary
+  });
 
   // Enhanced recent activities with more realistic data
   const recentActivities = [
@@ -613,6 +623,50 @@ export default function DashboardScreen() {
     </View>
   );
 
+  const renderEmptyState = () => (
+    <View style={styles.emptyStateContainer}>
+      <View style={styles.emptyStateIcon}>
+        <Building2 size={64} color={theme.colors.onSurfaceVariant} />
+      </View>
+      <Text style={[styles.emptyStateTitle, { color: theme.colors.onBackground }]}>
+        لا توجد بيانات لعرضها
+      </Text>
+      <Text style={[styles.emptyStateMessage, { color: theme.colors.onSurfaceVariant }]}>
+        لم يتم العثور على عقارات أو مستأجرين في النظام.{'\n'}
+        ابدأ بإضافة عقار جديد أو مستأجر للبدء في استخدام النظام.
+      </Text>
+      <View style={styles.emptyStateActions}>
+        <Text style={[styles.emptyStateActionText, { color: theme.colors.primary }]}>
+          • أضف عقار جديد من صفحة العقارات{'\n'}
+          • أضف مستأجر جديد من صفحة المستأجرين{'\n'}
+          • تحقق من إعدادات المستخدم والصلاحيات
+        </Text>
+      </View>
+    </View>
+  );
+
+  const renderErrorState = () => (
+    <View style={styles.emptyStateContainer}>
+      <View style={styles.emptyStateIcon}>
+        <AlertCircle size={64} color="#FF5722" />
+      </View>
+      <Text style={[styles.emptyStateTitle, { color: theme.colors.onBackground }]}>
+        خطأ في تحميل البيانات
+      </Text>
+      <Text style={[styles.emptyStateMessage, { color: theme.colors.onSurfaceVariant }]}>
+        حدث خطأ أثناء تحميل بيانات لوحة التحكم.{'\n'}
+        تحقق من اتصال الإنترنت وحاول مرة أخرى.
+      </Text>
+      <View style={styles.emptyStateActions}>
+        <Text style={[styles.emptyStateActionText, { color: theme.colors.primary }]}>
+          • اسحب للأسفل لتحديث البيانات{'\n'}
+          • تحقق من اتصال الإنترنت{'\n'}
+          • تواصل مع الدعم الفني إذا استمرت المشكلة
+        </Text>
+      </View>
+    </View>
+  );
+
   const renderRecentActivity = () => (
     <View style={styles.activitySection}>
       <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
@@ -691,10 +745,16 @@ export default function DashboardScreen() {
         ) : (
           /* Admin/Manager/Owner Dashboard - Full view */
           <>
-            {renderQuickStats()}
-            {renderFinancialCards()}
-            {renderPropertyOverview()}
-            {renderRecentActivity()}
+            {hasError ? (
+              renderErrorState()
+            ) : (
+              <>
+                {renderQuickStats()}
+                {renderFinancialCards()}
+                {renderPropertyOverview()}
+                {renderRecentActivity()}
+              </>
+            )}
           </>
         )}
       </ScrollView>
@@ -1017,7 +1077,36 @@ const styles = StyleSheet.create({
   },
   noPropertyMessage: {
     fontSize: 14,
-    ...rtlStyles.textAlignEnd,
+  },
+  // Empty state styles
+  emptyStateContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 20,
+  },
+  emptyStateIcon: {
+    marginBottom: 24,
+  },
+  emptyStateTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  emptyStateMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 24,
+  },
+  emptyStateActions: {
+    alignItems: 'center',
+  },
+  emptyStateActionText: {
+    fontSize: 14,
+    textAlign: 'center',
     lineHeight: 20,
   },
 });

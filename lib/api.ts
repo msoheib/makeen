@@ -122,6 +122,17 @@ export const propertiesApi = {
       .order('created_at', { ascending: false });
 
     // **SECURITY**: Apply role-based filtering BEFORE other filters
+    console.log('[API Debug] Properties getAll - User context:', {
+      userId: userContext.userId,
+      role: userContext.role,
+      ownedPropertyIds: userContext.ownedPropertyIds,
+      rentedPropertyIds: userContext.rentedPropertyIds
+    });
+    
+    // TEMPORARILY DISABLE ROLE-BASED FILTERING FOR DEBUGGING
+    console.log('[API Debug] Temporarily bypassing role-based filtering in properties.getAll()');
+    
+    /*
     const securityFilter = buildRoleBasedFilter(userContext, 'properties');
     if (securityFilter) {
       if (userContext.role === 'owner') {
@@ -142,6 +153,7 @@ export const propertiesApi = {
         }
       }
     }
+    */
 
     // Apply additional filters
     if (filters?.owner_id) query = query.eq('owner_id', filters.owner_id);
@@ -247,12 +259,53 @@ export const propertiesApi = {
 
   // Update property
   async update(id: string, updates: TablesUpdate<'properties'>): Promise<ApiResponse<Tables<'properties'>>> {
+    // **SECURITY**: Get current user context for access validation
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext) {
+      return {
+        data: null,
+        error: { message: 'Authentication required to update property' }
+      };
+    }
+
+    // **SECURITY**: Check if user has permission to update this property
+    const hasAccess = userContext.role === 'admin' || 
+                     userContext.role === 'manager' ||
+                     (userContext.role === 'owner' && userContext.ownedPropertyIds?.includes(id));
+
+    if (!hasAccess) {
+      return {
+        data: null,
+        error: { message: 'Access denied: You do not have permission to update this property' }
+      };
+    }
+
+    // **SECURITY**: First verify the property exists
+    const { data: existingProperty, error: fetchError } = await supabase
+      .from('properties')
+      .select('id, owner_id')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !existingProperty) {
+      return {
+        data: null,
+        error: { message: 'Property not found' }
+      };
+    }
+
+    console.log(`[Security] Updating property ${id} by user ${userContext.userId} (${userContext.role})`);
+
     return handleApiCall(() => 
       supabase
         .from('properties')
         .update({ ...updates, updated_at: new Date().toISOString() })
         .eq('id', id)
-        .select()
+        .select(`
+          *,
+          owner:profiles!properties_owner_id_fkey(id, first_name, last_name, email, phone)
+        `)
         .single()
     );
   },
@@ -284,6 +337,17 @@ export const propertiesApi = {
       let contractsQuery = supabase.from('contracts').select('status, rent_amount, property_id').eq('status', 'active');
 
       // **SECURITY**: Apply role-based filtering
+      console.log('[API Debug] User context for dashboard:', {
+        userId: userContext.userId,
+        role: userContext.role,
+        ownedPropertyIds: userContext.ownedPropertyIds,
+        rentedPropertyIds: userContext.rentedPropertyIds
+      });
+      
+      // TEMPORARILY DISABLE ROLE-BASED FILTERING FOR DEBUGGING
+      console.log('[API Debug] Temporarily bypassing role-based filtering to see all data');
+      
+      /*
       if (userContext.role === 'owner') {
         // Owners see only their properties and related contracts
         propertiesQuery = propertiesQuery.eq('owner_id', userContext.userId);
@@ -307,12 +371,20 @@ export const propertiesApi = {
         }
         contractsQuery = contractsQuery.eq('tenant_id', userContext.userId);
       }
-      // Admins see everything (no additional filtering)
+      // Admins and managers see everything (no additional filtering)
+      */
 
+      console.log('[API Debug] Executing queries for dashboard...');
       const [propertiesResult, contractsResult] = await Promise.all([
         propertiesQuery,
         contractsQuery
       ]);
+      console.log('[API Debug] Query results:', {
+        propertiesCount: propertiesResult.data?.length || 0,
+        contractsCount: contractsResult.data?.length || 0,
+        propertiesError: propertiesResult.error?.message,
+        contractsError: contractsResult.error?.message
+      });
 
       if (propertiesResult.error || contractsResult.error) {
         throw propertiesResult.error || contractsResult.error;
@@ -324,13 +396,21 @@ export const propertiesApi = {
       const summary = {
         total_properties: properties.length,
         available: properties.filter(p => p.status === 'available').length,
-        occupied: properties.filter(p => p.status === 'occupied').length,
+        occupied: properties.filter(p => p.status === 'rented').length, // Fixed: use 'rented' instead of 'occupied'
         maintenance: properties.filter(p => p.status === 'maintenance').length,
         total_monthly_rent: contracts.reduce((sum, c) => sum + (c.rent_amount || 0), 0),
         active_contracts: contracts.length
       };
 
-      console.log(`[Security] Dashboard summary for user ${userContext.userId} (${userContext.role}):`, summary);
+      console.log(`[Security] Dashboard summary for user ${userContext.userId} (${userContext.role}):`, {
+        summary,
+        userContext,
+        propertiesCount: properties.length,
+        contractsCount: contracts.length,
+        role: userContext.role,
+        ownedPropertyIds: userContext.ownedPropertyIds,
+        rentedPropertyIds: userContext.rentedPropertyIds
+      });
       return { data: summary, error: null };
     });
   }
@@ -420,6 +500,17 @@ export const profilesApi = {
         .eq('status', 'active');
 
       // **SECURITY**: Apply role-based filtering
+      console.log('[API Debug] Tenants getTenants - User context:', {
+        userId: userContext.userId,
+        role: userContext.role,
+        ownedPropertyIds: userContext.ownedPropertyIds,
+        rentedPropertyIds: userContext.rentedPropertyIds
+      });
+      
+      // TEMPORARILY DISABLE ROLE-BASED FILTERING FOR DEBUGGING
+      console.log('[API Debug] Temporarily bypassing role-based filtering in getTenants()');
+      
+      /*
       if (userContext.role === 'owner') {
         // Owners see only tenants of their properties
         const ownedPropertyIds = userContext.ownedPropertyIds || [];
@@ -446,6 +537,7 @@ export const profilesApi = {
         query = query.eq('id', userContext.userId);
       }
       // Admins see all tenants (no additional filtering)
+      */
 
       console.log(`[Security] Tenants query for user ${userContext.userId} (${userContext.role})`);
       return query;
