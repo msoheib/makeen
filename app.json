@@ -25,7 +25,6 @@
         "backgroundColor": "#4C2661"
       },
       "package": "com.decimaldrown.propertymanagement",
-      "supportsRtl": true,
       "allowBackup": false,
       "permissions": [
         "INTERNET",

@@ -17,7 +17,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useApi } from '@/hooks/useApi';
 import { contractsApi, propertiesApi, profilesApi } from '@/lib/api';
 import { spacing } from '@/lib/theme';
-import { ModernHeader } from '@/components/ModernHeader';
+import ModernHeader from '@/components/ModernHeader';
 import { 
   FileText, 
   MapPin, 
@@ -185,13 +185,7 @@ export default function AddContractScreen() {
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ModernHeader 
         title="Add Contract" 
-        showBack
-        action={{
-          icon: Check,
-          onPress: handleSubmit,
-          label: 'Save Contract',
-          loading: loading
-        }}
+        showBackButton={true}
       />
 
       <ScrollView style={styles.content}>

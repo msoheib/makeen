@@ -16,6 +16,14 @@ type ApiResponse<T> = {
   count?: number;
 };
 
+// Legacy response type for backward compatibility
+type LegacyApiResponse<T> = {
+  success: boolean;
+  data?: T;
+  error?: string;
+  count?: number;
+};
+
 // Generic functions
 async function handleApiCall<T>(
   operation: () => Promise<{ data: T | null; error: any; count?: number }>
@@ -4431,7 +4439,7 @@ export const buyerApi = {
 
   // Withdraw a bid
   async withdrawBid(bidId: string, buyerId: string): Promise<ApiResponse<any>> {
-    try {
+    return handleApiCall(async () => {
       const { data, error } = await supabase
         .from('bids')
         .update({
@@ -4446,10 +4454,8 @@ export const buyerApi = {
         .single();
 
       if (error) throw error;
-      return { success: true, data };
-    } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : 'Failed to withdraw bid' };
-    }
+      return { data, error: null };
+    });
   }
 };
 
@@ -4484,7 +4490,10 @@ export const notificationsApi = {
     if (filters?.notification_type) query = query.eq('notification_type', filters.notification_type);
     if (filters?.priority) query = query.eq('priority', filters.priority);
 
-    return handleApiCall(() => query);
+    return handleApiCall(async () => {
+      const result = await query;
+      return { data: result.data, error: result.error, count: result.count };
+    });
   },
 
   // Get unread notifications count
@@ -4521,15 +4530,16 @@ export const notificationsApi = {
       };
     }
 
-    return handleApiCall(() =>
-      supabase
+    return handleApiCall(async () => {
+      const result = await supabase
         .from('notifications')
         .update({ is_read: true, updated_at: new Date().toISOString() })
         .eq('id', notificationId)
         .eq('recipient_id', userContext.userId)
         .select()
-        .single()
-    );
+        .single();
+      return { data: result.data, error: result.error };
+    });
   },
 
   // Mark all notifications as read
@@ -4543,13 +4553,14 @@ export const notificationsApi = {
       };
     }
 
-    return handleApiCall(() =>
-      supabase
+    return handleApiCall(async () => {
+      const result = await supabase
         .from('notifications')
         .update({ is_read: true, updated_at: new Date().toISOString() })
         .eq('recipient_id', userContext.userId)
-        .eq('is_read', false)
-    );
+        .eq('is_read', false);
+      return { data: result.data, error: result.error };
+    });
   },
 
   // Create notification
@@ -4563,8 +4574,8 @@ export const notificationsApi = {
     related_entity_type?: string;
     related_entity_id?: string;
   }): Promise<ApiResponse<any>> {
-    return handleApiCall(() =>
-      supabase
+    return handleApiCall(async () => {
+      const result = await supabase
         .from('notifications')
         .insert({
           ...notification,
@@ -4572,8 +4583,9 @@ export const notificationsApi = {
           created_at: new Date().toISOString()
         })
         .select()
-        .single()
-    );
+        .single();
+      return { data: result.data, error: result.error };
+    });
   }
 };
 

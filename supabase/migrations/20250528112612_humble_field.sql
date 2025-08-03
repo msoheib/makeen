@@ -171,6 +171,17 @@ CREATE POLICY "Users can view their own profile"
   TO authenticated
   USING (auth.uid() = id);
 
+CREATE POLICY "Managers and admins can view all profiles"
+  ON profiles FOR SELECT
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE id = auth.uid() 
+      AND role IN ('admin', 'manager')
+    )
+  );
+
 CREATE POLICY "Users can update their own profile"
   ON profiles FOR UPDATE
   TO authenticated

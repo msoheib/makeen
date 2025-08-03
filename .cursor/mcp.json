@@ -1,17 +1,64 @@
 {
   "mcpServers": {
-    "supabase": {
-      "command": "wsl",
+    "context7": {
+      "command": "cmd",
       "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@upstash/context7-mcp@latest"
+      ]
+    },
+    "Magic MCP": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@21st-dev/magic@latest",
+        "API_KEY=\"f45ee749e3c6c323718018e27f57b891ce8e0a0bd6ba914b38c6de67c487582a\""
+      ]
+    },
+    "memory": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ]
+    },
+    "playwright": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@halftheopposite/mcp-server-playwright"
+      ]
+    },
+    "puppeteer": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-puppeteer"
+      ],
+      "alwaysAllow": [
+        "puppeteer_navigate"
+      ]
+    },
+    "supabase": {
+      "command": "cmd",
+      "args": [
+        "/c",
         "npx",
         "-y",
         "@supabase/mcp-server-supabase@latest",
-        "--read-only",
-        "--project-ref=fbabpaorcvatejkrelrf"
-      ],
-      "env": {
-        "SUPABASE_ACCESS_TOKEN": "sbp_1ca78abfe8bfb034569e4091d1d8f7ea5361e828"
-      }
+        "--access-token",
+        "sbp_8c014db910853569e660b3c065a33e8076c858a9"
+      ]
     }
   }
 }
