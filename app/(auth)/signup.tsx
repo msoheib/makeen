@@ -40,11 +40,26 @@ export default function SignUpScreen() {
       return;
     }
     
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+    
+    // Validate role
+    if (!['tenant', 'owner', 'buyer'].includes(role)) {
+      setError('Please select a valid role');
+      return;
+    }
+    
     setLoading(true);
     setError(null);
     
     try {
       // Create user in Supabase Auth
+      console.log('Attempting signup with:', { email, role, firstName, lastName });
+      
       const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -57,11 +72,17 @@ export default function SignUpScreen() {
         }
       });
       
-      if (authError) throw authError;
+      console.log('Signup response:', { data, error: authError });
+      
+      if (authError) {
+        console.error('Auth signup error:', authError);
+        throw authError;
+      }
       
       if (data.user) {
-        // Determine initial status based on role
-        const initialStatus = role === 'owner' ? 'pending' : 'approved';
+        // Determine initial status and approval status based on role
+        const initialStatus = 'active'; // All users start with active status
+        const approvalStatus = role === 'owner' ? 'pending' : 'approved'; // Use approval_status for pending
         
         // Create user profile with selected role and status
         const { error: profileError } = await supabase
@@ -73,11 +94,15 @@ export default function SignUpScreen() {
               last_name: lastName,
               email: email,
               role: role, // Set the selected role
-              status: initialStatus, // Property owners require approval
+              status: initialStatus, // Use valid status values
+              approval_status: approvalStatus, // Use approval_status for pending/approved
             }
           ]);
           
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+          throw profileError;
+        }
         
         // Show appropriate message based on role
         if (role === 'owner') {
@@ -94,10 +119,18 @@ export default function SignUpScreen() {
         setError(t('signup.signupInitiated'));
       }
     } catch (error: any) {
-      if (error instanceof AuthApiError && error.message.includes('User already registered')) {
-        setError(t('signup.emailAlreadyInUse'));
+      console.error('Full signup error:', error);
+      if (error instanceof AuthApiError) {
+        if (error.message.includes('User already registered')) {
+          setError(t('signup.emailAlreadyInUse'));
+        } else if (error.message.includes('Password should be at least')) {
+          setError('Password must be at least 6 characters long');
+        } else if (error.message.includes('Invalid email')) {
+          setError('Please enter a valid email address');
+        } else {
+          setError(`Signup error: ${error.message}`);
+        }
       } else {
-        console.error('Error in handleSignUp:', error);
         setError(error.message || t('signup.signupFailed'));
       }
     } finally {
