@@ -5,20 +5,22 @@ import {
   Alert,
   TouchableOpacity,
   Platform,
+  ActionSheetIOS,
+  Modal,
 } from 'react-native';
 import {
   Avatar,
   Button,
   ActivityIndicator,
-  Menu,
-  Portal,
   Text,
+  Portal,
 } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
 import { theme, spacing } from '@/lib/theme';
-import { Camera as CameraIcon, Image as ImageIcon, User, Upload } from 'lucide-react-native';
+import { Camera as CameraIcon, Image as ImageIcon, User, Upload, X } from 'lucide-react-native';
 import { uploadImage, validateImage, deleteImage, ImageUploadResult } from '@/lib/imageUpload';
 import { useTranslation } from '@/lib/useTranslation';
+import { supabase } from '@/lib/supabase';
 
 interface ProfilePictureUploadProps {
   currentImageUrl?: string | null;
@@ -37,7 +39,16 @@ export default function ProfilePictureUpload({
 }: ProfilePictureUploadProps) {
   const { t } = useTranslation('profile');
   const [uploading, setUploading] = useState(false);
-  const [menuVisible, setMenuVisible] = useState(false);
+  const [showWebModal, setShowWebModal] = useState(false);
+
+  // Debug logging
+  console.log('ProfilePictureUpload: Component rendered with props:', {
+    currentImageUrl,
+    userId,
+    disabled,
+    size,
+    uploading
+  });
 
   // Request permissions on component mount
   React.useEffect(() => {
@@ -57,9 +68,93 @@ export default function ProfilePictureUpload({
     }
   };
 
+  const showImageOptions = () => {
+    console.log('ProfilePictureUpload: showImageOptions called');
+    console.log('ProfilePictureUpload: uploading =', uploading);
+    console.log('ProfilePictureUpload: disabled =', disabled);
+    
+    if (uploading || disabled) {
+      console.log('ProfilePictureUpload: Button is disabled, returning');
+      return;
+    }
+
+    console.log('ProfilePictureUpload: Platform =', Platform.OS);
+
+    if (Platform.OS === 'ios') {
+      const options = ['Take Photo', 'Choose from Gallery'];
+      if (currentImageUrl) {
+        options.push('Remove Picture');
+      }
+      options.push('Cancel');
+
+      console.log('ProfilePictureUpload: Showing iOS ActionSheet with options:', options);
+
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options,
+          cancelButtonIndex: options.length - 1,
+          destructiveButtonIndex: currentImageUrl ? 2 : undefined,
+        },
+        (buttonIndex) => {
+          console.log('ProfilePictureUpload: ActionSheet button pressed:', buttonIndex);
+          switch (buttonIndex) {
+            case 0:
+              pickImageFromCamera();
+              break;
+            case 1:
+              pickImageFromGallery();
+              break;
+            case 2:
+              if (currentImageUrl) {
+                removeProfilePicture();
+              }
+              break;
+          }
+        }
+      );
+    } else if (Platform.OS === 'web') {
+      // For Web, use custom modal
+      console.log('ProfilePictureUpload: Showing Web Modal');
+      setShowWebModal(true);
+    } else {
+      // For Android, use Alert with buttons
+      const options = ['Take Photo', 'Choose from Gallery'];
+      if (currentImageUrl) {
+        options.push('Remove Picture');
+      }
+      options.push('Cancel');
+
+      console.log('ProfilePictureUpload: Showing Alert with options:', options);
+
+      Alert.alert(
+        'Profile Picture',
+        'Choose an option:',
+        options.map((option, index) => ({
+          text: option,
+          onPress: () => {
+            console.log('ProfilePictureUpload: Alert button pressed:', index, option);
+            switch (index) {
+              case 0:
+                pickImageFromCamera();
+                break;
+              case 1:
+                pickImageFromGallery();
+                break;
+              case 2:
+                if (currentImageUrl) {
+                  removeProfilePicture();
+                }
+                break;
+            }
+          },
+          style: option === 'Remove Picture' ? 'destructive' : 'default',
+        }))
+      );
+    }
+  };
+
   const pickImageFromCamera = async () => {
     try {
-      setMenuVisible(false);
       setUploading(true);
 
       const result = await ImagePicker.launchCameraAsync({
@@ -82,7 +177,6 @@ export default function ProfilePictureUpload({
 
   const pickImageFromGallery = async () => {
     try {
-      setMenuVisible(false);
       setUploading(true);
 
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -106,6 +200,20 @@ export default function ProfilePictureUpload({
   const processImage = async (uri: string) => {
     try {
       console.log('ProfilePictureUpload: Starting image processing for URI:', uri);
+      
+      // Check authentication first
+      const { data: { session }, error: authError } = await supabase.auth.getSession();
+      console.log('ProfilePictureUpload: Authentication check:', { 
+        hasSession: !!session, 
+        userId: session?.user?.id,
+        authError: authError?.message 
+      });
+      
+      if (!session) {
+        console.error('ProfilePictureUpload: No authenticated session found');
+        Alert.alert('Authentication Error', 'Please log in again to upload profile pictures.');
+        return;
+      }
       
       // Validate image
       const validation = await validateImage(uri, 2 * 1024 * 1024); // 2MB limit for profile pictures
@@ -191,6 +299,40 @@ export default function ProfilePictureUpload({
     return userId.slice(0, 2).toUpperCase() || 'U';
   };
 
+  const testUpload = async () => {
+    try {
+      console.log('ProfilePictureUpload: Testing simple upload...');
+      
+      // Create a simple test image (1x1 pixel PNG)
+      const testImageData = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+      
+      // Convert data URL to blob
+      const response = await fetch(testImageData);
+      const testBlob = await response.blob();
+      const testFile = new File([testBlob], 'test.png', { type: 'image/png' });
+      
+      console.log('ProfilePictureUpload: Test image file created:', testFile);
+      
+      // Try to upload to profile-pictures bucket
+      const { data, error } = await supabase.storage
+        .from('profile-pictures')
+        .upload('test.png', testFile);
+      
+      console.log('ProfilePictureUpload: Test upload result:', { data, error });
+      
+      if (error) {
+        console.error('ProfilePictureUpload: Test upload failed:', error);
+        Alert.alert('Test Upload Failed', error.message);
+      } else {
+        console.log('ProfilePictureUpload: Test upload successful!');
+        Alert.alert('Test Upload Success', 'Storage is working correctly.');
+      }
+    } catch (error: any) {
+      console.error('ProfilePictureUpload: Test upload error:', error);
+      Alert.alert('Test Upload Error', error.message);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.avatarContainer}>
@@ -210,50 +352,107 @@ export default function ProfilePictureUpload({
         )}
 
         {/* Upload/Change Button */}
-        <Menu
-          visible={menuVisible}
-          onDismiss={() => setMenuVisible(false)}
-          anchor={
-            <TouchableOpacity
-              style={[
-                styles.uploadButton,
-                uploading && styles.uploadButtonDisabled,
-                { width: size / 3, height: size / 3, borderRadius: size / 6 }
-              ]}
-              onPress={() => setMenuVisible(true)}
-              disabled={uploading || disabled}
-            >
-              {uploading ? (
-                <ActivityIndicator size="small" color="white" />
-              ) : (
-                <Upload size={size / 6} color="white" />
-              )}
-            </TouchableOpacity>
-          }
+        <TouchableOpacity
+          style={[
+            styles.uploadButton,
+            uploading && styles.uploadButtonDisabled,
+            { width: size / 3, height: size / 3, borderRadius: size / 6 }
+          ]}
+          onPress={() => {
+            console.log('ProfilePictureUpload: TouchableOpacity pressed');
+            showImageOptions();
+          }}
+          disabled={uploading || disabled}
+          activeOpacity={0.7}
         >
-          <Menu.Item
-            onPress={pickImageFromCamera}
-            title="Take Photo"
-            leadingIcon={() => <CameraIcon size={20} color={theme.colors.onSurface} />}
-          />
-          <Menu.Item
-            onPress={pickImageFromGallery}
-            title="Choose from Gallery"
-            leadingIcon={() => <ImageIcon size={20} color={theme.colors.onSurface} />}
-          />
-          {currentImageUrl && (
-            <Menu.Item
-              onPress={removeProfilePicture}
-              title="Remove Picture"
-              leadingIcon={() => <User size={20} color={theme.colors.error} />}
-              titleStyle={{ color: theme.colors.error }}
-            />
+          {uploading ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+            <Upload size={size / 6} color="white" />
           )}
-        </Menu>
+        </TouchableOpacity>
       </View>
 
       {uploading && (
         <Text style={styles.uploadingText}>Uploading...</Text>
+      )}
+
+      {/* Web Modal for Image Options */}
+      {Platform.OS === 'web' && (
+        <Portal>
+          <Modal
+            visible={showWebModal}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setShowWebModal(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Profile Picture</Text>
+                  <TouchableOpacity
+                    onPress={() => setShowWebModal(false)}
+                    style={styles.closeButton}
+                  >
+                    <X size={20} color={theme.colors.onSurface} />
+                  </TouchableOpacity>
+                </View>
+                
+                <View style={styles.modalOptions}>
+                  <TouchableOpacity
+                    style={styles.modalOption}
+                    onPress={() => {
+                      setShowWebModal(false);
+                      pickImageFromCamera();
+                    }}
+                  >
+                    <CameraIcon size={24} color={theme.colors.primary} />
+                    <Text style={styles.modalOptionText}>Take Photo</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={styles.modalOption}
+                    onPress={() => {
+                      setShowWebModal(false);
+                      pickImageFromGallery();
+                    }}
+                  >
+                    <ImageIcon size={24} color={theme.colors.primary} />
+                    <Text style={styles.modalOptionText}>Choose from Gallery</Text>
+                  </TouchableOpacity>
+                  
+                  {currentImageUrl && (
+                    <TouchableOpacity
+                      style={[styles.modalOption, styles.modalOptionDestructive]}
+                      onPress={() => {
+                        setShowWebModal(false);
+                        removeProfilePicture();
+                      }}
+                    >
+                      <User size={24} color={theme.colors.error} />
+                      <Text style={[styles.modalOptionText, { color: theme.colors.error }]}>
+                        Remove Picture
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  
+                  {/* Test Upload Button for Debugging */}
+                  <TouchableOpacity
+                    style={[styles.modalOption, { backgroundColor: theme.colors.tertiaryContainer }]}
+                    onPress={() => {
+                      setShowWebModal(false);
+                      testUpload();
+                    }}
+                  >
+                    <Text style={[styles.modalOptionText, { color: theme.colors.onTertiaryContainer }]}>
+                      Test Upload (Debug)
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+        </Portal>
       )}
     </View>
   );
@@ -310,5 +509,66 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.colors.onSurfaceVariant,
     textAlign: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: 10,
+    width: '80%',
+    maxWidth: 350,
+    elevation: 5,
+    ...Platform.select({
+      web: {
+        boxShadow: `0 4px 15px ${theme.colors.shadow}40`,
+      },
+      default: {
+        shadowColor: theme.colors.shadow,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 10,
+      },
+    }),
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: spacing.m,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.outline,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: theme.colors.onSurface,
+  },
+  closeButton: {
+    padding: spacing.s,
+  },
+  modalOptions: {
+    padding: spacing.m,
+  },
+  modalOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.s,
+    paddingHorizontal: spacing.xs,
+    borderRadius: 8,
+    marginBottom: spacing.xs,
+  },
+  modalOptionText: {
+    marginLeft: spacing.s,
+    fontSize: 16,
+    color: theme.colors.onSurface,
+  },
+  modalOptionDestructive: {
+    backgroundColor: theme.colors.errorContainer,
+    borderColor: theme.colors.errorContainer,
+    borderWidth: 1,
   },
 });

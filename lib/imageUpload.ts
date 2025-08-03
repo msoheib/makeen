@@ -27,7 +27,26 @@ export async function uploadImage(
     // Generate unique filename
     const timestamp = Date.now();
     const randomId = Math.random().toString(36).substring(2);
-    const fileExtension = uri.split('.').pop() || 'jpg';
+    
+    // Better file extension detection
+    let fileExtension = 'jpg';
+    if (uri.startsWith('data:')) {
+      // Handle data URLs
+      const match = uri.match(/data:([^;]+);/);
+      if (match && match[1]) {
+        if (match[1].includes('png')) fileExtension = 'png';
+        else if (match[1].includes('jpeg') || match[1].includes('jpg')) fileExtension = 'jpg';
+        else if (match[1].includes('gif')) fileExtension = 'gif';
+        else if (match[1].includes('webp')) fileExtension = 'webp';
+      }
+    } else {
+      // Handle regular file paths
+      const pathExtension = uri.split('.').pop()?.toLowerCase();
+      if (pathExtension && ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(pathExtension)) {
+        fileExtension = pathExtension;
+      }
+    }
+    
     const fileName = `${timestamp}_${randomId}.${fileExtension}`;
     
     // Create storage path
@@ -75,6 +94,13 @@ export async function uploadImage(
     }
     
     // Upload to Supabase Storage using ArrayBuffer
+    console.log('Attempting Supabase storage upload...', {
+      bucket,
+      storagePath,
+      arrayBufferSize: arrayBuffer.byteLength,
+      contentType: `image/${fileExtension}`
+    });
+    
     const { data, error } = await supabase.storage
       .from(bucket)
       .upload(storagePath, arrayBuffer, {
@@ -87,6 +113,13 @@ export async function uploadImage(
     
     if (error) {
       console.error('Supabase upload error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        status: error.status,
+        statusText: error.statusText,
+        details: error.details,
+        hint: error.hint
+      });
       return {
         success: false,
         error: error.message

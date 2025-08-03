@@ -23,6 +23,7 @@ import CashflowCard from '@/components/CashflowCard';
 import StatCard from '@/components/StatCard';
 import { useApi } from '@/hooks/useApi';
 import { propertiesApi, profilesApi, contractsApi } from '@/lib/api';
+import { supabase } from '@/lib/supabase';
 import { useScreenAccess, SCREEN_PERMISSIONS } from '@/lib/permissions';
 import { formatCurrency } from '@/lib/formatters';
 import { 
@@ -113,6 +114,16 @@ export default function DashboardScreen() {
     error: tenantsError,
     refetch: refetchTenants 
   } = useApi(() => profilesApi.getTenants(), []);
+
+  // Debug API errors
+  console.log('[Dashboard Debug] API Errors:', {
+    propertiesError: propertiesError?.message,
+    tenantsError: tenantsError?.message,
+    summaryError: summaryError?.message,
+    propertiesLoading,
+    tenantsLoading,
+    summaryLoading
+  });
 
   // Fetch tenant contracts for payment information
   const { 
@@ -272,6 +283,36 @@ export default function DashboardScreen() {
     propertyStats: propertyStats,
     tenantStats: tenantStats,
     financialSummary: financialSummary
+  });
+
+  // Direct database query for debugging
+  console.log('[Dashboard Debug] Direct Database Check:');
+  
+  // Check properties directly
+  supabase.from('properties').select('*').then(result => {
+    console.log('[Direct DB] Properties:', {
+      count: result.data?.length || 0,
+      data: result.data?.slice(0, 3), // First 3 properties
+      error: result.error?.message
+    });
+  });
+  
+  // Check tenants directly
+  supabase.from('profiles').select('*').eq('role', 'tenant').then(result => {
+    console.log('[Direct DB] Tenants:', {
+      count: result.data?.length || 0,
+      data: result.data?.slice(0, 3), // First 3 tenants
+      error: result.error?.message
+    });
+  });
+  
+  // Check contracts directly
+  supabase.from('contracts').select('*').then(result => {
+    console.log('[Direct DB] Contracts:', {
+      count: result.data?.length || 0,
+      data: result.data?.slice(0, 3), // First 3 contracts
+      error: result.error?.message
+    });
   });
 
   // Enhanced recent activities with more realistic data

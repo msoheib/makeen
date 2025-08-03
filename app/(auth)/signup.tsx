@@ -84,6 +84,17 @@ export default function SignUpScreen() {
         const initialStatus = 'active'; // All users start with active status
         const approvalStatus = role === 'owner' ? 'pending' : 'approved'; // Use approval_status for pending
         
+        console.log('Creating profile for user:', data.user.id);
+        console.log('Profile data:', {
+          id: data.user.id,
+          first_name: firstName,
+          last_name: lastName,
+          email: email,
+          role: role,
+          status: initialStatus,
+          approval_status: approvalStatus,
+        });
+        
         // Create user profile with selected role and status
         const { error: profileError } = await supabase
           .from('profiles')
@@ -104,18 +115,58 @@ export default function SignUpScreen() {
           throw profileError;
         }
         
+        console.log('Profile created successfully!');
+        
         // Show appropriate message based on role
+        console.log('User role:', role);
+        console.log('About to show success alert...');
+        
         if (role === 'owner') {
+          console.log('Showing owner success alert...');
           Alert.alert(
-            'Registration Successful',
-            'Your account has been created and is pending approval. A property manager will review your registration and you will receive notification once approved.',
-            [{ text: 'OK', onPress: () => router.replace('/(auth)') }]
+            'Registration Successful! 🎉',
+            'Your account has been created successfully and is pending approval. A property manager will review your registration and you will receive notification once approved. You can now sign in with your credentials.',
+            [
+              { 
+                text: 'Sign In Now', 
+                onPress: () => {
+                  console.log('Owner: Sign In Now button pressed, redirecting...');
+                  router.replace('/(auth)');
+                }
+              }
+            ]
           );
+          
+          // Fallback redirect after 3 seconds if Alert doesn't work
+          setTimeout(() => {
+            console.log('Fallback redirect triggered for owner...');
+            router.replace('/(auth)');
+          }, 3000);
         } else {
-          // Navigate back to sign in for other roles
-          router.replace('/(auth)');
+          // For non-owner roles, show immediate success and redirect
+          console.log('Showing non-owner success alert...');
+          Alert.alert(
+            'Registration Successful! 🎉',
+            'Your account has been created successfully. You can now sign in with your credentials.',
+            [
+              { 
+                text: 'Sign In Now', 
+                onPress: () => {
+                  console.log('Non-owner: Sign In Now button pressed, redirecting...');
+                  router.replace('/(auth)');
+                }
+              }
+            ]
+          );
+          
+          // Fallback redirect after 3 seconds if Alert doesn't work
+          setTimeout(() => {
+            console.log('Fallback redirect triggered...');
+            router.replace('/(auth)');
+          }, 3000);
         }
       } else {
+        console.log('No user data in response, showing signup initiated message');
         setError(t('signup.signupInitiated'));
       }
     } catch (error: any) {
