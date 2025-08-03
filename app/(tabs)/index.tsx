@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, RefreshControl } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
@@ -115,14 +115,41 @@ export default function DashboardScreen() {
     refetch: refetchTenants 
   } = useApi(() => profilesApi.getTenants(), []);
 
-  // Debug API errors
-  console.log('[Dashboard Debug] API Errors:', {
+  // TEMPORARY: Use direct database data for debugging
+  const [directProperties, setDirectProperties] = useState<any[]>([]);
+  const [directTenants, setDirectTenants] = useState<any[]>([]);
+  
+  useEffect(() => {
+    // Direct database queries for debugging
+    supabase.from('properties').select('*').then(result => {
+      if (result.data) {
+        setDirectProperties(result.data);
+        console.log('[Direct DB Debug] Properties loaded:', result.data.length);
+      }
+    });
+    
+    supabase.from('profiles').select('*').eq('role', 'tenant').then(result => {
+      if (result.data) {
+        setDirectTenants(result.data);
+        console.log('[Direct DB Debug] Tenants loaded:', result.data.length);
+      }
+    });
+  }, []);
+
+  // Debug API errors and data
+  console.log('[Dashboard Debug] API Data:', {
     propertiesError: propertiesError?.message,
     tenantsError: tenantsError?.message,
     summaryError: summaryError?.message,
     propertiesLoading,
     tenantsLoading,
-    summaryLoading
+    summaryLoading,
+    propertiesRaw: properties,
+    tenantsRaw: tenants,
+    summaryRaw: dashboardSummary,
+    propertiesDataLength: properties?.data?.length,
+    tenantsDataLength: tenants?.data?.length,
+    summaryDataLength: dashboardSummary?.data ? Object.keys(dashboardSummary.data).length : 0
   });
 
   // Fetch tenant contracts for payment information
@@ -234,25 +261,25 @@ export default function DashboardScreen() {
   
   // Enhanced property statistics with real data
   const propertyStats = {
-    totalProperties: dashboardData?.total_properties || propertiesData.length,
-    occupied: dashboardData?.occupied || propertiesData.filter(p => p.status === 'rented').length,
-    available: dashboardData?.available || propertiesData.filter(p => p.status === 'available').length,
-    maintenance: dashboardData?.maintenance || propertiesData.filter(p => p.status === 'maintenance').length,
+    totalProperties: dashboardData?.total_properties || directProperties.length || propertiesData.length,
+    occupied: dashboardData?.occupied || directProperties.filter(p => p.status === 'rented').length || propertiesData.filter(p => p.status === 'rented').length,
+    available: dashboardData?.available || directProperties.filter(p => p.status === 'available').length || propertiesData.filter(p => p.status === 'available').length,
+    maintenance: dashboardData?.maintenance || directProperties.filter(p => p.status === 'maintenance').length || propertiesData.filter(p => p.status === 'maintenance').length,
     occupancyRate: dashboardData?.total_properties > 0 ? 
       Math.round((dashboardData.occupied / dashboardData.total_properties) * 100) : 
-      (propertiesData.length > 0 ? Math.round((propertiesData.filter(p => p.status === 'rented').length / propertiesData.length) * 100) : 0)
+      (directProperties.length > 0 ? Math.round((directProperties.filter(p => p.status === 'rented').length / directProperties.length) * 100) : 
+       (propertiesData.length > 0 ? Math.round((propertiesData.filter(p => p.status === 'rented').length / propertiesData.length) * 100) : 0))
   };
   
   // Enhanced tenant statistics with better calculations
   // First, calculate the value needed for the object
-  const totalTenantsCount = tenantsData.length;
+  const totalTenantsCount = directTenants.length || tenantsData.length;
   
   // Now create the object using the pre-calculated variable
   const tenantStats = {
     totalTenants: totalTenantsCount,
-    activeTenants: tenantsData.filter(t => t.status === 'active').length,
-    foreignTenants: tenantsData.filter(t => t.is_foreign === true).length,
-    pendingTenants: tenantsData.filter(t => t.status === 'pending').length,
+    activeTenants: (directTenants.length > 0 ? directTenants.filter(t => t.status === 'active').length : 0) || tenantsData.filter(t => t.status === 'active').length,
+    pendingTenants: (directTenants.length > 0 ? directTenants.filter(t => t.status === 'pending').length : 0) || tenantsData.filter(t => t.status === 'pending').length,
     // Calculate contract-related stats
     activeContracts: dashboardData?.active_contracts || 0,
     // Use the new variable here instead of referencing tenantStats
@@ -554,17 +581,7 @@ export default function DashboardScreen() {
               </Text>
             </View>
             
-            <View style={styles.horizontalStatItem}>
-              <View style={[styles.horizontalStatIcon, { backgroundColor: '#FF980020' }]}>
-                <AlertCircle size={24} color="#FF9800" />
-              </View>
-              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                المستأجرين الأجانب
-              </Text>
-              <Text style={[styles.horizontalStatValue, { color: '#FF9800' }]}>
-                {tenantStats.foreignTenants}
-              </Text>
-            </View>
+
           </View>
         </View>
       )}

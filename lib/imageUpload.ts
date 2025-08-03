@@ -22,8 +22,6 @@ export async function uploadImage(
   folder?: string
 ): Promise<ImageUploadResult> {
   try {
-    console.log('Starting image upload...', { uri, bucket, folder, platform: Platform.OS });
-    
     // Generate unique filename
     const timestamp = Date.now();
     const randomId = Math.random().toString(36).substring(2);
@@ -51,19 +49,14 @@ export async function uploadImage(
     
     // Create storage path
     const storagePath = folder ? `${folder}/${fileName}` : fileName;
-    console.log('Storage path:', storagePath);
     
     let arrayBuffer: ArrayBuffer;
     
     if (Platform.OS === 'web') {
       // Web platform: Handle blob/file directly
-      console.log('Web platform: Processing image as blob...');
-      
-      // For web, the uri might be a blob URL or data URL
       if (uri.startsWith('blob:') || uri.startsWith('data:')) {
         const response = await fetch(uri);
         arrayBuffer = await response.arrayBuffer();
-        console.log('Web: Converted blob to ArrayBuffer, byteLength:', arrayBuffer.byteLength);
       } else {
         // Fallback: try to read as base64 if FileSystem is available
         try {
@@ -71,36 +64,22 @@ export async function uploadImage(
             encoding: FileSystem.EncodingType.Base64,
           });
           arrayBuffer = decode(base64);
-          console.log('Web: Fallback base64 conversion successful, byteLength:', arrayBuffer.byteLength);
         } catch (fsError) {
-          console.error('Web: FileSystem not available, trying fetch fallback:', fsError);
           const response = await fetch(uri);
           arrayBuffer = await response.arrayBuffer();
-          console.log('Web: Fetch fallback successful, byteLength:', arrayBuffer.byteLength);
         }
       }
     } else {
       // Native platform: Use FileSystem
-      console.log('Native platform: Reading file as base64...');
       const base64 = await FileSystem.readAsStringAsync(uri, {
         encoding: FileSystem.EncodingType.Base64,
       });
       
-      console.log('Native: File read as base64, length:', base64.length);
-      
       // Convert base64 to ArrayBuffer
       arrayBuffer = decode(base64);
-      console.log('Native: Converted to ArrayBuffer, byteLength:', arrayBuffer.byteLength);
     }
     
     // Upload to Supabase Storage using ArrayBuffer
-    console.log('Attempting Supabase storage upload...', {
-      bucket,
-      storagePath,
-      arrayBufferSize: arrayBuffer.byteLength,
-      contentType: `image/${fileExtension}`
-    });
-    
     const { data, error } = await supabase.storage
       .from(bucket)
       .upload(storagePath, arrayBuffer, {
@@ -109,17 +88,7 @@ export async function uploadImage(
         upsert: false
       });
     
-    console.log('Supabase upload response:', { data, error });
-    
     if (error) {
-      console.error('Supabase upload error:', error);
-      console.error('Error details:', {
-        message: error.message,
-        status: error.status,
-        statusText: error.statusText,
-        details: error.details,
-        hint: error.hint
-      });
       return {
         success: false,
         error: error.message
@@ -131,18 +100,14 @@ export async function uploadImage(
       .from(bucket)
       .getPublicUrl(storagePath);
     
-    console.log('Public URL generated:', publicUrlData.publicUrl);
-    
     return {
       success: true,
       url: publicUrlData.publicUrl
     };
-    
   } catch (error: any) {
-    console.error('Image upload error:', error);
     return {
       success: false,
-      error: error.message || 'Failed to upload image'
+      error: error.message || 'Upload failed'
     };
   }
 }

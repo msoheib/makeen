@@ -41,15 +41,6 @@ export default function ProfilePictureUpload({
   const [uploading, setUploading] = useState(false);
   const [showWebModal, setShowWebModal] = useState(false);
 
-  // Debug logging
-  console.log('ProfilePictureUpload: Component rendered with props:', {
-    currentImageUrl,
-    userId,
-    disabled,
-    size,
-    uploading
-  });
-
   // Request permissions on component mount
   React.useEffect(() => {
     requestPermissions();
@@ -69,16 +60,9 @@ export default function ProfilePictureUpload({
   };
 
   const showImageOptions = () => {
-    console.log('ProfilePictureUpload: showImageOptions called');
-    console.log('ProfilePictureUpload: uploading =', uploading);
-    console.log('ProfilePictureUpload: disabled =', disabled);
-    
     if (uploading || disabled) {
-      console.log('ProfilePictureUpload: Button is disabled, returning');
       return;
     }
-
-    console.log('ProfilePictureUpload: Platform =', Platform.OS);
 
     if (Platform.OS === 'ios') {
       const options = ['Take Photo', 'Choose from Gallery'];
@@ -87,8 +71,6 @@ export default function ProfilePictureUpload({
       }
       options.push('Cancel');
 
-      console.log('ProfilePictureUpload: Showing iOS ActionSheet with options:', options);
-
       ActionSheetIOS.showActionSheetWithOptions(
         {
           options,
@@ -96,7 +78,6 @@ export default function ProfilePictureUpload({
           destructiveButtonIndex: currentImageUrl ? 2 : undefined,
         },
         (buttonIndex) => {
-          console.log('ProfilePictureUpload: ActionSheet button pressed:', buttonIndex);
           switch (buttonIndex) {
             case 0:
               pickImageFromCamera();
@@ -113,18 +94,13 @@ export default function ProfilePictureUpload({
         }
       );
     } else if (Platform.OS === 'web') {
-      // For Web, use custom modal
-      console.log('ProfilePictureUpload: Showing Web Modal');
       setShowWebModal(true);
     } else {
-      // For Android, use Alert with buttons
       const options = ['Take Photo', 'Choose from Gallery'];
       if (currentImageUrl) {
         options.push('Remove Picture');
       }
       options.push('Cancel');
-
-      console.log('ProfilePictureUpload: Showing Alert with options:', options);
 
       Alert.alert(
         'Profile Picture',
@@ -132,7 +108,6 @@ export default function ProfilePictureUpload({
         options.map((option, index) => ({
           text: option,
           onPress: () => {
-            console.log('ProfilePictureUpload: Alert button pressed:', index, option);
             switch (index) {
               case 0:
                 pickImageFromCamera();
@@ -199,37 +174,24 @@ export default function ProfilePictureUpload({
 
   const processImage = async (uri: string) => {
     try {
-      console.log('ProfilePictureUpload: Starting image processing for URI:', uri);
-      
       // Check authentication first
       const { data: { session }, error: authError } = await supabase.auth.getSession();
-      console.log('ProfilePictureUpload: Authentication check:', { 
-        hasSession: !!session, 
-        userId: session?.user?.id,
-        authError: authError?.message 
-      });
       
       if (!session) {
-        console.error('ProfilePictureUpload: No authenticated session found');
         Alert.alert('Authentication Error', 'Please log in again to upload profile pictures.');
         return;
       }
       
       // Validate image
       const validation = await validateImage(uri, 2 * 1024 * 1024); // 2MB limit for profile pictures
-      console.log('ProfilePictureUpload: Image validation result:', validation);
       
       if (!validation.valid) {
-        console.error('ProfilePictureUpload: Image validation failed:', validation.error);
         Alert.alert('Invalid Image', validation.error || 'Please select a valid image file.');
         return;
       }
 
-      console.log('ProfilePictureUpload: Starting upload to Supabase Storage...');
-      
       // Delete old profile picture if exists
       if (currentImageUrl) {
-        console.log('ProfilePictureUpload: Deleting old profile picture...');
         await deleteImage(currentImageUrl, 'profile-pictures');
       }
 
@@ -240,16 +202,10 @@ export default function ProfilePictureUpload({
         userId // Use user ID as folder for organization
       );
 
-      console.log('ProfilePictureUpload: Upload result received:', uploadResult);
-
       if (uploadResult.success && uploadResult.url) {
-        console.log('ProfilePictureUpload: Profile picture uploaded successfully:', uploadResult.url);
         onImageChange(uploadResult.url);
-        
-        // Show success message
         Alert.alert('Success', 'Profile picture updated successfully!');
       } else {
-        console.error('ProfilePictureUpload: Upload failed:', uploadResult.error);
         Alert.alert('Upload Failed', uploadResult.error || 'Failed to upload image. Please try again.');
       }
     } catch (error: any) {
@@ -299,40 +255,6 @@ export default function ProfilePictureUpload({
     return userId.slice(0, 2).toUpperCase() || 'U';
   };
 
-  const testUpload = async () => {
-    try {
-      console.log('ProfilePictureUpload: Testing simple upload...');
-      
-      // Create a simple test image (1x1 pixel PNG)
-      const testImageData = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
-      
-      // Convert data URL to blob
-      const response = await fetch(testImageData);
-      const testBlob = await response.blob();
-      const testFile = new File([testBlob], 'test.png', { type: 'image/png' });
-      
-      console.log('ProfilePictureUpload: Test image file created:', testFile);
-      
-      // Try to upload to profile-pictures bucket
-      const { data, error } = await supabase.storage
-        .from('profile-pictures')
-        .upload('test.png', testFile);
-      
-      console.log('ProfilePictureUpload: Test upload result:', { data, error });
-      
-      if (error) {
-        console.error('ProfilePictureUpload: Test upload failed:', error);
-        Alert.alert('Test Upload Failed', error.message);
-      } else {
-        console.log('ProfilePictureUpload: Test upload successful!');
-        Alert.alert('Test Upload Success', 'Storage is working correctly.');
-      }
-    } catch (error: any) {
-      console.error('ProfilePictureUpload: Test upload error:', error);
-      Alert.alert('Test Upload Error', error.message);
-    }
-  };
-
   return (
     <View style={styles.container}>
       <View style={styles.avatarContainer}>
@@ -358,10 +280,7 @@ export default function ProfilePictureUpload({
             uploading && styles.uploadButtonDisabled,
             { width: size / 3, height: size / 3, borderRadius: size / 6 }
           ]}
-          onPress={() => {
-            console.log('ProfilePictureUpload: TouchableOpacity pressed');
-            showImageOptions();
-          }}
+          onPress={showImageOptions}
           disabled={uploading || disabled}
           activeOpacity={0.7}
         >
@@ -435,19 +354,6 @@ export default function ProfilePictureUpload({
                       </Text>
                     </TouchableOpacity>
                   )}
-                  
-                  {/* Test Upload Button for Debugging */}
-                  <TouchableOpacity
-                    style={[styles.modalOption, { backgroundColor: theme.colors.tertiaryContainer }]}
-                    onPress={() => {
-                      setShowWebModal(false);
-                      testUpload();
-                    }}
-                  >
-                    <Text style={[styles.modalOptionText, { color: theme.colors.onTertiaryContainer }]}>
-                      Test Upload (Debug)
-                    </Text>
-                  </TouchableOpacity>
                 </View>
               </View>
             </View>
