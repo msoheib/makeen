@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert, I18nManager, TouchableOpacity } from 'react-native';
 import { Text, TextInput, Button, SegmentedButtons, IconButton } from 'react-native-paper';
-import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/lib/store';
 import { PropertyType, PropertyStatus } from '@/lib/types';
 import { getCurrentUserContext } from '@/lib/security';
 import { useApi } from '@/hooks/useApi';
-import { profilesApi, propertiesApi } from '@/lib/api';
+import { profilesApi, propertiesApi, propertyGroupsApi } from '@/lib/api';
 import { ArrowLeft, Building2, MapPin, DollarSign, Chrome as Home } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 
 export default function AddPropertyScreen() {
+  const params = useLocalSearchParams<{ groupId?: string }>();
+  const { t } = useTranslation(['properties', 'common']);
   const router = useRouter();
   const user = useAppStore(state => state.user);
   const [loading, setLoading] = useState(false);
@@ -77,6 +80,33 @@ export default function AddPropertyScreen() {
     is_accepting_bids: true,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedGroupId, setSelectedGroupId] = useState<string>('');
+  const [groups, setGroups] = useState<any[]>([]);
+  const [groupsLoading, setGroupsLoading] = useState(false);
+  const [groupsError, setGroupsError] = useState<string | null>(null);
+
+  // Load property groups (buildings) for optional assignment
+  React.useEffect(() => {
+    setGroupsLoading(true);
+    setGroupsError(null);
+    propertyGroupsApi.getAll()
+      .then(res => {
+        if (res.error) {
+          setGroupsError(res.error.message);
+          setGroups([]);
+        } else {
+          setGroups(res.data || []);
+        }
+      })
+      .finally(() => setGroupsLoading(false));
+  }, []);
+
+  // If navigated with groupId, preselect it
+  React.useEffect(() => {
+    if (params?.groupId) {
+      setSelectedGroupId(String(params.groupId));
+    }
+  }, [params?.groupId]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -170,6 +200,7 @@ export default function AddPropertyScreen() {
         owner_id: ownerId,
         images: [], // Empty array for now
         is_accepting_bids: formData.is_accepting_bids,
+        group_id: selectedGroupId || null,
       };
 
       console.log('Submitting property data:', propertyData);
@@ -345,6 +376,36 @@ export default function AddPropertyScreen() {
                 <Text style={styles.errorText}>يجب اختيار مالك العقار</Text>
               )}
             </>
+          )}
+        </ModernCard>
+
+        {/* Optional: Assign to Building */}
+        <ModernCard style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Building2 size={20} color={theme.colors.primary} />
+            <Text style={styles.sectionTitle}>إسناد إلى مبنى (اختياري)</Text>
+          </View>
+
+          {groupsLoading ? (
+            <Text style={styles.loadingText}>جاري تحميل قائمة المباني...</Text>
+          ) : groupsError ? (
+            <Text style={styles.errorText}>خطأ في تحميل المباني: {groupsError}</Text>
+          ) : groups.length === 0 ? (
+            <Text style={styles.loadingText}>لا توجد مبانٍ. يمكنك إضافة وحدات الآن ثم ربطها لاحقًا.</Text>
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.ownerScroll}>
+              {groups.map((g: any) => (
+                <TouchableOpacity
+                  key={g.id}
+                  style={[styles.ownerOption, selectedGroupId === g.id && styles.selectedOwnerOption]}
+                  onPress={() => setSelectedGroupId(selectedGroupId === g.id ? '' : g.id)}
+                >
+                  <Text style={[styles.ownerText, selectedGroupId === g.id && styles.selectedOwnerText]}>
+                    {g.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           )}
         </ModernCard>
 

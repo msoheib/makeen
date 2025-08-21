@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, Platform , ActivityIndicator } from 'react-native';
 import { Text, IconButton, Button, TextInput, Avatar } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
@@ -10,7 +10,7 @@ import { ArrowLeft, User, Mail, Phone, MapPin, Edit3, Save, X, Camera, Shield } 
 import ModernCard from '@/components/ModernCard';
 import ProfilePictureUpload from '@/components/ProfilePictureUpload';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import { ActivityIndicator } from 'react-native';
+
 import ChangePasswordModal from '@/components/ChangePasswordModal';
 
 export default function ProfileScreen() {

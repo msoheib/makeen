@@ -16,19 +16,19 @@ interface OccupancyData {
     avgVacancyDuration: number;
     revenuePerOccupiedUnit: number;
   };
-  occupancyTrend: Array<{
+  occupancyTrend: {
     month: string;
     occupancyRate: number;
     occupiedUnits: number;
     vacantUnits: number;
-  }>;
-  propertyOccupancy: Array<{
+  }[];
+  propertyOccupancy: {
     propertyName: string;
     totalUnits: number;
     occupiedUnits: number;
     occupancyRate: number;
     monthlyRevenue: number;
-  }>;
+  }[];
 }
 
 export default function OccupancyAnalyticsScreen() {

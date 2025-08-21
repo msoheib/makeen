@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Card } from 'react-native-paper';
-import { useTheme } from 'react-native-paper';
+import { Card , useTheme } from 'react-native-paper';
+
 import { Bell, Users, Building, Wrench, DollarSign, FileText, AlertCircle, Settings } from 'lucide-react-native';
 import { NotificationBadge } from './NotificationBadge';
 import { useNotificationBadges } from '@/hooks/useNotificationBadges';

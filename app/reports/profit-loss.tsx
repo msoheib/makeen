@@ -12,12 +12,12 @@ interface ProfitLossData {
   totalExpenses: number;
   netProfit: number;
   profitMargin: number;
-  monthlyComparison: Array<{
+  monthlyComparison: {
     month: string;
     revenue: number;
     expenses: number;
     profit: number;
-  }>;
+  }[];
   yearOverYear: {
     currentYear: number;
     previousYear: number;

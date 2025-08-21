@@ -17,7 +17,12 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.decimaldrown.propertymanagement"
+      "bundleIdentifier": "com.decimaldrown.propertymanagement",
+      "infoPlist": {
+        "ExpoLocalization_supportsRTL": true,
+        "ExpoLocalization_forcesRTL": false,
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -42,7 +47,10 @@
               "host": "property-management-system.vercel.app"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -54,7 +62,7 @@
     "plugins": [
       "expo-router",
       "expo-font",
-      "expo-secure-store", 
+      "expo-secure-store",
       "expo-web-browser",
       "expo-mail-composer",
       "expo-localization",
@@ -75,6 +83,10 @@
                 "**/libjsc.so"
               ]
             }
+          },
+          "ios": {
+            "deploymentTarget": "15.1",
+            "useFrameworks": "static"
           }
         }
       ]

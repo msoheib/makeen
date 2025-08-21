@@ -89,18 +89,18 @@ export interface ChartDataPoint {
 
 export interface LineChartData {
   labels: string[];
-  datasets: Array<{
+  datasets: {
     data: number[];
     color?: (opacity: number) => string;
     strokeWidth?: number;
-  }>;
+  }[];
 }
 
 export interface BarChartData {
   labels: string[];
-  datasets: Array<{
+  datasets: {
     data: number[];
-  }>;
+  }[];
 }
 
 export interface PieChartData extends Array<{

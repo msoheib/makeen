@@ -41,5 +41,35 @@
     "title": "إضافة مستأجر جديد",
     "subtitle": "إنشاء ملف تعريف مستأجر جديد",
     "createProfile": "إنشاء ملف تعريف مستأجر جديد"
+  },
+  "form": {
+    "title": "تعيين مستأجر",
+    "subtitle": "اختر المستأجر والعقار لإنشاء عقد جديد",
+    "selectTenant": "اختر المستأجر",
+    "selectProperty": "اختر العقار",
+    "contractDetails": "تفاصيل العقد",
+    "startDate": "تاريخ البداية",
+    "endDate": "تاريخ الانتهاء",
+    "rentAmount": "مبلغ الإيجار",
+    "securityDeposit": "الوديعة",
+    "paymentFrequency": "تكرار الدفع",
+    "contractNumber": "رقم العقد",
+    "autoRenewal": "تجديد تلقائي",
+    "noticePeriod": "فترة الإشعار (أيام)",
+    "utilitiesIncluded": "المرافق مشمولة",
+    "submit": "إنشاء العقد",
+    "cancel": "إلغاء",
+    "loading": "جارٍ إنشاء العقد...",
+    "success": "تم إنشاء العقد بنجاح",
+    "error": "فشل في إنشاء العقد",
+    "validation": {
+      "tenantRequired": "يجب اختيار مستأجر",
+      "propertyRequired": "يجب اختيار عقار",
+      "startDateRequired": "تاريخ البداية مطلوب",
+      "endDateRequired": "تاريخ الانتهاء مطلوب",
+      "rentAmountRequired": "مبلغ الإيجار مطلوب",
+      "securityDepositRequired": "الوديعة مطلوبة",
+      "invalidDates": "تاريخ الانتهاء يجب أن يكون بعد تاريخ البداية"
+    }
   }
 } 

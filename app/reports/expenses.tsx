@@ -9,21 +9,21 @@ import ModernHeader from '@/components/ModernHeader';
 
 interface ExpenseData {
   totalExpenses: number;
-  monthlyExpenses: Array<{
+  monthlyExpenses: {
     month: string;
     amount: number;
-  }>;
-  categoryExpenses: Array<{
+  }[];
+  categoryExpenses: {
     category: string;
     amount: number;
-  }>;
-  vouchers: Array<{
+  }[];
+  vouchers: {
     id: string;
     amount: number;
     description: string;
     date: string;
     accountName?: string;
-  }>;
+  }[];
 }
 
 export default function ExpenseReportScreen() {

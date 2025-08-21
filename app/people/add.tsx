@@ -5,19 +5,25 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { UserRole } from '@/lib/types';
-import { ArrowLeft, User, Mail, Phone, UserCheck } from 'lucide-react-native';
+import { ArrowLeft, User, Mail, Phone, UserCheck, Lock, Eye, EyeOff } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function AddPersonScreen() {
   const router = useRouter();
   const { role: urlRole } = useLocalSearchParams<{ role?: UserRole }>();
+  const { signUp } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
     email: '',
     phone_number: '',
+    password: '',
+    confirmPassword: '',
     role: (urlRole as UserRole) || 'tenant' as UserRole,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -39,9 +45,62 @@ export default function AddPersonScreen() {
     if (formData.phone_number && !/^\+?[\d\s\-\(\)]+$/.test(formData.phone_number)) {
       newErrors.phone_number = 'Please enter a valid phone number';
     }
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm your password';
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const sendWelcomeEmail = async (email: string, password: string, firstName: string) => {
+    try {
+      const emailData = {
+        to: email,
+        subject: 'Welcome to Real Estate Management System',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #1976d2;">Welcome to Real Estate Management System</h2>
+            <p>Hello ${firstName},</p>
+            <p>Your account has been successfully created. Here are your login credentials:</p>
+            <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+              <p><strong>Email:</strong> ${email}</p>
+              <p><strong>Password:</strong> ${password}</p>
+            </div>
+            <p>Please keep your password secure and consider changing it after your first login.</p>
+            <p>If you have any questions, please contact our support team.</p>
+            <p>Best regards,<br>Real Estate Management Team</p>
+          </div>
+        `,
+        firstName,
+        password
+      };
+
+      // Call the Supabase Edge Function to send email
+      const { data, error } = await supabase.functions.invoke('send-email', {
+        body: emailData
+      });
+
+      if (error) {
+        console.error('Error calling email function:', error);
+        // Don't fail the registration if email fails
+        return false;
+      }
+
+      console.log('Email sent successfully:', data);
+      return true;
+    } catch (error) {
+      console.error('Error sending welcome email:', error);
+      // Don't fail the registration if email fails
+      return false;
+    }
   };
 
   const handleSubmit = async () => {
@@ -51,12 +110,33 @@ export default function AddPersonScreen() {
 
     setLoading(true);
     try {
+      // First, create the user account with authentication
+      const signUpResult = await signUp(
+        formData.email.trim().toLowerCase(),
+        formData.password,
+        {
+          first_name: formData.first_name.trim(),
+          last_name: formData.last_name.trim(),
+          phone: formData.phone_number.trim() || undefined,
+          role: formData.role,
+        }
+      );
+
+      if (!signUpResult.success) {
+        throw new Error(signUpResult.error || 'Failed to create user account');
+      }
+
+      // Then, create the profile record in the database
       const personData = {
         first_name: formData.first_name.trim(),
         last_name: formData.last_name.trim(),
         email: formData.email.trim().toLowerCase(),
-        phone: formData.phone_number.trim() || null, // Fixed: use 'phone' field instead of 'phone_number'
+        phone: formData.phone_number.trim() || null,
         role: formData.role,
+        status: 'active',
+        profile_type: formData.role === 'owner' ? 'owner' : 
+                     formData.role === 'tenant' ? 'tenant' : 
+                     formData.role === 'manager' ? 'admin' : 'employee',
       };
 
       const { data, error } = await supabase
@@ -65,11 +145,22 @@ export default function AddPersonScreen() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // If profile creation fails, we should handle this gracefully
+        console.error('Error creating profile:', error);
+        // Don't throw here as the auth account was created successfully
+      }
+
+      // Send welcome email
+      await sendWelcomeEmail(
+        formData.email.trim().toLowerCase(),
+        formData.password,
+        formData.first_name.trim()
+      );
 
       Alert.alert(
         'Success',
-        'Person added successfully!',
+        'User account created successfully! A welcome email has been sent with login credentials.',
         [
           {
             text: 'OK',
@@ -83,11 +174,13 @@ export default function AddPersonScreen() {
         router.replace('/(tabs)/people');
       }, 1500);
     } catch (error: any) {
-      console.error('Error adding person:', error);
-      if (error.code === '23505') {
-        setErrors({ email: 'This email address is already in use' });
+      console.error('Error creating user:', error);
+      if (error.message?.includes('already registered')) {
+        setErrors({ email: 'This email address is already registered' });
+      } else if (error.message?.includes('password')) {
+        setErrors({ password: 'Password must be at least 6 characters' });
       } else {
-        Alert.alert('Error', error.message || 'Failed to add person');
+        Alert.alert('Error', error.message || 'Failed to create user account');
       }
     } finally {
       setLoading(false);
@@ -180,6 +273,54 @@ export default function AddPersonScreen() {
           {errors.phone_number && <Text style={styles.errorText}>{errors.phone_number}</Text>}
         </ModernCard>
 
+        {/* Authentication Information */}
+        <ModernCard style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Lock size={20} color={theme.colors.tertiary} />
+            <Text style={styles.sectionTitle}>Authentication</Text>
+          </View>
+
+          <TextInput
+            label="Password *"
+            value={formData.password}
+            onChangeText={(text) => setFormData({ ...formData, password: text })}
+            mode="outlined"
+            secureTextEntry={!showPassword}
+            style={styles.input}
+            error={!!errors.password}
+            left={<TextInput.Icon icon="lock-outline" />}
+            right={
+              <TextInput.Icon
+                icon={showPassword ? "eye-off" : "eye"}
+                onPress={() => setShowPassword(!showPassword)}
+              />
+            }
+          />
+          {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+
+          <TextInput
+            label="Confirm Password *"
+            value={formData.confirmPassword}
+            onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
+            mode="outlined"
+            secureTextEntry={!showConfirmPassword}
+            style={styles.input}
+            error={!!errors.confirmPassword}
+            left={<TextInput.Icon icon="lock-outline" />}
+            right={
+              <TextInput.Icon
+                icon={showConfirmPassword ? "eye-off" : "eye"}
+                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+              />
+            }
+          />
+          {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
+
+          <Text style={styles.passwordNote}>
+            Password must be at least 6 characters long. A welcome email will be sent with login credentials.
+          </Text>
+        </ModernCard>
+
         {/* Role Information */}
         <ModernCard style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -225,7 +366,7 @@ export default function AddPersonScreen() {
             style={styles.submitButton}
             contentStyle={styles.submitButtonContent}
           >
-            Add Person
+            Create User Account
           </Button>
         </View>
       </ScrollView>
@@ -291,6 +432,13 @@ const styles = StyleSheet.create({
   errorText: {
     color: theme.colors.error,
     fontSize: 12,
+    marginTop: -spacing.s,
+    marginBottom: spacing.s,
+  },
+  passwordNote: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
+    fontStyle: 'italic',
     marginTop: -spacing.s,
     marginBottom: spacing.s,
   },

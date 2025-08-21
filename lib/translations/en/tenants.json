@@ -41,5 +41,35 @@
     "title": "Add New Tenant",
     "subtitle": "Create a new tenant profile",
     "createProfile": "Create a new tenant profile"
+  },
+  "form": {
+    "title": "Assign Tenant",
+    "subtitle": "Select tenant and property to create a new contract",
+    "selectTenant": "Select Tenant",
+    "selectProperty": "Select Property",
+    "contractDetails": "Contract Details",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "rentAmount": "Rent Amount",
+    "securityDeposit": "Security Deposit",
+    "paymentFrequency": "Payment Frequency",
+    "contractNumber": "Contract Number",
+    "autoRenewal": "Auto Renewal",
+    "noticePeriod": "Notice Period (days)",
+    "utilitiesIncluded": "Utilities Included",
+    "submit": "Create Contract",
+    "cancel": "Cancel",
+    "loading": "Creating contract...",
+    "success": "Contract created successfully",
+    "error": "Failed to create contract",
+    "validation": {
+      "tenantRequired": "Please select a tenant",
+      "propertyRequired": "Please select a property",
+      "startDateRequired": "Start date is required",
+      "endDateRequired": "End date is required",
+      "rentAmountRequired": "Rent amount is required",
+      "securityDepositRequired": "Security deposit is required",
+      "invalidDates": "End date must be after start date"
+    }
   }
 } 

@@ -16,24 +16,24 @@ interface PaymentHistoryData {
     totalOutstanding: number;
     avgPaymentDelay: number;
   };
-  paymentTrends: Array<{
+  paymentTrends: {
     month: string;
     onTimePayments: number;
     latePayments: number;
     totalAmount: number;
-  }>;
-  paymentMethods: Array<{
+  }[];
+  paymentMethods: {
     method: string;
     count: number;
     amount: number;
-  }>;
-  tenantPayments: Array<{
+  }[];
+  tenantPayments: {
     tenantName: string;
     paymentStatus: 'current' | 'late' | 'overdue';
     lastPaymentDate: string;
     amountDue: number;
     daysSincePayment: number;
-  }>;
+  }[];
 }
 
 export default function PaymentHistoryReportScreen() {

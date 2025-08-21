@@ -16,13 +16,13 @@ interface LeaseExpiryData {
     renewalRate: number;
     avgDaysNotice: number;
   };
-  expiryTrends: Array<{
+  expiryTrends: {
     month: string;
     expiringLeases: number;
     renewedLeases: number;
     newLeases: number;
-  }>;
-  upcomingExpiries: Array<{
+  }[];
+  upcomingExpiries: {
     tenantName: string;
     propertyName: string;
     expiryDate: string;
@@ -30,11 +30,11 @@ interface LeaseExpiryData {
     leaseDuration: number;
     monthlyRent: number;
     renewalStatus: 'pending' | 'renewed' | 'not-renewing' | 'undecided';
-  }>;
-  leaseDurationDistribution: Array<{
+  }[];
+  leaseDurationDistribution: {
     duration: string;
     count: number;
-  }>;
+  }[];
 }
 
 export default function LeaseExpiryReportScreen() {

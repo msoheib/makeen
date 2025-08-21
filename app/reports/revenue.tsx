@@ -10,21 +10,21 @@ import ModernHeader from '@/components/ModernHeader';
 
 interface RevenueData {
   totalRevenue: number;
-  monthlyRevenue: Array<{
+  monthlyRevenue: {
     month: string;
     amount: number;
-  }>;
-  propertyRevenue: Array<{
+  }[];
+  propertyRevenue: {
     propertyName: string;
     amount: number;
-  }>;
-  vouchers: Array<{
+  }[];
+  vouchers: {
     id: string;
     amount: number;
     description: string;
     date: string;
     propertyName?: string;
-  }>;
+  }[];
 }
 
 export default function RevenueReportScreen() {

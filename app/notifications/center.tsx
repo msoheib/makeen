@@ -9,8 +9,8 @@ import {
   Menu,
   Text
 } from 'react-native-paper';
-import { theme, spacing } from '@/lib/theme';
-import { useTheme } from '@/lib/theme';
+import { theme, spacing , useTheme } from '@/lib/theme';
+
 import { router } from 'expo-router';
 import ModernHeader from '@/components/ModernHeader';
 import NotificationList from '@/components/NotificationList';

@@ -6,13 +6,11 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import ModernHeader from '@/components/ModernHeader';
 import { useApi } from '@/hooks/useApi';
-import { reportsApi, reportFiltersApi } from '@/lib/api';
+import { reportsApi, reportFiltersApi , profilesApi , propertiesApi } from '@/lib/api';
 import { pdfApi, PDFRequest } from '@/lib/pdfApi';
 import { useStore } from '@/lib/store';
 import { useTranslation } from '@/lib/useTranslation';
 import { rtlStyles, getFlexDirection } from '@/lib/rtl';
-import { profilesApi } from '@/lib/api';
-import { propertiesApi } from '@/lib/api';
 import { useScreenAccess } from '@/lib/permissions';
 
 interface FilterModalProps {

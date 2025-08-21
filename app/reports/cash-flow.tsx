@@ -12,13 +12,13 @@ interface CashFlowData {
   monthlyInflow: number;
   monthlyOutflow: number;
   netCashFlow: number;
-  monthlyCashFlow: Array<{
+  monthlyCashFlow: {
     month: string;
     inflow: number;
     outflow: number;
     netFlow: number;
     position: number;
-  }>;
+  }[];
 }
 
 export default function CashFlowReportScreen() {

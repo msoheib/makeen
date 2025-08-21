@@ -2,8 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../lib/theme';
-import { NotificationPriority } from '../types/notificationPreferences';
-import { PRIORITY_INFO } from '../types/notificationPreferences';
+import { NotificationPriority , PRIORITY_INFO } from '../types/notificationPreferences';
+
 
 interface PriorityFilterProps {
   minimumPriority: NotificationPriority;

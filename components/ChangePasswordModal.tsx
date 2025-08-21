@@ -4,6 +4,7 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { 
   Button, 
   Portal, 
@@ -28,6 +29,7 @@ export default function ChangePasswordModal({
   onChangePassword,
   loading = false,
 }: ChangePasswordModalProps) {
+  const { t } = useTranslation(['common', 'settings']);
   const theme = useTheme();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

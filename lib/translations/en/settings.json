@@ -247,6 +247,31 @@
     }
   },
   "helpSection": "Help & Support",
+  "password": {
+    "title": "Change Password",
+    "subtitle": "Enter your new password",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "showPassword": "Show Password",
+    "hidePassword": "Hide Password",
+    "passwordStrength": "Password Strength",
+    "tooShort": "Too Short",
+    "weak": "Weak",
+    "good": "Good",
+    "strong": "Strong",
+    "passwordsMatch": "Passwords Match",
+    "passwordsDontMatch": "Passwords Don't Match",
+    "submit": "Change Password",
+    "cancel": "Cancel",
+    "loading": "Changing password...",
+    "success": "Password changed successfully",
+    "error": "Failed to change password",
+    "validation": {
+      "passwordRequired": "Password is required",
+      "passwordTooShort": "Password must be at least 6 characters",
+      "passwordsDontMatch": "Passwords don't match"
+    }
+  },
   "help": {
     "title": "Help Center",
     "description": "Get help and learn how to use the application",

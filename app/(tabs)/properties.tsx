@@ -1,33 +1,21 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, FlatList, ScrollView, SafeAreaView, TouchableOpacity, RefreshControl, ActivityIndicator, Alert } from 'react-native';
-import { Text, Searchbar, FAB, Button, IconButton } from 'react-native-paper';
-import { useTranslation } from 'react-i18next';
+import { View, StyleSheet, FlatList, SafeAreaView, TouchableOpacity, RefreshControl, Alert } from 'react-native';
+import { Text, Searchbar, FAB, Button, IconButton, Portal, Modal, Card, Title, Paragraph } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { lightTheme, darkTheme, spacing } from '@/lib/theme';
-import { useAppStore } from '@/lib/store';
-import { Building2, Home, Search, Plus, MessageSquare, Users } from 'lucide-react-native';
-import ModernHeader from '@/components/ModernHeader';
-import StatCard from '@/components/StatCard';
-import ModernCard from '@/components/ModernCard';
+import { useAuth } from '@/hooks/useAuth';
 import { useApi } from '@/hooks/useApi';
-import { propertiesApi, bidsApi } from '@/lib/api';
-import { getCurrentUserContext } from '@/lib/security';
-import { HorizontalStatsShimmer, PropertyListShimmer } from '@/components/shimmer';
+import { propertiesApi } from '@/lib/api';
+import { theme, spacing } from '@/lib/theme';
+import ModernHeader from '@/components/ModernHeader';
 import TenantEmptyState from '@/components/TenantEmptyState';
+import { HorizontalStatsShimmer, PropertyListShimmer } from '@/components/shimmer';
+import { Building2, Home, Users, MessageSquare } from 'lucide-react-native';
 
 export default function PropertiesScreen() {
   const router = useRouter();
-  const { isDarkMode } = useAppStore();
-  const theme = isDarkMode ? darkTheme : lightTheme;
-  const { t } = useTranslation('common');
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
-
-  // Get current user context for role-based functionality
-  const { 
-    data: userContext, 
-    loading: userLoading, 
-    error: userError 
-  } = useApi(() => getCurrentUserContext(), []);
+  const [showAddPropertyModal, setShowAddPropertyModal] = useState(false);
 
   // Fetch properties from database
   const { 
@@ -78,7 +66,7 @@ export default function PropertiesScreen() {
 
   // Handle rental contract request
   const handleRequestContract = async (property: any) => {
-    if (!userContext || userContext.role !== 'tenant') {
+    if (!user || user.user_metadata?.role !== 'tenant') {
       Alert.alert(
         'خطأ في الصلاحية',
         'يجب أن تكون مستأجرًا لطلب عقد إيجار',
@@ -104,8 +92,8 @@ export default function PropertiesScreen() {
 
   // Check if user can request contract for a property
   const canRequestContract = (property: any) => {
-    return userContext && 
-           userContext.role === 'tenant' && 
+    return user && 
+           user.user_metadata?.role === 'tenant' && 
            property.status === 'available' && 
            (property.listing_type === 'rent' || property.listing_type === 'both') &&
            property.is_accepting_bids;
@@ -123,7 +111,7 @@ export default function PropertiesScreen() {
           showNotifications={true}
             variant="dark"
         />
-        {userContext?.role === 'tenant' ? (
+        {user?.user_metadata?.role === 'tenant' ? (
           <TenantEmptyState type="properties" />
         ) : (
           <View style={styles.errorContainer}>
@@ -247,7 +235,7 @@ export default function PropertiesScreen() {
         )}
         
         {/* Owner/Admin View Button */}
-        {userContext && (userContext.role === 'owner' || userContext.role === 'admin' || userContext.role === 'manager') && (
+        {user && (user.user_metadata?.role === 'owner' || user.user_metadata?.role === 'admin' || user.user_metadata?.role === 'manager') && (
           <View style={styles.adminActions}>
             <IconButton
               icon={() => <Users size={20} color={theme.colors.onSurfaceVariant} />}
@@ -259,6 +247,15 @@ export default function PropertiesScreen() {
       </View>
     </TouchableOpacity>
   );
+
+  const handleAddProperty = (type: 'single' | 'building') => {
+    setShowAddPropertyModal(false);
+    if (type === 'single') {
+      router.push('/properties/add');
+    } else {
+      router.push('/buildings/add');
+    }
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -372,7 +369,7 @@ export default function PropertiesScreen() {
             </View>
           )}
           ListEmptyComponent={
-            userContext?.role === 'tenant' ? (
+            user?.user_metadata?.role === 'tenant' ? (
               <TenantEmptyState type="properties" />
             ) : (
               <View style={[styles.emptyState, { backgroundColor: theme.colors.surface }]}>
@@ -390,16 +387,52 @@ export default function PropertiesScreen() {
         />
       )}
 
-      {/* Add Property FAB - Only visible for admin, manager, or owner */}
-      {userContext && ['admin', 'manager', 'owner'].includes(userContext.role) && (
-        <FAB
-          icon="plus"
-          style={[styles.fab, { backgroundColor: theme.colors.primary }]}
-          size="medium"
-          onPress={() => router.push('/properties/add')}
-          label="إضافة عقار"
-        />
-      )}
+      {/* Add Property FAB - Always visible for now */}
+      <FAB
+        icon="plus"
+        style={[styles.fab, { backgroundColor: theme.colors.primary }]}
+        size="medium"
+        onPress={() => setShowAddPropertyModal(true)}
+        label="إضافة عقار"
+      />
+
+      {/* Add Property Type Selection Modal */}
+      <Portal>
+        <Modal
+          visible={showAddPropertyModal}
+          onDismiss={() => setShowAddPropertyModal(false)}
+          contentContainerStyle={styles.modalContainer}
+        >
+          <Card style={styles.modalCard}>
+            <Card.Content>
+              <Title style={styles.modalTitle}>اختر نوع العقار المراد إضافته</Title>
+              <Paragraph style={styles.modalDescription}>
+                يمكنك إضافة عقار منفرد أو مبنى يحتوي على عدة شقق
+              </Paragraph>
+              
+              <View style={styles.modalButtons}>
+                <Button
+                  mode="contained"
+                  onPress={() => handleAddProperty('single')}
+                  style={styles.modalButton}
+                  icon="home"
+                >
+                  إضافة عقار منفرد
+                </Button>
+                
+                <Button
+                  mode="outlined"
+                  onPress={() => handleAddProperty('building')}
+                  style={styles.modalButton}
+                  icon="building"
+                >
+                  إضافة مبنى جديد
+                </Button>
+              </View>
+            </Card.Content>
+          </Card>
+        </Modal>
+      </Portal>
     </SafeAreaView>
   );
 }
@@ -608,6 +641,8 @@ const styles = StyleSheet.create({
     margin: 16,
     right: 0,
     bottom: 0,
+    zIndex: 1000,
+    elevation: 8,
   },
   loadingContainer: {
     flex: 1,
@@ -640,21 +675,38 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  emptyState: {
-    padding: spacing.xl,
-    borderRadius: 16,
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: spacing.m,
+    padding: spacing.l,
   },
-  emptyStateTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginTop: spacing.m,
+  modalCard: {
+    width: '100%',
+    borderRadius: 16,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: spacing.s,
     textAlign: 'center',
   },
-  emptyStateSubtitle: {
+  modalDescription: {
     fontSize: 14,
-    marginTop: spacing.s,
     textAlign: 'center',
+    marginBottom: spacing.l,
+    color: theme.colors.onSurfaceVariant,
+  },
+  modalButtons: {
+    flexDirection: 'column',
+    gap: spacing.s,
+  },
+  modalButton: {
+    borderRadius: 12,
   },
 });

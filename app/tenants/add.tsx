@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Text, TextInput, Button, SegmentedButtons, Card, Divider } from 'react-native-paper';
+import { useTranslation } from 'react-i18next';
 import { Picker } from '@react-native-picker/picker';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
@@ -27,6 +28,7 @@ interface PropertyOption {
 }
 
 export default function AssignTenantScreen() {
+  const { t } = useTranslation(['tenants', 'common']);
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState('');

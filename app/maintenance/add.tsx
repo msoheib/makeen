@@ -6,6 +6,12 @@ import { theme, spacing } from '@/lib/theme';
 import { useApi } from '@/hooks/useApi';
 import { maintenanceApi, propertiesApi, tenantApi } from '@/lib/api';
 import { Tables, TablesInsert } from '@/lib/database.types';
+import { getCurrentUserContext } from '@/lib/security';
+import ModernHeader from '@/components/ModernHeader';
+import ModernCard from '@/components/ModernCard';
+import PhotoCapture from '@/components/PhotoCapture';
+import { Wrench, AlertTriangle, Building, Search, Check, Camera } from 'lucide-react-native';
+import { useTranslation } from '@/lib/useTranslation';
 
 // TypeScript interface for contract with property response
 interface ContractWithProperty {
@@ -20,12 +26,6 @@ interface ContractWithProperty {
     property_type?: string;
   };
 }
-import { getCurrentUserContext } from '@/lib/security';
-import ModernHeader from '@/components/ModernHeader';
-import ModernCard from '@/components/ModernCard';
-import PhotoCapture from '@/components/PhotoCapture';
-import { Wrench, AlertTriangle, Building, Search, Check, Camera } from 'lucide-react-native';
-import { useTranslation } from '@/lib/useTranslation';
 
 type MaintenanceRequest = TablesInsert<'maintenance_requests'>;
 type Property = Tables<'properties'>;

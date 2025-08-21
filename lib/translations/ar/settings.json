@@ -274,6 +274,31 @@
   "signOutConfirmTitle": "تسجيل الخروج",
   "signOutConfirmMessage": "هل أنت متأكد من أنك تريد تسجيل الخروج؟",
   "cancel": "إلغاء",
+  "password": {
+    "title": "تغيير كلمة المرور",
+    "subtitle": "أدخل كلمة المرور الجديدة",
+    "newPassword": "كلمة المرور الجديدة",
+    "confirmPassword": "تأكيد كلمة المرور",
+    "showPassword": "إظهار كلمة المرور",
+    "hidePassword": "إخفاء كلمة المرور",
+    "passwordStrength": "قوة كلمة المرور",
+    "tooShort": "قصيرة جداً",
+    "weak": "ضعيفة",
+    "good": "جيدة",
+    "strong": "قوية",
+    "passwordsMatch": "كلمات المرور متطابقة",
+    "passwordsDontMatch": "كلمات المرور غير متطابقة",
+    "submit": "تغيير كلمة المرور",
+    "cancel": "إلغاء",
+    "loading": "جارٍ تغيير كلمة المرور...",
+    "success": "تم تغيير كلمة المرور بنجاح",
+    "error": "فشل في تغيير كلمة المرور",
+    "validation": {
+      "passwordRequired": "كلمة المرور مطلوبة",
+      "passwordTooShort": "كلمة المرور يجب أن تكون 6 أحرف على الأقل",
+      "passwordsDontMatch": "كلمات المرور غير متطابقة"
+    }
+  },
   "help": {
     "title": "مركز المساعدة",
     "description": "احصل على المساعدة وتعلم كيفية استخدام التطبيق",

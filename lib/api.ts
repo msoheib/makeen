@@ -102,6 +102,7 @@ export const propertiesApi = {
     status?: string;
     property_type?: string;
     city?: string;
+    group_id?: string; // new: filter by building/group
   }): Promise<ApiResponse<Tables<'properties'>[]>> {
     // **SECURITY**: Get current user context for role-based filtering
     const userContext = await getCurrentUserContext();
@@ -160,6 +161,7 @@ export const propertiesApi = {
     if (filters?.status) query = query.eq('status', filters.status);
     if (filters?.property_type) query = query.eq('property_type', filters.property_type);
     if (filters?.city) query = query.ilike('city', `%${filters.city}%`);
+    if (filters?.group_id) query = query.eq('group_id', filters.group_id);
 
     console.log(`[Security] Properties query for user ${userContext.userId} (${userContext.role})`);
     return handleApiCall(() => query);
@@ -413,6 +415,72 @@ export const propertiesApi = {
       });
       return { data: summary, error: null };
     });
+  }
+};
+
+// Property Groups (Buildings/Compounds) API
+export const propertyGroupsApi = {
+  async getAll(filters?: {
+    owner_id?: string;
+    city?: string;
+    status?: string;
+  }): Promise<ApiResponse<Tables<'property_groups'>[]>> {
+    let query = supabase
+      .from('property_groups')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (filters?.owner_id) query = query.eq('owner_id', filters.owner_id);
+    if (filters?.status) query = query.eq('status', filters.status);
+    if (filters?.city) query = query.ilike('city', `%${filters.city}%`);
+
+    return handleApiCall(() => query);
+  },
+
+  async getById(id: string): Promise<ApiResponse<any>> {
+    return handleApiCall(async () => {
+      const [groupRes, unitsRes] = await Promise.all([
+        supabase.from('property_groups').select('*').eq('id', id).single(),
+        supabase.from('properties').select('*').eq('group_id', id)
+      ]);
+
+      if (groupRes.error) throw groupRes.error;
+      if (unitsRes.error) throw unitsRes.error;
+
+      return { data: { ...groupRes.data, units: unitsRes.data || [] }, error: null };
+    });
+  },
+
+  async create(payload: TablesInsert<'property_groups'>): Promise<ApiResponse<Tables<'property_groups'>>> {
+    return handleApiCall(() =>
+      supabase.from('property_groups').insert(payload).select().single()
+    );
+  },
+
+  async update(id: string, payload: TablesUpdate<'property_groups'>): Promise<ApiResponse<Tables<'property_groups'>>> {
+    return handleApiCall(() =>
+      supabase
+        .from('property_groups')
+        .update({ ...payload, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single()
+    );
+  },
+
+  async delete(id: string): Promise<ApiResponse<null>> {
+    return handleApiCall(() => supabase.from('property_groups').delete().eq('id', id));
+  },
+
+  // Bulk-create apartment units under a group
+  async createUnitsBulk(groupId: string, units: Array<Omit<TablesInsert<'properties'>, 'group_id'>>): Promise<ApiResponse<Tables<'properties'>[]>> {
+    const rows = units.map(u => ({ ...u, group_id: groupId }));
+    return handleApiCall(() =>
+      supabase
+        .from('properties')
+        .insert(rows)
+        .select('*')
+    );
   }
 };
 

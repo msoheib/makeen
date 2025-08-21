@@ -14,7 +14,7 @@ interface PropertyPerformanceData {
   avgOccupancyRate: number;
   totalRevenue: number;
   avgROI: number;
-  properties: Array<{
+  properties: {
     id: string;
     title: string;
     occupancyRate: number;
@@ -23,15 +23,15 @@ interface PropertyPerformanceData {
     maintenanceCosts: number;
     netIncome: number;
     propertyValue: number;
-  }>;
-  occupancyTrend: Array<{
+  }[];
+  occupancyTrend: {
     month: string;
     occupancyRate: number;
-  }>;
-  revenueByProperty: Array<{
+  }[];
+  revenueByProperty: {
     propertyName: string;
     revenue: number;
-  }>;
+  }[];
 }
 
 export default function PropertyPerformanceReportScreen() {
