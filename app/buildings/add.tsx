@@ -4,7 +4,7 @@ import { Text, TextInput, Button, SegmentedButtons, Snackbar } from 'react-nativ
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import { useRouter } from 'expo-router';
-import { propertyGroupsApi } from '@/lib/api';
+import { propertyGroupsApi, profilesApi } from '@/lib/api';
 import { theme, spacing } from '@/lib/theme';
 
 export default function AddBuildingScreen() {
@@ -20,6 +20,7 @@ export default function AddBuildingScreen() {
     country: '',
     neighborhood: '',
     floors_count: '',
+    owner_id: '',
   });
 
   const [unitsForm, setUnitsForm] = useState({
@@ -33,6 +34,14 @@ export default function AddBuildingScreen() {
     defaultAreaSqm: '80',
     defaultAnnualRent: '',
   });
+
+  const [owners, setOwners] = useState<any[]>([]);
+  React.useEffect(() => {
+    (async () => {
+      const { data } = await profilesApi.getAll({ role: 'owner' });
+      setOwners(data || []);
+    })();
+  }, []);
 
   const handleCreate = async () => {
     if (!groupForm.name.trim()) {
@@ -49,6 +58,7 @@ export default function AddBuildingScreen() {
         country: groupForm.country || null,
         neighborhood: groupForm.neighborhood || null,
         floors_count: groupForm.floors_count ? Number(groupForm.floors_count) : null,
+        owner_id: groupForm.owner_id || null,
         status: 'active' as const,
       };
       const res = await propertyGroupsApi.create(payload);
@@ -86,6 +96,7 @@ export default function AddBuildingScreen() {
               city: payload.city || '',
               country: payload.country || '',
               neighborhood: payload.neighborhood || '',
+              owner_id: payload.owner_id || null,
               area_sqm: defaultArea,
               bedrooms: defaultBedrooms,
               bathrooms: defaultBathrooms,
@@ -206,6 +217,16 @@ export default function AddBuildingScreen() {
               />
             </View>
           </View>
+
+          <Text style={styles.subsectionTitle}>المالك</Text>
+          <Text style={styles.label}>تعيين مالك للمبنى</Text>
+          <TextInput
+            mode="outlined"
+            style={styles.input}
+            placeholder="أدخل معرف المالك أو اختر من الشاشة المناسبة لاحقاً"
+            value={groupForm.owner_id}
+            onChangeText={(t) => setGroupForm({ ...groupForm, owner_id: t })}
+          />
         </ModernCard>
 
         <ModernCard style={styles.section}>

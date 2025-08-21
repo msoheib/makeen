@@ -118,7 +118,8 @@ export const propertiesApi = {
       .from('properties')
       .select(`
         *,
-        owner:profiles!properties_owner_id_fkey(id, first_name, last_name, email, phone)
+        owner:profiles!properties_owner_id_fkey(id, first_name, last_name, email, phone),
+        group:property_groups!properties_group_id_fkey(id, name, group_type)
       `)
       .order('created_at', { ascending: false });
 

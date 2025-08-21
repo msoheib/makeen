@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, StyleSheet, FlatList, SafeAreaView, TouchableOpacity, RefreshControl, Alert } from 'react-native';
 import { Text, Searchbar, FAB, Button, IconButton, Portal, Modal, Card, Title, Paragraph } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useApi } from '@/hooks/useApi';
-import { propertiesApi } from '@/lib/api';
+import { propertiesApi, propertyGroupsApi } from '@/lib/api';
 import { theme, spacing } from '@/lib/theme';
 import ModernHeader from '@/components/ModernHeader';
 import TenantEmptyState from '@/components/TenantEmptyState';
@@ -24,11 +24,52 @@ export default function PropertiesScreen() {
     error: propertiesError, 
     refetch: refetchProperties 
   } = useApi(async () => {
-    console.log('[PropertiesScreen] Calling propertiesApi.getAll()...');
     const result = await propertiesApi.getAll();
-    console.log('[PropertiesScreen] API result:', result);
     return result;
   }, []);
+
+  // Fetch property groups (buildings/compounds)
+  const { 
+    data: groups, 
+    loading: groupsLoading, 
+    error: groupsError, 
+    refetch: refetchGroups 
+  } = useApi(() => propertyGroupsApi.getAll(), []);
+
+  // Merge properties and groups into one list
+  const combinedItems = useMemo(() => {
+    const groupItems = (groups || []).map((g: any) => ({
+      __kind: 'group',
+      id: g.id,
+      title: g.name,
+      address: g.address || '',
+      city: g.city || '',
+      group: { id: g.id, name: g.name, group_type: g.group_type },
+      floors_count: g.floors_count,
+      status: 'group',
+    }));
+    const propertyItems = properties || [];
+    return [...groupItems, ...propertyItems];
+  }, [groups, properties]);
+
+  // Filter based on search across both kinds
+  const filteredProperties = useMemo(() => {
+    const q = (searchQuery || '').toLowerCase();
+    return (combinedItems || []).filter((item: any) => {
+      if (item.__kind === 'group') {
+        return (
+          (item.title || '').toLowerCase().includes(q) ||
+          (item.address || '').toLowerCase().includes(q) ||
+          (item.city || '').toLowerCase().includes(q)
+        );
+      }
+      return (
+        (item.title || '').toLowerCase().includes(q) ||
+        (item.address || '').toLowerCase().includes(q) ||
+        (item.city || '').toLowerCase().includes(q)
+      );
+    });
+  }, [combinedItems, searchQuery]);
 
   // Fetch dashboard summary for stats
   const { 
@@ -37,13 +78,6 @@ export default function PropertiesScreen() {
     error: statsError, 
     refetch: refetchStats 
   } = useApi(() => propertiesApi.getDashboardSummary(), []);
-
-  // Filter properties based on search
-  const filteredProperties = properties ? properties.filter((property: any) =>
-    property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    property.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    property.city.toLowerCase().includes(searchQuery.toLowerCase())
-  ) : [];
 
   // Calculate stats from properties data
   const stats = dashboardStats ? {
@@ -62,6 +96,7 @@ export default function PropertiesScreen() {
   const handleRefresh = () => {
     refetchProperties();
     refetchStats();
+    refetchGroups();
   };
 
   // Handle rental contract request
@@ -100,29 +135,29 @@ export default function PropertiesScreen() {
   };
 
   // Loading state - show shimmer if no data yet
-  const showInitialLoading = (propertiesLoading && !properties) || (statsLoading && !dashboardStats);
+  const showInitialLoading = ((propertiesLoading && !properties) || (statsLoading && !dashboardStats) || (groupsLoading && !groups));
 
   // Error state - show tenant-friendly message for tenants
-  if (propertiesError || statsError) {
+  if (propertiesError || statsError || groupsError) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}> 
         <ModernHeader 
           title="العقارات" 
           showNotifications={true}
-            variant="dark"
+          variant="dark"
         />
         {user?.user_metadata?.role === 'tenant' ? (
           <TenantEmptyState type="properties" />
         ) : (
           <View style={styles.errorContainer}>
-            <Text style={[styles.errorText, { color: theme.colors.error }]}>
-              خطأ في تحميل البيانات: {propertiesError || statsError}
+            <Text style={[styles.errorText, { color: theme.colors.error }]}> 
+              خطأ في تحميل البيانات: {propertiesError || statsError || groupsError}
             </Text>
             <TouchableOpacity 
-              style={[styles.retryButton, { backgroundColor: theme.colors.primary }]}
+              style={[styles.retryButton, { backgroundColor: theme.colors.primary }]} 
               onPress={handleRefresh}
             >
-              <Text style={[styles.retryButtonText, { color: theme.colors.onPrimary }]}>
+              <Text style={[styles.retryButtonText, { color: theme.colors.onPrimary }]}> 
                 إعادة المحاولة
               </Text>
             </TouchableOpacity>
@@ -135,102 +170,140 @@ export default function PropertiesScreen() {
   const renderProperty = ({ item }: { item: any }) => (
     <TouchableOpacity 
       style={[styles.propertyCard, { backgroundColor: theme.colors.surface }]}
-      onPress={() => router.push(`/properties/${item.id}`)}
+      onPress={() => item.__kind === 'group' ? router.push(`/buildings/${item.id}`) : router.push(`/properties/${item.id}`)}
     >
       <View style={styles.propertyHeader}>
-        <Text style={[styles.propertyTitle, { color: theme.colors.onSurface }]}>
+        <Text style={[styles.propertyTitle, { color: theme.colors.onSurface }]}> 
           {item.title}
         </Text>
-        <View style={[
-          styles.statusBadge, 
-          { 
-            backgroundColor: item.status === 'available' 
-              ? theme.colors.primaryContainer 
-              : item.status === 'rented'
-              ? theme.colors.secondaryContainer
-              : theme.colors.errorContainer
-          }
-        ]}>
-          <Text style={[
-            styles.statusText,
-            {
-              color: item.status === 'available'
-                ? theme.colors.primary
-                : item.status === 'rented' 
-                ? theme.colors.secondary
-                : theme.colors.error
-            }
-          ]}>
-            {item.status === 'available' ? 'متاح' : item.status === 'rented' ? 'مؤجر' : 'صيانة'}
-          </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {item.__kind === 'group' ? (
+            <View style={[styles.groupBadge, { backgroundColor: theme.colors.surfaceVariant }]}> 
+              <Text style={[styles.groupBadgeText, { color: theme.colors.onSurfaceVariant }]}> 
+                {item.group.group_type === 'villa_compound' ? 'مجمع فلل' : item.group.group_type === 'apartment_block' ? 'مجمع شقق' : 'مبنى'}
+              </Text>
+            </View>
+          ) : (
+            <>
+              {item.group && (
+                <View style={[styles.groupBadge, { backgroundColor: theme.colors.surfaceVariant }]}> 
+                  <Text style={[styles.groupBadgeText, { color: theme.colors.onSurfaceVariant }]}> 
+                    {item.group.group_type === 'villa_compound' ? 'مجمع فلل' : item.group.group_type === 'apartment_block' ? 'مجمع شقق' : 'مبنى'}: {item.group.name}
+                  </Text>
+                </View>
+              )}
+              <View style={[
+                styles.statusBadge, 
+                { 
+                  backgroundColor: item.status === 'available' 
+                    ? theme.colors.primaryContainer 
+                    : item.status === 'rented'
+                    ? theme.colors.secondaryContainer
+                    : theme.colors.errorContainer
+                }
+              ]}>
+                <Text style={[
+                  styles.statusText,
+                  {
+                    color: item.status === 'available'
+                      ? theme.colors.primary
+                      : item.status === 'rented' 
+                      ? theme.colors.secondary
+                      : theme.colors.error
+                  }
+                ]}>
+                  {item.status === 'available' ? 'متاح' : item.status === 'rented' ? 'مؤجر' : 'صيانة'}
+                </Text>
+              </View>
+            </>
+          )}
         </View>
       </View>
       
-      <Text style={[styles.propertyAddress, { color: theme.colors.onSurfaceVariant }]}>
+      <Text style={[styles.propertyAddress, { color: theme.colors.onSurfaceVariant }]}> 
         📍 {item.address}
       </Text>
       
-      <Text style={[styles.propertyDescription, { color: theme.colors.onSurfaceVariant }]}>
-        {item.description}
-      </Text>
+      {item.__kind !== 'group' && (
+        <Text style={[styles.propertyDescription, { color: theme.colors.onSurfaceVariant }]}> 
+          {item.description}
+        </Text>
+      )}
       
-      <View style={styles.propertyDetails}>
-        <View style={styles.detailItem}>
-          <Text style={[styles.detailLabel, { color: theme.colors.onSurfaceVariant }]}>
-            غرف النوم
-          </Text>
-          <Text style={[styles.detailValue, { color: theme.colors.onSurface }]}>
-            {item.bedrooms || '٠'}
-          </Text>
-        </View>
-        <View style={styles.detailItem}>
-          <Text style={[styles.detailLabel, { color: theme.colors.onSurfaceVariant }]}>
-            الحمامات
-          </Text>
-          <Text style={[styles.detailValue, { color: theme.colors.onSurface }]}>
-            {item.bathrooms || '٠'}
-          </Text>
-        </View>
-        <View style={styles.detailItem}>
-          <Text style={[styles.detailLabel, { color: theme.colors.onSurfaceVariant }]}>
-            المساحة
-          </Text>
-          <Text style={[styles.detailValue, { color: theme.colors.onSurface }]}>
-            {item.area_sqm} م²
-          </Text>
-        </View>
-      </View>
-      
-      <View style={styles.propertyFooter}>
-        <View style={styles.priceAndTypeContainer}>
-          <Text style={[styles.propertyPrice, { color: theme.colors.primary }]}>
-            {Number(item.annual_rent || item.price).toLocaleString('ar-SA')} ريال
-            {item.annual_rent && '/سنة'}
-          </Text>
-          <View style={[styles.typeTag, { backgroundColor: theme.colors.surfaceVariant }]}>
-            <Text style={[styles.typeText, { color: theme.colors.onSurfaceVariant }]}>
-              {item.property_type === 'villa' ? 'فيلا' : 
-               item.property_type === 'apartment' ? 'شقة' : 
-               item.property_type === 'office' ? 'مكتب' :
-               item.property_type === 'retail' ? 'تجاري' :
-               item.property_type === 'warehouse' ? 'مستودع' : (item.property_type || 'غير محدد')}
+      {item.__kind !== 'group' ? (
+        <View style={styles.propertyDetails}>
+          <View style={styles.detailItem}>
+            <Text style={[styles.detailLabel, { color: theme.colors.onSurfaceVariant }]}> 
+              غرف النوم
+            </Text>
+            <Text style={[styles.detailValue, { color: theme.colors.onSurface }]}> 
+              {item.bedrooms || '٠'}
+            </Text>
+          </View>
+          <View style={styles.detailItem}>
+            <Text style={[styles.detailLabel, { color: theme.colors.onSurfaceVariant }]}> 
+              الحمامات
+            </Text>
+            <Text style={[styles.detailValue, { color: theme.colors.onSurface }]}> 
+              {item.bathrooms || '٠'}
+            </Text>
+          </View>
+          <View style={styles.detailItem}>
+            <Text style={[styles.detailLabel, { color: theme.colors.onSurfaceVariant }]}> 
+              المساحة
+            </Text>
+            <Text style={[styles.detailValue, { color: theme.colors.onSurface }]}> 
+              {item.area_sqm} م²
             </Text>
           </View>
         </View>
-        
-        {/* Tenant Actions */}
-        {canRequestContract(item) && (
-          <View style={styles.tenantActions}>
-            <Button
-              mode="contained"
-              icon={() => <MessageSquare size={16} color={theme.colors.onPrimary} />}
-              onPress={() => handleRequestContract(item)}
-              style={[styles.requestButton, { backgroundColor: theme.colors.primary }]}
-              labelStyle={styles.requestButtonText}
-              compact
-            >
-              طلب عقد إيجار
-            </Button>
+      ) : (
+        <View style={styles.propertyDetails}>
+          <View style={styles.detailItem}>
+            <Text style={[styles.detailLabel, { color: theme.colors.onSurfaceVariant }]}> 
+              النوع
+            </Text>
+            <Text style={[styles.detailValue, { color: theme.colors.onSurface }]}> 
+              {item.group.group_type === 'villa_compound' ? 'مجمع فلل' : item.group.group_type === 'apartment_block' ? 'مجمع شقق' : 'مبنى'}
+            </Text>
+          </View>
+          {item.floors_count ? (
+            <View style={styles.detailItem}>
+              <Text style={[styles.detailLabel, { color: theme.colors.onSurfaceVariant }]}> 
+                الطوابق
+              </Text>
+              <Text style={[styles.detailValue, { color: theme.colors.onSurface }]}> 
+                {item.floors_count}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      )}
+      
+      <View style={styles.propertyFooter}>
+        {item.__kind !== 'group' ? (
+          <View style={styles.priceAndTypeContainer}>
+            <Text style={[styles.propertyPrice, { color: theme.colors.primary }]}> 
+              {Number(item.annual_rent || item.price).toLocaleString('ar-SA')} ريال
+              {item.annual_rent && '/سنة'}
+            </Text>
+            <View style={[styles.typeTag, { backgroundColor: theme.colors.surfaceVariant }]}> 
+              <Text style={[styles.typeText, { color: theme.colors.onSurfaceVariant }]}> 
+                {item.property_type === 'villa' ? 'فيلا' : 
+                 item.property_type === 'apartment' ? 'شقة' : 
+                 item.property_type === 'office' ? 'مكتب' :
+                 item.property_type === 'retail' ? 'تجاري' :
+                 item.property_type === 'warehouse' ? 'مستودع' : (item.property_type || 'غير محدد')}
+              </Text>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.priceAndTypeContainer}>
+            <View style={[styles.typeTag, { backgroundColor: theme.colors.surfaceVariant }]}> 
+              <Text style={[styles.typeText, { color: theme.colors.onSurfaceVariant }]}> 
+                عرض تفاصيل المبنى
+              </Text>
+            </View>
           </View>
         )}
         
@@ -239,7 +312,7 @@ export default function PropertiesScreen() {
           <View style={styles.adminActions}>
             <IconButton
               icon={() => <Users size={20} color={theme.colors.onSurfaceVariant} />}
-              onPress={() => router.push(`/properties/${item.id}`)}
+              onPress={() => item.__kind === 'group' ? router.push(`/buildings/${item.id}`) : router.push(`/properties/${item.id}`)}
               style={[styles.viewButton, { backgroundColor: theme.colors.surfaceVariant }]}
             />
           </View>
@@ -276,7 +349,7 @@ export default function PropertiesScreen() {
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
-              refreshing={propertiesLoading || statsLoading}
+              refreshing={propertiesLoading || statsLoading || groupsLoading}
               onRefresh={handleRefresh}
               colors={[theme.colors.primary]}
               tintColor={theme.colors.primary}
@@ -708,5 +781,14 @@ const styles = StyleSheet.create({
   },
   modalButton: {
     borderRadius: 12,
+  },
+  groupBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  groupBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
 });
