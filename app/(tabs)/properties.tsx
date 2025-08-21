@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { View, StyleSheet, FlatList, SafeAreaView, TouchableOpacity, RefreshControl, Alert } from 'react-native';
-import { Text, Searchbar, FAB, Button, IconButton, Portal, Modal, Card, Title, Paragraph } from 'react-native-paper';
+import { Text, Searchbar, FAB, Button, IconButton, Portal, Modal, Card, Title, Paragraph, SegmentedButtons } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useApi } from '@/hooks/useApi';
@@ -16,6 +16,7 @@ export default function PropertiesScreen() {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddPropertyModal, setShowAddPropertyModal] = useState(false);
+  const [viewFilter, setViewFilter] = useState<'all' | 'units' | 'groups'>('all');
 
   // Fetch properties from database
   const { 
@@ -55,21 +56,17 @@ export default function PropertiesScreen() {
   // Filter based on search across both kinds
   const filteredProperties = useMemo(() => {
     const q = (searchQuery || '').toLowerCase();
-    return (combinedItems || []).filter((item: any) => {
-      if (item.__kind === 'group') {
-        return (
-          (item.title || '').toLowerCase().includes(q) ||
-          (item.address || '').toLowerCase().includes(q) ||
-          (item.city || '').toLowerCase().includes(q)
-        );
-      }
+    const base = (combinedItems || []).filter((item: any) => {
       return (
         (item.title || '').toLowerCase().includes(q) ||
         (item.address || '').toLowerCase().includes(q) ||
         (item.city || '').toLowerCase().includes(q)
       );
     });
-  }, [combinedItems, searchQuery]);
+    if (viewFilter === 'groups') return base.filter((i: any) => i.__kind === 'group');
+    if (viewFilter === 'units') return base.filter((i: any) => i.__kind !== 'group');
+    return base;
+  }, [combinedItems, searchQuery, viewFilter]);
 
   // Fetch dashboard summary for stats
   const { 
@@ -173,9 +170,16 @@ export default function PropertiesScreen() {
       onPress={() => item.__kind === 'group' ? router.push(`/buildings/${item.id}`) : router.push(`/properties/${item.id}`)}
     >
       <View style={styles.propertyHeader}>
-        <Text style={[styles.propertyTitle, { color: theme.colors.onSurface }]}> 
-          {item.title}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {item.__kind === 'group' ? (
+            <Building2 size={18} color={theme.colors.onSurfaceVariant} />
+          ) : (
+            <Home size={18} color={theme.colors.onSurfaceVariant} />
+          )}
+          <Text style={[styles.propertyTitle, { color: theme.colors.onSurface }]}> 
+            {item.title}
+          </Text>
+        </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           {item.__kind === 'group' ? (
             <View style={[styles.groupBadge, { backgroundColor: theme.colors.surfaceVariant }]}> 
@@ -438,6 +442,17 @@ export default function PropertiesScreen() {
                 <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
                   قائمة العقارات {!showInitialLoading && `(${filteredProperties.length})`}
                 </Text>
+              </View>
+              <View style={{ marginBottom: 12 }}>
+                <SegmentedButtons
+                  value={viewFilter}
+                  onValueChange={(v: any) => setViewFilter(v)}
+                  buttons={[
+                    { value: 'all', label: 'الكل' },
+                    { value: 'units', label: 'وحدات' },
+                    { value: 'groups', label: 'مبانٍ' },
+                  ]}
+                />
               </View>
             </View>
           )}
