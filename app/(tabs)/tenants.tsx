@@ -32,6 +32,19 @@ export default function TenantsScreen() {
     refetch: refetchTenants 
   } = useApi(() => profilesApi.getTenants(), []);
 
+  // Get owners count for property managers and admins
+  const { 
+    data: owners, 
+    loading: ownersLoading, 
+    error: ownersError 
+  } = useApi(() => {
+    // Only fetch owners if user is admin or manager
+    if (userContext?.role === 'admin' || userContext?.role === 'manager') {
+      return profilesApi.getOwners();
+    }
+    return Promise.resolve({ data: [], error: null });
+  }, [userContext?.role]);
+
   // Computed values (not hooks, but derived state)
   const theme = isDarkMode ? darkTheme : lightTheme;
   const tenantsData = tenants || [];
@@ -62,7 +75,8 @@ export default function TenantsScreen() {
     active: tenantsData.filter(t => t.status === 'active').length,
     pending: tenantsData.filter(t => t.status === 'pending').length,
     foreign: tenantsData.filter(t => t.is_foreign === true).length,
-  }), [tenantsData]);
+    owners: owners?.length || 0, // Add owners count for admins/managers
+  }), [tenantsData, owners]);
 
   // Memoized render item function
   const renderTenantItem = useCallback(({ item: tenant }: { item: any }) => (
@@ -158,7 +172,10 @@ export default function TenantsScreen() {
       {/* Stats Section */}
       <View style={styles.statsSection}>
         <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
-          إحصائيات المستأجرين
+          {userContext?.role === 'admin' || userContext?.role === 'manager' 
+            ? 'إحصائيات المستأجرين والملاك' 
+            : 'إحصائيات المستأجرين'
+          }
         </Text>
         <View style={[styles.horizontalStatsCard, { backgroundColor: theme.colors.surface }]}>
           <View style={[styles.horizontalStatsRow, { flexDirection: getFlexDirection('row') }]}>
@@ -209,6 +226,21 @@ export default function TenantsScreen() {
                 {isLoading ? '...' : String(tenantStats.foreign || 0)}
               </Text>
             </View>
+
+            {/* Owners count - only visible to admins and managers */}
+            {(userContext?.role === 'admin' || userContext?.role === 'manager') && (
+              <View style={styles.horizontalStatItem}>
+                <View style={[styles.horizontalStatIcon, { backgroundColor: '#9C27B020' }]}>
+                  <Shield size={24} color="#9C27B0" />
+                </View>
+                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                  إجمالي الملاك
+                </Text>
+                <Text style={[styles.horizontalStatValue, { color: '#9C27B0' }]}>
+                  {ownersLoading ? '...' : String(tenantStats.owners || 0)}
+                </Text>
+              </View>
+            )}
           </View>
         </View>
       </View>
@@ -238,7 +270,7 @@ export default function TenantsScreen() {
         </Text>
       </View>
     </View>
-  ), [theme.colors, tenantStats, isLoading, searchQuery, filteredTenants.length]);
+  ), [theme.colors, tenantStats, isLoading, searchQuery, filteredTenants.length, ownersLoading, userContext?.role]);
 
   // EARLY RETURNS AFTER ALL HOOKS ARE CALLED
   // Show loading while checking permissions

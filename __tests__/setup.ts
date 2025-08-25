@@ -6,6 +6,51 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
 
+// Mock react-native-localize
+jest.mock('react-native-localize', () => ({
+  getLocales: () => [
+    {
+      countryCode: 'US',
+      languageTag: 'en-US',
+      languageCode: 'en',
+      isRTL: false,
+    },
+  ],
+  getCountry: () => 'US',
+  getLanguages: () => ['en'],
+  getTimeZone: () => 'America/New_York',
+  isRTL: false,
+  findBestAvailableLanguage: () => ({
+    languageTag: 'en',
+    isRTL: false,
+  }),
+}));
+
+// Mock expo-localization
+jest.mock('expo-localization', () => ({
+  getLocales: () => [
+    {
+      languageCode: 'en',
+      countryCode: 'US',
+      languageTag: 'en-US',
+      decimalSeparator: '.',
+      digitGroupingSeparator: ',',
+    },
+  ],
+  isRTL: false,
+  locale: 'en',
+  locales: ['en'],
+  timezone: 'America/New_York',
+}));
+
+// Mock expo-updates
+jest.mock('expo-updates', () => ({
+  isAvailableAsync: jest.fn(() => Promise.resolve(false)),
+  updateAsync: jest.fn(() => Promise.resolve()),
+  reloadAsync: jest.fn(() => Promise.resolve()),
+  checkForUpdateAsync: jest.fn(() => Promise.resolve({ isAvailable: false })),
+}));
+
 // Mock react-native-reanimated
 jest.mock('react-native-reanimated', () => {
   const Reanimated = require('react-native-reanimated/mock');
@@ -31,6 +76,8 @@ jest.mock('expo-router', () => ({
     push: jest.fn(),
     back: jest.fn(),
     replace: jest.fn(),
+    pathname: '/',
+    canGoBack: jest.fn(() => false),
   }),
   useLocalSearchParams: () => ({}),
   usePathname: () => '/',
@@ -101,6 +148,87 @@ jest.mock('react-native-paper', () => {
 jest.mock('expo-linking', () => ({
   openURL: jest.fn(() => Promise.resolve()),
   canOpenURL: jest.fn(() => Promise.resolve(true)),
+}));
+
+// Mock react-native-safe-area-context
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+  SafeAreaProvider: ({ children }: any) => children,
+  SafeAreaView: ({ children }: any) => children,
+}));
+
+// Mock the custom hooks
+jest.mock('@/hooks/useApi', () => ({
+  useApi: jest.fn(() => ({ data: 0, loading: false, error: null })),
+}));
+
+jest.mock('@/hooks/useRouteContext', () => ({
+  useRouteContext: jest.fn(() => ({
+    shouldShowBackButton: true,
+    shouldShowHamburger: false,
+    routeType: 'NON_TAB_PAGE',
+    hasBottomNavbar: false,
+    currentRoute: '/',
+    segments: [],
+  })),
+}));
+
+jest.mock('@/lib/store', () => ({
+  useAppStore: jest.fn(() => ({ 
+    isDarkMode: false,
+    settings: {},
+    user: null,
+    isAuthenticated: false,
+    isLoading: false,
+    properties: [],
+    maintenanceRequests: [],
+    invoices: [],
+    vouchers: [],
+    notifications: [],
+    isHydrated: true,
+  })),
+}));
+
+jest.mock('@/lib/theme', () => ({
+  lightTheme: {
+    colors: {
+      primary: '#6200ee',
+      onPrimary: '#ffffff',
+      surface: '#ffffff',
+      onSurface: '#000000',
+      onSurfaceVariant: '#666666',
+      error: '#b00020',
+    },
+  },
+  darkTheme: {
+    colors: {
+      primary: '#bb86fc',
+      onPrimary: '#000000',
+      surface: '#121212',
+      onSurface: '#ffffff',
+      onSurfaceVariant: '#b3b3b3',
+      error: '#cf6679',
+    },
+  },
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 16,
+    lg: 24,
+    xl: 32,
+  },
+}));
+
+jest.mock('@/lib/rtl', () => ({
+  rtlStyles: {
+    alignItemsStart: {},
+    textAlign: () => ({}),
+  },
+  getFlexDirection: () => 'row',
+}));
+
+jest.mock('@/lib/i18n', () => ({
+  isRTL: () => false,
 }));
 
 // Silence console warnings during tests
