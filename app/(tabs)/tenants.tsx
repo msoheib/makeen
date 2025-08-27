@@ -171,12 +171,23 @@ export default function TenantsScreen() {
     <View>
       {/* Stats Section */}
       <View style={styles.statsSection}>
-        <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
-          {userContext?.role === 'admin' || userContext?.role === 'manager' 
-            ? 'إحصائيات المستأجرين والملاك' 
-            : 'إحصائيات المستأجرين'
-          }
-        </Text>
+        <View style={[styles.sectionHeader, { flexDirection: getFlexDirection('row') }]}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+            {userContext?.role === 'admin' || userContext?.role === 'manager' 
+              ? 'إحصائيات المستأجرين والملاك' 
+              : 'إحصائيات المستأجرين'
+            }
+          </Text>
+          {(userContext?.role === 'admin' || userContext?.role === 'manager') && (
+            <TouchableOpacity
+              style={[styles.addButton, { backgroundColor: theme.colors.primary }]}
+              onPress={() => router.push('/people/add')}
+            >
+              <Plus size={16} color="white" />
+              <Text style={styles.addButtonText}>إضافة شخص</Text>
+            </TouchableOpacity>
+          )}
+        </View>
         <View style={[styles.horizontalStatsCard, { backgroundColor: theme.colors.surface }]}>
           <View style={[styles.horizontalStatsRow, { flexDirection: getFlexDirection('row') }]}>
             <View style={styles.horizontalStatItem}>
@@ -393,7 +404,13 @@ export default function TenantsScreen() {
           },
         ]}
         icon={() => <Plus size={24} color="white" />}
-        onPress={() => router.push('/people/add')}
+        onPress={() => {
+          if (userContext?.role === 'admin' || userContext?.role === 'manager') {
+            router.push('/people/add');
+          } else {
+            router.push('/tenants/add');
+          }
+        }}
       />
     </SafeAreaView>
   );
@@ -472,11 +489,34 @@ const styles = StyleSheet.create({
   statsSection: {
     marginBottom: spacing.m,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.s,
+  },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: spacing.m,
     textAlign: 'right',
+  },
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.s,
+    paddingHorizontal: spacing.m,
+    borderRadius: 8,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+  },
+  addButtonText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginLeft: spacing.s,
   },
   horizontalStatsCard: {
     borderRadius: 12,

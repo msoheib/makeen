@@ -77,5 +77,3 @@ const styles = StyleSheet.create({
 });
 
 
-
-

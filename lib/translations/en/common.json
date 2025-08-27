@@ -127,6 +127,7 @@
   "uploading": "Uploading...",
   "downloading": "Downloading...",
   "connecting": "Connecting...",
+  "notAvailable": "Not available",
   "enterTitle": "Enter title",
   "enterDescription": "Enter description",
   "selectOption": "Select an option",

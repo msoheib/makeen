@@ -43,6 +43,8 @@ export const SCREEN_PERMISSIONS: ScreenPermission[] = [
   { screen: 'suppliers', roles: ['admin', 'manager'] },
   { screen: 'clients', roles: ['admin', 'manager'] },
   { screen: 'foreign-tenants', roles: ['admin', 'manager', 'owner'] },
+  { screen: 'add-people', roles: ['admin', 'manager'] },
+  { screen: 'people', roles: ['admin', 'manager'] },
   
   // Financial Management
   { screen: 'vouchers', roles: ['admin', 'manager'] },
@@ -90,6 +92,8 @@ export const SIDEBAR_PERMISSIONS: NavigationPermission[] = [
   { id: 'buyer', label: 'Buyer', roles: ['admin', 'manager', 'owner'] },
   { id: 'foreign-tenants', label: 'Foreign Tenants', roles: ['admin', 'manager', 'owner'] },
   { id: 'customers-suppliers', label: 'Customers and suppliers', roles: ['admin', 'manager'] },
+  { id: 'people-management', label: 'People Management', roles: ['admin', 'manager'] },
+  { id: 'add-person', label: 'Add Person', roles: ['admin', 'manager'] },
   
   // Property Management section
   { id: 'property-management', label: 'Property Management', roles: ['admin', 'manager', 'owner', 'tenant'] },

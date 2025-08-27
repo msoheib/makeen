@@ -78,5 +78,9 @@
   "paymentHistoryDesc": "Detailed payment tracking and late fees",
   "leaseExpiryDesc": "Upcoming lease renewals and expirations",
   "operationsSummaryDesc": "Overall operational metrics and KPIs",
-  "vendorReportDesc": "Vendor performance and cost analysis"
+  "vendorReportDesc": "Vendor performance and cost analysis",
+  "downloadPDF": "Download PDF",
+  "noContentAvailable": "No content available for viewing",
+  "tryDownloadInstead": "Try downloading the PDF instead",
+  "quickStatistics": "Quick Statistics"
 } 

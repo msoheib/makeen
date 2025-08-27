@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Text, TextInput, Button, SegmentedButtons, Snackbar } from 'react-native-paper';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
@@ -148,9 +148,7 @@ export default function AddBuildingScreen() {
       />
       <ScrollView 
         style={styles.content}
-        contentContainerStyle={{ 
-          writingDirection: 'rtl',
-        }}
+        contentContainerStyle={{ writingDirection: 'rtl' }}
         showsVerticalScrollIndicator={false}
       >
         <ModernCard style={styles.section}>

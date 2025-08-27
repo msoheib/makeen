@@ -65,8 +65,8 @@ export const formatCurrency = (amount: number, currency: string = 'SAR'): string
   
   // Language-appropriate display format
   if (currentLanguage === 'ar') {
-    // Arabic: amount + space + symbol (e.g., "1,000 ر.س")
-    return `${formattedAmount} ${currencySymbol}`;
+    // Arabic: amount + space + symbol (e.g., "١,٠٠٠ ر.س")
+    return `${toArabicNumerals(formattedAmount)} ${currencySymbol}`;
   } else {
     // English: symbol + space + amount (e.g., "SAR 1,000")
     return `${currencySymbol} ${formattedAmount}`;
@@ -76,6 +76,35 @@ export const formatCurrency = (amount: number, currency: string = 'SAR'): string
 export const formatNumber = (num: number | string): string => {
   const numStr = num.toString();
   return isArabicLanguage() ? toArabicNumerals(numStr) : numStr;
+};
+
+// Enhanced number formatter for stats and displays
+export const formatDisplayNumber = (num: number | string): string => {
+  const currentLanguage = getCurrentLanguage();
+  
+  if (currentLanguage === 'ar') {
+    // For Arabic, format with Arabic-Indic digits and proper grouping
+    const numValue = typeof num === 'string' ? parseFloat(num) : num;
+    if (isNaN(numValue)) return toArabicNumerals(num.toString());
+    
+    // Format with Arabic locale for proper grouping
+    const formatted = new Intl.NumberFormat('ar-SA', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(numValue);
+    
+    // Convert to Arabic-Indic digits
+    return toArabicNumerals(formatted);
+  } else {
+    // For English, use standard formatting
+    const numValue = typeof num === 'string' ? parseFloat(num) : num;
+    if (isNaN(numValue)) return num.toString();
+    
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(numValue);
+  }
 };
 
 export const formatPercentage = (value: number): string => {

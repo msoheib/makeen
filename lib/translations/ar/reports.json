@@ -87,5 +87,8 @@
   "paymentHistoryDesc": "تتبع مفصل للمدفوعات والرسوم المتأخرة",
   "leaseExpiryDesc": "تجديدات وانتهاءات الإيجار القادمة",
   "operationsSummaryDesc": "المقاييس التشغيلية العامة ومؤشرات الأداء الرئيسية",
-  "vendorReportDesc": "تحليل أداء وتكلفة الموردين"
+  "vendorReportDesc": "تحليل أداء وتكلفة الموردين",
+  "downloadPDF": "تحميل PDF",
+  "noContentAvailable": "لا يوجد محتوى متاح للعرض",
+  "tryDownloadInstead": "جرب تحميل PDF بدلاً من ذلك"
 } 

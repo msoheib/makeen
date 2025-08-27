@@ -12,22 +12,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { rtlStyles, getFlexDirection } from '@/lib/rtl';
 import { isRTL } from '@/lib/i18n';
 
-/**
- * ModernHeader Component with Smart Back Navigation
- * 
- * This component implements intelligent back navigation that maps subsections
- * to their parent main sections instead of following the navigation stack
- * step-by-step. This provides a better user experience by taking users
- * directly to the relevant main section rather than through intermediate pages.
- * 
- * Smart Navigation Examples:
- * - /documents/[id] → /(drawer)/(tabs)/documents (Documents tab)
- * - /reports/revenue → /(drawer)/(tabs)/reports (Reports tab)
- * - /properties/[id] → /(drawer)/(tabs)/properties (Properties tab)
- * - /profile/ → /(drawer)/(tabs)/settings (Settings tab)
- * 
- * If no smart mapping is found, it falls back to standard router.back() behavior.
- */
 interface ModernHeaderProps {
   title?: string;
   subtitle?: string;
@@ -73,84 +57,11 @@ export default function ModernHeader({
   const handleBackPress = () => {
     if (onBackPress) {
       onBackPress();
+    } else if (router.canGoBack()) {
+      router.back();
     } else {
-      // Smart back navigation that maps subsections to parent main sections
-      const targetRoute = getSmartBackRoute();
-      if (targetRoute) {
-        router.push(targetRoute);
-      } else if (router.canGoBack()) {
-        router.back();
-      } else {
-        router.push('/(drawer)/(tabs)/');
-      }
+      router.push('/(tabs)/');
     }
-  };
-
-  /**
-   * Smart back navigation that maps subsections to their parent main sections
-   * instead of following the navigation stack step-by-step
-   */
-  const getSmartBackRoute = (): string | null => {
-    const currentRoute = router.pathname || '';
-    
-    // Map subsections to their parent main sections
-    const routeMapping: { [key: string]: string } = {
-      // Document subsections → Documents tab
-      '/documents/': '/(drawer)/(tabs)/documents',
-      '/(drawer)/documents/': '/(drawer)/(tabs)/documents',
-      
-      // Report subsections → Reports tab
-      '/reports/': '/(drawer)/(tabs)/reports',
-      '/(drawer)/reports/': '/(drawer)/(tabs)/reports',
-      
-      // Property subsections → Properties tab
-      '/properties/': '/(drawer)/(tabs)/properties',
-      '/(drawer)/properties/': '/(drawer)/(tabs)/properties',
-      
-      // Tenant subsections → Tenants tab
-      '/tenants/': '/(drawer)/(tabs)/tenants',
-      '/(drawer)/tenants/': '/(drawer)/(tabs)/tenants',
-      
-      // Finance subsections → Finance tab (if exists) or Dashboard
-      '/finance/': '/(drawer)/(tabs)/',
-      '/(drawer)/finance/': '/(drawer)/(tabs)/',
-      
-      // Maintenance subsections → Maintenance tab (if exists) or Dashboard
-      '/maintenance/': '/(drawer)/(tabs)/',
-      '/(drawer)/maintenance/': '/(drawer)/(tabs)/',
-      
-      // People subsections → Tenants tab (closest match)
-      '/people/': '/(drawer)/(tabs)/tenants',
-      '/(drawer)/people/': '/(drawer)/(tabs)/tenants',
-      
-      // Settings subsections → Settings tab
-      '/profile/': '/(drawer)/(tabs)/settings',
-      '/theme/': '/(drawer)/(tabs)/settings',
-      '/language/': '/(drawer)/(tabs)/settings',
-      '/currency/': '/(drawer)/(tabs)/settings',
-      '/notifications/': '/(drawer)/(tabs)/settings',
-      '/support/': '/(drawer)/(tabs)/settings',
-      '/terms/': '/(drawer)/(tabs)/settings',
-      '/privacy/': '/(drawer)/(tabs)/settings',
-      '/help/': '/(drawer)/(tabs)/settings',
-      
-      // Auth and other pages → Dashboard
-      '/': '/(drawer)/(tabs)/',
-      '/(auth)/': '/(drawer)/(tabs)/',
-      '/(drawer)/': '/(drawer)/(tabs)/'
-    };
-
-    // Find the best matching route
-    for (const [pattern, targetRoute] of Object.entries(routeMapping)) {
-      if (currentRoute.startsWith(pattern)) {
-        console.log('🧭 Smart Navigation:', currentRoute, '→', targetRoute);
-        return targetRoute;
-      }
-    }
-
-    console.log('🧭 No smart route mapping found for:', currentRoute, '- falling back to router.back()');
-    // If no specific mapping found, return null to fall back to router.back()
-    return null;
   };
 
   const handleNotificationPress = () => {

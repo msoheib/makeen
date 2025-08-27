@@ -25,7 +25,7 @@ import { useApi } from '@/hooks/useApi';
 import { propertiesApi, profilesApi, contractsApi } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 import { useScreenAccess, SCREEN_PERMISSIONS } from '@/lib/permissions';
-import { formatCurrency } from '@/lib/formatters';
+import { formatCurrency, formatDisplayNumber } from '@/lib/formatters';
 import { 
   HorizontalStatsShimmer, 
   RentCardShimmer, 
@@ -552,9 +552,9 @@ export default function DashboardScreen() {
               <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
                 إجمالي العقارات
               </Text>
-              <Text style={[styles.horizontalStatValue, { color: theme.colors.primary }]}>
-                {propertyStats.totalProperties}
-              </Text>
+                              <Text style={[styles.horizontalStatValue, { color: theme.colors.primary }]}>
+                  {formatDisplayNumber(propertyStats.totalProperties)}
+                </Text>
             </View>
             
             <View style={styles.horizontalStatItem}>
@@ -564,9 +564,9 @@ export default function DashboardScreen() {
               <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
                 العقارات المشغولة
               </Text>
-              <Text style={[styles.horizontalStatValue, { color: '#4CAF50' }]}>
-                {propertyStats.occupied}
-              </Text>
+                              <Text style={[styles.horizontalStatValue, { color: '#4CAF50' }]}>
+                  {formatDisplayNumber(propertyStats.occupied)}
+                </Text>
             </View>
             
             <View style={styles.horizontalStatItem}>
@@ -576,9 +576,9 @@ export default function DashboardScreen() {
               <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
                 إجمالي المستأجرين
               </Text>
-              <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary }]}>
-                {tenantStats.totalTenants}
-              </Text>
+                              <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary }]}>
+                  {formatDisplayNumber(tenantStats.totalTenants)}
+                </Text>
             </View>
             
 
@@ -638,9 +638,9 @@ export default function DashboardScreen() {
               <Text style={[styles.propertyLabel, { color: theme.colors.onSurfaceVariant }]}>
                 مشغولة
               </Text>
-              <Text style={[styles.propertyValue, { color: theme.colors.onSurface }]}>
-                {propertyStats.occupied}
-              </Text>
+                              <Text style={[styles.propertyValue, { color: theme.colors.onSurface }]}>
+                  {formatDisplayNumber(propertyStats.occupied)}
+                </Text>
             </View>
             
             <View style={styles.propertyItem}>
@@ -650,9 +650,9 @@ export default function DashboardScreen() {
               <Text style={[styles.propertyLabel, { color: theme.colors.onSurfaceVariant }]}>
                 شاغرة
               </Text>
-              <Text style={[styles.propertyValue, { color: theme.colors.onSurface }]}>
-                {propertyStats.available}
-              </Text>
+                              <Text style={[styles.propertyValue, { color: theme.colors.onSurface }]}>
+                  {formatDisplayNumber(propertyStats.available)}
+                </Text>
             </View>
             
             <View style={styles.propertyItem}>
@@ -662,9 +662,9 @@ export default function DashboardScreen() {
               <Text style={[styles.propertyLabel, { color: theme.colors.onSurfaceVariant }]}>
                 صيانة
               </Text>
-              <Text style={[styles.propertyValue, { color: theme.colors.onSurface }]}>
-                {propertyStats.maintenance}
-              </Text>
+                              <Text style={[styles.propertyValue, { color: theme.colors.onSurface }]}>
+                  {formatDisplayNumber(propertyStats.maintenance)}
+                </Text>
             </View>
           </View>
           
@@ -673,7 +673,7 @@ export default function DashboardScreen() {
               معدل الإشغال
             </Text>
             <Text style={[styles.occupancyValue, { color: theme.colors.primary }]}>
-              {propertyStats.occupancyRate}%
+              {formatDisplayNumber(propertyStats.occupancyRate)}%
             </Text>
           </View>
         </View>

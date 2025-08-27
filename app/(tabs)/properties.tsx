@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
-import { View, StyleSheet, FlatList, SafeAreaView, TouchableOpacity, RefreshControl, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, StyleSheet, FlatList, SafeAreaView, TouchableOpacity, RefreshControl, Alert } from 'react-native';
 import { Text, Searchbar, FAB, Button, IconButton, Portal, Modal, Card, Title, Paragraph, SegmentedButtons } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
@@ -17,9 +17,6 @@ export default function PropertiesScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddPropertyModal, setShowAddPropertyModal] = useState(false);
   const [viewFilter, setViewFilter] = useState<'all' | 'units' | 'groups'>('all');
-  
-  // Ref for search input to help maintain focus
-  const searchInputRef = useRef<any>(null);
 
   // Fetch properties from database
   const { 
@@ -73,178 +70,6 @@ export default function PropertiesScreen() {
     return base;
   }, [combinedItems, searchQuery, viewFilter]);
 
-  // Memoize the search handler to prevent unnecessary re-renders
-  const handleSearchChange = useMemo(() => (text: string) => {
-    setSearchQuery(text);
-  }, []);
-
-  // Memoize the filter change handler
-  const handleFilterChange = useMemo(() => (value: string) => {
-    setViewFilter(value as 'all' | 'units' | 'groups');
-  }, []);
-
-  // Memoize the header component to prevent unnecessary re-renders
-  const ListHeaderComponent = useMemo(() => () => (
-    <View>
-      {/* Stats Section */}
-      <View style={styles.statsSection}>
-        <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
-          إحصائيات العقارات
-        </Text>
-        {showInitialLoading ? (
-          <HorizontalStatsShimmer />
-        ) : (
-          <View style={[styles.horizontalStatsCard, { backgroundColor: theme.colors.surface }]}>
-            <View style={styles.horizontalStatsRow}>
-              <View style={styles.horizontalStatItem}>
-                <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
-                  <Building2 size={24} color={theme.colors.primary} />
-                </View>
-                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                  إجمالي العقارات
-                </Text>
-                <Text style={[styles.horizontalStatValue, { color: theme.colors.primary }]}>
-                  {statsLoading ? '...' : stats.total}
-                </Text>
-              </View>
-              
-              <View style={styles.horizontalStatItem}>
-                <View style={[styles.horizontalStatIcon, { backgroundColor: '#4CAF5020' }]}>
-                  <Home size={24} color="#4CAF50" />
-                </View>
-                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                  عقارات متاحة
-                </Text>
-                <Text style={[styles.horizontalStatValue, { color: '#4CAF50' }]}>
-                  {statsLoading ? '...' : stats.available}
-                </Text>
-              </View>
-              
-              <View style={styles.horizontalStatItem}>
-                <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.secondary}20` }]}>
-                  <Users size={24} color={theme.colors.secondary} />
-                </View>
-                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                  عقارات مؤجرة
-                </Text>
-                <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary }]}>
-                  {statsLoading ? '...' : stats.rented}
-                </Text>
-              </View>
-              
-              <View style={styles.horizontalStatItem}>
-                <View style={[styles.horizontalStatIcon, { backgroundColor: '#F4433620' }]}>
-                  <MessageSquare size={24} color="#F44336" />
-                </View>
-                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                  تحت الصيانة
-                </Text>
-                <Text style={[styles.horizontalStatValue, { color: '#F44336' }]}>
-                  {statsLoading ? '...' : stats.maintenance}
-                </Text>
-              </View>
-            </View>
-          </View>
-        )}
-      </View>
-
-      {/* Search Section */}
-      <View style={styles.searchSection}>
-        <Searchbar
-          ref={searchInputRef}
-          placeholder="البحث في العقارات..."
-          onChangeText={handleSearchChange}
-          value={searchQuery}
-          style={[styles.searchbar, { backgroundColor: theme.colors.surface }]}
-          iconColor={theme.colors.onSurfaceVariant}
-          placeholderTextColor={theme.colors.onSurfaceVariant}
-          autoCapitalize="none"
-          autoCorrect={false}
-          returnKeyType="search"
-          blurOnSubmit={false}
-          clearButtonMode="while-editing"
-          enablesReturnKeyAutomatically={true}
-          maxFontSizeMultiplier={1.0}
-          selectTextOnFocus={false}
-          contextMenuHidden={true}
-          spellCheck={false}
-          dataDetectorTypes="none"
-          textContentType="none"
-          secureTextEntry={false}
-          keyboardType="default"
-          multiline={false}
-          numberOfLines={1}
-          scrollEnabled={false}
-          showsHorizontalScrollIndicator={false}
-          showsVerticalScrollIndicator={false}
-          textAlign="right"
-          textAlignVertical="center"
-          underlineColorAndroid="transparent"
-          caretHidden={false}
-          selectionColor={theme.colors.primary}
-          testID="properties-search-input"
-          accessibilityLabel="البحث في العقارات"
-          accessibilityHint="اكتب للبحث في قائمة العقارات"
-          accessibilityRole="search"
-          accessibilityState={{ disabled: false, busy: false }}
-          accessibilityActions={[
-            { name: 'clear', label: 'مسح النص' },
-            { name: 'search', label: 'البحث' }
-          ]}
-          onAccessibilityAction={(event) => {
-            if (event.nativeEvent.actionName === 'clear') {
-              setSearchQuery('');
-            }
-          }}
-          onSubmitEditing={() => {
-            if (searchInputRef.current) {
-              searchInputRef.current.blur();
-            }
-          }}
-          onKeyPress={(event) => {
-            if (event.nativeEvent.key === 'Enter') {
-              if (searchInputRef.current) {
-                searchInputRef.current.blur();
-              }
-            }
-          }}
-          onFocus={() => {
-            if (searchInputRef.current) {
-              searchInputRef.current.focus();
-            }
-          }}
-          onBlur={() => {
-            if (searchQuery && searchInputRef.current) {
-              setTimeout(() => {
-                searchInputRef.current?.focus();
-              }, 100);
-            }
-          }}
-        />
-      </View>
-
-      {/* Filter Section */}
-      <View style={{ marginBottom: 12 }}>
-        <SegmentedButtons
-          value={viewFilter}
-          onValueChange={handleFilterChange}
-          buttons={[
-            { value: 'all', label: 'الكل' },
-            { value: 'units', label: 'وحدات' },
-            { value: 'groups', label: 'مبانٍ' },
-          ]}
-        />
-      </View>
-
-      {/* Properties List Header */}
-      <View style={styles.propertiesSection}>
-        <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
-          قائمة العقارات {!showInitialLoading && `(${filteredProperties.length})`}
-        </Text>
-      </View>
-    </View>
-  ), [showInitialLoading, statsLoading, stats, searchQuery, viewFilter, handleSearchChange, handleFilterChange, filteredProperties.length]);
-
   // Fetch dashboard summary for stats
   const { 
     data: dashboardStats, 
@@ -267,14 +92,14 @@ export default function PropertiesScreen() {
   };
 
   // Handle refresh
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = () => {
     refetchProperties();
     refetchStats();
     refetchGroups();
-  }, [refetchProperties, refetchStats, refetchGroups]);
+  };
 
   // Handle rental contract request
-  const handleRequestContract = useCallback(async (property: any) => {
+  const handleRequestContract = async (property: any) => {
     if (!user || user.user_metadata?.role !== 'tenant') {
       Alert.alert(
         'خطأ في الصلاحية',
@@ -297,16 +122,16 @@ export default function PropertiesScreen() {
         maxBidAmount: property.maximum_bid_amount || 0
       }
     });
-  }, [user, router]);
+  };
 
   // Check if user can request contract for a property
-  const canRequestContract = useCallback((property: any) => {
+  const canRequestContract = (property: any) => {
     return user && 
            user.user_metadata?.role === 'tenant' && 
            property.status === 'available' && 
            (property.listing_type === 'rent' || property.listing_type === 'both') &&
            property.is_accepting_bids;
-  }, [user]);
+  };
 
   // Loading state - show shimmer if no data yet
   const showInitialLoading = (propertiesLoading && !properties) || (statsLoading && !dashboardStats) || (groupsLoading && !groups);
@@ -341,8 +166,7 @@ export default function PropertiesScreen() {
     );
   }
 
-  // Memoize the renderProperty function to prevent unnecessary re-renders
-  const renderProperty = useMemo(() => ({ item }: { item: any }) => (
+  const renderProperty = ({ item }: { item: any }) => (
     <TouchableOpacity 
       style={[styles.propertyCard, { backgroundColor: theme.colors.surface }]}
       onPress={() => item.__kind === 'group' ? router.push(`/buildings/${item.id}`) : router.push(`/properties/${item.id}`)}
@@ -474,21 +298,26 @@ export default function PropertiesScreen() {
               {item.property_type === 'villa' ? 'فيلا' : 
                item.property_type === 'apartment' ? 'شقة' : 
                item.property_type === 'office' ? 'مكتب' :
-               item.property_type === 'retail' ? 'محل تجاري' :
+               item.property_type === 'retail' ? 'تجاري' :
                item.property_type === 'warehouse' ? 'مستودع' : (item.property_type || 'غير محدد')}
             </Text>
           </View>
         </View>
         
+        {/* Tenant Actions */}
         {canRequestContract(item) && (
-          <TouchableOpacity
-            style={[styles.requestContractButton, { backgroundColor: theme.colors.primary }]}
-            onPress={() => handleRequestContract(item)}
-          >
-            <Text style={[styles.requestContractButtonText, { color: theme.colors.onPrimary }]}>
+          <View style={styles.tenantActions}>
+            <Button
+              mode="contained"
+              icon={() => <MessageSquare size={16} color={theme.colors.onPrimary} />}
+              onPress={() => handleRequestContract(item)}
+              style={[styles.requestButton, { backgroundColor: theme.colors.primary }]}
+              labelStyle={styles.requestButtonText}
+              compact
+            >
               طلب عقد إيجار
-            </Text>
-          </TouchableOpacity>
+            </Button>
+          </View>
         )}
         
         {/* Owner/Admin View Button */}
@@ -503,23 +332,16 @@ export default function PropertiesScreen() {
         )}
       </View>
     </TouchableOpacity>
-  ), [router, canRequestContract, handleRequestContract]);
+  );
 
-  // Memoize getItemLayout for better FlatList performance
-  const getItemLayout = useCallback((data: any, index: number) => ({
-    length: 200, // Approximate height of each property card
-    offset: 200 * index,
-    index,
-  }), []);
-
-  const handleAddProperty = useCallback((type: 'single' | 'building') => {
+  const handleAddProperty = (type: 'single' | 'building') => {
     setShowAddPropertyModal(false);
     if (type === 'single') {
       router.push('/properties/add');
     } else {
       router.push('/buildings/add');
     }
-  }, [router]);
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -528,55 +350,141 @@ export default function PropertiesScreen() {
         showNotifications={true}
         variant="dark"
       />
-      
-      <KeyboardAvoidingView 
-        style={{ flex: 1 }} 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-      >
-        {/* Properties List with FlatList */}
-        {showInitialLoading ? (
-          <PropertyListShimmer count={5} />
-        ) : (
-          <FlatList
-            data={filteredProperties}
-            renderItem={renderProperty}
-            keyExtractor={item => item.id}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="none"
-            removeClippedSubviews={false}
-            getItemLayout={getItemLayout}
-            refreshControl={
-              <RefreshControl
-                refreshing={propertiesLoading || statsLoading || groupsLoading}
-                onRefresh={handleRefresh}
-                colors={[theme.colors.primary]}
-                tintColor={theme.colors.primary}
-                title="سحب للتحديث"
-                titleColor={theme.colors.onBackground}
-              />
-            }
-            ListHeaderComponent={ListHeaderComponent}
-            ListEmptyComponent={
-              user?.user_metadata?.role === 'tenant' ? (
-                <TenantEmptyState type="properties" />
-              ) : (
-                <View style={[styles.emptyState, { backgroundColor: theme.colors.surface }]}>
-                  <Home size={48} color={theme.colors.onSurfaceVariant} />
-                  <Text style={[styles.emptyStateTitle, { color: theme.colors.onSurface }]}>
-                    لا توجد عقارات
-                  </Text>
-                  <Text style={[styles.emptyStateSubtitle, { color: theme.colors.onSurfaceVariant }]}>
-                    {searchQuery ? 'جرب البحث بكلمات أخرى' : 'ابدأ بإضافة عقار جديد'}
-                  </Text>
-                </View>
-              )
-            }
-            contentContainerStyle={styles.listContent}
-          />
-        )}
-      </KeyboardAvoidingView>
+
+      {/* Properties List with FlatList */}
+      {showInitialLoading ? (
+        <PropertyListShimmer count={5} />
+      ) : (
+        <FlatList
+          data={filteredProperties}
+          renderItem={renderProperty}
+          keyExtractor={item => item.id}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={propertiesLoading || statsLoading || groupsLoading}
+              onRefresh={handleRefresh}
+              colors={[theme.colors.primary]}
+              tintColor={theme.colors.primary}
+              title="سحب للتحديث"
+              titleColor={theme.colors.onBackground}
+            />
+          }
+          ListHeaderComponent={() => (
+            <View>
+              {/* Stats Section */}
+              <View style={styles.statsSection}>
+                <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+                  إحصائيات العقارات
+                </Text>
+                {showInitialLoading ? (
+                  <HorizontalStatsShimmer />
+                ) : (
+                  <View style={[styles.horizontalStatsCard, { backgroundColor: theme.colors.surface }]}>
+                    <View style={styles.horizontalStatsRow}>
+                      <View style={styles.horizontalStatItem}>
+                        <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
+                          <Building2 size={24} color={theme.colors.primary} />
+                        </View>
+                        <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                          إجمالي العقارات
+                        </Text>
+                        <Text style={[styles.horizontalStatValue, { color: theme.colors.primary }]}>
+                          {statsLoading ? '...' : stats.total}
+                        </Text>
+                      </View>
+                      
+                      <View style={styles.horizontalStatItem}>
+                        <View style={[styles.horizontalStatIcon, { backgroundColor: '#4CAF5020' }]}>
+                          <Home size={24} color="#4CAF50" />
+                        </View>
+                        <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                          عقارات متاحة
+                        </Text>
+                        <Text style={[styles.horizontalStatValue, { color: '#4CAF50' }]}>
+                          {statsLoading ? '...' : stats.available}
+                        </Text>
+                      </View>
+                      
+                      <View style={styles.horizontalStatItem}>
+                        <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.secondary}20` }]}>
+                          <Users size={24} color={theme.colors.secondary} />
+                        </View>
+                        <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                          عقارات مؤجرة
+                        </Text>
+                        <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary }]}>
+                          {statsLoading ? '...' : stats.rented}
+                        </Text>
+                      </View>
+                      
+                      <View style={styles.horizontalStatItem}>
+                        <View style={[styles.horizontalStatIcon, { backgroundColor: '#F4433620' }]}>
+                          <MessageSquare size={24} color="#F44336" />
+                        </View>
+                        <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
+                          تحت الصيانة
+                        </Text>
+                        <Text style={[styles.horizontalStatValue, { color: '#F44336' }]}>
+                          {statsLoading ? '...' : stats.maintenance}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                )}
+              </View>
+
+              {/* Search Section */}
+              <View style={styles.searchSection}>
+                <Searchbar
+                  placeholder="البحث في العقارات..."
+                  onChangeText={setSearchQuery}
+                  value={searchQuery}
+                  style={[styles.searchbar, { backgroundColor: theme.colors.surface }]}
+                  iconColor={theme.colors.onSurfaceVariant}
+                  placeholderTextColor={theme.colors.onSurfaceVariant}
+                />
+              </View>
+
+              {/* Filter Section */}
+              <View style={{ marginBottom: 12 }}>
+                <SegmentedButtons
+                  value={viewFilter}
+                  onValueChange={(v: any) => setViewFilter(v)}
+                  buttons={[
+                    { value: 'all', label: 'الكل' },
+                    { value: 'units', label: 'وحدات' },
+                    { value: 'groups', label: 'مبانٍ' },
+                  ]}
+                />
+              </View>
+
+              {/* Properties List Header */}
+              <View style={styles.propertiesSection}>
+                <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+                  قائمة العقارات {!showInitialLoading && `(${filteredProperties.length})`}
+                </Text>
+              </View>
+            </View>
+          )}
+          ListEmptyComponent={
+            user?.user_metadata?.role === 'tenant' ? (
+              <TenantEmptyState type="properties" />
+            ) : (
+              <View style={[styles.emptyState, { backgroundColor: theme.colors.surface }]}>
+                <Home size={48} color={theme.colors.onSurfaceVariant} />
+                <Text style={[styles.emptyStateTitle, { color: theme.colors.onSurface }]}>
+                  لا توجد عقارات
+                </Text>
+                <Text style={[styles.emptyStateSubtitle, { color: theme.colors.onSurfaceVariant }]}>
+                  {searchQuery ? 'جرب البحث بكلمات أخرى' : 'ابدأ بإضافة عقار جديد'}
+                </Text>
+              </View>
+            )
+          }
+          contentContainerStyle={styles.listContent}
+        />
+      )}
 
       {/* Add Property FAB - Always visible for now */}
       <FAB
@@ -929,16 +837,5 @@ const styles = StyleSheet.create({
   },
   modalButton: {
     borderRadius: 12,
-  },
-  requestContractButton: {
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  requestContractButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
   },
 });

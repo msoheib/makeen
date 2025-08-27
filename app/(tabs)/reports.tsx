@@ -115,49 +115,111 @@ const FilterModal: React.FC<FilterModalProps> = ({ visible, onClose, onApply, fi
                       </Text>
                     )}
                   </View>
-                  {selectedOption?.id === item.id && (
-                    <MaterialIcons name="check" size={20} color={lightColors.primary} />
-                  )}
                 </TouchableOpacity>
               )}
-              ListEmptyComponent={
-                <View style={styles.modalEmptyContainer}>
-                  <Text style={[styles.modalEmptyText, rtlStyles.textAlign(), { color: lightColors.onSurfaceVariant }]}>
-                    {t('common:noData')}
-                  </Text>
-                </View>
-              }
             />
           )}
           
-          <View style={[styles.modalActions, rtlStyles.rowReverse()]}>
+          <View style={styles.modalActions}>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.modalButtonSecondary]}
+              onPress={onClose}
+            >
+              <Text style={[styles.modalButtonText, { color: lightColors.onSurface }]}>
+                {t('common:cancel')}
+              </Text>
+            </TouchableOpacity>
             <TouchableOpacity
               style={[
                 styles.modalButton, 
-                { 
-                  backgroundColor: selectedOption ? lightColors.primary : lightColors.onSurfaceVariant,
-                  opacity: selectedOption ? 1 : 0.6
-                }, 
-                rtlStyles.marginLeft(8)
+                styles.modalButtonPrimary,
+                { backgroundColor: lightColors.primary },
+                !selectedOption && { opacity: 0.5 }
               ]}
-              onPress={() => {
-                if (selectedOption) {
-                  onApply(selectedOption);
-                  onClose();
-                }
-              }}
+              onPress={() => selectedOption && onApply(selectedOption)}
               disabled={!selectedOption}
             >
               <Text style={[styles.modalButtonText, { color: lightColors.onPrimary }]}>
                 {t('common:apply')}
               </Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+// Report Viewer Modal Component
+interface ReportViewerModalProps {
+  visible: boolean;
+  onClose: () => void;
+  reportData: any;
+  onDownload: () => void;
+}
+
+const ReportViewerModal: React.FC<ReportViewerModalProps> = ({ visible, onClose, reportData, onDownload }) => {
+  const { theme } = useTheme();
+  const { t } = useTranslation();
+
+  // Force light theme colors for consistency
+  const lightColors = {
+    surface: '#FFFFFF',
+    onSurface: '#212121',
+    onSurfaceVariant: '#757575',
+    primary: '#1976D2',
+    secondary: '#FF6B35',
+    onPrimary: '#FFFFFF',
+    outline: '#E0E0E0',
+    background: '#F8F9FA'
+  };
+
+  if (!reportData) return null;
+
+  return (
+    <Modal visible={visible} transparent animationType="slide">
+      <View style={styles.modalOverlay}>
+        <View style={[styles.reportViewerContent, { backgroundColor: lightColors.surface }]}>
+          {/* Header */}
+          <View style={styles.reportViewerHeader}>
+            <Text style={[styles.reportViewerTitle, { color: lightColors.onSurface }]}>
+              {reportData.title}
+            </Text>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <MaterialIcons name="close" size={24} color={lightColors.onSurfaceVariant} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Report Content */}
+          <ScrollView style={styles.reportContent} showsVerticalScrollIndicator={false}>
+            {reportData.content ? (
+              <View style={styles.htmlContentContainer}>
+                <Text style={[styles.htmlContent, { color: lightColors.onSurface }]}>
+                  {reportData.content}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.noContentContainer}>
+                <MaterialIcons name="description" size={48} color={lightColors.onSurfaceVariant} />
+                <Text style={[styles.noContentText, { color: lightColors.onSurfaceVariant }]}>
+                  {t('reports:noContentAvailable')}
+                </Text>
+                <Text style={[styles.noContentSubtext, { color: lightColors.onSurfaceVariant }]}>
+                  {t('reports:tryDownloadInstead')}
+                </Text>
+              </View>
+            )}
+          </ScrollView>
+
+          {/* Footer Actions */}
+          <View style={styles.reportViewerFooter}>
             <TouchableOpacity
-              style={[styles.modalButton, { backgroundColor: lightColors.surface, borderWidth: 1, borderColor: lightColors.outline }]}
-              onPress={onClose}
+              style={[styles.reportViewerButton, { backgroundColor: lightColors.secondary }]}
+              onPress={onDownload}
             >
-              <Text style={[styles.modalButtonText, { color: lightColors.onSurface }]}>
-                {t('common:cancel')}
+              <MaterialIcons name="download" size={20} color="white" />
+              <Text style={[styles.reportViewerButtonText, { color: 'white' }]}>
+                {t('reports:downloadPDF')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -182,11 +244,18 @@ export default function ReportsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [generatingPDF, setGeneratingPDF] = useState<string | null>(null);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const [currentReportId, setCurrentReportId] = useState<string | null>(null);
   const [currentFilterType, setCurrentFilterType] = useState<string | null>(null);
-  const [currentReportId, setCurrentReportId] = useState<string>('');
-  const [appliedFilters, setAppliedFilters] = useState({});
   const [filterOptions, setFilterOptions] = useState<any[]>([]);
   const [loadingFilterOptions, setLoadingFilterOptions] = useState(false);
+  
+  // Report viewer modal state
+  const [reportViewerVisible, setReportViewerVisible] = useState(false);
+  const [currentReportData, setCurrentReportData] = useState<any>(null);
+  const [reportViewLoading, setReportViewLoading] = useState(false);
+  
+  // Track current action (view or download)
+  const [currentAction, setCurrentAction] = useState<'view' | 'download'>('view');
 
   // Force light theme colors for consistency with other screens
   const lightColors = {
@@ -512,6 +581,7 @@ export default function ReportsScreen() {
         // Show filter modal for reports that require filtering
         setCurrentReportId(report.id);
         setCurrentFilterType(report.filterType);
+        setCurrentAction('download');
         setFilterModalVisible(true);
         
         // Fetch filter options based on the filter type
@@ -524,6 +594,28 @@ export default function ReportsScreen() {
     } catch (error) {
       console.error('Error downloading PDF:', error);
       Alert.alert('Error', 'Failed to generate PDF report');
+    }
+  };
+
+  const handleViewReport = async (report: any) => {
+    try {
+      if (report.requiresFilter && report.filterType) {
+        // Show filter modal for reports that require filtering
+        setCurrentReportId(report.id);
+        setCurrentFilterType(report.filterType);
+        setCurrentAction('view');
+        setFilterModalVisible(true);
+        
+        // Fetch filter options based on the filter type
+        await fetchFilterOptions(report.filterType);
+        return;
+      }
+
+      // View report without filtering
+      await viewReport(report.id, report.title, report.titleEn);
+    } catch (error) {
+      console.error('Error viewing report:', error);
+      Alert.alert('Error', 'Failed to load report for viewing');
     }
   };
 
@@ -573,6 +665,17 @@ export default function ReportsScreen() {
       }
 
       if (result.success) {
+        // Handle actual file delivery
+        if (result.pdfData && result.contentType === 'application/pdf') {
+          await pdfApi.downloadPDF(result.pdfData, result.filename || `${title || 'report'}.pdf`);
+        } else if (result.htmlContent) {
+          // Convert to PDF if possible, else download HTML
+          const desiredName = (result.filename || `${title || 'report'}.html`).replace('.html', '.pdf');
+          const converted = await pdfApi.convertHTMLToPDF(result.htmlContent, desiredName);
+          if (!converted) {
+            await pdfApi.downloadHTML(result.htmlContent, result.filename || `${title || 'report'}.html`);
+          }
+        }
         Alert.alert('Success', 'PDF report generated successfully!');
       } else {
         Alert.alert('Error', result.error || 'Failed to generate PDF report');
@@ -585,10 +688,96 @@ export default function ReportsScreen() {
     }
   };
 
+  const viewReport = async (reportId: string, title: string, titleEn?: string, filterId?: string, filterType?: string) => {
+    try {
+      setReportViewLoading(true);
+
+      let result;
+
+      // Use specific helper methods for different report types
+      switch (reportId) {
+        case 'property-report':
+          if (!filterId) {
+            Alert.alert('Error', 'Please select a property for this report');
+            return;
+          }
+          result = await pdfApi.viewPropertyReport(filterId, userContext!);
+          break;
+
+        case 'tenant-statement':
+          if (!filterId) {
+            Alert.alert('Error', 'Please select a tenant for this report');
+            return;
+          }
+          result = await pdfApi.viewTenantStatement(filterId, userContext!);
+          break;
+
+        case 'owner-financial':
+          if (!filterId) {
+            Alert.alert('Error', 'Please select an owner for this report');
+            return;
+          }
+          result = await pdfApi.viewOwnerReport(filterId, userContext!);
+          break;
+
+        case 'expense-report':
+          const expenseType = filterType as 'sales' | 'maintenance' | 'all' || 'all';
+          result = await pdfApi.viewExpenseReport(expenseType, userContext!);
+          break;
+
+        default:
+          // Use the general filtered report method for viewing
+          result = await pdfApi.viewFilteredReport(reportId, title, userContext!, {
+            ...(filterId && { [currentFilterType + 'Id']: filterId }),
+            ...(filterType && { reportType: filterType })
+          });
+      }
+
+      if (result.success) {
+        // On web, open in a new tab for better UX
+        if (typeof window !== 'undefined' && result.htmlContent) {
+          const opened = await pdfApi.openHTML(result.htmlContent, title || 'Report');
+          if (!opened) {
+            // Fallback to in-app modal
+            setCurrentReportData({
+              id: reportId,
+              title: title,
+              titleEn: titleEn,
+              content: result.htmlContent,
+              data: result.data
+            });
+            setReportViewerVisible(true);
+          }
+        } else {
+          // Native path: show in modal
+          setCurrentReportData({
+            id: reportId,
+            title: title,
+            titleEn: titleEn,
+            content: result.htmlContent,
+            data: result.data
+          });
+          setReportViewerVisible(true);
+        }
+      } else {
+        Alert.alert('Error', result.error || 'Failed to load report for viewing');
+      }
+    } catch (error) {
+      console.error('Error viewing report:', error);
+      Alert.alert('Error', 'Failed to load report for viewing');
+    } finally {
+      setReportViewLoading(false);
+    }
+  };
+
   const handleFilterSelect = (filterId: string, filterType?: string) => {
     const report = availableReports.find(r => r.id === currentReportId);
     if (report) {
-      generatePDFReport(currentReportId, report.title, report.titleEn, filterId, filterType);
+      if (currentAction === 'download') {
+        generatePDFReport(currentReportId, report.title, report.titleEn, filterId, filterType);
+      } else {
+        viewReport(currentReportId, report.title, report.titleEn, filterId, filterType);
+      }
     }
   };
 
@@ -635,12 +824,24 @@ export default function ReportsScreen() {
             <ActivityIndicator size="small" color={lightColors.primary} />
           </View>
         ) : (
-          <IconButton
-            icon="download"
-            size={20}
-            iconColor={lightColors.primary}
-            onPress={() => handleDownloadPDF(item)}
-          />
+          <View style={styles.actionButtons}>
+            <IconButton
+              icon={(props) => (
+                <MaterialIcons name="visibility" size={20} color={props.color || lightColors.secondary} />
+              )}
+              selected={false}
+              onPress={() => handleViewReport(item)}
+              style={styles.actionButton}
+            />
+            <IconButton
+              icon={(props) => (
+                <MaterialIcons name="download" size={20} color={props.color || lightColors.primary} />
+              )}
+              selected={false}
+              onPress={() => handleDownloadPDF(item)}
+              style={styles.actionButton}
+            />
+          </View>
         )}
       </View>
 
@@ -849,7 +1050,11 @@ export default function ReportsScreen() {
           setFilterOptions([]);
         }}
         onApply={(filter) => {
-          generatePDFReport(currentReportId, '', '', filter.id, currentFilterType);
+          if (currentAction === 'download') {
+            generatePDFReport(currentReportId, '', '', filter.id, currentFilterType);
+          } else {
+            viewReport(currentReportId, '', '', filter.id, currentFilterType);
+          }
           setFilterModalVisible(false);
           setCurrentFilterType(null);
           setCurrentReportId('');
@@ -858,6 +1063,17 @@ export default function ReportsScreen() {
         filterType={currentFilterType || ''}
         options={filterOptions}
         loading={loadingFilterOptions}
+      />
+
+      <ReportViewerModal
+        visible={reportViewerVisible}
+        onClose={() => setReportViewerVisible(false)}
+        reportData={currentReportData}
+        onDownload={() => {
+          if (currentReportData) {
+            generatePDFReport(currentReportData.id, currentReportData.title, currentReportData.titleEn);
+          }
+        }}
       />
     </SafeAreaView>
   );
@@ -1081,19 +1297,31 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
     marginTop: 20,
-    gap: 8,
   },
   modalButton: {
+    flex: 1,
     paddingVertical: 12,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     borderRadius: 8,
     alignItems: 'center',
-    flex: 1,
+    justifyContent: 'center',
+  },
+  modalButtonPrimary: {
+    backgroundColor: '#1976D2', // Default primary color
+  },
+  modalButtonSecondary: {
+    backgroundColor: '#E0E0E0',
+    borderWidth: 1,
+    borderColor: '#B0B0B0',
   },
   modalButtonText: {
     fontSize: 16,
     fontWeight: '500',
+    textAlign: 'center',
   },
   loadingContainer: {
     flex: 1,
@@ -1123,5 +1351,84 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: 'center',
     lineHeight: 24,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionButton: {
+    flex: 1,
+  },
+  reportViewerContent: {
+    width: '90%',
+    maxHeight: '80%',
+    borderRadius: 12,
+    padding: 20,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+  },
+  reportViewerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  reportViewerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    flex: 1,
+  },
+  closeButton: {
+    padding: 8,
+  },
+  reportContent: {
+    flex: 1,
+  },
+  htmlContentContainer: {
+    padding: 16,
+  },
+  htmlContent: {
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  noContentContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+  },
+  noContentText: {
+    fontSize: 16,
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  noContentSubtext: {
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  reportViewerFooter: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  reportViewerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  reportViewerButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginLeft: 8,
   },
 });

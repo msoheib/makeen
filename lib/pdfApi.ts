@@ -98,100 +98,127 @@ class PDFGeneratorAPI {
       // Transform the request to match backend expectations
       const backendRequest = {
         reportType: this.mapReportType(request.type),
-        dateRange: request.filters?.startDate && request.filters?.endDate ? {
-          startDate: request.filters.startDate,
-          endDate: request.filters.endDate
-        } : undefined,
-        propertyId: request.filters?.propertyId,
-        tenantId: request.filters?.tenantId,
+        title: request.title,
+        titleEn: request.titleEn,
+        data: request.data,
+        userContext: request.userContext,
+        filters: request.filters,
+        format: 'pdf' // Request PDF format
       };
 
-      console.log('Transformed backend request:', backendRequest);
-      
-      const response = await fetch(this.edgeFunctionUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.anonKey}`,
-          'apikey': this.anonKey
-        },
-        body: JSON.stringify(backendRequest)
+      console.log('Backend request:', backendRequest);
+
+      // Prefer supabase functions client to avoid CORS/HTML responses
+      const { data: result, error } = await supabase.functions.invoke('pdf-generator', {
+        body: backendRequest
       });
 
-      console.log('Report API response status:', response.status);
-
-      if (!response.ok) {
-        // Try to get error message from response
-        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-        
-        try {
-          const errorData = await response.json();
-          console.log('Error response data:', errorData);
-          errorMessage = errorData.error || errorData.message || errorMessage;
-        } catch (jsonError) {
-          console.log('Could not parse error response as JSON:', jsonError);
-          try {
-            const errorText = await response.text();
-            console.log('Error response text:', errorText);
-            if (errorText) {
-              errorMessage = errorText;
-            }
-          } catch (textError) {
-            console.log('Could not read error response as text:', textError);
-          }
-        }
-        
-        throw new Error(errorMessage);
+      if (error) {
+        throw new Error(error.message || 'Failed to invoke pdf-generator');
       }
 
-      // Check if response is PDF, HTML, or JSON error
-      const contentType = response.headers.get('content-type');
-      console.log('Response content type:', contentType);
-      
-      if (contentType?.includes('application/pdf')) {
-        // Success: PDF response - handle PDF download for mobile
-        const pdfBuffer = await response.arrayBuffer();
-        const filename = this.extractFilenameFromHeaders(response.headers) || 
-                        `report-${request.type}-${new Date().toISOString().split('T')[0]}.pdf`;
-        
-        console.log('PDF report generated successfully:', filename);
-        
-        // For Expo mobile app, convert to base64 and save/share
-        const base64Pdf = btoa(String.fromCharCode(...new Uint8Array(pdfBuffer)));
-        
+      console.log('Backend response:', result);
+
+      // If function returned raw HTML string (under-development placeholder), treat as HTML content
+      if (typeof result === 'string') {
         return {
           success: true,
-          pdfData: base64Pdf,
-          filename,
-          contentType: 'application/pdf'
+          htmlContent: result,
+          filename: this.getArabicFilename(backendRequest.reportType),
+          contentType: 'text/html',
+          message: 'HTML report generated'
         };
-      } else if (contentType?.includes('text/html')) {
-        // Fallback: HTML response (if PDF generation failed)
-        const htmlContent = await response.text();
-        const filename = this.extractFilenameFromHeaders(response.headers) || 
-                        `report-${request.type}-${new Date().toISOString().split('T')[0]}.html`;
-        
-        console.log('HTML report generated (PDF generation may have failed):', filename);
-        
+      }
+
+      if (result.success) {
         return {
           success: true,
-          htmlContent,
-          filename,
-          contentType: 'text/html'
+          pdfData: result.pdfData,
+          filename: result.filename || `${request.title}.pdf`,
+          contentType: 'application/pdf',
+          message: result.message
         };
       } else {
-        // Error response in JSON format
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Report generation failed');
+        return {
+          success: false,
+          error: result.error || 'Failed to generate PDF'
+        };
       }
-
     } catch (error) {
-      console.error('Report generation failed:', error);
-      
+      console.error('Error generating PDF report:', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Report generation failed',
-        message: 'فشل في إنشاء التقرير. يرجى المحاولة مرة أخرى.'
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      };
+    }
+  }
+
+  /**
+   * View HTML report using Supabase Edge Function (for viewing without download)
+   */
+  async viewReport(request: PDFRequest): Promise<PDFResponse> {
+    try {
+      console.log('Viewing report for request:', request);
+      
+      if (!this.anonKey) {
+        throw new Error('Missing Supabase authentication key');
+      }
+
+      // Transform the request to match backend expectations
+      const backendRequest = {
+        reportType: this.mapReportType(request.type),
+        title: request.title,
+        titleEn: request.titleEn,
+        data: request.data,
+        userContext: request.userContext,
+        filters: request.filters,
+        format: 'html' // Request HTML format for viewing
+      };
+
+      console.log('Backend request for viewing:', backendRequest);
+
+      // Prefer supabase functions client to avoid CORS/HTML responses
+      const { data: result, error } = await supabase.functions.invoke('pdf-generator', {
+        body: backendRequest
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Failed to invoke pdf-generator');
+      }
+
+      console.log('Backend response for viewing:', result);
+
+      // Handle raw HTML string responses
+      if (typeof result === 'string') {
+        return {
+          success: true,
+          htmlContent: result,
+          filename: this.getArabicFilename(backendRequest.reportType),
+          contentType: 'text/html',
+          message: 'HTML report generated'
+        };
+      }
+
+      if (result.success) {
+        return {
+          success: true,
+          htmlContent: result.htmlContent,
+          data: result.data,
+          filename: result.filename || `${request.title}.html`,
+          contentType: 'text/html',
+          message: result.message
+        };
+      } else {
+        return {
+          success: false,
+          error: result.error || 'Failed to generate HTML report'
+        };
+      }
+    } catch (error) {
+      console.error('Error viewing HTML report:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
       };
     }
   }
@@ -669,7 +696,7 @@ class PDFGeneratorAPI {
     propertyId: string,
     userContext: PDFRequest['userContext']
   ): Promise<{ success: boolean; url?: string; error?: string }> {
-    return this.generatePDF({
+    return this.generateReport({
       type: 'property-report',
       title: 'Property Report',
       titleEn: 'Property Report',
@@ -678,50 +705,133 @@ class PDFGeneratorAPI {
     });
   }
 
-  // Helper method for tenant-specific reports
-  async generateTenantStatement(
-    tenantId: string,
-    userContext: PDFRequest['userContext']
-  ): Promise<{ success: boolean; url?: string; error?: string }> {
-    return this.generatePDF({
+  /**
+   * Generate property report
+   */
+  async generatePropertyReport(propertyId: string, userContext: any): Promise<PDFResponse> {
+    return this.generateReport({
+      type: 'property-report',
+      title: 'Property Report',
+      titleEn: 'Property Report',
+      userContext,
+      filters: { propertyId }
+    });
+  }
+
+  /**
+   * View property report (HTML format for viewing)
+   */
+  async viewPropertyReport(propertyId: string, userContext: any): Promise<PDFResponse> {
+    return this.viewReport({
+      type: 'property-report',
+      title: 'Property Report',
+      titleEn: 'Property Report',
+      userContext,
+      filters: { propertyId }
+    });
+  }
+
+  /**
+   * Generate tenant statement
+   */
+  async generateTenantStatement(tenantId: string, userContext: any): Promise<PDFResponse> {
+    return this.generateReport({
       type: 'tenant-statement',
-      title: 'كشف حساب المستأجر',
+      title: 'Tenant Statement',
       titleEn: 'Tenant Statement',
       userContext,
       filters: { tenantId }
     });
   }
 
-  // Helper method for owner-specific reports
-  async generateOwnerReport(
-    ownerId: string,
-    userContext: PDFRequest['userContext']
-  ): Promise<{ success: boolean; url?: string; error?: string }> {
-    return this.generatePDF({
+  /**
+   * View tenant statement (HTML format for viewing)
+   */
+  async viewTenantStatement(tenantId: string, userContext: any): Promise<PDFResponse> {
+    return this.viewReport({
+      type: 'tenant-statement',
+      title: 'Tenant Statement',
+      titleEn: 'Tenant Statement',
+      userContext,
+      filters: { tenantId }
+    });
+  }
+
+  /**
+   * Generate owner report
+   */
+  async generateOwnerReport(ownerId: string, userContext: any): Promise<PDFResponse> {
+    return this.generateReport({
       type: 'owner-financial',
-      title: 'التقرير المالي للمالك',
+      title: 'Owner Financial Report',
       titleEn: 'Owner Financial Report',
       userContext,
       filters: { ownerId }
     });
   }
 
-  // Helper method for expense reports with type filtering
-  async generateExpenseReport(
-    reportType: 'sales' | 'maintenance' | 'all',
-    userContext: PDFRequest['userContext'],
-    filters: PDFRequest['filters'] = {}
-  ): Promise<{ success: boolean; url?: string; error?: string }> {
-    return this.generatePDF({
-      type: 'expense-report',
-      title: reportType === 'maintenance' ? 'تقرير مصاريف الصيانة' : 
-             reportType === 'sales' ? 'تقرير مصاريف المبيعات' : 
-             'تقرير المصاريف',
-      titleEn: reportType === 'maintenance' ? 'Maintenance Expense Report' : 
-               reportType === 'sales' ? 'Sales Expense Report' : 
-               'Expense Report',
+  /**
+   * View owner report (HTML format for viewing)
+   */
+  async viewOwnerReport(ownerId: string, userContext: any): Promise<PDFResponse> {
+    return this.viewReport({
+      type: 'owner-financial',
+      title: 'Owner Financial Report',
+      titleEn: 'Owner Financial Report',
       userContext,
-      filters: { ...filters, reportType }
+      filters: { ownerId }
+    });
+  }
+
+  /**
+   * Generate expense report
+   */
+  async generateExpenseReport(expenseType: 'sales' | 'maintenance' | 'all', userContext: any): Promise<PDFResponse> {
+    return this.generateReport({
+      type: 'expense-report',
+      title: 'Expense Report',
+      titleEn: 'Expense Report',
+      userContext,
+      filters: { reportType: expenseType }
+    });
+  }
+
+  /**
+   * View expense report (HTML format for viewing)
+   */
+  async viewExpenseReport(expenseType: 'sales' | 'maintenance' | 'all', userContext: any): Promise<PDFResponse> {
+    return this.viewReport({
+      type: 'expense-report',
+      title: 'Expense Report',
+      titleEn: 'Expense Report',
+      userContext,
+      filters: { reportType: expenseType }
+    });
+  }
+
+  /**
+   * Generate filtered report
+   */
+  async generateFilteredReport(reportId: string, title: string, userContext: any, filters: any): Promise<PDFResponse> {
+    return this.generateReport({
+      type: reportId,
+      title,
+      titleEn: title,
+      userContext,
+      filters
+    });
+  }
+
+  /**
+   * View filtered report (HTML format for viewing)
+   */
+  async viewFilteredReport(reportId: string, title: string, userContext: any, filters: any): Promise<PDFResponse> {
+    return this.viewReport({
+      type: reportId,
+      title,
+      titleEn: title,
+      userContext,
+      filters
     });
   }
 }

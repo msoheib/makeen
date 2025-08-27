@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { Text, TextInput, Button, SegmentedButtons, IconButton } from 'react-native-paper';
+import { Text, TextInput, Button, SegmentedButtons, IconButton, Checkbox } from 'react-native-paper';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { UserRole } from '@/lib/types';
-import { ArrowLeft, User, Mail, Phone, UserCheck, Lock, Eye, EyeOff } from 'lucide-react-native';
+import { ArrowLeft, User, Mail, Phone, UserCheck, Lock, Eye, EyeOff, MapPin } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import { useAuth } from '@/hooks/useAuth';
@@ -25,8 +25,22 @@ export default function AddPersonScreen() {
     password: '',
     confirmPassword: '',
     role: (urlRole as UserRole) || 'tenant' as UserRole,
+    address: '',
+    city: '',
+    country: '',
+    nationality: '',
+    id_number: '',
+    is_foreign: false,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Available roles for admins and managers
+  const availableRoles: { value: UserRole; label: string; description: string }[] = [
+    { value: 'owner', label: 'Property Owner', description: 'Can manage their own properties' },
+    { value: 'tenant', label: 'Tenant', description: 'Can rent properties and manage contracts' },
+    { value: 'manager', label: 'Property Manager', description: 'Can manage properties and tenants' },
+    { value: 'staff', label: 'Staff Member', description: 'Limited access to system features' },
+  ];
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -54,6 +68,19 @@ export default function AddPersonScreen() {
       newErrors.confirmPassword = 'Please confirm your password';
     } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
+    }
+    
+    // Additional validation for address fields
+    if (formData.role === 'owner' || formData.role === 'tenant') {
+      if (!formData.address.trim()) {
+        newErrors.address = 'Address is required for owners and tenants';
+      }
+      if (!formData.city.trim()) {
+        newErrors.city = 'City is required for owners and tenants';
+      }
+      if (!formData.country.trim()) {
+        newErrors.country = 'Country is required for owners and tenants';
+      }
     }
 
     setErrors(newErrors);
@@ -137,6 +164,12 @@ export default function AddPersonScreen() {
         profile_type: formData.role === 'owner' ? 'owner' : 
                      formData.role === 'tenant' ? 'tenant' : 
                      formData.role === 'manager' ? 'admin' : 'employee',
+        address: formData.address.trim() || null,
+        city: formData.city.trim() || null,
+        country: formData.country.trim() || null,
+        nationality: formData.nationality.trim() || null,
+        id_number: formData.id_number.trim() || null,
+        is_foreign: formData.is_foreign,
       };
 
       const { data, error } = await supabase
@@ -163,7 +196,33 @@ export default function AddPersonScreen() {
         'User account created successfully! A welcome email has been sent with login credentials.',
         [
           {
-            text: 'OK',
+            text: 'View Details',
+            onPress: () => router.push(`/people/${data?.id}`),
+          },
+          {
+            text: 'Add Another',
+            onPress: () => {
+              // Reset form for adding another person
+              setFormData({
+                first_name: '',
+                last_name: '',
+                email: '',
+                phone_number: '',
+                password: '',
+                confirmPassword: '',
+                role: 'tenant' as UserRole,
+                address: '',
+                city: '',
+                country: '',
+                nationality: '',
+                id_number: '',
+                is_foreign: false,
+              });
+              setErrors({});
+            },
+          },
+          {
+            text: 'Back to List',
             onPress: () => router.replace('/(tabs)/people'),
           },
         ]
@@ -341,20 +400,88 @@ export default function AddPersonScreen() {
                 communicate with tenants, and track maintenance requests.
               </Text>
             )}
-            {formData.role === 'staff' && (
-              <Text style={styles.roleDescription}>
-                Staff members can handle maintenance requests, manage work orders, 
-                and assist with day-to-day operations.
-              </Text>
-            )}
             {formData.role === 'manager' && (
               <Text style={styles.roleDescription}>
-                Managers have full access to manage properties, tenants, staff, 
-                financial records, and generate reports.
+                Property managers have full access to manage properties, tenants, 
+                contracts, and financial operations.
+              </Text>
+            )}
+            {formData.role === 'staff' && (
+              <Text style={styles.roleDescription}>
+                Staff members have limited access to view and manage basic operations 
+                as assigned by managers.
               </Text>
             )}
           </View>
         </ModernCard>
+
+        {/* Address and Additional Information */}
+        {(formData.role === 'owner' || formData.role === 'tenant') && (
+          <ModernCard style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <MapPin size={20} color={theme.colors.primary} />
+              <Text style={styles.sectionTitle}>Address & Additional Information</Text>
+            </View>
+
+            <TextInput
+              label="Address *"
+              value={formData.address}
+              onChangeText={(text) => setFormData({ ...formData, address: text })}
+              mode="outlined"
+              style={styles.input}
+              error={!!errors.address}
+              left={<TextInput.Icon icon="map-marker-outline" />}
+            />
+            {errors.address && <Text style={styles.errorText}>{errors.address}</Text>}
+
+            <View style={styles.row}>
+              <TextInput
+                label="City *"
+                value={formData.city}
+                onChangeText={(text) => setFormData({ ...formData, city: text })}
+                mode="outlined"
+                style={[styles.input, styles.halfInput]}
+                error={!!errors.city}
+              />
+              <TextInput
+                label="Country *"
+                value={formData.country}
+                onChangeText={(text) => setFormData({ ...formData, country: text })}
+                mode="outlined"
+                style={[styles.input, styles.halfInput]}
+                error={!!errors.country}
+              />
+            </View>
+            {(errors.city || errors.country) && (
+              <Text style={styles.errorText}>{errors.city || errors.country}</Text>
+            )}
+
+            <View style={styles.row}>
+              <TextInput
+                label="Nationality"
+                value={formData.nationality}
+                onChangeText={(text) => setFormData({ ...formData, nationality: text })}
+                mode="outlined"
+                style={[styles.input, styles.halfInput]}
+              />
+              <TextInput
+                label="ID Number"
+                value={formData.id_number}
+                onChangeText={(text) => setFormData({ ...formData, id_number: text })}
+                mode="outlined"
+                style={[styles.input, styles.halfInput]}
+              />
+            </View>
+
+            <View style={styles.checkboxRow}>
+              <Checkbox
+                status={formData.is_foreign ? 'checked' : 'unchecked'}
+                onPress={() => setFormData({ ...formData, is_foreign: !formData.is_foreign })}
+              />
+              <Text style={styles.checkboxLabel}>Foreign National</Text>
+            </View>
+          </ModernCard>
+        )}
 
         {/* Submit Button */}
         <View style={styles.submitContainer}>
@@ -451,5 +578,15 @@ const styles = StyleSheet.create({
   },
   submitButtonContent: {
     paddingVertical: spacing.s,
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.s,
+  },
+  checkboxLabel: {
+    marginLeft: spacing.s,
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
   },
 });

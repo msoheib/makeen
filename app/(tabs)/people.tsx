@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList, Alert } from 'react-native';
-import { Text, Searchbar, SegmentedButtons, Avatar, List, ActivityIndicator } from 'react-native-paper';
+import { Text, Searchbar, SegmentedButtons, Avatar, List, ActivityIndicator, Chip, FAB } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { User } from '@/lib/types';
-import { Users, UserPlus, Phone, Mail, Plus } from 'lucide-react-native';
+import { Users, UserPlus, Phone, Mail, Plus, MapPin } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import StatCard from '@/components/StatCard';
@@ -100,39 +100,67 @@ export default function PeopleScreen() {
         )}
         right={() => (
           <View style={styles.personActions}>
-            <View style={[styles.roleTag, getRoleTagStyle(item.role)]}>
-              <Text style={[styles.roleText, { color: getRoleColor(item.role) }]}>
-                {item.role.charAt(0).toUpperCase() + item.role.slice(1)}
-              </Text>
-            </View>
+            <Chip 
+              mode="outlined" 
+              textStyle={{ fontSize: 12 }}
+              style={[
+                styles.roleChip,
+                { 
+                  backgroundColor: getRoleColor(item.role).background,
+                  borderColor: getRoleColor(item.role).color 
+                }
+              ]}
+            >
+              {getRoleLabel(item.role)}
+            </Chip>
           </View>
         )}
         onPress={() => router.push(`/people/${item.id}`)}
         style={styles.listItem}
       />
+      <View style={styles.personDetails}>
+        {item.phone && (
+          <View style={styles.detailRow}>
+            <Phone size={16} color={theme.colors.onSurfaceVariant} />
+            <Text style={styles.detailText}>{item.phone}</Text>
+          </View>
+        )}
+        {item.address && (
+          <View style={styles.detailRow}>
+            <MapPin size={16} color={theme.colors.onSurfaceVariant} />
+            <Text style={styles.detailText}>{item.address}, {item.city}</Text>
+          </View>
+        )}
+      </View>
     </ModernCard>
   );
 
-  const getRoleTagStyle = (role: string) => {
-    const colors = {
-      tenant: theme.colors.primaryContainer,
-      owner: theme.colors.successContainer,
-      manager: theme.colors.tertiaryContainer,
-      staff: theme.colors.secondaryContainer,
-      admin: theme.colors.errorContainer,
-    };
-    return { backgroundColor: colors[role as keyof typeof colors] || theme.colors.surfaceVariant };
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case 'tenant':
+        return 'Tenant';
+      case 'owner':
+        return 'Owner';
+      case 'staff':
+        return 'Staff';
+      case 'manager':
+        return 'Manager';
+      case 'admin':
+        return 'Admin';
+      default:
+        return role.charAt(0).toUpperCase() + role.slice(1);
+    }
   };
 
   const getRoleColor = (role: string) => {
     const colors = {
-      tenant: theme.colors.primary,
-      owner: theme.colors.success,
-      manager: theme.colors.tertiary,
-      staff: theme.colors.secondary,
-      admin: theme.colors.error,
+      tenant: { background: theme.colors.primaryContainer, color: theme.colors.primary },
+      owner: { background: theme.colors.successContainer, color: theme.colors.success },
+      manager: { background: theme.colors.tertiaryContainer, color: theme.colors.tertiary },
+      staff: { background: theme.colors.secondaryContainer, color: theme.colors.secondary },
+      admin: { background: theme.colors.errorContainer, color: theme.colors.error },
     };
-    return colors[role as keyof typeof colors] || theme.colors.onSurfaceVariant;
+    return colors[role as keyof typeof colors] || { background: theme.colors.surfaceVariant, color: theme.colors.onSurfaceVariant };
   };
 
   return (
@@ -231,17 +259,13 @@ export default function PeopleScreen() {
         }
       />
 
-      {/* Add Person FAB */}
-      <View style={styles.fabContainer}>
-        <ModernCard style={styles.fab}>
-          <Text
-            style={styles.fabText}
-            onPress={() => router.push('/people/add')}
-          >
-            <Plus size={24} color="white" />
-          </Text>
-        </ModernCard>
-      </View>
+      {/* FAB for adding new people */}
+      <FAB
+        icon={() => <Plus size={24} color="white" />}
+        style={[styles.fab, { backgroundColor: theme.colors.primary }]}
+        onPress={() => router.push('/people/add')}
+        label="Add Person"
+      />
     </View>
   );
 }
@@ -282,14 +306,33 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'flex-end',
   },
-  roleTag: {
-    paddingHorizontal: spacing.s,
-    paddingVertical: 4,
+  roleChip: {
     borderRadius: 12,
   },
-  roleText: {
-    fontSize: 12,
-    fontWeight: '600',
+  personDetails: {
+    marginTop: spacing.s,
+    paddingHorizontal: spacing.s,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  detailText: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    marginLeft: spacing.xs,
+  },
+  fab: {
+    position: 'absolute',
+    margin: 16,
+    right: 0,
+    bottom: 0,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
   emptyState: {
     alignItems: 'center',
@@ -312,15 +355,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: spacing.m,
     right: spacing.m,
-  },
-  fab: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: theme.colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 0,
   },
   fabText: {
     color: 'white',
