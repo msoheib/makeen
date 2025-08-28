@@ -12,51 +12,64 @@ interface ApiResponse<T> {
   error: { message: string } | null;
 }
 
+interface UseApiOptions {
+  timeoutMs?: number;
+}
+
 export function useApi<T>(
   apiCall: () => Promise<ApiResponse<T>> | Promise<T>,
-  dependencies: any[] = []
+  dependencies: any[] = [],
+  options: UseApiOptions = {}
 ): UseApiState<T> {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const mountedRef = { current: true } as { current: boolean };
 
   const fetchData = async () => {
     try {
-      setLoading(true);
-      setError(null);
+      if (mountedRef.current) setLoading(true);
+      if (mountedRef.current) setError(null);
       
-      // Add timeout handling - PERFORMANCE FIX for Issue #32
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('API call timed out after 15 seconds')), 15000)
-      );
+      // Add timeout handling - configurable per call (default 30s)
+      const timeoutMs = options.timeoutMs ?? 30000;
+      let timeoutId: any;
+      const timeoutPromise = new Promise((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error(`API call timed out after ${timeoutMs} ms`)), timeoutMs);
+      });
       
       const response = await Promise.race([apiCall(), timeoutPromise]);
+      clearTimeout(timeoutId);
       
       // Check if response is in ApiResponse format
       if (response && typeof response === 'object' && 'data' in response && 'error' in response) {
         const apiResponse = response as ApiResponse<T>;
         if (apiResponse.error) {
-          setError(apiResponse.error.message);
-          setData(null);
+          if (mountedRef.current) setError(apiResponse.error.message);
+          if (mountedRef.current) setData(null);
         } else {
-          setData(apiResponse.data);
-          setError(null);
+          if (mountedRef.current) setData(apiResponse.data);
+          if (mountedRef.current) setError(null);
         }
       } else {
         // Direct data response
-        setData(response as T);
-        setError(null);
+        if (mountedRef.current) setData(response as T);
+        if (mountedRef.current) setError(null);
       }
     } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred');
-      setData(null);
+      if (mountedRef.current) setError(err.message || 'An unexpected error occurred');
+      if (mountedRef.current) setData(null);
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   };
 
   useEffect(() => {
+    mountedRef.current = true;
     fetchData();
+    return () => {
+      mountedRef.current = false;
+    };
   }, dependencies);
 
   return {

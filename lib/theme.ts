@@ -1,202 +1,487 @@
-import { MD3LightTheme } from 'react-native-paper';
-import { isRTL } from './i18n';
+import { MD3LightTheme, MD3DarkTheme, MD3Theme } from 'react-native-paper';
+import { isRTL, getTextDirection, getFlexDirection, getTextAlign } from './rtl';
 
-// Define light colors with purple theme
-export const lightColors = {
-  primary: '#4C2661', // Primary Purple
-  onPrimary: '#FFFFFF',
-  primaryContainer: '#E8D5F0', // Light purple container
-  onPrimaryContainer: '#2A1436', // Dark purple text
-  secondary: '#6B4C93', // Secondary purple
-  onSecondary: '#FFFFFF',
-  secondaryContainer: '#F0E8F7', // Very light purple container
-  onSecondaryContainer: '#3A2452',
-  tertiary: '#8E6BA8', // Lighter purple tertiary
-  onTertiary: '#FFFFFF',
-  tertiaryContainer: '#F4EFFF',
-  onTertiaryContainer: '#4A3860',
-  error: '#D32F2F',
-  onError: '#FFFFFF',
-  errorContainer: '#FFCDD2',
-  onErrorContainer: '#B71C1C',
-  // Additional semantic colors
-  success: '#4CAF50',
-  onSuccess: '#FFFFFF',
-  successContainer: '#C8E6C9',
-  onSuccessContainer: '#2E7D32',
-  warning: '#FF9800',
-  onWarning: '#FFFFFF', 
-  warningContainer: '#FFE0B2',
-  onWarningContainer: '#E65100',
-  notification: '#4C2661',
-  // Tab bar colors (fixing broken references)
-  tabBarActive: '#4C2661',
-  tabBarInactive: '#A892B8',
-  tabBarBackground: '#F8F5FA',
-  background: '#FAFAFA',
-  onBackground: '#1C1B1F',
-  surface: '#FFFFFF',
-  onSurface: '#1C1B1F',
-  surfaceVariant: '#F5F5F5',
-  onSurfaceVariant: '#49454F',
-  outline: '#E0E0E0',
-  outlineVariant: '#F0F0F0',
-  shadow: '#000000',
-  scrim: '#000000',
-  inverseSurface: '#313033',
-  inverseOnSurface: '#F4EFF4',
-  inversePrimary: '#B388D1', // Light purple for inverse elements
-  elevation: {
-    level0: 'transparent',
-    level1: '#FFFFFF',
-    level2: '#F8F9FA',
-    level3: '#F1F3F4',
-    level4: '#E8EAED',
-    level5: '#E1E3E6',
-  },
-};
-
-// Light theme (Material Design 3)
-export const lightTheme = {
-  ...MD3LightTheme,
-  colors: {
-    ...MD3LightTheme.colors,
-    ...lightColors,
-  },
-};
-
-// Use light theme as the only theme (remove dark mode)
-export const theme = lightTheme;
-
-// For backwards compatibility, export the same theme as both light and dark
-export const darkTheme = lightTheme;
-
-// Spacing and sizing constants
-export const spacing = {
+// RTL-aware spacing system
+export const rtlSpacing = {
   xs: 4,
   sm: 8,
   md: 16,
   lg: 24,
   xl: 32,
   xxl: 48,
-  // Add missing mappings for backwards compatibility
-  s: 8,  // same as sm
-  m: 16, // same as md
-  l: 24, // same as lg
+  xxxl: 64,
 };
 
-// Compact spacing for tighter layouts
-export const compactSpacing = {
-  xs: 2,
-  sm: 4,
-  md: 6,
-  lg: 8,
-  xl: 12,
-  '2xl': 16,
-  '3xl': 20,
-  '4xl': 24,
-};
-
-export const borderRadius = {
-  small: 8,
-  medium: 12,
-  large: 16,
-  extraLarge: 24,
-};
-
-export const fontSizes = {
-  xs: 12,
-  sm: 14,
-  md: 16,
-  lg: 18,
-  xl: 20,
-  xxl: 24,
-  xxxl: 32,
-};
-
-export const fontWeights = {
-  normal: '400' as const,
-  medium: '500' as const,
-  semibold: '600' as const,
-  bold: '700' as const,
-};
-
-// Card styles
-export const cardStyles = {
-  elevation: 2,
-  borderRadius: borderRadius.medium,
-  backgroundColor: lightColors.surface,
-  shadowColor: lightColors.shadow,
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.1,
-  shadowRadius: 4,
-};
-
-// Button styles
-export const buttonStyles = {
-  borderRadius: borderRadius.medium,
-  paddingHorizontal: spacing.md,
-  paddingVertical: spacing.sm,
-};
-
-// Input styles
-export const inputStyles = {
-  borderRadius: borderRadius.small,
-  borderWidth: 1,
-  borderColor: lightColors.outline,
-  paddingHorizontal: spacing.md,
-  paddingVertical: spacing.sm,
-};
-
-export default theme;
-
-// RTL-aware styling utilities
-export const rtlStyles = {
-  row: (isRtl: boolean = isRTL()) => ({
-    flexDirection: isRtl ? 'row-reverse' : 'row' as const,
+// RTL-aware layout system
+export const rtlLayout = {
+  // Container layouts
+  container: {
+    flex: 1,
+    direction: getTextDirection(),
+  },
+  
+  // Row layouts with RTL support
+  row: {
+    flexDirection: getFlexDirection('row'),
+    alignItems: 'center',
+  },
+  
+  rowReverse: {
+    flexDirection: getFlexDirection('row'),
+    alignItems: 'center',
+  },
+  
+  // Column layouts
+  column: {
+    flexDirection: 'column',
+  },
+  
+  // Text alignment
+  textStart: {
+    textAlign: getTextAlign('left'),
+  },
+  
+  textEnd: {
+    textAlign: getTextAlign('right'),
+  },
+  
+  textCenter: {
+    textAlign: 'center',
+  },
+  
+  // Margin utilities
+  marginStart: (value: number) => ({
+    [isRTL() ? 'marginRight' : 'marginLeft']: value,
   }),
-  textAlign: (isRtl: boolean = isRTL()) => ({
-    textAlign: isRtl ? 'right' : 'left' as const,
+  
+  marginEnd: (value: number) => ({
+    [isRTL() ? 'marginLeft' : 'marginRight']: value,
   }),
-  marginStart: (value: number, isRtl: boolean = isRTL()) => ({
-    [isRtl ? 'marginRight' : 'marginLeft']: value,
+  
+  // Padding utilities
+  paddingStart: (value: number) => ({
+    [isRTL() ? 'paddingRight' : 'paddingLeft']: value,
   }),
-  marginEnd: (value: number, isRtl: boolean = isRTL()) => ({
-    [isRtl ? 'marginLeft' : 'marginRight']: value,
+  
+  paddingEnd: (value: number) => ({
+    [isRTL() ? 'paddingLeft' : 'paddingRight']: value,
   }),
-  paddingStart: (value: number, isRtl: boolean = isRTL()) => ({
-    [isRtl ? 'paddingRight' : 'paddingLeft']: value,
+  
+  // Position utilities
+  positionStart: (value: number) => ({
+    [isRTL() ? 'right' : 'left']: value,
   }),
-  paddingEnd: (value: number, isRtl: boolean = isRTL()) => ({
-    [isRtl ? 'paddingLeft' : 'paddingRight']: value,
+  
+  positionEnd: (value: number) => ({
+    [isRTL() ? 'left' : 'right']: value,
   }),
 };
 
-// Make rtlLayout a function to avoid calling isRTL at module initialization
-export const rtlLayout = () => ({
-  row: isRTL() ? 'row-reverse' : 'row',
-  textAlign: isRTL() ? 'right' : 'left',
-  alignItems: isRTL() ? 'flex-end' : 'flex-start',
-} as const);
-
-// Spacing system for backwards compatibility
-export const spacingCompact = {
-  xs: compactSpacing.xs,
-  sm: compactSpacing.sm,
-  md: compactSpacing.md,
-  lg: compactSpacing.lg,
-  xl: compactSpacing.xl,
-  xxl: compactSpacing['2xl'],
-  xxxl: compactSpacing['3xl'],
-  xxxxl: compactSpacing['4xl'],
-  // Add missing mappings for completeness
-  s: compactSpacing.sm,
-  m: compactSpacing.md,
-  l: compactSpacing.lg,
+// RTL-aware component styles
+export const rtlComponents = {
+  // Card styles
+  card: {
+    marginHorizontal: rtlSpacing.md,
+    marginBottom: rtlSpacing.md,
+    borderRadius: 12,
+    elevation: 2,
+    shadowOffset: {
+      width: isRTL() ? -1 : 1,
+      height: 2,
+    },
+  },
+  
+  // Input styles
+  input: {
+    marginBottom: rtlSpacing.md,
+    textAlign: getTextAlign('left'),
+    writingDirection: getTextDirection(),
+  },
+  
+  // Button styles
+  button: {
+    borderRadius: 8,
+    paddingHorizontal: rtlSpacing.md,
+    paddingVertical: rtlSpacing.sm,
+  },
+  
+  buttonWithIcon: {
+    flexDirection: getFlexDirection('row'),
+    alignItems: 'center',
+    gap: rtlSpacing.sm,
+  },
+  
+  // Header styles
+  header: {
+    flexDirection: getFlexDirection('row'),
+    alignItems: 'center',
+    paddingHorizontal: rtlSpacing.md,
+    paddingVertical: rtlSpacing.sm,
+  },
+  
+  headerWithBack: {
+    flexDirection: getFlexDirection('row'),
+    alignItems: 'center',
+    paddingHorizontal: rtlSpacing.md,
+    paddingVertical: rtlSpacing.sm,
+  },
+  
+  // List styles
+  listItem: {
+    flexDirection: getFlexDirection('row'),
+    alignItems: 'center',
+    paddingHorizontal: rtlSpacing.md,
+    paddingVertical: rtlSpacing.sm,
+  },
+  
+  // Form styles
+  formField: {
+    marginBottom: rtlSpacing.md,
+  },
+  
+  formActions: {
+    flexDirection: getFlexDirection('row'),
+    justifyContent: 'flex-end',
+    gap: rtlSpacing.md,
+    paddingHorizontal: rtlSpacing.md,
+    paddingVertical: rtlSpacing.md,
+  },
+  
+  // Modal styles
+  modalHeader: {
+    flexDirection: getFlexDirection('row'),
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: rtlSpacing.lg,
+    paddingVertical: rtlSpacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  
+  modalActions: {
+    flexDirection: getFlexDirection('row'),
+    justifyContent: 'flex-end',
+    gap: rtlSpacing.md,
+    paddingHorizontal: rtlSpacing.lg,
+    paddingVertical: rtlSpacing.md,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+  },
+  
+  // Navigation styles
+  tabBar: {
+    flexDirection: getFlexDirection('row'),
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    paddingHorizontal: rtlSpacing.md,
+    paddingVertical: rtlSpacing.sm,
+  },
+  
+  drawer: {
+    flex: 1,
+    direction: getTextDirection(),
+  },
+  
+  // Search styles
+  searchContainer: {
+    flexDirection: getFlexDirection('row'),
+    alignItems: 'center',
+    paddingHorizontal: rtlSpacing.md,
+    paddingBottom: rtlSpacing.md,
+    gap: rtlSpacing.sm,
+  },
+  
+  searchBar: {
+    flex: 1,
+    flexDirection: getFlexDirection('row'),
+    alignItems: 'center',
+    paddingHorizontal: rtlSpacing.sm,
+    paddingVertical: rtlSpacing.sm,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  
+  // Filter styles
+  filterContainer: {
+    flexDirection: getFlexDirection('row'),
+    flexWrap: 'wrap',
+    gap: rtlSpacing.sm,
+    paddingHorizontal: rtlSpacing.md,
+    paddingBottom: rtlSpacing.md,
+  },
+  
+  filterOption: {
+    paddingHorizontal: rtlSpacing.md,
+    paddingVertical: rtlSpacing.sm,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  
+  // Stats styles
+  statsContainer: {
+    padding: rtlSpacing.md,
+  },
+  
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: rtlSpacing.sm,
+  },
+  
+  // Actions styles
+  actionsContainer: {
+    paddingHorizontal: rtlSpacing.md,
+    paddingBottom: rtlSpacing.md,
+  },
+  
+  quickActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: rtlSpacing.sm,
+  },
+  
+  actionButton: {
+    flexDirection: getFlexDirection('row'),
+    alignItems: 'center',
+    paddingHorizontal: rtlSpacing.md,
+    paddingVertical: rtlSpacing.sm,
+    borderRadius: 8,
+    borderWidth: 1,
+    minWidth: 0,
+    flex: 1,
+  },
+  
+  // Content styles
+  content: {
+    flex: 1,
+  },
+  
+  section: {
+    marginHorizontal: rtlSpacing.md,
+    marginBottom: rtlSpacing.md,
+  },
+  
+  sectionHeader: {
+    flexDirection: getFlexDirection('row'),
+    alignItems: 'center',
+    marginBottom: rtlSpacing.md,
+  },
+  
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginLeft: rtlSpacing.sm,
+  },
+  
+  // Row layouts
+  row: {
+    flexDirection: getFlexDirection('row'),
+    gap: rtlSpacing.md,
+    alignItems: 'flex-end',
+  },
+  
+  halfWidth: {
+    flex: 1,
+  },
+  
+  // Status styles
+  statusInfo: {
+    marginTop: rtlSpacing.xs,
+  },
+  
+  statusDescription: {
+    fontSize: 12,
+    fontStyle: 'italic',
+  },
+  
+  // Error styles
+  errorText: {
+    fontSize: 12,
+    marginTop: -rtlSpacing.sm,
+    marginBottom: rtlSpacing.md,
+  },
+  
+  // Submit styles
+  submitContainer: {
+    padding: rtlSpacing.md,
+    paddingBottom: rtlSpacing.xxxl,
+  },
+  
+  submitButton: {
+    borderRadius: 12,
+  },
+  
+  submitButtonContent: {
+    paddingVertical: rtlSpacing.sm,
+  },
+  
+  // Loading and empty states
+  loadingContainer: {
+    padding: rtlSpacing.lg,
+    alignItems: 'center',
+  },
+  
+  loadingText: {
+    fontSize: 16,
+  },
+  
+  errorContainer: {
+    padding: rtlSpacing.lg,
+    alignItems: 'center',
+  },
+  
+  errorText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: rtlSpacing.sm,
+  },
+  
+  retryButton: {
+    paddingHorizontal: rtlSpacing.md,
+    paddingVertical: rtlSpacing.sm,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  
+  retryText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  
+  emptyContainer: {
+    padding: rtlSpacing.xxxl,
+    alignItems: 'center',
+  },
+  
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: rtlSpacing.md,
+    textAlign: 'center',
+  },
+  
+  emptySubtitle: {
+    fontSize: 14,
+    marginTop: rtlSpacing.sm,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  
+  // List styles
+  vouchersList: {
+    gap: rtlSpacing.sm,
+  },
+  
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  
+  filterModal: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '80%',
+  },
+  
+  modalContent: {
+    padding: rtlSpacing.lg,
+  },
+  
+  filterSection: {
+    marginBottom: rtlSpacing.lg,
+  },
+  
+  filterLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: rtlSpacing.sm,
+  },
+  
+  filterOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: rtlSpacing.sm,
+  },
+  
+  modalButton: {
+    flex: 1,
+    paddingVertical: rtlSpacing.sm,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  
+  applyButton: {
+    borderWidth: 0,
+  },
 };
 
-// Shadow styles for backwards compatibility
-export const shadowsCompact = {
+// Enhanced spacing object with RTL awareness
+export const spacing = {
+  ...rtlSpacing,
+  // RTL-aware margin helpers
+  marginStart: rtlLayout.marginStart,
+  marginEnd: rtlLayout.marginEnd,
+  
+  // RTL-aware padding helpers
+  paddingStart: rtlLayout.paddingStart,
+  paddingEnd: rtlLayout.paddingEnd,
+  
+  // RTL-aware position helpers
+  positionStart: rtlLayout.positionStart,
+  positionEnd: rtlLayout.positionEnd,
+  
+  // Backwards-compatible aliases
+  s: rtlSpacing.sm,
+  m: rtlSpacing.md,
+  l: rtlSpacing.lg,
+};
+
+// Enhanced theme with RTL support
+export const lightTheme: MD3Theme = {
+  ...MD3LightTheme,
+  // Add RTL-aware colors and properties
+  colors: {
+    ...MD3LightTheme.colors,
+    // RTL-aware accent colors
+    primary: '#1976D2',
+    secondary: '#424242',
+    tertiary: '#9C27B0',
+  },
+};
+
+export const darkTheme: MD3Theme = {
+  ...MD3DarkTheme,
+  // Add RTL-aware colors and properties
+  colors: {
+    ...MD3DarkTheme.colors,
+    // RTL-aware accent colors
+    primary: '#90CAF9',
+    secondary: '#BDBDBD',
+    tertiary: '#CE93D8',
+  },
+};
+
+// Export the theme object
+export const theme = lightTheme;
+
+// Export all RTL-aware utilities
+export {
+  rtlSpacing,
+  rtlLayout,
+  rtlComponents,
+  spacing,
+};
+
+// Backwards-compatible shadow styles
+export const shadows = {
   small: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -219,6 +504,3 @@ export const shadowsCompact = {
     elevation: 4,
   },
 };
-
-// Export shadows as an alias for shadowsCompact for backwards compatibility
-export const shadows = shadowsCompact;

@@ -3,6 +3,7 @@ import { View, StyleSheet, ScrollView, SafeAreaView, Alert, Platform, I18nManage
 import { Text, List, Switch, Divider } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { lightTheme, darkTheme } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { useAppStore } from '@/lib/store';
 import { supabase } from '@/lib/supabase';
 import { useTranslation } from 'react-i18next';
@@ -24,7 +25,8 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 export default function SettingsScreen() {
   const router = useRouter();
   const { t } = useTranslation(['settings', 'common']);
-  const { isDarkMode, toggleDarkMode, language, setLanguage } = useAppStore();
+  const { isDarkMode, language, setLanguage } = useAppStore();
+  const { isDark, toggleTheme } = useAppTheme();
   const setUser = useAppStore(state => state.setUser);
   const setAuthenticated = useAppStore(state => state.setAuthenticated);
   const { profile } = useUserProfile();
@@ -149,10 +151,10 @@ export default function SettingsScreen() {
     {
       key: 'theme',
       icon: Palette,
-      onPress: toggleDarkMode,
+      onPress: toggleTheme,
       showSwitch: true,
-      switchValue: isDarkMode,
-      description: t(isDarkMode ? 'theme.darkTheme.title' : 'theme.lightTheme.title')
+      switchValue: isDark,
+      description: t(isDark ? 'theme.darkTheme.title' : 'theme.lightTheme.title')
     },
     {
       key: 'currency',

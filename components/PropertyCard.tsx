@@ -6,6 +6,7 @@ import { Property } from '@/lib/types';
 import { Building2, MapPin } from 'lucide-react-native';
 import { theme, shadows } from '@/lib/theme';
 import { getFlexDirection, getTextAlign, rtlStyles } from '@/lib/rtl';
+import { formatDisplayNumber, toArabicNumerals } from '@/lib/formatters';
 
 // Status color mapping
 const statusColors = {
@@ -101,25 +102,25 @@ export default function PropertyCard({ property, onPress, compact = false }: Pro
             <View style={[styles.detailsRow, rtlStyles.row()]}>
               {property.bedrooms !== undefined && (
                 <View style={[styles.detailItem, rtlStyles.row()]}>
-                  <Text style={[styles.detailValue, rtlStyles.textAlign()]}>{property.bedrooms}</Text>
+                  <Text style={[styles.detailValue, rtlStyles.textAlign()]}>{formatDisplayNumber(property.bedrooms)}</Text>
                   <Text style={[styles.detailLabel, rtlStyles.textAlign()]}>Beds</Text>
                 </View>
               )}
               {property.bathrooms !== undefined && (
                 <View style={[styles.detailItem, rtlStyles.row()]}>
-                  <Text style={[styles.detailValue, rtlStyles.textAlign()]}>{property.bathrooms}</Text>
+                  <Text style={[styles.detailValue, rtlStyles.textAlign()]}>{formatDisplayNumber(property.bathrooms)}</Text>
                   <Text style={[styles.detailLabel, rtlStyles.textAlign()]}>Baths</Text>
                 </View>
               )}
               <View style={[styles.detailItem, rtlStyles.row()]}>
-                <Text style={[styles.detailValue, rtlStyles.textAlign()]}>{property.area_sqm}</Text>
+                <Text style={[styles.detailValue, rtlStyles.textAlign()]}>{formatDisplayNumber(property.area_sqm)}</Text>
                 <Text style={[styles.detailLabel, rtlStyles.textAlign()]}>Sqm</Text>
               </View>
             </View>
 
             <View style={[styles.priceContainer, rtlStyles.row()]}>
               <Text style={[styles.price, rtlStyles.textAlign()]}>
-                ${property.price.toLocaleString()}
+                {toArabicNumerals(new Intl.NumberFormat('ar-SA', { maximumFractionDigits: 0 }).format(property.price))} ر.س
               </Text>
               <Text style={[styles.paymentMethod, rtlStyles.textAlign()]}>
                 {property.payment_method === 'cash' ? 'Cash' : 'Installment'}

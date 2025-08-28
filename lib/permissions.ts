@@ -47,21 +47,21 @@ export const SCREEN_PERMISSIONS: ScreenPermission[] = [
   { screen: 'people', roles: ['admin', 'manager'] },
   
   // Financial Management
-  { screen: 'vouchers', roles: ['admin', 'manager'] },
-  { screen: 'receipts', roles: ['admin', 'manager', 'owner'] },
-  { screen: 'payments', roles: ['admin', 'manager'] },
-  { screen: 'invoices', roles: ['admin', 'manager', 'owner'] },
-  { screen: 'accounts', roles: ['admin', 'manager'] },
-  { screen: 'cost-centers', roles: ['admin', 'manager'] },
-  { screen: 'fixed-assets', roles: ['admin', 'manager'] },
+  { screen: 'vouchers', roles: ['admin', 'manager', 'accountant'] },
+  { screen: 'receipts', roles: ['admin', 'manager', 'owner', 'accountant'] },
+  { screen: 'payments', roles: ['admin', 'manager', 'accountant'] },
+  { screen: 'invoices', roles: ['admin', 'manager', 'owner', 'accountant'] },
+  { screen: 'accounts', roles: ['admin', 'manager', 'accountant'] },
+  { screen: 'cost-centers', roles: ['admin', 'manager', 'accountant'] },
+  { screen: 'fixed-assets', roles: ['admin', 'manager', 'accountant'] },
   
   // Maintenance
   { screen: 'maintenance-requests', roles: ['admin', 'manager', 'owner', 'tenant'] },
   { screen: 'work-orders', roles: ['admin', 'manager'] },
   
   // Reports
-  { screen: 'reports', roles: ['admin', 'manager', 'owner'] },
-  { screen: 'financial-reports', roles: ['admin', 'manager', 'owner'] },
+  { screen: 'reports', roles: ['admin', 'manager', 'owner', 'accountant'] },
+  { screen: 'financial-reports', roles: ['admin', 'manager', 'owner', 'accountant'] },
   { screen: 'property-reports', roles: ['admin', 'manager', 'owner'] },
   
   // Communications
@@ -105,18 +105,18 @@ export const SIDEBAR_PERMISSIONS: NavigationPermission[] = [
   { id: 'reservations', label: 'Property Reservation List', roles: ['admin', 'manager', 'owner'] },
   
   // Accounting & Voucher section
-  { id: 'accounting-voucher', label: 'Accounting & Voucher', roles: ['admin', 'manager'] },
-  { id: 'receipt-voucher', label: 'Receipt Voucher', roles: ['admin', 'manager', 'owner'] },
-  { id: 'payment-voucher', label: 'Payment Voucher', roles: ['admin', 'manager'] },
-  { id: 'entry-voucher', label: 'Entry voucher', roles: ['admin', 'manager'] },
-  { id: 'credit-notification', label: 'Credit notification', roles: ['admin', 'manager'] },
-  { id: 'debit-notification', label: 'Debit notification', roles: ['admin', 'manager'] },
-  { id: 'vat-invoices', label: 'VAT invoices', roles: ['admin', 'manager', 'owner'] },
+  { id: 'accounting-voucher', label: 'Accounting & Voucher', roles: ['admin', 'manager', 'accountant'] },
+  { id: 'receipt-voucher', label: 'Receipt Voucher', roles: ['admin', 'manager', 'owner', 'accountant'] },
+  { id: 'payment-voucher', label: 'Payment Voucher', roles: ['admin', 'manager', 'accountant'] },
+  { id: 'entry-voucher', label: 'Entry voucher', roles: ['admin', 'manager', 'accountant'] },
+  { id: 'credit-notification', label: 'Credit notification', roles: ['admin', 'manager', 'accountant'] },
+  { id: 'debit-notification', label: 'Debit notification', roles: ['admin', 'manager', 'accountant'] },
+  { id: 'vat-invoices', label: 'VAT invoices', roles: ['admin', 'manager', 'owner', 'accountant'] },
   
   // Reports section
-  { id: 'reports', label: 'Reports', roles: ['admin', 'manager', 'owner'] },
-  { id: 'reports-summary', label: 'Summary of Reports', roles: ['admin', 'manager', 'owner'] },
-  { id: 'invoices-report', label: 'Invoices Report', roles: ['admin', 'manager', 'owner'] },
+  { id: 'reports', label: 'Reports', roles: ['admin', 'manager', 'owner', 'accountant'] },
+  { id: 'reports-summary', label: 'Summary of Reports', roles: ['admin', 'manager', 'owner', 'accountant'] },
+  { id: 'invoices-report', label: 'Invoices Report', roles: ['admin', 'manager', 'owner', 'accountant'] },
   
   // Maintenance, letters, issues section
   { id: 'maintenance-letters-issues', label: 'Maintenance, letters, issues', roles: ['admin', 'manager', 'owner', 'tenant'] },
@@ -144,8 +144,8 @@ export const TAB_PERMISSIONS: NavigationPermission[] = [
   { id: 'properties', label: 'Properties', roles: ['admin', 'manager', 'owner', 'tenant'] },
   { id: 'tenants', label: 'Tenants', roles: ['admin', 'manager'] },
   { id: 'maintenance', label: 'Maintenance', roles: ['admin', 'manager', 'owner', 'tenant'] },
-  { id: 'reports', label: 'Reports', roles: ['admin', 'manager', 'owner'] },
-  { id: 'finance', label: 'Finance', roles: ['admin', 'manager', 'owner'] },
+  { id: 'reports', label: 'Reports', roles: ['admin', 'manager', 'owner', 'accountant'] },
+  { id: 'finance', label: 'Finance', roles: ['admin', 'manager', 'owner', 'accountant'] },
   { id: 'documents', label: 'Documents', roles: ['admin', 'manager', 'owner', 'tenant'] },
   { id: 'people', label: 'People', roles: ['admin', 'manager', 'owner'] },
   { id: 'payments', label: 'Payments', roles: ['admin', 'manager', 'owner'] },
@@ -159,6 +159,20 @@ export const TAB_PERMISSIONS: NavigationPermission[] = [
  */
 export function isAdminOrManager(userContext: UserContext | null): boolean {
   return userContext?.role === 'admin' || userContext?.role === 'manager';
+}
+
+/**
+ * Check if user is an accountant (has access to financial data and reports only)
+ */
+export function isAccountant(userContext: UserContext | null): boolean {
+  return userContext?.role === 'accountant';
+}
+
+/**
+ * Check if user has access to financial data (admin, manager, or accountant)
+ */
+export function hasFinancialAccess(userContext: UserContext | null): boolean {
+  return isAdminOrManager(userContext) || isAccountant(userContext);
 }
 
 /**

@@ -7,7 +7,8 @@ import { Slot } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { theme } from '@/lib/theme';
+import { lightTheme, darkTheme } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { useFonts } from 'expo-font';
 import { Inter_400Regular, Inter_500Medium, Inter_700Bold } from '@expo-google-fonts/inter';
 import * as SplashScreen from 'expo-splash-screen';
@@ -43,7 +44,8 @@ const initializeRTLImmediately = () => {
       }
     }
     
-    const shouldBeRTL = storedLanguage === 'ar';
+    // FORCE RTL ALWAYS - NO LTR ALLOWED ANYWHERE IN THE APP
+    const shouldBeRTL = true; // Always RTL, no exceptions
     
     console.log('[Layout] 🔧 Setting immediate RTL:', { 
       storedLanguage, 
@@ -51,14 +53,14 @@ const initializeRTLImmediately = () => {
       platform: Platform.OS 
     });
     
-    // Set RTL IMMEDIATELY
+    // Set RTL IMMEDIATELY - ALWAYS RTL
     I18nManager.allowRTL(true);
-    I18nManager.forceRTL(shouldBeRTL);
+    I18nManager.forceRTL(true); // Force RTL regardless of language
     
     console.log('[Layout] ✅ Immediate RTL set:', I18nManager.isRTL);
   } catch (error) {
     console.error('[Layout] ❌ Immediate RTL setup failed:', error);
-    // Fallback: Default to RTL for Arabic
+    // Fallback: ALWAYS RTL - NO EXCEPTIONS
     I18nManager.allowRTL(true);
     I18nManager.forceRTL(true);
   }
@@ -70,6 +72,7 @@ initializeRTLImmediately();
 export default function RootLayout() {
   const { settings, isHydrated } = useAppStore();
   const [isI18nReady, setI18nReady] = useState(false);
+  const { theme, isDark } = useAppTheme();
 
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
@@ -98,12 +101,13 @@ export default function RootLayout() {
         await manualInitializeI18n();
         
         const currentLanguage = settings?.language || 'ar'; // Default to Arabic
-        const isRTL = currentLanguage === 'ar';
+        // FORCE RTL ALWAYS - NO LTR ALLOWED ANYWHERE IN THE APP
+        const isRTL = true; // Always RTL, no exceptions
         
         // Force RTL direction immediately after i18n initialization
         console.log('[Layout] 🔄 Forcing RTL direction:', { currentLanguage, isRTL });
         I18nManager.allowRTL(true);
-        I18nManager.forceRTL(isRTL);
+        I18nManager.forceRTL(true); // Always RTL regardless of language
         
         console.log('[Layout] 🌐 Language config:', { 
           currentLanguage, 
@@ -148,7 +152,7 @@ export default function RootLayout() {
     return (
       <SafeAreaProvider>
         <PaperProvider theme={theme}>
-          <StatusBar style="light" />
+          <StatusBar style={isDark ? 'light' : 'dark'} />
           <CustomSplashScreen 
             onFinish={() => {}}
             isInitialized={false}
@@ -162,7 +166,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <PaperProvider theme={theme}>
         <RTLProvider>
-          <StatusBar style="auto" />
+          <StatusBar style={isDark ? 'light' : 'dark'} />
           <Slot />
         </RTLProvider>
       </PaperProvider>

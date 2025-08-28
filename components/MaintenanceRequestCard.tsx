@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Image, Platform } from 'react-native';
+import { View, StyleSheet, Image, Platform, I18nManager } from 'react-native';
 import { Card, Text, Chip, TouchableRipple } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { MaintenanceRequest } from '@/lib/types';
 import { Clock, AlertCircle, ImageIcon } from 'lucide-react-native';
 import { shadows } from '@/lib/theme';
+import { addAlpha } from '@/lib/colors';
 import { format } from 'date-fns';
 import { useMaintenanceTranslation } from '@/lib/useTranslation';
 import { getFlexDirection, getTextAlign, rtlStyles } from '@/lib/rtl';
@@ -64,6 +65,15 @@ const MaintenanceImage = ({ imageName, style, theme }: { imageName: string; styl
 export default function MaintenanceRequestCard({ request, theme, onPress }: MaintenanceRequestCardProps) {
   const router = useRouter();
   const { t } = useMaintenanceTranslation();
+
+  // Force RTL for this component
+  React.useEffect(() => {
+    // Force RTL at the native level
+    if (typeof I18nManager !== 'undefined') {
+      I18nManager.forceRTL(true);
+      I18nManager.allowRTL(true);
+    }
+  }, []);
 
   // Use default theme if not provided (fallback)
   const currentTheme = theme || {
@@ -212,40 +222,76 @@ export default function MaintenanceRequestCard({ request, theme, onPress }: Main
         Platform.select({
           web: { cursor: 'pointer' },
           default: {}
-        })
+        }),
+        { direction: 'rtl' as any, writingDirection: 'rtl' as any }
       ]} 
       onPress={handlePress}
       {...webTouchProps}
+      dir="rtl"
     >
-      <Card.Content style={styles.content}>
-        <View style={[styles.headerRow, rtlStyles.row()]}>
-          <Text style={[styles.title, { textAlign: getTextAlign() }]} numberOfLines={1} ellipsizeMode="tail">
+      <Card.Content style={[styles.content, { direction: 'rtl' as any, writingDirection: 'rtl' as any }]}>
+        <View style={[styles.headerRow, rtlStyles.row(), { flexDirection: 'row-reverse' as any, direction: 'rtl' as any }]}>
+          <Text 
+            style={[
+              styles.title, 
+              { 
+                textAlign: 'right' as any, 
+                direction: 'rtl' as any, 
+                writingDirection: 'rtl' as any 
+              }
+            ]} 
+            numberOfLines={1} 
+            ellipsizeMode="tail"
+            dir="rtl"
+          >
             {request.title}
           </Text>
           <Chip
             mode="flat"
             style={[
               styles.statusChip,
-              { backgroundColor: `${statusColors[request.status]}20` },
+              { backgroundColor: addAlpha((statusColors as any)[request.status] || currentTheme.colors.onSurfaceVariant, 0.125) },
             ]}
-            textStyle={{ color: statusColors[request.status], fontWeight: '500' }}
+            textStyle={{ color: (statusColors as any)[request.status] || currentTheme.colors.onSurfaceVariant, fontWeight: '500' }}
           >
             {getStatusLabel(request.status)}
           </Chip>
         </View>
 
-        <Text style={[styles.description, { textAlign: getTextAlign() }]} numberOfLines={2} ellipsizeMode="tail">
+        <Text 
+          style={[
+            styles.description, 
+            { 
+              textAlign: 'right' as any, 
+              direction: 'rtl' as any, 
+              writingDirection: 'rtl' as any 
+            }
+          ]} 
+          numberOfLines={2} 
+          ellipsizeMode="tail"
+          dir="rtl"
+        >
           {request.description}
         </Text>
 
-        <View style={[styles.metaRow, rtlStyles.row()]}>
-          <View style={[styles.metaItem, rtlStyles.row()]}>
+        <View style={[styles.metaRow, rtlStyles.row(), { flexDirection: 'row-reverse' as any, direction: 'rtl' as any }]}>
+          <View style={[styles.metaItem, rtlStyles.row(), { flexDirection: 'row-reverse' as any, direction: 'rtl' as any }]}>
             <Clock size={16} color={currentTheme.colors.onSurfaceVariant} />
-            <Text style={styles.metaText}>
+            <Text 
+              style={[
+                styles.metaText, 
+                { 
+                  textAlign: 'right' as any, 
+                  direction: 'rtl' as any, 
+                  writingDirection: 'rtl' as any 
+                }
+              ]}
+              dir="rtl"
+            >
               {format(new Date(request.created_at), 'MMM d, yyyy')}
             </Text>
           </View>
-          <View style={[styles.metaItem, rtlStyles.row()]}>
+          <View style={[styles.metaItem, rtlStyles.row(), { flexDirection: 'row-reverse' as any, direction: 'rtl' as any }]}>
             <AlertCircle 
               size={16} 
               color={priorityColors[request.priority]} 
@@ -253,8 +299,14 @@ export default function MaintenanceRequestCard({ request, theme, onPress }: Main
             <Text 
               style={[
                 styles.metaText, 
-                { color: priorityColors[request.priority] }
+                { 
+                  color: priorityColors[request.priority],
+                  textAlign: 'right' as any, 
+                  direction: 'rtl' as any, 
+                  writingDirection: 'rtl' as any 
+                }
               ]}
+              dir="rtl"
             >
               {getPriorityLabel(request.priority)}
             </Text>
@@ -262,7 +314,7 @@ export default function MaintenanceRequestCard({ request, theme, onPress }: Main
         </View>
 
         {request.images && request.images.length > 0 && (
-          <View style={[styles.imagesRow, rtlStyles.row()]}>
+          <View style={[styles.imagesRow, rtlStyles.row(), { flexDirection: 'row-reverse' as any, direction: 'rtl' as any }]}>
             {request.images.slice(0, 3).map((image, index) => (
               <View key={index} style={styles.imageContainer}>
                 <MaintenanceImage 
@@ -274,7 +326,17 @@ export default function MaintenanceRequestCard({ request, theme, onPress }: Main
             ))}
             {request.images.length > 3 && (
               <View style={styles.moreImagesContainer}>
-                <Text style={styles.moreImagesText}>+{request.images.length - 3}</Text>
+                <Text 
+                  style={[
+                    styles.moreImagesText, 
+                    { 
+                      textAlign: 'right' as any, 
+                      direction: 'rtl' as any, 
+                      writingDirection: 'rtl' as any 
+                    }
+                  ]}
+                  dir="rtl"
+                >+{request.images.length - 3}</Text>
               </View>
             )}
           </View>

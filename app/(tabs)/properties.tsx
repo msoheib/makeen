@@ -1,19 +1,24 @@
 import React, { useState, useMemo } from 'react';
 import { View, StyleSheet, FlatList, SafeAreaView, TouchableOpacity, RefreshControl, Alert } from 'react-native';
-import { Text, Searchbar, FAB, Button, IconButton, Portal, Modal, Card, Title, Paragraph, SegmentedButtons } from 'react-native-paper';
+import { Text, FAB, Button, IconButton, Portal, Modal, Card, Title, Paragraph, SegmentedButtons } from 'react-native-paper';
+import MobileSearchBar from '@/components/MobileSearchBar';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useApi } from '@/hooks/useApi';
 import { propertiesApi, propertyGroupsApi } from '@/lib/api';
-import { theme, spacing } from '@/lib/theme';
+import { lightTheme, spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import ModernHeader from '@/components/ModernHeader';
 import TenantEmptyState from '@/components/TenantEmptyState';
 import { HorizontalStatsShimmer, PropertyListShimmer } from '@/components/shimmer';
 import { Building2, Home, Users, MessageSquare } from 'lucide-react-native';
+import { formatDisplayNumber, toArabicNumerals } from '@/lib/formatters';
 
 export default function PropertiesScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const { theme, isDark } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme), [theme]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddPropertyModal, setShowAddPropertyModal] = useState(false);
   const [viewFilter, setViewFilter] = useState<'all' | 'units' | 'groups'>('all');
@@ -29,7 +34,7 @@ export default function PropertiesScreen() {
     const result = await propertiesApi.getAll();
     console.log('[PropertiesScreen] API result:', result);
     return result;
-  }, []);
+  }, [isDark], { timeoutMs: 15000 });
 
   // Fetch property groups (buildings/compounds)
   const { 
@@ -37,7 +42,7 @@ export default function PropertiesScreen() {
     loading: groupsLoading, 
     error: groupsError, 
     refetch: refetchGroups 
-  } = useApi(() => propertyGroupsApi.getAll(), []);
+  } = useApi(() => propertyGroupsApi.getAll(), [isDark], { timeoutMs: 15000 });
 
   // Merge properties and groups into one list
   const combinedItems = useMemo(() => {
@@ -76,14 +81,14 @@ export default function PropertiesScreen() {
     loading: statsLoading, 
     error: statsError, 
     refetch: refetchStats 
-  } = useApi(() => propertiesApi.getDashboardSummary(), []);
+  } = useApi(() => propertiesApi.getDashboardSummary(), [isDark], { timeoutMs: 15000 });
 
   // Calculate stats from properties data
   const stats = dashboardStats ? {
-    total: dashboardStats.total_properties.toString(),
-    available: dashboardStats.available.toString(), 
-    rented: (dashboardStats.occupied || 0).toString(),
-    maintenance: dashboardStats.maintenance.toString()
+    total: formatDisplayNumber(dashboardStats.total_properties),
+    available: formatDisplayNumber(dashboardStats.available), 
+    rented: formatDisplayNumber(dashboardStats.occupied || 0),
+    maintenance: formatDisplayNumber(dashboardStats.maintenance)
   } : {
     total: statsLoading ? '...' : '0',
     available: statsLoading ? '...' : '0', 
@@ -266,7 +271,7 @@ export default function PropertiesScreen() {
             غرف النوم
           </Text>
           <Text style={[styles.detailValue, { color: theme.colors.onSurface }]}>
-            {item.bedrooms || '٠'}
+            {item.bedrooms != null ? formatDisplayNumber(item.bedrooms) : '٠'}
           </Text>
         </View>
         <View style={styles.detailItem}>
@@ -274,7 +279,7 @@ export default function PropertiesScreen() {
             الحمامات
           </Text>
           <Text style={[styles.detailValue, { color: theme.colors.onSurface }]}>
-            {item.bathrooms || '٠'}
+            {item.bathrooms != null ? formatDisplayNumber(item.bathrooms) : '٠'}
           </Text>
         </View>
         <View style={styles.detailItem}>
@@ -282,7 +287,7 @@ export default function PropertiesScreen() {
             المساحة
           </Text>
           <Text style={[styles.detailValue, { color: theme.colors.onSurface }]}>
-            {item.area_sqm} م²
+            {formatDisplayNumber(item.area_sqm)} م²
           </Text>
         </View>
       </View>
@@ -290,7 +295,7 @@ export default function PropertiesScreen() {
       <View style={styles.propertyFooter}>
         <View style={styles.priceAndTypeContainer}>
           <Text style={[styles.propertyPrice, { color: theme.colors.primary }]}>
-            {Number(item.annual_rent || item.price).toLocaleString('ar-SA')} ريال
+            {toArabicNumerals(new Intl.NumberFormat('ar-SA', { maximumFractionDigits: 0 }).format(Number(item.annual_rent || item.price)))} ريال
             {item.annual_rent && '/سنة'}
           </Text>
           <View style={[styles.typeTag, { backgroundColor: theme.colors.surfaceVariant }]}>
@@ -351,6 +356,19 @@ export default function PropertiesScreen() {
         variant="dark"
       />
 
+      {/* Top Search (keeps keyboard stable on mobile) */}
+      <View style={[styles.searchSection, { paddingHorizontal: 16 }]}>
+        <MobileSearchBar
+          placeholder="البحث في العقارات..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          style={[styles.searchbar, { backgroundColor: theme.colors.surface }]}
+          placeholderTextColor={theme.colors.onSurfaceVariant}
+          iconColor={theme.colors.onSurfaceVariant}
+          textAlign="right"
+        />
+      </View>
+
       {/* Properties List with FlatList */}
       {showInitialLoading ? (
         <PropertyListShimmer count={5} />
@@ -360,6 +378,7 @@ export default function PropertiesScreen() {
           renderItem={renderProperty}
           keyExtractor={item => item.id}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="always"
           refreshControl={
             <RefreshControl
               refreshing={propertiesLoading || statsLoading || groupsLoading}
@@ -434,17 +453,7 @@ export default function PropertiesScreen() {
                 )}
               </View>
 
-              {/* Search Section */}
-              <View style={styles.searchSection}>
-                <Searchbar
-                  placeholder="البحث في العقارات..."
-                  onChangeText={setSearchQuery}
-                  value={searchQuery}
-                  style={[styles.searchbar, { backgroundColor: theme.colors.surface }]}
-                  iconColor={theme.colors.onSurfaceVariant}
-                  placeholderTextColor={theme.colors.onSurfaceVariant}
-                />
-              </View>
+              {/* Search moved above FlatList to avoid input unmount */}
 
               {/* Filter Section */}
               <View style={{ marginBottom: 12 }}>
@@ -462,7 +471,7 @@ export default function PropertiesScreen() {
               {/* Properties List Header */}
               <View style={styles.propertiesSection}>
                 <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
-                  قائمة العقارات {!showInitialLoading && `(${filteredProperties.length})`}
+                  قائمة العقارات {!showInitialLoading && `(${toArabicNumerals(String(filteredProperties.length))})`}
                 </Text>
               </View>
             </View>
@@ -548,7 +557,7 @@ export default function PropertiesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: typeof lightTheme) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -568,6 +577,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 16,
     textAlign: 'right',
+    color: theme.colors.onSurface,
   },
   statsGrid: {
     flexDirection: 'row',
@@ -590,10 +600,11 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    backgroundColor: theme.colors.surface,
   },
   propertyHeader: {
     flexDirection: 'row',
@@ -607,6 +618,7 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'right',
     marginRight: 8,
+    color: theme.colors.onSurface,
   },
   statusBadge: {
     paddingHorizontal: 12,
@@ -639,11 +651,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 4,
     textAlign: 'right',
+    color: theme.colors.onSurfaceVariant,
   },
   propertyDescription: {
     fontSize: 14,
     marginBottom: 12,
     textAlign: 'right',
+    color: theme.colors.onSurfaceVariant,
   },
   propertyDetails: {
     flexDirection: 'row',
@@ -652,7 +666,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: theme.colors.outline,
   },
   detailItem: {
     alignItems: 'center',
@@ -660,10 +674,12 @@ const styles = StyleSheet.create({
   detailLabel: {
     fontSize: 12,
     marginBottom: 2,
+    color: theme.colors.onSurfaceVariant,
   },
   detailValue: {
     fontSize: 16,
     fontWeight: '600',
+    color: theme.colors.onSurface,
   },
   propertyFooter: {
     flexDirection: 'column',
@@ -677,6 +693,7 @@ const styles = StyleSheet.create({
   propertyPrice: {
     fontSize: 18,
     fontWeight: '700',
+    color: theme.colors.primary,
   },
   typeTag: {
     paddingHorizontal: 8,
@@ -717,10 +734,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 12,
     marginBottom: 4,
+    color: theme.colors.onSurface,
   },
   emptyStateSubtitle: {
     fontSize: 14,
     textAlign: 'center',
+    color: theme.colors.onSurfaceVariant,
   },
   statCardWrapper: {
     width: '48%',
@@ -731,10 +750,11 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    backgroundColor: theme.colors.surface,
   },
   horizontalStatsRow: {
     flexDirection: 'row',
@@ -759,11 +779,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 4,
     lineHeight: 16,
+    color: theme.colors.onSurfaceVariant,
   },
   horizontalStatValue: {
     fontSize: 24,
     fontWeight: '700',
     textAlign: 'center',
+    color: theme.colors.onSurface,
   },
   fab: {
     position: 'absolute',
@@ -783,6 +805,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.m,
     fontSize: 16,
     textAlign: 'center',
+    color: theme.colors.onSurfaceVariant,
   },
   errorContainer: {
     flex: 1,
@@ -794,6 +817,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     marginBottom: spacing.l,
+    color: theme.colors.error,
   },
   retryButton: {
     paddingHorizontal: spacing.l,
@@ -814,16 +838,18 @@ const styles = StyleSheet.create({
     width: '100%',
     borderRadius: 16,
     elevation: 4,
-    shadowColor: '#000',
+    shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
+    backgroundColor: theme.colors.surface,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
     marginBottom: spacing.s,
     textAlign: 'center',
+    color: theme.colors.onSurface,
   },
   modalDescription: {
     fontSize: 14,

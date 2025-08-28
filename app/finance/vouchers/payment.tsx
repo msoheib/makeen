@@ -86,7 +86,7 @@ export default function PaymentVoucherScreen() {
 
   const handleSubmit = async () => {
     if (!validateForm()) {
-      Alert.alert('Validation Error', 'Please fix the errors before submitting.');
+      Alert.alert('خطأ في التحقق', 'يرجى تصحيح الأخطاء قبل الإرسال.');
       return;
     }
 
@@ -113,11 +113,11 @@ export default function PaymentVoucherScreen() {
 
       if (response.success) {
         Alert.alert(
-          'Success',
-          `Payment voucher ${formData.voucher_number} ${formData.status === 'posted' ? 'created and posted' : 'saved as draft'} successfully!`,
+          'تم بنجاح',
+          `تم ${formData.status === 'posted' ? 'إنشاء وترحيل' : 'حفظ'} سند الصرف ${formData.voucher_number} بنجاح!`,
           [
             {
-              text: 'OK',
+              text: 'حسناً',
               onPress: () => router.back(),
             },
           ]
@@ -127,7 +127,7 @@ export default function PaymentVoucherScreen() {
       }
     } catch (error) {
       console.error('Error creating payment voucher:', error);
-      Alert.alert('Error', 'Failed to create payment voucher. Please try again.');
+      Alert.alert('خطأ', 'فشل إنشاء سند الصرف. يرجى المحاولة مرة أخرى.');
     } finally {
       setLoading(false);
     }
@@ -141,17 +141,17 @@ export default function PaymentVoucherScreen() {
   return (
     <View style={styles.container}>
       <ModernHeader 
-        title="Payment Voucher"
-        subtitle="Record outgoing payments and expenses"
+        title="سند صرف"
+        subtitle="تسجيل المدفوعات والمصروفات"
         onBack={() => router.back()}
       />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Voucher Information */}
-        <ModernCard title="Voucher Information" icon={FileText}>
+        <ModernCard title="معلومات السند" icon={FileText}>
           <View style={styles.row}>
             <View style={styles.halfWidth}>
-              <Text style={styles.label}>Voucher Number</Text>
+              <Text style={styles.label}>رقم السند</Text>
               <TextInput
                 mode="outlined"
                 value={formData.voucher_number}
@@ -161,7 +161,7 @@ export default function PaymentVoucherScreen() {
               />
             </View>
             <View style={styles.halfWidth}>
-              <Text style={styles.label}>Date</Text>
+              <Text style={styles.label}>التاريخ</Text>
               <TextInput
                 mode="outlined"
                 value={formData.date}
@@ -172,10 +172,10 @@ export default function PaymentVoucherScreen() {
             </View>
           </View>
 
-          <Text style={styles.label}>Description *</Text>
+          <Text style={styles.label}>الوصف *</Text>
           <TextInput
             mode="outlined"
-            placeholder="Enter payment description (e.g., Office rent payment, Maintenance contractor fee)"
+            placeholder="أدخل وصف الدفع (مثال: إيجار مكتب، أتعاب مقاول صيانة)"
             value={formData.description}
             onChangeText={(text) => setFormData(prev => ({ ...prev, description: text }))}
             multiline
@@ -185,7 +185,7 @@ export default function PaymentVoucherScreen() {
           />
           {errors.description && <Text style={styles.errorText}>{errors.description}</Text>}
 
-          <Text style={styles.label}>Amount ({currency}) *</Text>
+          <Text style={styles.label}>المبلغ ({currency}) *</Text>
           <TextInput
             mode="outlined"
             placeholder="0.00"
@@ -205,14 +205,14 @@ export default function PaymentVoucherScreen() {
         </ModernCard>
 
         {/* Account Selection */}
-        <ModernCard title="Account Selection" icon={Receipt}>
+        <ModernCard title="اختيار الحسابات" icon={Receipt}>
           <Text style={styles.sectionNote}>
-            Select the expense account (what you're paying for) and the payment account (where money comes from)
+            اختر حساب المصروف (سبب الدفع) وحساب السداد (مصدر الأموال)
           </Text>
           
           <AccountPicker
-            label="Expense Account (Debit) *"
-            placeholder="Select expense account"
+            label="حساب المصروف (مدين) *"
+            placeholder="اختر حساب المصروف"
             value={debitAccount}
             onValueChange={setDebitAccount}
             accountType="expense"
@@ -221,8 +221,8 @@ export default function PaymentVoucherScreen() {
           {errors.debitAccount && <Text style={styles.errorText}>{errors.debitAccount}</Text>}
 
           <AccountPicker
-            label="Payment Account (Credit) *"
-            placeholder="Select cash/bank account"
+            label="حساب السداد (دائن) *"
+            placeholder="اختر حساب النقدية/البنك"
             value={creditAccount}
             onValueChange={setCreditAccount}
             accountType="asset"
@@ -232,61 +232,61 @@ export default function PaymentVoucherScreen() {
 
           {debitAccount && creditAccount && (
             <View style={styles.accountingSummary}>
-              <Text style={styles.accountingTitle}>Accounting Entry:</Text>
+              <Text style={styles.accountingTitle}>القيد المحاسبي:</Text>
               <Text style={styles.accountingEntry}>
-                Dr. {debitAccount.account_name} - {formatAmount(formData.amount)}
+                مدين: {debitAccount.account_name} - {formatAmount(formData.amount)}
               </Text>
               <Text style={styles.accountingEntry}>
-                Cr. {creditAccount.account_name} - {formatAmount(formData.amount)}
+                دائن: {creditAccount.account_name} - {formatAmount(formData.amount)}
               </Text>
             </View>
           )}
         </ModernCard>
 
         {/* Vendor and Property Information */}
-        <ModernCard title="Additional Information" icon={Building}>
+        <ModernCard title="معلومات إضافية" icon={Building}>
           <VendorPicker
-            label="Vendor/Supplier"
-            placeholder="Select vendor or supplier (optional)"
+            label="المورد/المتعهد"
+            placeholder="اختر المورد أو المتعهد (اختياري)"
             value={selectedVendor}
             onValueChange={setSelectedVendor}
           />
 
           <PropertyPicker
-            label="Property"
-            placeholder="Select property (for property-related expenses)"
+            label="العقار"
+            placeholder="اختر العقار (للمصروفات المرتبطة بالعقار)"
             value={selectedProperty}
             onValueChange={setSelectedProperty}
           />
 
           <CostCenterPicker
-            label="Cost Center"
-            placeholder="Select cost center (optional)"
+            label="مركز التكلفة"
+            placeholder="اختر مركز التكلفة (اختياري)"
             value={selectedCostCenter}
             onValueChange={setSelectedCostCenter}
           />
         </ModernCard>
 
         {/* Payment Method */}
-        <ModernCard title="Payment Method" icon={CreditCard}>
+        <ModernCard title="طريقة الدفع" icon={CreditCard}>
           <SegmentedButtons
             value={formData.payment_method}
             onValueChange={(value) => setFormData(prev => ({ ...prev, payment_method: value }))}
             buttons={[
-              { value: 'cash', label: 'Cash' },
-              { value: 'bank_transfer', label: 'Bank' },
-              { value: 'cheque', label: 'Cheque' },
-              { value: 'card', label: 'Card' },
+              { value: 'cash', label: 'نقداً' },
+              { value: 'bank_transfer', label: 'تحويل بنكي' },
+              { value: 'cheque', label: 'شيك' },
+              { value: 'card', label: 'بطاقة' },
             ]}
             style={styles.segmentedButtons}
           />
 
           {formData.payment_method === 'cheque' && (
             <>
-              <Text style={styles.label}>Cheque Number *</Text>
+              <Text style={styles.label}>رقم الشيك *</Text>
               <TextInput
                 mode="outlined"
-                placeholder="Enter cheque number"
+                placeholder="أدخل رقم الشيك"
                 value={formData.cheque_number}
                 onChangeText={(text) => setFormData(prev => ({ ...prev, cheque_number: text }))}
                 style={styles.input}
@@ -298,10 +298,10 @@ export default function PaymentVoucherScreen() {
 
           {formData.payment_method === 'bank_transfer' && (
             <>
-              <Text style={styles.label}>Bank Reference *</Text>
+              <Text style={styles.label}>رقم المرجع البنكي *</Text>
               <TextInput
                 mode="outlined"
-                placeholder="Enter bank reference number"
+                placeholder="أدخل رقم المرجع البنكي"
                 value={formData.bank_reference}
                 onChangeText={(text) => setFormData(prev => ({ ...prev, bank_reference: text }))}
                 style={styles.input}
@@ -313,21 +313,21 @@ export default function PaymentVoucherScreen() {
         </ModernCard>
 
         {/* Status and Submit */}
-        <ModernCard title="Status" icon={FileText}>
+        <ModernCard title="الحالة" icon={FileText}>
           <SegmentedButtons
             value={formData.status}
             onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
             buttons={[
-              { value: 'draft', label: 'Save as Draft' },
-              { value: 'posted', label: 'Post Voucher' },
+              { value: 'draft', label: 'حفظ كمسودة' },
+              { value: 'posted', label: 'ترحيل السند' },
             ]}
             style={styles.segmentedButtons}
           />
 
           <Text style={styles.statusNote}>
             {formData.status === 'draft' 
-              ? 'Save as draft to review later. The voucher will not affect account balances.'
-              : 'Post voucher to make it final. This will update account balances and cannot be undone.'
+              ? 'سيتم حفظ السند كمسودة للمراجعة لاحقاً ولن يؤثر على الأرصدة.'
+              : 'سيتم ترحيل السند وجعله نهائياً وسيؤثر على الأرصدة ولا يمكن التراجع.'
             }
           </Text>
         </ModernCard>
@@ -339,7 +339,7 @@ export default function PaymentVoucherScreen() {
             style={styles.button}
             disabled={loading}
           >
-            Cancel
+            إلغاء
           </Button>
           <Button 
             mode="contained" 
@@ -348,7 +348,7 @@ export default function PaymentVoucherScreen() {
             loading={loading}
             disabled={loading}
           >
-            {formData.status === 'posted' ? 'Create & Post' : 'Save Draft'}
+            {formData.status === 'posted' ? 'إنشاء وترحيل' : 'حفظ كمسودة'}
           </Button>
         </View>
       </ScrollView>

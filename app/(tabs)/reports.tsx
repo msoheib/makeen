@@ -6,12 +6,14 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import ModernHeader from '@/components/ModernHeader';
 import { useApi } from '@/hooks/useApi';
+import { ReportFilters } from '@/components/ReportFilters';
 import { reportsApi, reportFiltersApi , profilesApi , propertiesApi } from '@/lib/api';
 import { pdfApi, PDFRequest } from '@/lib/pdfApi';
 import { useStore } from '@/lib/store';
 import { useTranslation } from '@/lib/useTranslation';
 import { rtlStyles, getFlexDirection } from '@/lib/rtl';
 import { useScreenAccess } from '@/lib/permissions';
+import { formatDisplayNumber, toArabicNumerals } from '@/lib/formatters';
 
 interface FilterModalProps {
   visible: boolean;
@@ -27,16 +29,77 @@ const FilterModal: React.FC<FilterModalProps> = ({ visible, onClose, onApply, fi
   const { t } = useTranslation();
   const [selectedOption, setSelectedOption] = useState<any>(null);
 
-  // Force light theme colors for testing
-  const lightColors = {
-    surface: '#FFFFFF',
-    onSurface: '#212121',
-    onSurfaceVariant: '#757575',
-    primary: '#1976D2',
-    primaryContainer: '#E3F2FD',
-    onPrimary: '#FFFFFF',
-    outline: '#E0E0E0'
-  };
+  // Local styles for modal (avoid relying on parent styles)
+  const modalStyles = React.useMemo(() => StyleSheet.create({
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.4)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 16,
+    },
+    modalContent: {
+      width: '100%',
+      maxWidth: 640,
+      borderRadius: 12,
+      padding: 16,
+      elevation: 3,
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      marginBottom: 12,
+    },
+    modalLoadingContainer: {
+      alignItems: 'center',
+      paddingVertical: 24,
+    },
+    modalLoadingText: {
+      marginTop: 8,
+      fontSize: 14,
+    },
+    modalOptionsList: {
+      maxHeight: 400,
+    },
+    modalOption: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: 12,
+      paddingHorizontal: 12,
+      borderRadius: 8,
+      marginBottom: 8,
+    },
+    modalOptionContent: {
+      flex: 1,
+      marginRight: 12,
+    },
+    modalOptionText: {
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    modalOptionSubtext: {
+      fontSize: 12,
+      marginTop: 2,
+    },
+    modalActions: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 12,
+      gap: 12,
+    },
+    modalButton: {
+      flex: 1,
+      paddingVertical: 12,
+      borderRadius: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    modalButtonText: {
+      fontSize: 16,
+      fontWeight: '600',
+    },
+  }), [theme]);
 
   // Reset selected option when modal opens
   React.useEffect(() => {
@@ -62,16 +125,16 @@ const FilterModal: React.FC<FilterModalProps> = ({ visible, onClose, onApply, fi
 
   return (
     <Modal visible={visible} transparent animationType="slide">
-      <View style={styles.modalOverlay}>
-        <View style={[styles.modalContent, { backgroundColor: lightColors.surface }]}>
-          <Text style={[styles.modalTitle, rtlStyles.textAlign(), { color: lightColors.onSurface }]}>
+      <View style={modalStyles.modalOverlay}>
+        <View style={[modalStyles.modalContent, { backgroundColor: theme.colors.surface }]}>
+          <Text style={[modalStyles.modalTitle, rtlStyles.textStart, { color: theme.colors.onSurface }]}> 
             {getFilterTypeLabel(filterType)}
           </Text>
           
           {loading ? (
-            <View style={styles.modalLoadingContainer}>
-              <ActivityIndicator size="large" color={lightColors.primary} />
-              <Text style={[styles.modalLoadingText, rtlStyles.textAlign(), { color: lightColors.onSurfaceVariant }]}>
+            <View style={modalStyles.modalLoadingContainer}>
+              <ActivityIndicator size="large" color={theme.colors.primary} />
+              <Text style={[modalStyles.modalLoadingText, rtlStyles.textStart, { color: theme.colors.onSurfaceVariant }]}> 
                 {t('common:loading')}
               </Text>
             </View>
@@ -79,67 +142,58 @@ const FilterModal: React.FC<FilterModalProps> = ({ visible, onClose, onApply, fi
             <FlatList
               data={options}
               keyExtractor={(item) => item.id}
-              style={styles.modalOptionsList}
+              style={modalStyles.modalOptionsList}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={[
-                    styles.modalOption,
-                    selectedOption?.id === item.id && { backgroundColor: lightColors.primaryContainer }
+                    modalStyles.modalOption,
+                    selectedOption?.id === item.id && { backgroundColor: theme.colors.primaryContainer }
                   ]}
                   onPress={() => setSelectedOption(item)}
                 >
-                  <View style={styles.modalOptionContent}>
-                    <Text style={[
-                      styles.modalOptionText, 
-                      rtlStyles.textAlign(),
-                      { color: lightColors.onSurface }
-                    ]}>
+                  <View style={modalStyles.modalOptionContent}>
+                    <Text style={[modalStyles.modalOptionText, rtlStyles.textStart, { color: theme.colors.onSurface }]}>
                       {item.name}
                     </Text>
                     {item.email && (
-                      <Text style={[
-                        styles.modalOptionSubtext, 
-                        rtlStyles.textAlign(),
-                        { color: lightColors.onSurfaceVariant }
-                      ]}>
+                      <Text style={[modalStyles.modalOptionSubtext, rtlStyles.textStart, { color: theme.colors.onSurfaceVariant }]}> 
                         {item.email}
                       </Text>
                     )}
-                    {item.address && (
-                      <Text style={[
-                        styles.modalOptionSubtext, 
-                        rtlStyles.textAlign(),
-                        { color: lightColors.onSurfaceVariant }
-                      ]}>
-                        {item.address}
-                      </Text>
-                    )}
                   </View>
+                  {selectedOption?.id === item.id && (
+                    <MaterialIcons name="check" size={20} color={theme.colors.primary} />
+                  )}
                 </TouchableOpacity>
               )}
             />
           )}
           
-          <View style={styles.modalActions}>
+          <View style={modalStyles.modalActions}>
             <TouchableOpacity
-              style={[styles.modalButton, styles.modalButtonSecondary]}
+              style={[modalStyles.modalButton, { backgroundColor: theme.colors.outline }]}
               onPress={onClose}
             >
-              <Text style={[styles.modalButtonText, { color: lightColors.onSurface }]}>
+              <Text style={[modalStyles.modalButtonText, { color: theme.colors.onSurface }]}> 
                 {t('common:cancel')}
               </Text>
             </TouchableOpacity>
+            
             <TouchableOpacity
               style={[
-                styles.modalButton, 
-                styles.modalButtonPrimary,
-                { backgroundColor: lightColors.primary },
-                !selectedOption && { opacity: 0.5 }
+                modalStyles.modalButton, 
+                { 
+                  backgroundColor: selectedOption ? theme.colors.primary : theme.colors.outline,
+                  opacity: selectedOption ? 1 : 0.5
+                }
               ]}
               onPress={() => selectedOption && onApply(selectedOption)}
               disabled={!selectedOption}
             >
-              <Text style={[styles.modalButtonText, { color: lightColors.onPrimary }]}>
+              <Text style={[
+                modalStyles.modalButtonText,
+                { color: selectedOption ? theme.colors.onPrimary : theme.colors.onSurface }
+              ]}>
                 {t('common:apply')}
               </Text>
             </TouchableOpacity>
@@ -179,14 +233,14 @@ const ReportViewerModal: React.FC<ReportViewerModalProps> = ({ visible, onClose,
   return (
     <Modal visible={visible} transparent animationType="slide">
       <View style={styles.modalOverlay}>
-        <View style={[styles.reportViewerContent, { backgroundColor: lightColors.surface }]}>
+        <View style={[styles.reportViewerContent, { backgroundColor: theme.colors.surface }]}>
           {/* Header */}
           <View style={styles.reportViewerHeader}>
-            <Text style={[styles.reportViewerTitle, { color: lightColors.onSurface }]}>
+            <Text style={[styles.reportViewerTitle, { color: theme.colors.onSurface }]}>
               {reportData.title}
             </Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <MaterialIcons name="close" size={24} color={lightColors.onSurfaceVariant} />
+              <MaterialIcons name="close" size={24} color={theme.colors.onSurfaceVariant} />
             </TouchableOpacity>
           </View>
 
@@ -194,17 +248,17 @@ const ReportViewerModal: React.FC<ReportViewerModalProps> = ({ visible, onClose,
           <ScrollView style={styles.reportContent} showsVerticalScrollIndicator={false}>
             {reportData.content ? (
               <View style={styles.htmlContentContainer}>
-                <Text style={[styles.htmlContent, { color: lightColors.onSurface }]}>
+                <Text style={[styles.htmlContent, { color: theme.colors.onSurface }]}>
                   {reportData.content}
                 </Text>
               </View>
             ) : (
               <View style={styles.noContentContainer}>
-                <MaterialIcons name="description" size={48} color={lightColors.onSurfaceVariant} />
-                <Text style={[styles.noContentText, { color: lightColors.onSurfaceVariant }]}>
+                <MaterialIcons name="description" size={48} color={theme.colors.onSurfaceVariant} />
+                <Text style={[styles.noContentText, { color: theme.colors.onSurfaceVariant }]}>
                   {t('reports:noContentAvailable')}
                 </Text>
-                <Text style={[styles.noContentSubtext, { color: lightColors.onSurfaceVariant }]}>
+                <Text style={[styles.noContentSubtext, { color: theme.colors.onSurfaceVariant }]}>
                   {t('reports:tryDownloadInstead')}
                 </Text>
               </View>
@@ -214,7 +268,7 @@ const ReportViewerModal: React.FC<ReportViewerModalProps> = ({ visible, onClose,
           {/* Footer Actions */}
           <View style={styles.reportViewerFooter}>
             <TouchableOpacity
-              style={[styles.reportViewerButton, { backgroundColor: lightColors.secondary }]}
+              style={[styles.reportViewerButton, { backgroundColor: theme.colors.secondary }]}
               onPress={onDownload}
             >
               <MaterialIcons name="download" size={20} color="white" />
@@ -233,9 +287,10 @@ const ReportViewerModal: React.FC<ReportViewerModalProps> = ({ visible, onClose,
 // TEMPORARY FIX: Force light theme colors to match dashboard appearance
 // This addresses the issue where reports page shows dark backgrounds while dashboard shows light
 export default function ReportsScreen() {
-  const { theme, isDarkMode } = useTheme();
-  const { t } = useTranslation();
   const router = useRouter();
+  const { theme, isDark } = useTheme();
+  const styles = React.useMemo(() => createStyles(theme), [theme]);
+  const { t } = useTranslation();
   const { user } = useStore();
   const [selectedCategory, setSelectedCategory] = useState('all');
   
@@ -248,6 +303,21 @@ export default function ReportsScreen() {
   const [currentFilterType, setCurrentFilterType] = useState<string | null>(null);
   const [filterOptions, setFilterOptions] = useState<any[]>([]);
   const [loadingFilterOptions, setLoadingFilterOptions] = useState(false);
+  
+  // Universal filters for all reports
+  const [universalFilters, setUniversalFilters] = useState({
+    dateRange: {
+      startDate: new Date(new Date().getFullYear(), 0, 1),
+      endDate: new Date(),
+      label: 'This Year'
+    },
+    propertyTypes: [],
+    cities: [],
+    neighborhoods: [],
+    paymentStatuses: [],
+    includeSubProperties: true
+  });
+  const [showUniversalFilters, setShowUniversalFilters] = useState(false);
   
   // Report viewer modal state
   const [reportViewerVisible, setReportViewerVisible] = useState(false);
@@ -514,6 +584,19 @@ export default function ReportsScreen() {
       lastGenerated: stats?.lastGenerated,
       requiresFilter: false,
       accessRoles: ['admin', 'manager', 'owner']
+    },
+    { 
+      id: 'water-meters', 
+      type: 'water-meters',
+      title: 'تقرير عدادات المياه', 
+      titleEn: 'Water Meters Report',
+      description: 'تقارير استهلاك المياه للعقارات',
+      category: 'operations',
+      iconName: 'water-drop',
+      color: '#2196F3',
+      lastGenerated: stats?.lastGenerated,
+      requiresFilter: false,
+      accessRoles: ['admin', 'manager', 'owner']
     }
   ].filter(report => 
     userContext?.role && report.accessRoles.includes(userContext.role)
@@ -656,11 +739,29 @@ export default function ReportsScreen() {
           result = await pdfApi.generateExpenseReport(expenseType, userContext!);
           break;
 
+        case 'water-meters':
+          result = await pdfApi.generateWaterMetersReport(userContext!, {
+            dateRange: universalFilters.dateRange,
+            propertyTypes: universalFilters.propertyTypes,
+            cities: universalFilters.cities,
+            neighborhoods: universalFilters.neighborhoods,
+            paymentStatuses: universalFilters.paymentStatuses,
+            includeSubProperties: universalFilters.includeSubProperties
+          });
+          break;
+
         default:
-          // Use the general filtered report method
+          // Use the general filtered report method with universal filters
           result = await pdfApi.generateFilteredReport(reportId, title, userContext!, {
             ...(filterId && { [currentFilterType + 'Id']: filterId }),
-            ...(filterType && { reportType: filterType })
+            ...(filterType && { reportType: filterType }),
+            // Add universal filters
+            dateRange: universalFilters.dateRange,
+            propertyTypes: universalFilters.propertyTypes,
+            cities: universalFilters.cities,
+            neighborhoods: universalFilters.neighborhoods,
+            paymentStatuses: universalFilters.paymentStatuses,
+            includeSubProperties: universalFilters.includeSubProperties
           });
       }
 
@@ -725,11 +826,29 @@ export default function ReportsScreen() {
           result = await pdfApi.viewExpenseReport(expenseType, userContext!);
           break;
 
+        case 'water-meters':
+          result = await pdfApi.viewWaterMetersReport(userContext!, {
+            dateRange: universalFilters.dateRange,
+            propertyTypes: universalFilters.propertyTypes,
+            cities: universalFilters.cities,
+            neighborhoods: universalFilters.neighborhoods,
+            paymentStatuses: universalFilters.paymentStatuses,
+            includeSubProperties: universalFilters.includeSubProperties
+          });
+          break;
+
         default:
-          // Use the general filtered report method for viewing
+          // Use the general filtered report method for viewing with universal filters
           result = await pdfApi.viewFilteredReport(reportId, title, userContext!, {
             ...(filterId && { [currentFilterType + 'Id']: filterId }),
-            ...(filterType && { reportType: filterType })
+            ...(filterType && { reportType: filterType }),
+            // Add universal filters
+            dateRange: universalFilters.dateRange,
+            propertyTypes: universalFilters.propertyTypes,
+            cities: universalFilters.cities,
+            neighborhoods: universalFilters.neighborhoods,
+            paymentStatuses: universalFilters.paymentStatuses,
+            includeSubProperties: universalFilters.includeSubProperties
           });
       }
 
@@ -792,27 +911,27 @@ export default function ReportsScreen() {
   }, [refetchStats]);
 
   const renderReportItem = useCallback(({ item }: { item: any }) => (
-    <View style={[styles.reportCard, { backgroundColor: lightColors.surface }]}>
+    <View style={[styles.reportCard, { backgroundColor: theme.colors.surface }]}>
       <View style={[styles.reportHeader, { flexDirection: getFlexDirection('row') }]}>
         <View style={[styles.reportInfo, { flexDirection: getFlexDirection('row') }]}>
           <View style={[
             styles.iconContainer, 
-            { backgroundColor: `${item.color}20` }, 
+            { backgroundColor: `${(item.color || theme.colors.onSurfaceVariant)}20` }, 
             rtlStyles.marginRight(12)
           ]}>
             <MaterialIcons name={item.iconName as any} size={24} color={item.color} />
           </View>
           <View style={styles.reportDetails}>
-            <Text style={[styles.reportTitle, rtlStyles.textAlignStart, { color: lightColors.onSurface }]}>
+            <Text style={[styles.reportTitle, rtlStyles.textAlignStart, { color: theme.colors.onSurface }]}>
               {item.title}
             </Text>
-            <Text style={[styles.reportDescription, rtlStyles.textAlignStart, { color: lightColors.onSurfaceVariant }]}>
+            <Text style={[styles.reportDescription, rtlStyles.textAlignStart, { color: theme.colors.onSurfaceVariant }]}>
               {item.description}
             </Text>
             {item.requiresFilter && (
               <View style={[styles.filterBadge, { flexDirection: getFlexDirection('row') }]}>
-                <MaterialIcons name="filter-list" size={12} color={lightColors.primary} />
-                <Text style={[styles.filterText, rtlStyles.marginLeft(4), { color: lightColors.primary }]}>
+                <MaterialIcons name="filter-list" size={12} color={theme.colors.primary} />
+                <Text style={[styles.filterText, rtlStyles.marginLeft(4), { color: theme.colors.primary }]}>
                   {t('reports:requiresFilter', { filterType: t(`reports:filterType_${item.filterType}`) })}
                 </Text>
               </View>
@@ -821,13 +940,13 @@ export default function ReportsScreen() {
         </View>
         {generatingPDF === item.id ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color={lightColors.primary} />
+            <ActivityIndicator size="small" color={theme.colors.primary} />
           </View>
         ) : (
           <View style={styles.actionButtons}>
             <IconButton
               icon={(props) => (
-                <MaterialIcons name="visibility" size={20} color={props.color || lightColors.secondary} />
+                <MaterialIcons name="visibility" size={20} color={props.color || theme.colors.secondary} />
               )}
               selected={false}
               onPress={() => handleViewReport(item)}
@@ -835,7 +954,7 @@ export default function ReportsScreen() {
             />
             <IconButton
               icon={(props) => (
-                <MaterialIcons name="download" size={20} color={props.color || lightColors.primary} />
+                <MaterialIcons name="download" size={20} color={props.color || theme.colors.primary} />
               )}
               selected={false}
               onPress={() => handleDownloadPDF(item)}
@@ -846,36 +965,36 @@ export default function ReportsScreen() {
       </View>
 
       <View style={styles.reportData}>
-        <Text style={[styles.reportTime, rtlStyles.textAlign(), { color: lightColors.onSurfaceVariant }]}>
+        <Text style={[styles.reportTime, rtlStyles.textAlign(), { color: theme.colors.onSurfaceVariant }]}>
           {t('reports:downloadAvailable')}
         </Text>
       </View>
 
-      <View style={[styles.reportFooter, { borderTopColor: lightColors.outline }]}>
-        <Text style={[styles.lastGenerated, rtlStyles.textAlign(), { color: lightColors.onSurfaceVariant }]}>
+      <View style={[styles.reportFooter, { borderTopColor: theme.colors.outline }]}>
+        <Text style={[styles.lastGenerated, rtlStyles.textAlign(), { color: theme.colors.onSurfaceVariant }]}>
           {t('reports:lastUpdated', { date: formatDate(item.lastGenerated) })}
         </Text>
       </View>
     </View>
-  ), [lightColors, generatingPDF, t, handleDownloadPDF, formatDate]);
+  ), [theme, generatingPDF, t, handleDownloadPDF, formatDate]);
 
   // Render Quick Statistics (matching dashboard's horizontal stats container)
   const renderQuickStats = () => (
     <View style={styles.quickStatsSection}>
-      <Text style={[styles.sectionTitle, rtlStyles.textAlign(), { color: lightColors.onBackground }]}>
+      <Text style={[styles.sectionTitle, rtlStyles.textAlign(), { color: theme.colors.onBackground }]}>
         {t('reports:quickStatistics')}
       </Text>
-      <View style={[styles.horizontalStatsCard, { backgroundColor: lightColors.surface }]}>
+      <View style={[styles.horizontalStatsCard, { backgroundColor: theme.colors.surface }]}>
         <View style={[styles.horizontalStatsRow, { flexDirection: getFlexDirection('row') }]}>
           <View style={styles.horizontalStatItem}>
-            <View style={[styles.horizontalStatIcon, { backgroundColor: `${lightColors.primary}20` }]}>
-              <MaterialIcons name="assessment" size={24} color={lightColors.primary} />
+            <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
+              <MaterialIcons name="assessment" size={24} color={theme.colors.primary} />
             </View>
-            <Text style={[styles.horizontalStatLabel, rtlStyles.textAlign(), { color: lightColors.onSurfaceVariant }]}>
+            <Text style={[styles.horizontalStatLabel, rtlStyles.textAlign(), { color: theme.colors.onSurfaceVariant }]}>
               {t('reports:totalReports')}
             </Text>
-            <Text style={[styles.horizontalStatValue, rtlStyles.textAlign(), { color: lightColors.primary }]}>
-              {statsLoading ? '...' : connectedStats.totalReports}
+            <Text style={[styles.horizontalStatValue, rtlStyles.textAlign(), { color: theme.colors.primary }]}> 
+              {statsLoading ? '...' : formatDisplayNumber(connectedStats.totalReports)}
             </Text>
           </View>
           
@@ -883,11 +1002,11 @@ export default function ReportsScreen() {
             <View style={[styles.horizontalStatIcon, { backgroundColor: '#4CAF5020' }]}>
               <MaterialIcons name="people" size={24} color="#4CAF50" />
             </View>
-            <Text style={[styles.horizontalStatLabel, rtlStyles.textAlign(), { color: lightColors.onSurfaceVariant }]}>
+            <Text style={[styles.horizontalStatLabel, rtlStyles.textAlign(), { color: theme.colors.onSurfaceVariant }]}>
               المستأجرين النشطين
             </Text>
-            <Text style={[styles.horizontalStatValue, rtlStyles.textAlign(), { color: '#4CAF50' }]}>
-              {tenantsLoading ? '...' : connectedStats.activeTenants}
+            <Text style={[styles.horizontalStatValue, rtlStyles.textAlign(), { color: '#4CAF50' }]}> 
+              {tenantsLoading ? '...' : formatDisplayNumber(connectedStats.activeTenants)}
             </Text>
           </View>
           
@@ -895,11 +1014,11 @@ export default function ReportsScreen() {
             <View style={[styles.horizontalStatIcon, { backgroundColor: '#2196F320' }]}>
               <MaterialIcons name="home" size={24} color="#2196F3" />
             </View>
-            <Text style={[styles.horizontalStatLabel, rtlStyles.textAlign(), { color: lightColors.onSurfaceVariant }]}>
+            <Text style={[styles.horizontalStatLabel, rtlStyles.textAlign(), { color: theme.colors.onSurfaceVariant }]}>
               العقارات المشغولة
             </Text>
-            <Text style={[styles.horizontalStatValue, rtlStyles.textAlign(), { color: '#2196F3' }]}>
-              {dashboardLoading ? '...' : connectedStats.occupiedProperties}
+            <Text style={[styles.horizontalStatValue, rtlStyles.textAlign(), { color: '#2196F3' }]}> 
+              {dashboardLoading ? '...' : formatDisplayNumber(connectedStats.occupiedProperties)}
             </Text>
           </View>
           
@@ -907,11 +1026,11 @@ export default function ReportsScreen() {
             <View style={[styles.horizontalStatIcon, { backgroundColor: '#FF980020' }]}>
               <MaterialIcons name="attach-money" size={24} color="#FF9800" />
             </View>
-            <Text style={[styles.horizontalStatLabel, rtlStyles.textAlign(), { color: lightColors.onSurfaceVariant }]}>
+            <Text style={[styles.horizontalStatLabel, rtlStyles.textAlign(), { color: theme.colors.onSurfaceVariant }]}>
               الإيرادات الشهرية
             </Text>
-            <Text style={[styles.horizontalStatValue, rtlStyles.textAlign(), { color: '#FF9800' }]}>
-              {dashboardLoading ? '...' : `${(connectedStats.monthlyRevenue / 1000).toFixed(0)}K`}
+            <Text style={[styles.horizontalStatValue, rtlStyles.textAlign(), { color: '#FF9800' }]}> 
+              {dashboardLoading ? '...' : `${toArabicNumerals((connectedStats.monthlyRevenue / 1000).toFixed(0))}K`}
             </Text>
           </View>
         </View>
@@ -921,14 +1040,14 @@ export default function ReportsScreen() {
 
   if (!canAccessReports) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: lightColors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <ModernHeader title={t('reports:title')} />
         <View style={styles.noAccessContainer}>
-          <MaterialIcons name="lock" size={64} color={lightColors.onSurfaceVariant} />
-          <Text style={[styles.noAccessText, rtlStyles.textAlign(), { color: lightColors.onSurface }]}>
+          <MaterialIcons name="lock" size={64} color={theme.colors.onSurfaceVariant} />
+          <Text style={[styles.noAccessText, rtlStyles.textAlign(), { color: theme.colors.onSurface }]}> 
             {t('reports:noAccessMessage')}
           </Text>
-          <Text style={[styles.noAccessSubtext, rtlStyles.textAlign(), { color: lightColors.onSurfaceVariant }]}>
+          <Text style={[styles.noAccessSubtext, rtlStyles.textAlign(), { color: theme.colors.onSurfaceVariant }]}>
             {t('reports:noAccessSuggestion')}
           </Text>
         </View>
@@ -939,11 +1058,11 @@ export default function ReportsScreen() {
   // Show loading while checking permissions
   if (permissionLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: lightColors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <ModernHeader title={t('reports:title')} />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={lightColors.primary} />
-          <Text style={[styles.loadingText, { color: lightColors.onSurfaceVariant }]}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={[styles.loadingText, { color: theme.colors.onSurfaceVariant }]}> 
             {t('common:loading')}
           </Text>
         </View>
@@ -954,17 +1073,17 @@ export default function ReportsScreen() {
   // If user doesn't have reports access, show access denied
   if (!canAccessReports) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: lightColors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <ModernHeader title={t('reports:title')} />
         <View style={styles.accessDeniedContainer}>
-          <MaterialIcons name="report-off" size={64} color={lightColors.onSurfaceVariant} />
-          <Text style={[styles.accessDeniedText, { color: lightColors.onSurface }]}>
+          <MaterialIcons name="report-off" size={64} color={theme.colors.onSurfaceVariant} />
+          <Text style={[styles.accessDeniedText, { color: theme.colors.onSurface }]}> 
             Access Denied
           </Text>
-          <Text style={[styles.accessDeniedSubtext, { color: lightColors.onSurfaceVariant }]}>
+          <Text style={[styles.accessDeniedSubtext, { color: theme.colors.onSurfaceVariant }]}> 
             You don't have permission to view reports. Only admins, managers, and property owners can access reports.
           </Text>
-          <Text style={[styles.accessDeniedSubtext, { color: lightColors.onSurfaceVariant, marginTop: 16 }]}>
+          <Text style={[styles.accessDeniedSubtext, { color: theme.colors.onSurfaceVariant, marginTop: 16 }]}> 
             Current Role: {userContext?.role || 'None'}
           </Text>
         </View>
@@ -973,17 +1092,17 @@ export default function ReportsScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: lightColors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ModernHeader title={t('reports:title')} />
       
       <ScrollView 
-        style={[styles.content, { backgroundColor: lightColors.background }]}
+        style={[styles.content, { backgroundColor: theme.colors.background }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         {renderQuickStats()}
 
         <View style={styles.categoryContainer}>
-          <Text style={[styles.mainTitle, rtlStyles.textAlignStart, { color: lightColors.onBackground, marginBottom: 16 }]}>
+          <Text style={[styles.mainTitle, rtlStyles.textAlignStart, { color: theme.colors.onBackground, marginBottom: 16 }]}>
             {t('common:categories')}
           </Text>
           <View style={[styles.categoryGrid, { flexDirection: getFlexDirection('row') }]}>
@@ -993,8 +1112,8 @@ export default function ReportsScreen() {
                 style={[
                   styles.categoryCard,
                   {
-                    backgroundColor: selectedCategory === category.id ? lightColors.primary : lightColors.surface,
-                    borderColor: lightColors.outline,
+                    backgroundColor: selectedCategory === category.id ? theme.colors.primary : theme.colors.surface,
+                    borderColor: theme.colors.outline,
                   }
                 ]}
                 onPress={() => setSelectedCategory(category.id)}
@@ -1002,14 +1121,14 @@ export default function ReportsScreen() {
                 <MaterialIcons
                   name={category.icon as any}
                   size={24}
-                  color={selectedCategory === category.id ? lightColors.onPrimary : lightColors.onSurface}
+                  color={selectedCategory === category.id ? theme.colors.onPrimary : theme.colors.onSurface}
                 />
                 <Text
                   style={[
                     styles.categoryChipText,
                     rtlStyles.textAlignStart,
                     {
-                      color: selectedCategory === category.id ? lightColors.onPrimary : lightColors.onSurface,
+                      color: selectedCategory === category.id ? theme.colors.onPrimary : theme.colors.onSurface,
                     }
                   ]}
                 >
@@ -1020,8 +1139,39 @@ export default function ReportsScreen() {
           </View>
         </View>
 
+        {/* Universal Report Filters */}
+        <View style={styles.universalFiltersContainer}>
+          <View style={styles.universalFiltersHeader}>
+            <Text style={[styles.mainTitle, rtlStyles.textStart, { color: theme.colors.onBackground, marginBottom: 16 }]}>
+              Universal Report Filters
+            </Text>
+            <TouchableOpacity
+              style={styles.filterToggleButton}
+              onPress={() => setShowUniversalFilters(!showUniversalFilters)}
+            >
+              <MaterialIcons
+                name={showUniversalFilters ? 'expand-less' : 'expand-more'}
+                size={24}
+                color={theme.colors.primary}
+              />
+              <Text style={[styles.filterToggleText, { color: theme.colors.primary }]}>
+                {showUniversalFilters ? 'Hide Filters' : 'Show Filters'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          
+          {showUniversalFilters && (
+            <ReportFilters
+              onFiltersChange={setUniversalFilters}
+              initialFilters={universalFilters}
+              availableCities={properties?.data?.map((p: any) => p.city).filter((c: string, i: number, arr: string[]) => arr.indexOf(c) === i) || []}
+              showAdvancedFilters={true}
+            />
+          )}
+        </View>
+
         <View style={styles.reportsContainer}>
-          <Text style={[styles.mainTitle, rtlStyles.textAlignStart, { color: lightColors.onBackground, marginBottom: 16, marginTop: 24 }]}>
+          <Text style={[styles.mainTitle, rtlStyles.textStart, { color: theme.colors.onBackground, marginBottom: 16, marginTop: 24 }]}> 
             {t('reports:availableReportsCount', { count: filteredReports.length })}
           </Text>
           
@@ -1079,7 +1229,7 @@ export default function ReportsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -1095,41 +1245,49 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 16,
     marginTop: 16,
+    color: theme.colors.onSurface,
   },
   horizontalStatsCard: {
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 16,
+    padding: 20,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    backgroundColor: theme.colors.surface,
   },
   horizontalStatsRow: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   horizontalStatItem: {
-    alignItems: 'center',
     flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 8,
   },
   horizontalStatIcon: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 8,
+    backgroundColor: theme.colors.primaryContainer,
   },
   horizontalStatLabel: {
     fontSize: 12,
-    marginBottom: 4,
     textAlign: 'center',
+    marginBottom: 4,
+    lineHeight: 16,
+    color: theme.colors.onSurfaceVariant,
   },
   horizontalStatValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontWeight: '700',
     textAlign: 'center',
+    color: theme.colors.onSurface,
   },
   categoryContainer: {
     marginBottom: 24,
@@ -1142,6 +1300,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+  },
+  universalFiltersContainer: {
+    marginBottom: 24,
+  },
+  universalFiltersHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  filterToggleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.outline,
+  },
+  filterToggleText: {
+    marginLeft: 8,
+    fontSize: 14,
+    fontWeight: '500',
   },
   categoryCard: {
     flexDirection: 'row',
@@ -1345,12 +1526,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 16,
     textAlign: 'center',
+    color: theme.colors.onSurface,
   },
   accessDeniedSubtext: {
     fontSize: 16,
     marginTop: 8,
     textAlign: 'center',
     lineHeight: 24,
+    color: theme.colors.onSurfaceVariant,
   },
   actionButtons: {
     flexDirection: 'row',
@@ -1365,10 +1548,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 20,
     elevation: 4,
-    shadowColor: '#000',
+    shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
+    backgroundColor: theme.colors.surface,
   },
   reportViewerHeader: {
     flexDirection: 'row',
@@ -1380,6 +1564,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     flex: 1,
+    color: theme.colors.onSurface,
   },
   closeButton: {
     padding: 8,
@@ -1393,6 +1578,7 @@ const styles = StyleSheet.create({
   htmlContent: {
     fontSize: 16,
     lineHeight: 24,
+    color: theme.colors.onSurface,
   },
   noContentContainer: {
     alignItems: 'center',
@@ -1403,11 +1589,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 16,
     textAlign: 'center',
+    color: theme.colors.onSurface,
   },
   noContentSubtext: {
     fontSize: 14,
     marginTop: 8,
     textAlign: 'center',
+    color: theme.colors.onSurfaceVariant,
   },
   reportViewerFooter: {
     alignItems: 'center',
@@ -1421,14 +1609,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 8,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: theme.colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    backgroundColor: theme.colors.primary,
   },
   reportViewerButtonText: {
     fontSize: 16,
     fontWeight: '500',
     marginLeft: 8,
+    color: theme.colors.onPrimary,
   },
 });

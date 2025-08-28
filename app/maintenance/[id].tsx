@@ -3,6 +3,7 @@ import { View, StyleSheet, ScrollView, Image, Alert, ActivityIndicator } from 'r
 import { Text, Button, Card, Chip, Portal, Modal, SegmentedButtons } from 'react-native-paper';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
+import { addAlpha } from '@/lib/colors';
 import { supabase } from '@/lib/supabase';
 import { MaintenanceRequest } from '@/lib/types';
 import { Clock, AlertCircle, User, MapPin, Calendar, CheckCircle, XCircle, Edit3 } from 'lucide-react-native';
@@ -173,9 +174,9 @@ export default function MaintenanceRequestDetails() {
                 mode="flat"
                 style={[
                   styles.statusChip,
-                  { backgroundColor: `${statusColors[request.status]}20` },
+                  { backgroundColor: addAlpha((statusColors as any)[request.status] || theme.colors.onSurfaceVariant, 0.125) },
                 ]}
-                textStyle={{ color: statusColors[request.status], fontWeight: '600' }}
+                textStyle={{ color: (statusColors as any)[request.status] || theme.colors.onSurfaceVariant, fontWeight: '600' }}
               >
                 {getStatusLabel(request.status)}
               </Chip>
@@ -298,27 +299,27 @@ export default function MaintenanceRequestDetails() {
               { 
                 value: 'pending', 
                 label: getStatusLabel('pending'),
-                style: { backgroundColor: newStatus === 'pending' ? `${statusColors.pending}20` : 'transparent' }
+                style: { backgroundColor: newStatus === 'pending' ? addAlpha((statusColors as any).pending || theme.colors.onSurfaceVariant, 0.125) : 'transparent' }
               },
               { 
                 value: 'approved', 
                 label: getStatusLabel('approved'),
-                style: { backgroundColor: newStatus === 'approved' ? `${statusColors.approved}20` : 'transparent' }
+                style: { backgroundColor: newStatus === 'approved' ? addAlpha((statusColors as any).approved || theme.colors.onSurfaceVariant, 0.125) : 'transparent' }
               },
               { 
                 value: 'in_progress', 
                 label: getStatusLabel('in_progress'),
-                style: { backgroundColor: newStatus === 'in_progress' ? `${statusColors.in_progress}20` : 'transparent' }
+                style: { backgroundColor: newStatus === 'in_progress' ? addAlpha((statusColors as any).in_progress || theme.colors.onSurfaceVariant, 0.125) : 'transparent' }
               },
               { 
                 value: 'completed', 
                 label: getStatusLabel('completed'),
-                style: { backgroundColor: newStatus === 'completed' ? `${statusColors.completed}20` : 'transparent' }
+                style: { backgroundColor: newStatus === 'completed' ? addAlpha((statusColors as any).completed || theme.colors.onSurfaceVariant, 0.125) : 'transparent' }
               },
               { 
                 value: 'cancelled', 
                 label: getStatusLabel('cancelled'),
-                style: { backgroundColor: newStatus === 'cancelled' ? `${statusColors.cancelled}20` : 'transparent' }
+                style: { backgroundColor: newStatus === 'cancelled' ? addAlpha((statusColors as any).cancelled || theme.colors.onSurfaceVariant, 0.125) : 'transparent' }
               },
             ]}
             style={styles.segmentedButtons}

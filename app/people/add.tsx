@@ -9,6 +9,7 @@ import { ArrowLeft, User, Mail, Phone, UserCheck, Lock, Eye, EyeOff, MapPin } fr
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import { useAuth } from '@/hooks/useAuth';
+import { rtlStyles, getFlexDirection } from '@/lib/rtl';
 
 export default function AddPersonScreen() {
   const router = useRouter();
@@ -192,15 +193,15 @@ export default function AddPersonScreen() {
       );
 
       Alert.alert(
-        'Success',
-        'User account created successfully! A welcome email has been sent with login credentials.',
+        'تم بنجاح',
+        'تم إنشاء حساب المستخدم بنجاح! تم إرسال رسالة ترحيبية تحتوي على بيانات الدخول.',
         [
           {
-            text: 'View Details',
+            text: 'عرض التفاصيل',
             onPress: () => router.push(`/people/${data?.id}`),
           },
           {
-            text: 'Add Another',
+            text: 'إضافة مستخدم آخر',
             onPress: () => {
               // Reset form for adding another person
               setFormData({
@@ -222,7 +223,7 @@ export default function AddPersonScreen() {
             },
           },
           {
-            text: 'Back to List',
+            text: 'العودة إلى القائمة',
             onPress: () => router.replace('/(tabs)/people'),
           },
         ]
@@ -235,11 +236,11 @@ export default function AddPersonScreen() {
     } catch (error: any) {
       console.error('Error creating user:', error);
       if (error.message?.includes('already registered')) {
-        setErrors({ email: 'This email address is already registered' });
+        setErrors({ email: 'هذا البريد الإلكتروني مسجل مسبقاً' });
       } else if (error.message?.includes('password')) {
-        setErrors({ password: 'Password must be at least 6 characters' });
+        setErrors({ password: 'يجب أن تكون كلمة المرور 6 أحرف على الأقل' });
       } else {
-        Alert.alert('Error', error.message || 'Failed to create user account');
+        Alert.alert('خطأ', error.message || 'فشل إنشاء حساب المستخدم');
       }
     } finally {
       setLoading(false);
@@ -249,7 +250,7 @@ export default function AddPersonScreen() {
   return (
     <View style={styles.container}>
       <ModernHeader
-        title="Add Person"
+        title="إضافة شخص"
         showBackButton={true}
         showNotifications={false}
         onBackPress={() => router.back()}
@@ -258,14 +259,14 @@ export default function AddPersonScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Basic Information */}
         <ModernCard style={styles.section}>
-          <View style={styles.sectionHeader}>
+          <View style={[styles.sectionHeader, { flexDirection: getFlexDirection('row') }]}>
             <User size={20} color={theme.colors.primary} />
-            <Text style={styles.sectionTitle}>Personal Information</Text>
+            <Text style={[styles.sectionTitle, rtlStyles.textAlign()]}>المعلومات الشخصية</Text>
           </View>
 
-          <View style={styles.row}>
+          <View style={[styles.row, rtlStyles.row()]}>
             <TextInput
-              label="First Name *"
+              label="الاسم الأول *"
               value={formData.first_name}
               onChangeText={(text) => setFormData({ ...formData, first_name: text })}
               mode="outlined"
@@ -273,7 +274,7 @@ export default function AddPersonScreen() {
               error={!!errors.first_name}
             />
             <TextInput
-              label="Last Name *"
+              label="اسم العائلة *"
               value={formData.last_name}
               onChangeText={(text) => setFormData({ ...formData, last_name: text })}
               mode="outlined"
@@ -282,18 +283,18 @@ export default function AddPersonScreen() {
             />
           </View>
           {(errors.first_name || errors.last_name) && (
-            <Text style={styles.errorText}>{errors.first_name || errors.last_name}</Text>
+            <Text style={[styles.errorText, rtlStyles.textAlign()]}>{errors.first_name || errors.last_name}</Text>
           )}
 
-          <Text style={styles.fieldLabel}>Role *</Text>
+          <Text style={[styles.fieldLabel, rtlStyles.textAlign()]}>الدور *</Text>
           <SegmentedButtons
             value={formData.role}
             onValueChange={(value) => setFormData({ ...formData, role: value as UserRole })}
             buttons={[
-              { value: 'tenant', label: 'Tenant' },
-              { value: 'owner', label: 'Owner' },
-              { value: 'staff', label: 'Staff' },
-              { value: 'manager', label: 'Manager' },
+              { value: 'tenant', label: 'مستأجر' },
+              { value: 'owner', label: 'مالك' },
+              { value: 'staff', label: 'موظف' },
+              { value: 'manager', label: 'مدير' },
             ]}
             style={styles.segmentedButtons}
           />
@@ -301,13 +302,13 @@ export default function AddPersonScreen() {
 
         {/* Contact Information */}
         <ModernCard style={styles.section}>
-          <View style={styles.sectionHeader}>
+          <View style={[styles.sectionHeader, { flexDirection: getFlexDirection('row') }]}>
             <Mail size={20} color={theme.colors.secondary} />
-            <Text style={styles.sectionTitle}>Contact Information</Text>
+            <Text style={[styles.sectionTitle, rtlStyles.textAlign()]}>معلومات الاتصال</Text>
           </View>
 
           <TextInput
-            label="Email Address *"
+            label="البريد الإلكتروني *"
             value={formData.email}
             onChangeText={(text) => setFormData({ ...formData, email: text })}
             mode="outlined"
@@ -317,10 +318,10 @@ export default function AddPersonScreen() {
             error={!!errors.email}
             left={<TextInput.Icon icon="email-outline" />}
           />
-          {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+          {errors.email && <Text style={[styles.errorText, rtlStyles.textAlign()]}>{errors.email}</Text>}
 
           <TextInput
-            label="Phone Number"
+            label="رقم الجوال"
             value={formData.phone_number}
             onChangeText={(text) => setFormData({ ...formData, phone_number: text })}
             mode="outlined"
@@ -329,18 +330,18 @@ export default function AddPersonScreen() {
             error={!!errors.phone_number}
             left={<TextInput.Icon icon="phone-outline" />}
           />
-          {errors.phone_number && <Text style={styles.errorText}>{errors.phone_number}</Text>}
+          {errors.phone_number && <Text style={[styles.errorText, rtlStyles.textAlign()]}>{errors.phone_number}</Text>}
         </ModernCard>
 
         {/* Authentication Information */}
         <ModernCard style={styles.section}>
-          <View style={styles.sectionHeader}>
+          <View style={[styles.sectionHeader, { flexDirection: getFlexDirection('row') }]}>
             <Lock size={20} color={theme.colors.tertiary} />
-            <Text style={styles.sectionTitle}>Authentication</Text>
+            <Text style={[styles.sectionTitle, rtlStyles.textAlign()]}>بيانات الدخول</Text>
           </View>
 
           <TextInput
-            label="Password *"
+            label="كلمة المرور *"
             value={formData.password}
             onChangeText={(text) => setFormData({ ...formData, password: text })}
             mode="outlined"
@@ -355,10 +356,10 @@ export default function AddPersonScreen() {
               />
             }
           />
-          {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+          {errors.password && <Text style={[styles.errorText, rtlStyles.textAlign()]}>{errors.password}</Text>}
 
           <TextInput
-            label="Confirm Password *"
+            label="تأكيد كلمة المرور *"
             value={formData.confirmPassword}
             onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
             mode="outlined"
@@ -373,44 +374,32 @@ export default function AddPersonScreen() {
               />
             }
           />
-          {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
+          {errors.confirmPassword && <Text style={[styles.errorText, rtlStyles.textAlign()]}>{errors.confirmPassword}</Text>}
 
           <Text style={styles.passwordNote}>
-            Password must be at least 6 characters long. A welcome email will be sent with login credentials.
+            يجب أن تكون كلمة المرور 6 أحرف على الأقل. سيتم إرسال رسالة ترحيبية تحتوي على بيانات الدخول.
           </Text>
         </ModernCard>
 
         {/* Role Information */}
         <ModernCard style={styles.section}>
-          <View style={styles.sectionHeader}>
+          <View style={[styles.sectionHeader, { flexDirection: getFlexDirection('row') }]}>
             <UserCheck size={20} color={theme.colors.tertiary} />
-            <Text style={styles.sectionTitle}>Role Information</Text>
+            <Text style={[styles.sectionTitle, rtlStyles.textAlign()]}>معلومات الدور</Text>
           </View>
 
           <View style={styles.roleInfo}>
             {formData.role === 'tenant' && (
-              <Text style={styles.roleDescription}>
-                Tenants can view their rental properties, submit maintenance requests, 
-                make payments, and access their documents.
-              </Text>
+              <Text style={[styles.roleDescription, rtlStyles.textAlign()]}>يمكن للمستأجرين عرض عقاراتهم، وإرسال طلبات الصيانة، وإجراء المدفوعات، والوصول إلى مستنداتهم.</Text>
             )}
             {formData.role === 'owner' && (
-              <Text style={styles.roleDescription}>
-                Property owners can manage their properties, view financial reports, 
-                communicate with tenants, and track maintenance requests.
-              </Text>
+              <Text style={[styles.roleDescription, rtlStyles.textAlign()]}>يمكن لمالكي العقارات إدارة ممتلكاتهم، وعرض التقارير المالية، والتواصل مع المستأجرين، وتتبع طلبات الصيانة.</Text>
             )}
             {formData.role === 'manager' && (
-              <Text style={styles.roleDescription}>
-                Property managers have full access to manage properties, tenants, 
-                contracts, and financial operations.
-              </Text>
+              <Text style={[styles.roleDescription, rtlStyles.textAlign()]}>لدى مديري العقارات وصول كامل لإدارة العقارات والمستأجرين والعقود والعمليات المالية.</Text>
             )}
             {formData.role === 'staff' && (
-              <Text style={styles.roleDescription}>
-                Staff members have limited access to view and manage basic operations 
-                as assigned by managers.
-              </Text>
+              <Text style={[styles.roleDescription, rtlStyles.textAlign()]}>لدي الموظفين صلاحيات محدودة لعرض وإدارة العمليات الأساسية حسب ما يحدده المديرون.</Text>
             )}
           </View>
         </ModernCard>
@@ -418,13 +407,13 @@ export default function AddPersonScreen() {
         {/* Address and Additional Information */}
         {(formData.role === 'owner' || formData.role === 'tenant') && (
           <ModernCard style={styles.section}>
-            <View style={styles.sectionHeader}>
+            <View style={[styles.sectionHeader, { flexDirection: getFlexDirection('row') }]}>
               <MapPin size={20} color={theme.colors.primary} />
-              <Text style={styles.sectionTitle}>Address & Additional Information</Text>
+              <Text style={[styles.sectionTitle, rtlStyles.textAlign()]}>العنوان ومعلومات إضافية</Text>
             </View>
 
             <TextInput
-              label="Address *"
+              label="العنوان *"
               value={formData.address}
               onChangeText={(text) => setFormData({ ...formData, address: text })}
               mode="outlined"
@@ -432,11 +421,11 @@ export default function AddPersonScreen() {
               error={!!errors.address}
               left={<TextInput.Icon icon="map-marker-outline" />}
             />
-            {errors.address && <Text style={styles.errorText}>{errors.address}</Text>}
+            {errors.address && <Text style={[styles.errorText, rtlStyles.textAlign()]}>{errors.address}</Text>}
 
-            <View style={styles.row}>
+            <View style={[styles.row, rtlStyles.row()]}>
               <TextInput
-                label="City *"
+                label="المدينة *"
                 value={formData.city}
                 onChangeText={(text) => setFormData({ ...formData, city: text })}
                 mode="outlined"
@@ -444,7 +433,7 @@ export default function AddPersonScreen() {
                 error={!!errors.city}
               />
               <TextInput
-                label="Country *"
+                label="الدولة *"
                 value={formData.country}
                 onChangeText={(text) => setFormData({ ...formData, country: text })}
                 mode="outlined"
@@ -453,19 +442,19 @@ export default function AddPersonScreen() {
               />
             </View>
             {(errors.city || errors.country) && (
-              <Text style={styles.errorText}>{errors.city || errors.country}</Text>
+              <Text style={[styles.errorText, rtlStyles.textAlign()]}>{errors.city || errors.country}</Text>
             )}
 
-            <View style={styles.row}>
+            <View style={[styles.row, rtlStyles.row()]}>
               <TextInput
-                label="Nationality"
+                label="الجنسية"
                 value={formData.nationality}
                 onChangeText={(text) => setFormData({ ...formData, nationality: text })}
                 mode="outlined"
                 style={[styles.input, styles.halfInput]}
               />
               <TextInput
-                label="ID Number"
+                label="رقم الهوية"
                 value={formData.id_number}
                 onChangeText={(text) => setFormData({ ...formData, id_number: text })}
                 mode="outlined"
@@ -478,7 +467,7 @@ export default function AddPersonScreen() {
                 status={formData.is_foreign ? 'checked' : 'unchecked'}
                 onPress={() => setFormData({ ...formData, is_foreign: !formData.is_foreign })}
               />
-              <Text style={styles.checkboxLabel}>Foreign National</Text>
+              <Text style={styles.checkboxLabel}>أجنبي</Text>
             </View>
           </ModernCard>
         )}
@@ -493,7 +482,7 @@ export default function AddPersonScreen() {
             style={styles.submitButton}
             contentStyle={styles.submitButtonContent}
           >
-            Create User Account
+            إنشاء حساب مستخدم
           </Button>
         </View>
       </ScrollView>

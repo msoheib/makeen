@@ -177,7 +177,7 @@ export default function ReceiptVoucherScreen() {
     }
 
     if (!user) {
-      Alert.alert('Error', 'You must be logged in to create a voucher');
+      Alert.alert('خطأ', 'يجب تسجيل الدخول لإنشاء سند');
       return;
     }
 
@@ -207,11 +207,11 @@ export default function ReceiptVoucherScreen() {
       }
 
       Alert.alert(
-        'Success',
-        'Receipt voucher created successfully!',
+        'تم بنجاح',
+        'تم إنشاء سند القبض بنجاح!',
         [
           {
-            text: 'OK',
+            text: 'حسناً',
             onPress: () => router.replace('/(tabs)/payments'),
           },
         ]
@@ -224,9 +224,9 @@ export default function ReceiptVoucherScreen() {
     } catch (error: any) {
       console.error('Error creating receipt voucher:', error);
       if (error.code === '23505') {
-        setErrors({ voucher_number: 'This voucher number already exists' });
+        setErrors({ voucher_number: 'رقم السند هذا موجود بالفعل' });
       } else {
-        Alert.alert('Error', error.message || 'Failed to create receipt voucher');
+        Alert.alert('خطأ', error.message || 'فشل إنشاء سند القبض');
       }
     } finally {
       setLoading(false);
@@ -236,7 +236,7 @@ export default function ReceiptVoucherScreen() {
   return (
     <View style={styles.container}>
       <ModernHeader 
-        title="Receipt Voucher" 
+        title="سند قبض" 
         showBack 
         backAction={() => router.back()}
       />
@@ -246,11 +246,11 @@ export default function ReceiptVoucherScreen() {
         <ModernCard style={styles.section}>
           <View style={styles.sectionHeader}>
             <Receipt size={20} color={theme.colors.primary} />
-            <Text style={styles.sectionTitle}>Voucher Information</Text>
+            <Text style={styles.sectionTitle}>معلومات السند</Text>
           </View>
 
           <TextInput
-            label="Voucher Number *"
+            label="رقم السند *"
             value={formData.voucher_number}
             onChangeText={(text) => setFormData({ ...formData, voucher_number: text })}
             mode="outlined"
@@ -262,7 +262,7 @@ export default function ReceiptVoucherScreen() {
 
           <View style={styles.row}>
             <TextInput
-              label="Date *"
+              label="التاريخ *"
               value={formData.date}
               onChangeText={(text) => setFormData({ ...formData, date: text })}
               mode="outlined"
@@ -270,7 +270,7 @@ export default function ReceiptVoucherScreen() {
               placeholder="YYYY-MM-DD"
             />
             <View style={styles.currencyContainer}>
-              <Text style={styles.currencyLabel}>Currency</Text>
+              <Text style={styles.currencyLabel}>العملة</Text>
               <Chip 
                 style={styles.currencyChip}
                 textStyle={styles.currencyText}
@@ -282,7 +282,7 @@ export default function ReceiptVoucherScreen() {
           </View>
 
           <TextInput
-            label="Amount *"
+            label="المبلغ *"
             value={formData.amount}
             onChangeText={(text) => setFormData({ ...formData, amount: text })}
             mode="outlined"
@@ -295,7 +295,7 @@ export default function ReceiptVoucherScreen() {
           {errors.amount && <Text style={styles.errorText}>{errors.amount}</Text>}
 
           <TextInput
-            label="Description *"
+            label="الوصف *"
             value={formData.description}
             onChangeText={(text) => setFormData({ ...formData, description: text })}
             mode="outlined"
@@ -303,7 +303,7 @@ export default function ReceiptVoucherScreen() {
             numberOfLines={3}
             style={styles.input}
             error={!!errors.description}
-            placeholder="Describe the receipt purpose..."
+            placeholder="أدخل وصف سند القبض..."
           />
           {errors.description && <Text style={styles.errorText}>{errors.description}</Text>}
         </ModernCard>
@@ -312,34 +312,34 @@ export default function ReceiptVoucherScreen() {
         <ModernCard style={styles.section}>
           <View style={styles.sectionHeader}>
             <FileText size={20} color={theme.colors.secondary} />
-            <Text style={styles.sectionTitle}>Account Classification</Text>
+            <Text style={styles.sectionTitle}>تصنيف الحساب</Text>
           </View>
 
           <AccountPicker
-            label="Credit Account (Revenue) *"
+            label="حساب دائن (إيراد) *"
             value={creditAccount}
             onValueChange={setCreditAccount}
             accountType="revenue"
             error={!!errors.creditAccount}
-            placeholder="Select revenue account"
+            placeholder="اختر حساب الإيراد"
           />
           {errors.creditAccount && <Text style={styles.errorText}>{errors.creditAccount}</Text>}
 
           <AccountPicker
-            label="Debit Account (Cash/Bank) *"
+            label="حساب مدين (نقد/بنك) *"
             value={debitAccount}
             onValueChange={setDebitAccount}
             accountType="asset"
             error={!!errors.debitAccount}
-            placeholder="Select cash or bank account"
+            placeholder="اختر حساب النقدية أو البنك"
           />
           {errors.debitAccount && <Text style={styles.errorText}>{errors.debitAccount}</Text>}
 
           <CostCenterPicker
-            label="Cost Center (Optional)"
+            label="مركز تكلفة (اختياري)"
             value={costCenter}
             onValueChange={setCostCenter}
-            placeholder="Select cost center"
+            placeholder="اختر مركز التكلفة"
           />
         </ModernCard>
 
@@ -347,23 +347,23 @@ export default function ReceiptVoucherScreen() {
         <ModernCard style={styles.section}>
           <View style={styles.sectionHeader}>
             <Building size={20} color={theme.colors.tertiary} />
-            <Text style={styles.sectionTitle}>Property & Tenant (Optional)</Text>
+            <Text style={styles.sectionTitle}>العقار والمستأجر (اختياري)</Text>
           </View>
 
           <PropertyPicker
-            label="Property (Optional)"
+            label="العقار (اختياري)"
             value={property}
             onValueChange={setProperty}
             error={!!errors.property}
-            placeholder="Select property for rent receipts"
+            placeholder="اختر العقار لسندات الإيجار"
           />
           {errors.property && <Text style={styles.errorText}>{errors.property}</Text>}
 
           {property && (
             <View style={styles.tenantSection}>
-              <Text style={styles.tenantLabel}>Tenant (Optional)</Text>
+              <Text style={styles.tenantLabel}>المستأجر (اختياري)</Text>
               {loadingTenants ? (
-                <Text style={styles.loadingText}>Loading tenants...</Text>
+                <Text style={styles.loadingText}>جاري تحميل المستأجرين...</Text>
               ) : propertyTenants.length > 0 ? (
                 <View style={styles.tenantsList}>
                   {propertyTenants.map((t) => (
@@ -379,7 +379,7 @@ export default function ReceiptVoucherScreen() {
                   ))}
                 </View>
               ) : (
-                <Text style={styles.noTenantsText}>No active tenants for this property</Text>
+                <Text style={styles.noTenantsText}>لا يوجد مستأجرون نشطون لهذا العقار</Text>
               )}
             </View>
           )}
@@ -389,17 +389,17 @@ export default function ReceiptVoucherScreen() {
         <ModernCard style={styles.section}>
           <View style={styles.sectionHeader}>
             <CreditCard size={20} color={theme.colors.primary} />
-            <Text style={styles.sectionTitle}>Payment Method</Text>
+            <Text style={styles.sectionTitle}>طريقة الدفع</Text>
           </View>
 
           <SegmentedButtons
             value={formData.payment_method}
             onValueChange={(value) => setFormData({ ...formData, payment_method: value as any })}
             buttons={[
-              { value: 'cash', label: 'Cash' },
-              { value: 'bank_transfer', label: 'Bank' },
-              { value: 'cheque', label: 'Cheque' },
-              { value: 'card', label: 'Card' },
+              { value: 'cash', label: 'نقداً' },
+              { value: 'bank_transfer', label: 'تحويل بنكي' },
+              { value: 'cheque', label: 'شيك' },
+              { value: 'card', label: 'بطاقة' },
             ]}
             style={styles.segmentedButtons}
           />
@@ -407,13 +407,13 @@ export default function ReceiptVoucherScreen() {
           {formData.payment_method === 'cheque' && (
             <>
               <TextInput
-                label="Cheque Number *"
+                label="رقم الشيك *"
                 value={formData.cheque_number}
                 onChangeText={(text) => setFormData({ ...formData, cheque_number: text })}
                 mode="outlined"
                 style={styles.input}
                 error={!!errors.cheque_number}
-                placeholder="Enter cheque number"
+                placeholder="أدخل رقم الشيك"
               />
               {errors.cheque_number && <Text style={styles.errorText}>{errors.cheque_number}</Text>}
             </>
@@ -422,13 +422,13 @@ export default function ReceiptVoucherScreen() {
           {formData.payment_method === 'bank_transfer' && (
             <>
               <TextInput
-                label="Bank Reference *"
+                label="رقم المرجع البنكي *"
                 value={formData.bank_reference}
                 onChangeText={(text) => setFormData({ ...formData, bank_reference: text })}
                 mode="outlined"
                 style={styles.input}
                 error={!!errors.bank_reference}
-                placeholder="Enter bank reference number"
+                placeholder="أدخل رقم المرجع البنكي"
               />
               {errors.bank_reference && <Text style={styles.errorText}>{errors.bank_reference}</Text>}
             </>
@@ -439,15 +439,15 @@ export default function ReceiptVoucherScreen() {
         <ModernCard style={styles.section}>
           <View style={styles.sectionHeader}>
             <Calendar size={20} color={theme.colors.secondary} />
-            <Text style={styles.sectionTitle}>Voucher Status</Text>
+            <Text style={styles.sectionTitle}>حالة السند</Text>
           </View>
 
           <SegmentedButtons
             value={formData.status}
             onValueChange={(value) => setFormData({ ...formData, status: value as any })}
             buttons={[
-              { value: 'draft', label: 'Save as Draft' },
-              { value: 'posted', label: 'Post Now' },
+              { value: 'draft', label: 'حفظ كمسودة' },
+              { value: 'posted', label: 'ترحيل الآن' },
             ]}
             style={styles.segmentedButtons}
           />
@@ -455,12 +455,12 @@ export default function ReceiptVoucherScreen() {
           <View style={styles.statusInfo}>
             {formData.status === 'draft' && (
               <Text style={styles.statusDescription}>
-                Draft vouchers can be edited and are not included in financial reports.
+                يمكن تعديل السندات المسودة ولا تُحتسب في التقارير المالية.
               </Text>
             )}
             {formData.status === 'posted' && (
               <Text style={styles.statusDescription}>
-                Posted vouchers are final and will be included in financial reports.
+                السندات المرحلة نهائية وتُحتسب في التقارير المالية.
               </Text>
             )}
           </View>
@@ -468,7 +468,7 @@ export default function ReceiptVoucherScreen() {
 
         {/* Submit Button */}
         <View style={styles.submitContainer}>
-          <Button
+          <Button 
             mode="contained"
             onPress={handleSubmit}
             loading={loading}
@@ -477,7 +477,7 @@ export default function ReceiptVoucherScreen() {
             contentStyle={styles.submitButtonContent}
             icon="receipt"
           >
-            Create Receipt Voucher
+            إنشاء سند قبض
           </Button>
         </View>
       </ScrollView>

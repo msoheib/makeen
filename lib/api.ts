@@ -739,7 +739,7 @@ export const maintenanceApi = {
       .from('maintenance_requests')
       .select(`
         *,
-        property:properties(title, address, property_code),
+        property:properties(title, address, property_code, property_type),
         tenant:profiles!maintenance_requests_tenant_id_fkey(first_name, last_name, phone),
         work_orders(*)
       `)
@@ -3194,6 +3194,203 @@ export const reportsApi = {
         error: null
       };
     });
+  },
+
+  // Water Meters Report Data
+  async getWaterMetersReport(filters?: {
+    dateRange?: {
+      startDate: Date;
+      endDate: Date;
+      label: string;
+    };
+    propertyTypes?: string[];
+    propertyIds?: string[];
+    cities?: string[];
+    neighborhoods?: string[];
+    paymentStatuses?: string[];
+    meterNumbers?: string[];
+    minConsumption?: number;
+    maxConsumption?: number;
+    minAmount?: number;
+    maxAmount?: number;
+    includeSubProperties?: boolean;
+  }): Promise<ApiResponse<{
+    totalWaterMeters: number;
+    totalConsumption: number;
+    totalAmount: number;
+    averageConsumption: number;
+    monthlyBreakdown: Array<{ month: string; consumption: number; amount: number; year: number }>;
+    propertyBreakdown: Array<{ propertyId: string; propertyTitle: string; consumption: number; amount: number; meterNumber: string; propertyType: string; city: string; neighborhood: string }>;
+    paymentStatusBreakdown: { pending: number; paid: number; overdue: number };
+    lastGenerated: string;
+    appliedFilters: any;
+  }>> {
+    return handleApiCall(async () => {
+      const startDateFilter = filters?.dateRange?.startDate?.toISOString() || new Date(new Date().getFullYear(), 0, 1).toISOString();
+      const endDateFilter = filters?.dateRange?.endDate?.toISOString() || new Date().toISOString();
+
+      // Build the base query for water utility payments
+      let waterQuery = supabase
+        .from('utility_payments')
+        .select(`
+          id,
+          meter_number,
+          previous_reading,
+          current_reading,
+          consumption,
+          rate_per_unit,
+          amount,
+          reading_date,
+          payment_status,
+          property_id,
+          property:properties(id, title, address, city, neighborhood, property_type)
+        `)
+        .eq('utility_type', 'water')
+        .gte('reading_date', startDateFilter)
+        .lte('reading_date', endDateFilter);
+
+      // Apply property type filters
+      if (filters?.propertyTypes && filters.propertyTypes.length > 0) {
+        waterQuery = waterQuery.in('property.property_type', filters.propertyTypes);
+      }
+
+      // Apply property ID filters
+      if (filters?.propertyIds && filters.propertyIds.length > 0) {
+        waterQuery = waterQuery.in('property_id', filters.propertyIds);
+      }
+
+      // Apply city filters
+      if (filters?.cities && filters.cities.length > 0) {
+        waterQuery = waterQuery.in('property.city', filters.cities);
+      }
+
+      // Apply neighborhood filters
+      if (filters?.neighborhoods && filters.neighborhoods.length > 0) {
+        waterQuery = waterQuery.in('property.neighborhood', filters.neighborhoods);
+      }
+
+      // Apply payment status filters
+      if (filters?.paymentStatuses && filters.paymentStatuses.length > 0) {
+        waterQuery = waterQuery.in('payment_status', filters.paymentStatuses);
+      }
+
+      // Apply meter number filters
+      if (filters?.meterNumbers && filters.meterNumbers.length > 0) {
+        waterQuery = waterQuery.in('meter_number', filters.meterNumbers);
+      }
+
+      // Apply consumption range filters
+      if (filters?.minConsumption !== undefined) {
+        waterQuery = waterQuery.gte('consumption', filters.minConsumption);
+      }
+      if (filters?.maxConsumption !== undefined) {
+        waterQuery = waterQuery.lte('consumption', filters.maxConsumption);
+      }
+
+      // Apply amount range filters
+      if (filters?.minAmount !== undefined) {
+        waterQuery = waterQuery.gte('amount', filters.minAmount);
+      }
+      if (filters?.maxAmount !== undefined) {
+        waterQuery = waterQuery.lte('amount', filters.maxAmount);
+      }
+
+      // Apply sub-properties filter
+      if (filters?.includeSubProperties === false) {
+        waterQuery = waterQuery.eq('property.is_sub_property', false);
+      }
+
+      const { data: waterPayments, error: waterError } = await waterQuery;
+
+      if (waterError) throw waterError;
+
+      const totalWaterMeters = waterPayments?.length || 0;
+      const totalConsumption = waterPayments?.length > 0 ? waterPayments.reduce((sum, w) => sum + (w.consumption || 0), 0) : 0;
+      const totalAmount = waterPayments?.length > 0 ? waterPayments.reduce((sum, w) => sum + (w.amount || 0), 0) : 0;
+      const averageConsumption = totalWaterMeters > 0 ? totalConsumption / totalWaterMeters : 0;
+
+      // Group by month
+      const monthlyData: { [key: string]: { consumption: number; amount: number } } = {};
+      const propertyData: { [key: string]: { title: string; consumption: number; amount: number; meterNumber: string } } = {};
+      const paymentStatusData = { pending: 0, paid: 0, overdue: 0 };
+
+      waterPayments?.forEach(payment => {
+        const date = new Date(payment.reading_date);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        
+        if (!monthlyData[monthKey]) {
+          monthlyData[monthKey] = { consumption: 0, amount: 0 };
+        }
+        monthlyData[monthKey].consumption += payment.consumption || 0;
+        monthlyData[monthKey].amount += payment.amount || 0;
+
+        // Group by property
+        if (payment.property_id && payment.property) {
+          if (!propertyData[payment.property_id]) {
+            propertyData[payment.property_id] = {
+              title: payment.property.title || 'Unknown Property',
+              consumption: 0,
+              amount: 0,
+              meterNumber: payment.meter_number || 'N/A',
+              propertyType: payment.property.property_type || 'Unknown',
+              city: payment.property.city || 'Unknown',
+              neighborhood: payment.property.neighborhood || 'Unknown'
+            };
+          }
+          propertyData[payment.property_id].consumption += payment.consumption || 0;
+          propertyData[payment.property_id].amount += payment.amount || 0;
+        }
+
+        // Count payment status
+        switch (payment.payment_status) {
+          case 'pending':
+            paymentStatusData.pending++;
+            break;
+          case 'paid':
+            paymentStatusData.paid++;
+            break;
+          case 'overdue':
+            paymentStatusData.overdue++;
+            break;
+        }
+      });
+
+      const monthlyBreakdown = Object.entries(monthlyData).map(([monthKey, data]) => {
+        const [year, month] = monthKey.split('-');
+        return {
+          month: new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('en-US', { month: 'long' }),
+          year: parseInt(year),
+          consumption: data.consumption,
+          amount: data.amount
+        };
+      });
+
+      const propertyBreakdown = Object.entries(propertyData).map(([propertyId, data]) => ({
+        propertyId,
+        propertyTitle: data.title,
+        consumption: data.consumption,
+        amount: data.amount,
+        meterNumber: data.meterNumber,
+        propertyType: data.propertyType,
+        city: data.city,
+        neighborhood: data.neighborhood
+      }));
+
+      return {
+        data: {
+          totalWaterMeters,
+          totalConsumption,
+          totalAmount,
+          averageConsumption: Math.round(averageConsumption * 100) / 100,
+          monthlyBreakdown,
+          propertyBreakdown,
+          paymentStatusBreakdown: paymentStatusData,
+          lastGenerated: new Date().toISOString(),
+          appliedFilters: filters || {}
+        },
+        error: null
+      };
+    });
   }
 };
 
@@ -5266,6 +5463,66 @@ export const utilityPaymentsApi = {
 
       return { data: stats, error: null };
     });
+  },
+
+  // Upload new water payment data
+  async uploadWaterPayment(paymentData: {
+    property_id: string;
+    meter_number?: string;
+    previous_reading: number;
+    current_reading: number;
+    rate_per_unit?: number;
+    reading_date: string;
+    due_date?: string;
+    payment_status?: 'pending' | 'paid' | 'overdue';
+    payment_date?: string;
+    payment_method?: string;
+    payment_reference?: string;
+    notes?: string;
+  }): Promise<ApiResponse<any>> {
+    return handleApiCall(async () => {
+      const userContext = await getCurrentUserContext();
+      
+      if (!userContext || !['admin', 'manager'].includes(userContext.role)) {
+        throw new Error('Only property managers and admins can upload water payments');
+      }
+
+      const consumption = paymentData.current_reading - paymentData.previous_reading;
+      const amount = consumption * (paymentData.rate_per_unit || 0.15); // Default SAR per m³
+
+      const insertData = {
+        ...paymentData,
+        utility_type: 'water',
+        consumption,
+        amount,
+        rate_per_unit: paymentData.rate_per_unit || 0.15, // Default SAR per m³
+        uploaded_by: userContext.userId
+      };
+
+      return supabase
+        .from('utility_payments')
+        .insert(insertData)
+        .select(`
+          *,
+          property:properties(id, title, address)
+        `)
+        .single();
+    });
+  },
+
+  // Get water payments by property
+  async getWaterByProperty(propertyId: string): Promise<ApiResponse<any[]>> {
+    return handleApiCall(async () => {
+      return supabase
+        .from('utility_payments')
+        .select(`
+          *,
+          property:properties(id, title, address)
+        `)
+        .eq('property_id', propertyId)
+        .eq('utility_type', 'water')
+        .order('reading_date', { ascending: false });
+    });
   }
 };
 
@@ -5353,5 +5610,317 @@ export const reportFiltersApi = {
         .neq('status', 'deleted')
         .order('title')
     );
+  }
+}; 
+
+// Sub-Property Management API
+export const subPropertiesApi = {
+  // Get all sub-properties for a parent property
+  async getByParentProperty(parentPropertyId: string): Promise<ApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .select(`
+          *,
+          parent_property:properties!properties_parent_property_id_fkey(
+            id,
+            title,
+            property_type,
+            address,
+            city
+          ),
+          contracts(
+            id,
+            contract_number,
+            payment_frequency,
+            contract_duration_years,
+            base_price,
+            rent_amount,
+            tenant:profiles!contracts_tenant_id_fkey(
+              id,
+              first_name,
+              last_name,
+              phone,
+              email
+            )
+          ),
+          property_meters(
+            id,
+            meter_number,
+            meter_type,
+            current_reading
+          )
+        `)
+        .eq('parent_property_id', parentPropertyId)
+        .eq('is_sub_property', true)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return { data: data || [], error: null };
+    } catch (error) {
+      return { data: [], error: error as Error };
+    }
+  },
+
+  // Create a new sub-property
+  async create(subPropertyData: {
+    title: string;
+    parent_property_id: string;
+    property_type: string;
+    area_sqm: number;
+    bedrooms?: number;
+    bathrooms?: number;
+    floor_number?: number;
+    unit_number?: string;
+    unit_label?: string;
+    base_price: number;
+    rent_amount: number;
+    payment_frequency: 'monthly' | 'quarterly' | 'semi_annual' | 'annual';
+    contract_duration_years: number;
+    contract_number: string;
+    contract_pdf_url: string;
+    tenant_contact_numbers: string[];
+    meter_numbers?: string[];
+    description?: string;
+    amenities?: string[];
+    is_furnished?: boolean;
+    parking_spaces?: number;
+    service_charge?: number;
+  }): Promise<ApiResponse<any>> {
+    try {
+      // First create the sub-property
+      const { data: property, error: propertyError } = await supabase
+        .from('properties')
+        .insert({
+          title: subPropertyData.title,
+          parent_property_id: subPropertyData.parent_property_id,
+          property_type: subPropertyData.property_type,
+          area_sqm: subPropertyData.area_sqm,
+          bedrooms: subPropertyData.bedrooms,
+          bathrooms: subPropertyData.bathrooms,
+          floor_number: subPropertyData.floor_number,
+          unit_number: subPropertyData.unit_number,
+          unit_label: subPropertyData.unit_label,
+          price: subPropertyData.base_price,
+          annual_rent: subPropertyData.rent_amount,
+          description: subPropertyData.description,
+          amenities: subPropertyData.amenities,
+          is_furnished: subPropertyData.is_furnished,
+          parking_spaces: subPropertyData.parking_spaces,
+          service_charge: subPropertyData.service_charge,
+          is_sub_property: true,
+          status: 'available'
+        })
+        .select()
+        .single();
+
+      if (propertyError) throw propertyError;
+
+      // Create the contract
+      const { data: contract, error: contractError } = await supabase
+        .from('contracts')
+        .insert({
+          property_id: property.id,
+          contract_number: subPropertyData.contract_number,
+          payment_frequency: subPropertyData.payment_frequency,
+          contract_duration_years: subPropertyData.contract_duration_years,
+          base_price: subPropertyData.base_price,
+          rent_amount: subPropertyData.rent_amount,
+          start_date: new Date().toISOString(),
+          end_date: new Date(Date.now() + (subPropertyData.contract_duration_years * 365 * 24 * 60 * 60 * 1000)).toISOString(),
+          security_deposit: subPropertyData.base_price * 0.1, // 10% of base price
+          status: 'active',
+          contract_type: 'rental'
+        })
+        .select()
+        .single();
+
+      if (contractError) throw contractError;
+
+      // Create contract documents
+      if (subPropertyData.contract_pdf_url) {
+        await supabase
+          .from('documents')
+          .insert({
+            document_type: 'contract',
+            title: `Contract - ${subPropertyData.contract_number}`,
+            file_path: subPropertyData.contract_pdf_url,
+            related_entity_type: 'contract',
+            related_entity_id: contract.id,
+            tags: ['contract', 'sub-property', subPropertyData.contract_number]
+          });
+      }
+
+      // Create meter records if provided
+      if (subPropertyData.meter_numbers && subPropertyData.meter_numbers.length > 0) {
+        const meterRecords = subPropertyData.meter_numbers.map(meterNumber => ({
+          property_id: property.id,
+          meter_number: meterNumber,
+          meter_type: 'utility',
+          current_reading: 0
+        }));
+
+        await supabase
+          .from('property_meters')
+          .insert(meterRecords);
+      }
+
+      // Create tenant contact records
+      if (subPropertyData.tenant_contact_numbers && subPropertyData.tenant_contact_numbers.length > 0) {
+        const contactRecords = subPropertyData.tenant_contact_numbers.map((phone, index) => ({
+          property_id: property.id,
+          contact_type: 'tenant',
+          phone_number: phone,
+          is_primary: index === 0,
+          label: index === 0 ? 'Primary Contact' : `Additional Contact ${index + 1}`
+        }));
+
+        await supabase
+          .from('property_contacts')
+          .insert(contactRecords);
+      }
+
+      return { data: { property, contract }, error: null };
+    } catch (error) {
+      return { data: null, error: error as Error };
+    }
+  },
+
+  // Update a sub-property
+  async update(id: string, updateData: Partial<{
+    title: string;
+    area_sqm: number;
+    bedrooms: number;
+    bathrooms: number;
+    floor_number: number;
+    unit_number: string;
+    unit_label: string;
+    base_price: number;
+    rent_amount: number;
+    description: string;
+    amenities: string[];
+    is_furnished: boolean;
+    parking_spaces: number;
+    service_charge: number;
+    status: string;
+  }>): Promise<ApiResponse<any>> {
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .update({
+          ...updateData,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .eq('is_sub_property', true)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      return { data: null, error: error as Error };
+    }
+  },
+
+  // Delete a sub-property
+  async delete(id: string): Promise<ApiResponse<boolean>> {
+    try {
+      // Check if sub-property has active contracts
+      const { data: activeContracts, error: contractCheckError } = await supabase
+        .from('contracts')
+        .select('id')
+        .eq('property_id', id)
+        .eq('status', 'active');
+
+      if (contractCheckError) throw contractCheckError;
+
+      if (activeContracts && activeContracts.length > 0) {
+        throw new Error('Cannot delete sub-property with active contracts');
+      }
+
+      // Delete related records first
+      await supabase.from('property_meters').delete().eq('property_id', id);
+      await supabase.from('property_contacts').delete().eq('property_id', id);
+      await supabase.from('documents').delete().eq('related_entity_id', id);
+      
+      // Delete the sub-property
+      const { error } = await supabase
+        .from('properties')
+        .delete()
+        .eq('id', id)
+        .eq('is_sub_property', true);
+
+      if (error) throw error;
+      return { data: true, error: null };
+    } catch (error) {
+      return { data: false, error: error as Error };
+    }
+  },
+
+  // Get sub-property details with all related information
+  async getById(id: string): Promise<ApiResponse<any>> {
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .select(`
+          *,
+          parent_property:properties!properties_parent_property_id_fkey(
+            id,
+            title,
+            property_type,
+            address,
+            city,
+            country
+          ),
+          contracts(
+            id,
+            contract_number,
+            payment_frequency,
+            contract_duration_years,
+            base_price,
+            rent_amount,
+            start_date,
+            end_date,
+            status,
+            tenant:profiles!contracts_tenant_id_fkey(
+              id,
+              first_name,
+              last_name,
+              phone,
+              email
+            )
+          ),
+          property_meters(
+            id,
+            meter_number,
+            meter_type,
+            current_reading,
+            last_reading_date
+          ),
+          property_contacts(
+            id,
+            contact_type,
+            phone_number,
+            is_primary,
+            label
+          ),
+          documents(
+            id,
+            document_type,
+            title,
+            file_path,
+            tags
+          )
+        `)
+        .eq('id', id)
+        .eq('is_sub_property', true)
+        .single();
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      return { data: null, error: error as Error };
+    }
   }
 }; 

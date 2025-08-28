@@ -177,6 +177,11 @@ export function buildRoleBasedFilter(userContext: UserContext | null, tableName:
     return null;
   }
 
+  // Accountants have access to financial data and reports only
+  if (userContext.role === 'accountant') {
+    return buildAccountantFilter(userContext, tableName);
+  }
+
   switch (tableName) {
     case 'properties':
       return buildPropertiesFilter(userContext);
@@ -407,4 +412,56 @@ export function applySecurityFilter(query: any, userContext: UserContext | null,
 }
 
 // Export security configuration for testing
-export { SECURITY_CONFIG }; 
+export { SECURITY_CONFIG };
+
+/**
+ * Accountant filtering logic - accountants can only access financial data and reports
+ */
+function buildAccountantFilter(userContext: UserContext, tableName: string): any {
+  switch (tableName) {
+    case 'vouchers':
+      // Accountants can see all vouchers for financial reporting
+      return null; // No filtering - access to all financial data
+    
+    case 'invoices':
+      // Accountants can see all invoices for financial reporting
+      return null; // No filtering - access to all financial data
+    
+    case 'accounts':
+      // Accountants can see all accounts for chart of accounts
+      return null; // No filtering - access to all accounts
+    
+    case 'cost_centers':
+      // Accountants can see all cost centers
+      return null; // No filtering - access to all cost centers
+    
+    case 'fixed_assets':
+      // Accountants can see all fixed assets for depreciation reports
+      return null; // No filtering - access to all assets
+    
+    case 'utility_payments':
+      // Accountants can see all utility payments for billing reports
+      return null; // No filtering - access to all utility data
+    
+    case 'property_metrics':
+      // Accountants can see all property metrics for financial analysis
+      return null; // No filtering - access to all metrics
+    
+    case 'budgets':
+      // Accountants can see all budgets for financial planning
+      return null; // No filtering - access to all budgets
+    
+    case 'property_transactions':
+      // Accountants can see all property transactions for financial reporting
+      return null; // No filtering - access to all transactions
+    
+    case 'rental_payment_schedules':
+      // Accountants can see all payment schedules for cash flow analysis
+      return null; // No filtering - access to all schedules
+    
+    default:
+      // Accountants cannot access other data (properties, profiles, maintenance, etc.)
+      console.warn(`[Security] Accountant access denied to table: ${tableName}`);
+      return { id: { in: [] } }; // Return empty result set
+  }
+} 

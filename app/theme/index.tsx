@@ -2,8 +2,9 @@ import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, List, IconButton, RadioButton } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { theme, spacing } from '@/lib/theme';
+import { spacing } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { useTranslation } from '@/lib/useTranslation';
 import { ArrowLeft, Sun, Moon, Monitor, Check } from 'lucide-react-native';
 import ModernCard from '@/components/ModernCard';
@@ -12,6 +13,8 @@ export default function ThemeSelectionScreen() {
   const router = useRouter();
   const { settings, updateSettings } = useAppStore();
   const { t } = useTranslation('settings');
+  const { theme, setTheme } = useAppTheme();
+  const styles = React.useMemo(() => createStyles(theme), [theme]);
 
   const themeOptions = [
     {
@@ -38,7 +41,7 @@ export default function ThemeSelectionScreen() {
   ];
 
   const handleThemeSelect = (themeValue: 'light' | 'dark' | 'system') => {
-    updateSettings({ theme: themeValue });
+    setTheme(themeValue);
   };
 
   const getThemeIcon = (themeValue: string) => {
@@ -190,208 +193,209 @@ export default function ThemeSelectionScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.m,
-    paddingTop: spacing.l,
-    paddingBottom: spacing.m,
-    backgroundColor: theme.colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.outline,
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
-  },
-  backButton: {
-    margin: 0,
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 20,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    textAlign: 'center',
-    marginRight: 48,
-  },
-  headerSpacer: {
-    width: 48,
-  },
-  content: {
-    flex: 1,
-    padding: spacing.m,
-  },
-  infoCard: {
-    marginBottom: spacing.m,
-  },
-  infoHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.s,
-  },
-  infoTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginLeft: spacing.s,
-  },
-  infoDescription: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    lineHeight: 20,
-  },
-  themeCard: {
-    marginBottom: spacing.m,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.m,
-  },
-  listItem: {
-    paddingHorizontal: 0,
-    paddingVertical: spacing.m,
-  },
-  listItemBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.outline,
-  },
-  listItemTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: theme.colors.onSurface,
-  },
-  listItemDescription: {
-    fontSize: 13,
-    color: theme.colors.onSurfaceVariant,
-    marginTop: 2,
-  },
-  themeTitle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  themeName: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: theme.colors.onSurface,
-  },
-  themeIconContainer: {
-    width: 60,
-    height: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.s,
-    position: 'relative',
-  },
-  themePreview: {
-    width: 40,
-    height: 32,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: theme.colors.outline,
-    overflow: 'hidden',
-  },
-  gradientPreview: {
-    flex: 1,
-    flexDirection: 'row',
-  },
-  halfPreview: {
-    flex: 1,
-  },
-  themeIcon: {
-    position: 'absolute',
-    bottom: -2,
-    right: 2,
-    backgroundColor: theme.colors.surface,
-    borderRadius: 12,
-    padding: 2,
-  },
-  currentCard: {
-    marginBottom: spacing.m,
-    backgroundColor: `${theme.colors.primary}08`,
-    borderColor: `${theme.colors.primary}20`,
-    borderWidth: 1,
-  },
-  currentTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.primary,
-    marginBottom: spacing.s,
-  },
-  currentSelection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  currentIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: `${theme.colors.primary}15`,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.m,
-  },
-  currentDetails: {
-    flex: 1,
-  },
-  currentName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-  },
-  currentDescription: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    marginTop: 2,
-  },
-  benefitsCard: {
-    marginBottom: spacing.m,
-  },
-  benefitsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.m,
-  },
-  benefitsList: {
-    gap: spacing.m,
-  },
-  benefitItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.s,
-  },
-  benefitText: {
-    flex: 1,
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    lineHeight: 20,
-  },
-  benefitLabel: {
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-  },
-  implementationCard: {
-    marginBottom: spacing.xl,
-    backgroundColor: `${theme.colors.warning}08`,
-    borderColor: `${theme.colors.warning}20`,
-    borderWidth: 1,
-  },
-  implementationTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.warning,
-    marginBottom: spacing.s,
-  },
-  implementationDescription: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    lineHeight: 20,
-  },
-}); 
+const createStyles = (theme: typeof import('@/lib/theme').lightTheme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: spacing.m,
+      paddingTop: spacing.l,
+      paddingBottom: spacing.m,
+      backgroundColor: theme.colors.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.outline,
+      borderBottomLeftRadius: 16,
+      borderBottomRightRadius: 16,
+    },
+    backButton: {
+      margin: 0,
+    },
+    headerTitle: {
+      flex: 1,
+      fontSize: 20,
+      fontWeight: '600',
+      color: theme.colors.onSurface,
+      textAlign: 'center',
+      marginRight: 48,
+    },
+    headerSpacer: {
+      width: 48,
+    },
+    content: {
+      flex: 1,
+      padding: spacing.m,
+    },
+    infoCard: {
+      marginBottom: spacing.m,
+    },
+    infoHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: spacing.s,
+    },
+    infoTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: theme.colors.onSurface,
+      marginLeft: spacing.s,
+    },
+    infoDescription: {
+      fontSize: 14,
+      color: theme.colors.onSurfaceVariant,
+      lineHeight: 20,
+    },
+    themeCard: {
+      marginBottom: spacing.m,
+    },
+    sectionTitle: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: theme.colors.onSurface,
+      marginBottom: spacing.m,
+    },
+    listItem: {
+      paddingHorizontal: 0,
+      paddingVertical: spacing.m,
+    },
+    listItemBorder: {
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.outline,
+    },
+    listItemTitle: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: theme.colors.onSurface,
+    },
+    listItemDescription: {
+      fontSize: 13,
+      color: theme.colors.onSurfaceVariant,
+      marginTop: 2,
+    },
+    themeTitle: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    themeName: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: theme.colors.onSurface,
+    },
+    themeIconContainer: {
+      width: 60,
+      height: 48,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: spacing.s,
+      position: 'relative',
+    },
+    themePreview: {
+      width: 40,
+      height: 32,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: theme.colors.outline,
+      overflow: 'hidden',
+    },
+    gradientPreview: {
+      flex: 1,
+      flexDirection: 'row',
+    },
+    halfPreview: {
+      flex: 1,
+    },
+    themeIcon: {
+      position: 'absolute',
+      bottom: -2,
+      right: 2,
+      backgroundColor: theme.colors.surface,
+      borderRadius: 12,
+      padding: 2,
+    },
+    currentCard: {
+      marginBottom: spacing.m,
+      backgroundColor: `${theme.colors.primary}08`,
+      borderColor: `${theme.colors.primary}20`,
+      borderWidth: 1,
+    },
+    currentTitle: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: theme.colors.primary,
+      marginBottom: spacing.s,
+    },
+    currentSelection: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    currentIconContainer: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: `${theme.colors.primary}15`,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: spacing.m,
+    },
+    currentDetails: {
+      flex: 1,
+    },
+    currentName: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: theme.colors.onSurface,
+    },
+    currentDescription: {
+      fontSize: 14,
+      color: theme.colors.onSurfaceVariant,
+      marginTop: 2,
+    },
+    benefitsCard: {
+      marginBottom: spacing.m,
+    },
+    benefitsTitle: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: theme.colors.onSurface,
+      marginBottom: spacing.m,
+    },
+    benefitsList: {
+      gap: spacing.m,
+    },
+    benefitItem: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: spacing.s,
+    },
+    benefitText: {
+      flex: 1,
+      fontSize: 14,
+      color: theme.colors.onSurfaceVariant,
+      lineHeight: 20,
+    },
+    benefitLabel: {
+      fontWeight: '600',
+      color: theme.colors.onSurface,
+    },
+    implementationCard: {
+      marginBottom: spacing.xl,
+      backgroundColor: `${theme.colors.warning}08`,
+      borderColor: `${theme.colors.warning}20`,
+      borderWidth: 1,
+    },
+    implementationTitle: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: theme.colors.warning,
+      marginBottom: spacing.s,
+    },
+    implementationDescription: {
+      fontSize: 14,
+      color: theme.colors.onSurfaceVariant,
+      lineHeight: 20,
+    },
+  });

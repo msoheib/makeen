@@ -79,6 +79,8 @@
   "noWorkOrders": "No work orders found",
   "filterByStatus": "Filter by Status",
   "filterByPriority": "Filter by Priority",
+  "filterByPropertyType": "Filter by Property Type",
+  "filterByDate": "Filter by Date",
   "searchPlaceholder": "Search maintenance requests...",
   "createRequest": "Create Request",
   "saveRequest": "Save Request",

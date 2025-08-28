@@ -1,5 +1,5 @@
 // User types
-export type UserRole = 'admin' | 'manager' | 'owner' | 'tenant' | 'buyer' | 'staff';
+export type UserRole = 'admin' | 'manager' | 'owner' | 'tenant' | 'buyer' | 'staff' | 'accountant';
 export type UserStatus = 'pending' | 'approved' | 'rejected' | 'inactive';
 
 export interface User {

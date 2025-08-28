@@ -170,6 +170,14 @@ interface AppState {
   
   // Reset function
   reset: () => void;
+  
+  // Notification state
+  unreadNotificationCount: number;
+  lastNotificationUpdate: number;
+  
+  // Notification actions
+  setUnreadNotificationCount: (count: number) => void;
+  triggerHeaderBadgeRefresh: () => void;
 }
 
 // Create the store with persistence
@@ -392,6 +400,14 @@ export const useAppStore = create<AppState>()(
           userProfile: null,
           firstLaunch: true,
         }),
+      
+      // Notification state
+      unreadNotificationCount: 0,
+      lastNotificationUpdate: Date.now(),
+      
+      // Notification actions
+      setUnreadNotificationCount: (count) => set({ unreadNotificationCount: count }),
+      triggerHeaderBadgeRefresh: () => set({ lastNotificationUpdate: Date.now() }),
     }),
     {
       name: 'real-estate-app-storage',

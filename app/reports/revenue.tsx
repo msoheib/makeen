@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Dimensions } from 'react-native';
+import { View, StyleSheet, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
 import { Text, Card, useTheme, ActivityIndicator, Button } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -34,6 +34,33 @@ export default function RevenueReportScreen() {
     startDate: new Date(new Date().getFullYear(), 0, 1), // Start of year
     endDate: new Date(), // Today
   });
+
+  const [period, setPeriod] = useState<'monthly' | 'semiAnnual' | 'annual'>('annual');
+
+  const computeRangeForPeriod = (p: 'monthly' | 'semiAnnual' | 'annual') => {
+    const now = new Date();
+    const year = now.getFullYear();
+    if (p === 'monthly') {
+      const start = new Date(year, now.getMonth(), 1);
+      const end = new Date(year, now.getMonth() + 1, 0);
+      return { startDate: start, endDate: end };
+    }
+    if (p === 'semiAnnual') {
+      const month = now.getMonth();
+      const halfStartMonth = month < 6 ? 0 : 6; // H1 or H2
+      const halfEndMonth = month < 6 ? 5 : 11;  // inclusive end month
+      const start = new Date(year, halfStartMonth, 1);
+      const end = new Date(year, halfEndMonth + 1, 0);
+      return { startDate: start, endDate: end };
+    }
+    // annual
+    return { startDate: new Date(year, 0, 1), endDate: new Date(year, 11, 31) };
+  };
+
+  useEffect(() => {
+    const range = computeRangeForPeriod(period);
+    setDateRange(range);
+  }, [period]);
 
   const { 
     data: revenueData, 
@@ -127,6 +154,33 @@ export default function RevenueReportScreen() {
       />
       
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* Period Selector */}
+        <View style={styles.periodSelectorContainer}>
+          {[
+            { id: 'monthly', label: 'Monthly' },
+            { id: 'semiAnnual', label: 'Semi-Annual' },
+            { id: 'annual', label: 'Annual' },
+          ].map((opt) => (
+            <TouchableOpacity
+              key={opt.id}
+              style={[
+                styles.periodChip,
+                { borderColor: theme.colors.outline },
+                period === (opt.id as any) && { backgroundColor: theme.colors.primary },
+              ]}
+              onPress={() => setPeriod(opt.id as any)}
+            >
+              <Text
+                style={{
+                  color: period === (opt.id as any) ? theme.colors.onPrimary : theme.colors.onSurface,
+                  fontWeight: '600',
+                }}
+              >
+                {opt.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
         {/* Summary Card */}
         <Card style={[styles.summaryCard, { backgroundColor: theme.colors.surface }]}>
           <Card.Content>
@@ -227,8 +281,8 @@ export default function RevenueReportScreen() {
           <Button
             mode="outlined"
             onPress={() => {
-              // Future: Implement date range picker
-              console.log('Date range picker coming soon');
+              // set to monthly as a quick toggle for now (placeholder for full picker)
+              setPeriod('monthly');
             }}
             style={styles.actionButton}
             icon="calendar"

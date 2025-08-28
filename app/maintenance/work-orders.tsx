@@ -17,6 +17,7 @@ import { useTheme } from '../../lib/theme';
 import { useApi } from '../../hooks/useApi';
 import { maintenanceApi, profilesApi } from '../../lib/api';
 import ModernHeader from '../../components/ModernHeader';
+import { formatDisplayNumber, formatCurrency, toArabicNumerals } from '@/lib/formatters';
 
 const WORK_ORDER_STATUSES = [
   { value: 'all', label: 'All', color: '#6750A4' },
@@ -88,7 +89,7 @@ const WorkOrderCard: React.FC<{
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'urgent': return '#D32F2F';
-      case 'high': return '#F57C00';
+      case 'high': return '#FF9800';
       case 'medium': return '#1976D2';
       case 'low': return '#388E3C';
       default: return theme.colors.primary;
@@ -197,8 +198,8 @@ const WorkOrderCard: React.FC<{
           <Text style={[styles.progressLabel, { color: theme.colors.onSurfaceVariant }]}>
             Progress
           </Text>
-          <Text style={[styles.progressPercentage, { color: theme.colors.primary }]}>
-            {getProgressPercentage()}%
+          <Text style={[styles.progressPercentage, { color: theme.colors.primary }]}> 
+            {toArabicNumerals(`${getProgressPercentage()}%`)}
           </Text>
         </View>
         <View style={[styles.progressBar, { backgroundColor: theme.colors.outline }]}>
@@ -220,8 +221,8 @@ const WorkOrderCard: React.FC<{
           <Text style={[styles.costLabel, { color: theme.colors.onSurfaceVariant }]}>
             Estimated
           </Text>
-          <Text style={[styles.costValue, { color: theme.colors.onSurface }]}>
-            {workOrder.estimated_cost.toLocaleString()} SAR
+          <Text style={[styles.costValue, { color: theme.colors.onSurface }]}> 
+            {toArabicNumerals(new Intl.NumberFormat('ar-SA', { maximumFractionDigits: 0 }).format(workOrder.estimated_cost))} ر.س
           </Text>
         </View>
         {workOrder.actual_cost && (
@@ -229,8 +230,8 @@ const WorkOrderCard: React.FC<{
             <Text style={[styles.costLabel, { color: theme.colors.onSurfaceVariant }]}>
               Actual
             </Text>
-            <Text style={[styles.costValue, { color: theme.colors.onSurface }]}>
-              {workOrder.actual_cost.toLocaleString()} SAR
+            <Text style={[styles.costValue, { color: theme.colors.onSurface }]}> 
+              {toArabicNumerals(new Intl.NumberFormat('ar-SA', { maximumFractionDigits: 0 }).format(workOrder.actual_cost))} ر.س
             </Text>
           </View>
         )}

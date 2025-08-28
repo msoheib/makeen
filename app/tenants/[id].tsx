@@ -17,6 +17,7 @@ import {
   Calendar
 } from 'lucide-react-native';
 import { useTranslation } from '@/lib/useTranslation';
+import { toArabicNumerals } from '@/lib/formatters';
 
 export default function TenantDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -77,7 +78,7 @@ export default function TenantDetailsScreen() {
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    return date.toLocaleDateString();
+    return toArabicNumerals(date.toLocaleDateString('ar-SA'));
   };
 
   const getStatusColor = (status: string) => {
@@ -194,7 +195,7 @@ export default function TenantDetailsScreen() {
             />
             <List.Item
               title={t('details.monthlyRent')}
-              description={`${activeContract.rent_amount?.toLocaleString()} SAR`}
+              description={`${toArabicNumerals(new Intl.NumberFormat('ar-SA', { maximumFractionDigits: 0 }).format(activeContract.rent_amount || 0))} ر.س`}
               left={(props) => <FileText {...props} size={20} color={theme.colors.success} />}
             />
             <List.Item

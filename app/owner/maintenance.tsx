@@ -94,8 +94,8 @@ export default function MaintenanceManagement({}: MaintenanceManagementProps) {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'urgent': return theme.colors.error;
-      case 'high': return '#FF6B35';
-      case 'medium': return theme.colors.warning;
+      case 'high': return theme.colors.warning;
+      case 'medium': return theme.colors.primary;
       case 'low': return theme.colors.onSurfaceVariant;
       default: return theme.colors.onSurfaceVariant;
     }

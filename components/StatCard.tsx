@@ -2,6 +2,7 @@ import React from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { Text, Avatar } from 'react-native-paper';
 import { useTheme } from '@/hooks/useTheme';
+import { formatDisplayNumber, toArabicNumerals } from '@/lib/formatters';
 
 type StatCardProps = {
   // Old interface
@@ -32,6 +33,14 @@ const StatCard: React.FC<StatCardProps> = ({
   const displayTitle = title || label;
   const displayIcon = iconElement || (icon ? { icon } : null);
 
+  // Localized/RTL-aware value formatting (Arabic numerals when language is Arabic)
+  const formattedValue = React.useMemo(() => {
+    if (loading) return '';
+    if (typeof value === 'number') return formatDisplayNumber(value);
+    if (typeof value === 'string') return toArabicNumerals(value);
+    return String(value);
+  }, [loading, value]);
+
   return (
     <View style={styles.statCard}>
       {displayIcon && (
@@ -42,8 +51,8 @@ const StatCard: React.FC<StatCardProps> = ({
             <Avatar.Icon 
               icon={icon!} 
               size={48} 
-              style={{ backgroundColor: `${cardColor}20`}}
-              color={cardColor}
+              style={{ backgroundColor: `${(cardColor || theme.colors.onSurfaceVariant)}20`}}
+              color={cardColor || theme.colors.onSurfaceVariant}
             />
           )}
         </View>
@@ -52,7 +61,7 @@ const StatCard: React.FC<StatCardProps> = ({
         {loading ? (
           <ActivityIndicator size="small" color={cardColor} />
         ) : (
-          <Text style={[styles.statValue, { color: theme.colors.onBackground }]}>{value}</Text>
+          <Text style={[styles.statValue, { color: theme.colors.onBackground }]}>{formattedValue}</Text>
         )}
         <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>{displayTitle}</Text>
       </View>

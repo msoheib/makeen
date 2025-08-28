@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, StyleSheet, Platform, StatusBar, TouchableOpacity } from 'react-native';
 import { Text, IconButton, Badge } from 'react-native-paper';
 import { lightTheme, darkTheme, spacing } from '@/lib/theme';
 import { Bell, Search, ArrowRight, ArrowLeft } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useRouter } from 'expo-router';
+import { usePathname, useRouter, useFocusEffect } from 'expo-router';
 import { useAppStore } from '@/lib/store';
 import { useApi } from '@/hooks/useApi';
 import { notificationsApi } from '@/lib/api';
@@ -37,8 +37,9 @@ export default function ModernHeader({
 }: ModernHeaderProps) {
   const navigation = useNavigation();
   const router = useRouter();
-  const { isDarkMode } = useAppStore();
+  const { isDarkMode, lastNotificationUpdate } = useAppStore();
   const insets = useSafeAreaInsets();
+  const pathname = usePathname();
   
   const theme = isDarkMode ? darkTheme : lightTheme;
   const isDark = variant === 'dark';
@@ -46,13 +47,62 @@ export default function ModernHeader({
   const iconColor = isDark ? '#FFFFFF' : theme.colors.onPrimary;
   const backgroundColor = isDark ? '#3A1D4E' : theme.colors.primary;
 
-  // Get unread notifications count
-  const { data: unreadCount } = useApi(() => notificationsApi.getUnreadCount(), []);
+  // Get unread notifications count with refetch capability
+  const { data: unreadCount, refetch: refetchUnreadCount } = useApi(() => notificationsApi.getUnreadCount(), []);
+
+  // Refresh unread count when screen regains focus
+  useFocusEffect(
+    React.useCallback(() => {
+      refetchUnreadCount();
+    }, [refetchUnreadCount])
+  );
+
+  // Refresh unread count when store indicates notifications were updated
+  useEffect(() => {
+    if (lastNotificationUpdate > 0) {
+      refetchUnreadCount();
+    }
+  }, [lastNotificationUpdate, refetchUnreadCount]);
+
+  // Periodic refresh as fallback (every 30 seconds)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetchUnreadCount();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [refetchUnreadCount]);
 
   // Calculate increased safe area padding
   // Base: safe area top inset + Additional padding for better spacing  
   const safeAreaPadding = Math.max(insets.top + 16, 24); // Minimum 24px, safe area + 16px extra for generous spacing
 
+
+  const resolveSectionFallback = (path: string | null | undefined): string => {
+    if (!path) return '/(tabs)/';
+    // Normalize
+    const p = path.toLowerCase();
+
+    // Common section fallbacks (ensure users go back to the correct tab/section root)
+    const mappings: { test: (s: string) => boolean; dest: string }[] = [
+      { test: s => s.startsWith('/tenants') || s.includes('/tenants/'), dest: '/(tabs)/tenants' },
+      { test: s => s.startsWith('/people') || s.includes('/people/'), dest: '/(tabs)/people' },
+      { test: s => s.startsWith('/properties') || s.includes('/properties/') || s.startsWith('/buildings') || s.includes('/buildings/'), dest: '/(tabs)/properties' },
+      { test: s => s.startsWith('/maintenance') || s.includes('/maintenance/'), dest: '/(tabs)/maintenance' },
+      { test: s => s.startsWith('/finance') || s.includes('/finance/'), dest: '/(tabs)/finance' },
+      { test: s => s.startsWith('/documents') || s.includes('/documents/'), dest: '/(tabs)/documents' },
+      { test: s => s.startsWith('/reports') || s.includes('/reports/'), dest: '/(tabs)/reports' },
+      { test: s => s.startsWith('/notifications') || s.includes('/notifications/'), dest: '/notifications' },
+      { test: s => s.startsWith('/contracts') || s.includes('/contracts/'), dest: '/contracts' },
+      { test: s => s.startsWith('/owner') || s.includes('/owner/'), dest: '/owner-dashboard' },
+      { test: s => s.startsWith('/manager') || s.includes('/manager/'), dest: '/manager/user-management' },
+      { test: s => s.startsWith('/profile') || s.includes('/profile/'), dest: '/profile' },
+      { test: s => s.startsWith('/tenant') || s.includes('/tenant/'), dest: '/tenant-dashboard' },
+    ];
+
+    const found = mappings.find(m => m.test(p));
+    return found ? found.dest : '/(tabs)/';
+  };
 
   const handleBackPress = () => {
     if (onBackPress) {
@@ -60,7 +110,8 @@ export default function ModernHeader({
     } else if (router.canGoBack()) {
       router.back();
     } else {
-      router.push('/(tabs)/');
+      const dest = resolveSectionFallback(pathname);
+      router.push(dest);
     }
   };
 
@@ -69,6 +120,8 @@ export default function ModernHeader({
       onNotificationPress();
     } else {
       router.push('/notifications');
+      // Refresh unread count immediately after navigation
+      setTimeout(() => refetchUnreadCount(), 100);
     }
   };
 
@@ -139,7 +192,12 @@ export default function ModernHeader({
                 />
                 {unreadCount && unreadCount > 0 && (
                   <Badge
-                    style={[styles.notificationBadge, { backgroundColor: theme.colors.error }]}
+                    style={[
+                      styles.notificationBadge,
+                      { backgroundColor: theme.colors.error },
+                      // Flip badge side for RTL
+                      isRTL() ? { left: 8, right: undefined } : { right: 8, left: undefined },
+                    ]}
                     size={18}
                   >
                     {unreadCount > 99 ? '99+' : String(unreadCount || 0)}

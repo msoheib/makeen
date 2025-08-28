@@ -173,7 +173,7 @@ export default function JournalEntryScreen() {
 
   const handleSubmit = async () => {
     if (!validateForm()) {
-      Alert.alert('Validation Error', 'Please fix the errors before submitting.');
+      Alert.alert('خطأ في التحقق', 'يرجى تصحيح الأخطاء قبل الإرسال.');
       return;
     }
 
@@ -196,11 +196,11 @@ export default function JournalEntryScreen() {
 
       if (response.success) {
         Alert.alert(
-          'Success',
-          `Journal entry ${formData.voucher_number} ${formData.status === 'posted' ? 'created and posted' : 'saved as draft'} successfully!\n\nTotal Amount: ${currency} ${totalDebits.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+          'تم بنجاح',
+          `تم ${formData.status === 'posted' ? 'إنشاء وترحيل' : 'حفظ'} قيد اليومية ${formData.voucher_number} بنجاح!\n\nإجمالي المبلغ: ${currency} ${totalDebits.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
           [
             {
-              text: 'OK',
+              text: 'حسناً',
               onPress: () => router.back(),
             },
           ]
@@ -210,7 +210,7 @@ export default function JournalEntryScreen() {
       }
     } catch (error) {
       console.error('Error creating journal entry:', error);
-      Alert.alert('Error', 'Failed to create journal entry. Please try again.');
+      Alert.alert('خطأ', 'فشل إنشاء قيد اليومية. يرجى المحاولة مرة أخرى.');
     } finally {
       setLoading(false);
     }
@@ -231,17 +231,17 @@ export default function JournalEntryScreen() {
   return (
     <View style={styles.container}>
       <ModernHeader 
-        title="Journal Entry"
-        subtitle="Create manual accounting entries"
+        title="قيد يومية"
+        subtitle="إنشاء قيود محاسبية يدوياً"
         onBack={() => router.back()}
       />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Journal Entry Information */}
-        <ModernCard title="Journal Entry Information" icon={FileText}>
+        <ModernCard title="معلومات القيد" icon={FileText}>
           <View style={styles.row}>
             <View style={styles.halfWidth}>
-              <Text style={styles.label}>Voucher Number</Text>
+              <Text style={styles.label}>رقم القيد</Text>
               <TextInput
                 mode="outlined"
                 value={formData.voucher_number}
@@ -251,7 +251,7 @@ export default function JournalEntryScreen() {
               />
             </View>
             <View style={styles.halfWidth}>
-              <Text style={styles.label}>Date</Text>
+              <Text style={styles.label}>التاريخ</Text>
               <TextInput
                 mode="outlined"
                 value={formData.date}
@@ -262,10 +262,10 @@ export default function JournalEntryScreen() {
             </View>
           </View>
 
-          <Text style={styles.label}>Journal Entry Description *</Text>
+          <Text style={styles.label}>وصف القيد *</Text>
           <TextInput
             mode="outlined"
-            placeholder="Enter journal entry description (e.g., Month-end depreciation, Accrual adjustment)"
+            placeholder="أدخل وصف القيد (مثال: إهلاك نهاية الشهر، قيد استحقاق)"
             value={formData.description}
             onChangeText={(text) => setFormData(prev => ({ ...prev, description: text }))}
             multiline
@@ -276,8 +276,8 @@ export default function JournalEntryScreen() {
           {errors.description && <Text style={styles.errorText}>{errors.description}</Text>}
 
           <PropertyPicker
-            label="Property (Optional)"
-            placeholder="Select property for property-related entries"
+            label="العقار (اختياري)"
+            placeholder="اختر العقار للقيود المرتبطة بالعقار"
             value={selectedProperty}
             onValueChange={setSelectedProperty}
           />
@@ -291,9 +291,9 @@ export default function JournalEntryScreen() {
         />
 
         {/* Debit Entries */}
-        <ModernCard title="Debit Entries" icon={DollarSign}>
+        <ModernCard title="القيود المدينة" icon={DollarSign}>
           <Text style={styles.sectionNote}>
-            Debit entries increase assets and expenses, decrease liabilities and equity
+            القيود المدينة تزيد الأصول والمصروفات وتقلل الخصوم وحقوق الملكية
           </Text>
           
           {debitEntries.map((entry, index) => (
@@ -315,14 +315,14 @@ export default function JournalEntryScreen() {
             style={styles.addButton}
             icon={() => <Plus size={20} color={theme.colors.primary} />}
           >
-            Add Debit Entry
+            إضافة قيد مدين
           </Button>
         </ModernCard>
 
         {/* Credit Entries */}
-        <ModernCard title="Credit Entries" icon={DollarSign}>
+        <ModernCard title="القيود الدائنة" icon={DollarSign}>
           <Text style={styles.sectionNote}>
-            Credit entries increase liabilities, equity, and revenue, decrease assets
+            القيود الدائنة تزيد الخصوم وحقوق الملكية والإيرادات وتقلل الأصول
           </Text>
           
           {creditEntries.map((entry, index) => (
@@ -344,22 +344,22 @@ export default function JournalEntryScreen() {
             style={styles.addButton}
             icon={() => <Plus size={20} color={theme.colors.secondary} />}
           >
-            Add Credit Entry
+            إضافة قيد دائن
           </Button>
         </ModernCard>
 
         {/* Entry Summary */}
-        <ModernCard title="Entry Summary" icon={Scale}>
+        <ModernCard title="ملخص القيد" icon={Scale}>
           <View style={styles.summaryContainer}>
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Total Debits:</Text>
+              <Text style={styles.summaryLabel}>إجمالي المدين:</Text>
               <Text style={[styles.summaryAmount, styles.debitColor]}>
                 {formatAmount(totalDebits)}
               </Text>
             </View>
             
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Total Credits:</Text>
+              <Text style={styles.summaryLabel}>إجمالي الدائن:</Text>
               <Text style={[styles.summaryAmount, styles.creditColor]}>
                 {formatAmount(totalCredits)}
               </Text>
@@ -368,7 +368,7 @@ export default function JournalEntryScreen() {
             <View style={styles.divider} />
             
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Balance Status:</Text>
+              <Text style={styles.summaryLabel}>حالة التوازن:</Text>
               <Chip 
                 mode={isBalanced ? "flat" : "outlined"}
                 style={[
@@ -379,7 +379,7 @@ export default function JournalEntryScreen() {
                   color: isBalanced ? theme.colors.primary : theme.colors.error
                 }}
               >
-                {isBalanced ? 'Balanced' : 'Unbalanced'}
+                {isBalanced ? 'متوازن' : 'غير متوازن'}
               </Chip>
             </View>
           </View>
@@ -389,21 +389,21 @@ export default function JournalEntryScreen() {
         </ModernCard>
 
         {/* Status and Submit */}
-        <ModernCard title="Status" icon={FileText}>
+        <ModernCard title="الحالة" icon={FileText}>
           <SegmentedButtons
             value={formData.status}
             onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
             buttons={[
-              { value: 'draft', label: 'Save as Draft' },
-              { value: 'posted', label: 'Post Entry' },
+              { value: 'draft', label: 'حفظ كمسودة' },
+              { value: 'posted', label: 'ترحيل القيد' },
             ]}
             style={styles.segmentedButtons}
           />
 
           <Text style={styles.statusNote}>
             {formData.status === 'draft' 
-              ? 'Save as draft to review later. The entry will not affect account balances.'
-              : 'Post entry to make it final. This will update account balances and cannot be undone.'
+              ? 'سيتم حفظ القيد كمسودة للمراجعة لاحقاً ولن يؤثر على الأرصدة.'
+              : 'سيتم ترحيل القيد وجعله نهائياً وسيؤثر على الأرصدة ولا يمكن التراجع.'
             }
           </Text>
         </ModernCard>
@@ -415,7 +415,7 @@ export default function JournalEntryScreen() {
             style={styles.button}
             disabled={loading}
           >
-            Cancel
+            إلغاء
           </Button>
           <Button 
             mode="contained" 
@@ -427,7 +427,7 @@ export default function JournalEntryScreen() {
             loading={loading}
             disabled={loading || !isBalanced}
           >
-            {formData.status === 'posted' ? 'Create & Post' : 'Save Draft'}
+            {formData.status === 'posted' ? 'إنشاء وترحيل' : 'حفظ كمسودة'}
           </Button>
         </View>
       </ScrollView>

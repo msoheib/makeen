@@ -12,12 +12,7 @@ export interface ThemeContextType {
 
 export const useTheme = (): ThemeContextType => {
   const systemColorScheme = useColorScheme();
-  const { 
-    settings, 
-    updateSettings, 
-    isDarkMode, 
-    toggleDarkMode 
-  } = useAppStore();
+  const { settings, updateSettings } = useAppStore();
 
   // Determine the actual theme based on settings
   const getActualTheme = () => {
@@ -34,7 +29,8 @@ export const useTheme = (): ThemeContextType => {
   const toggleTheme = () => {
     const newTheme = isDark ? 'light' : 'dark';
     updateSettings({ theme: newTheme });
-    toggleDarkMode();
+    // keep legacy flag in sync for old components
+    useAppStore.setState({ isDarkMode: newTheme === 'dark' });
   };
 
   const setTheme = (themeMode: 'light' | 'dark' | 'system') => {

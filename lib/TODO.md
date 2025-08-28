@@ -12,25 +12,25 @@
 - 37 – change-password action does nothing
 
 ### High
-- 25 – (Maintenance Requests) some attached images do not appear
-- 28 – Reports page freezes when scrolling down
-- 31 – cannot delete old data
-- 34 – (Tenant List) keyboard hides after each character while searching
-- 36 – Dashboard quick stats show zeros instead of actual data
-- 49 – keyboard still disappears during search in Property List
+- 25 – (Maintenance Requests) some attached images do not appear done
+- 28 – Reports page freezes when scrolling down done
+- 31 – cannot delete old data done
+- 34 – (Tenant List) keyboard hides after each character while searching done
+- 36 – Dashboard quick stats show zeros instead of actual data done
+- 49 – keyboard still disappears during search in Property List done
 
 ### Medium
-- 3 – UI direction should follow selected language (LTR/RTL alignment)
-- 5 – after exiting menus (e.g., Settings), should return to Dashboard
-- 7 – slow loading when entering Property List
-- 22 – priority colors inconsistent (Urgent should be darker than High)
-- 47 – back arrow (top-right) navigates to previous subpage instead of intended main page
+- 3 – UI direction should follow selected language (LTR/RTL alignment) deon
+- 5 – after exiting menus (e.g., Settings), should return to Dashboard done
+- 7 – slow loading when entering Property List done
+- 22 – priority colors inconsistent (Urgent should be darker than High) done
+- 47 – back arrow (top-right) navigates to previous subpage instead of intended main page  done
 
 ### Low
-- 8 – Profile address formatting needs adjustment
-- 9 – dark mode doesn’t work
+- 8 – Profile address formatting needs adjustment done
+- 9 – dark mode doesn’t work done
 - 10 – “Contact Support” title not centered
-- 39 – cannot add profile photo for account owner
+- 39 – cannot add profile photo for account owner done
 
 ## Stylistic / UI changes (copy, layout, ordering, visual polish)
 - 1 – unify tenant info (remove “foreign tenants” segment) in quick stats
@@ -38,23 +38,23 @@
 - 4 – clarify incomplete labels (e.g., “Maintenance options”)
 - 11 – rename “Contact Support” to one of: “Contact Support Team” / “Help & Support” / “Complaints & Suggestions”
 - 14 – Terms of Service should match selected language
-- 15 – modernize login screen (neat and contemporary, not classic)
+- 15 – modernize login screen (neat and contemporary, not classic) done
 - 16 – statistics page uses charts and counters
-- 17 – balance spacing on the home page
-- 19 – priority options ordered right-to-left (Low → Medium …)
+- 17 – balance spacing on the home page 
+- 19 – priority options ordered right-to-left (Low → Medium …) done
 - 20 – move “Take Photo / Choose from Gallery” to a better place in Add Maintenance
-- 23 – remove 10-character minimum for maintenance description (validation policy change)
-- 24 – reverse maintenance status order (start from right: Pending → Approved …) and change wording to “تمت الموافقة”
+- 23 – ✅ remove 10-character minimum for maintenance description (validation policy change) - done
+- 24 – reverse maintenance status order (start from right: Pending → Approved …) and change wording to “تمت الموافقة” done
 - 38 – account type label should display a distinguishing role (Property Manager / Manager / Administrator)
 
 ## New feature requests (new capability or workflow/schema changes)
 - 6 – make property dashboard cards tappable to enter sections (e.g., Total/Available Properties)
-- 12 – Reports: view without saving, with side option to Save and Send
-- 13 – Add Property: provide selectable options instead of full manual entry, with “Other”
-- 18 – Add Maintenance: choose address from existing properties/buildings with “Other”
+- 12 – Reports: view without saving, with side option to Save done
+- 13 – Add Property: provide selectable options instead of full manual entry, with “Other” done
+- 18 – Add Maintenance: choose address from existing properties/buildings with “Other” done
 - 26 – Maintenance: replace simple search with a filter (Property Type, Maintenance Date, Maintenance Status)
 - 27 – group maintenance items by month name (newest to oldest)
-- 40 – dedicated section for tenant and owner information
+- 40 – dedicated section for tenant and owner information done
 - 41 – property-management section (units, vacancies, monthly/annual income)
 - 42 – accountants’ module (receipt vouchers, accounts, meters, maintenance pricing, expense/revenue reports, printing)
 - 43 – reports (monthly/semi-annual/annual) auto-updated for owners
@@ -62,10 +62,9 @@
 - 45 – maintenance section: quotations, requests, expected completion with start/end dates
 - 46 – role selection on app entry (Tenant / Owner / Property Manager)
 - 48 – owner search field when adding a property
-- 50 – add “Building” as a property type
+- 50 – add “Building” as a property type done
 - 51 – owner details: use a single “Full Name” field (no first/last split)
-- 52 – show total number of owners
-- 53 – view owner details after adding
+- 52 – show total number of owners done
 - 54 – parent-child property structure (Building → Apartments nested under the building)
 - 55 – allow editing and deleting of any added data across entities (global CRUD)
 - 56 – view reports without downloading, with a separate Download button

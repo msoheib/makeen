@@ -61,7 +61,7 @@ export default function AddVoucherScreen() {
     }
 
     if (!user) {
-      Alert.alert('Error', 'You must be logged in to create a voucher');
+      Alert.alert('خطأ', 'يجب تسجيل الدخول لإنشاء سند');
       return;
     }
 
@@ -88,11 +88,11 @@ export default function AddVoucherScreen() {
       if (error) throw error;
 
       Alert.alert(
-        'Success',
-        'Voucher created successfully!',
+        'تم بنجاح',
+        'تم إنشاء السند بنجاح!',
         [
           {
-            text: 'OK',
+            text: 'حسناً',
             onPress: () => router.replace('/(tabs)/payments'),
           },
         ]
@@ -105,9 +105,9 @@ export default function AddVoucherScreen() {
     } catch (error: any) {
       console.error('Error creating voucher:', error);
       if (error.code === '23505') {
-        setErrors({ voucher_number: 'This voucher number already exists' });
+        setErrors({ voucher_number: 'رقم السند هذا موجود بالفعل' });
       } else {
-        Alert.alert('Error', error.message || 'Failed to create voucher');
+        Alert.alert('خطأ', error.message || 'فشل إنشاء السند');
       }
     } finally {
       setLoading(false);
@@ -117,7 +117,7 @@ export default function AddVoucherScreen() {
   return (
     <View style={styles.container}>
       <ModernHeader
-        title="Add Voucher"
+        title="إضافة سند"
         showBackButton={true}
         showNotifications={false}
         onBackPress={() => router.back()}
@@ -128,16 +128,16 @@ export default function AddVoucherScreen() {
         <ModernCard style={styles.section}>
           <View style={styles.sectionHeader}>
             <Receipt size={20} color={theme.colors.primary} />
-            <Text style={styles.sectionTitle}>Voucher Type</Text>
+            <Text style={styles.sectionTitle}>نوع السند</Text>
           </View>
 
           <SegmentedButtons
             value={formData.voucher_type}
             onValueChange={(value) => setFormData({ ...formData, voucher_type: value as VoucherType })}
             buttons={[
-              { value: 'receipt', label: 'Receipt' },
-              { value: 'payment', label: 'Payment' },
-              { value: 'journal', label: 'Journal' },
+              { value: 'receipt', label: 'سند قبض' },
+              { value: 'payment', label: 'سند صرف' },
+              { value: 'journal', label: 'قيد يومية' },
             ]}
             style={styles.segmentedButtons}
           />
@@ -145,17 +145,17 @@ export default function AddVoucherScreen() {
           <View style={styles.typeInfo}>
             {formData.voucher_type === 'receipt' && (
               <Text style={styles.typeDescription}>
-                Receipt vouchers record money received from tenants or other sources.
+                يستخدم سند القبض لتسجيل الأموال المستلمة من المستأجرين أو مصادر أخرى.
               </Text>
             )}
             {formData.voucher_type === 'payment' && (
               <Text style={styles.typeDescription}>
-                Payment vouchers record money paid out for expenses, maintenance, or other costs.
+                يستخدم سند الصرف لتسجيل المصروفات المدفوعة مثل الصيانة أو غيرها.
               </Text>
             )}
             {formData.voucher_type === 'journal' && (
               <Text style={styles.typeDescription}>
-                Journal vouchers record internal transfers and adjustments.
+                يستخدم قيد اليومية لتسجيل التحويلات الداخلية والتسويات المحاسبية.
               </Text>
             )}
           </View>
@@ -165,11 +165,11 @@ export default function AddVoucherScreen() {
         <ModernCard style={styles.section}>
           <View style={styles.sectionHeader}>
             <FileText size={20} color={theme.colors.secondary} />
-            <Text style={styles.sectionTitle}>Voucher Details</Text>
+            <Text style={styles.sectionTitle}>تفاصيل السند</Text>
           </View>
 
           <TextInput
-            label="Voucher Number *"
+            label="رقم السند *"
             value={formData.voucher_number}
             onChangeText={(text) => setFormData({ ...formData, voucher_number: text })}
             mode="outlined"
@@ -181,7 +181,7 @@ export default function AddVoucherScreen() {
 
           <View style={styles.row}>
             <TextInput
-              label="Amount *"
+              label="المبلغ *"
               value={formData.amount}
               onChangeText={(text) => setFormData({ ...formData, amount: text })}
               mode="outlined"
@@ -191,7 +191,7 @@ export default function AddVoucherScreen() {
               left={<TextInput.Icon icon="currency-usd" />}
             />
             <TextInput
-              label="Currency"
+              label="العملة"
               value={formData.currency}
               onChangeText={(text) => setFormData({ ...formData, currency: text })}
               mode="outlined"
@@ -201,7 +201,7 @@ export default function AddVoucherScreen() {
           {errors.amount && <Text style={styles.errorText}>{errors.amount}</Text>}
 
           <TextInput
-            label="Description *"
+            label="الوصف *"
             value={formData.description}
             onChangeText={(text) => setFormData({ ...formData, description: text })}
             mode="outlined"
@@ -217,15 +217,15 @@ export default function AddVoucherScreen() {
         <ModernCard style={styles.section}>
           <View style={styles.sectionHeader}>
             <Calendar size={20} color={theme.colors.tertiary} />
-            <Text style={styles.sectionTitle}>Status</Text>
+            <Text style={styles.sectionTitle}>الحالة</Text>
           </View>
 
           <SegmentedButtons
             value={formData.status}
             onValueChange={(value) => setFormData({ ...formData, status: value as VoucherStatus })}
             buttons={[
-              { value: 'draft', label: 'Draft' },
-              { value: 'posted', label: 'Posted' },
+              { value: 'draft', label: 'مسودة' },
+              { value: 'posted', label: 'مُرحّل' },
             ]}
             style={styles.segmentedButtons}
           />
@@ -233,12 +233,12 @@ export default function AddVoucherScreen() {
           <View style={styles.statusInfo}>
             {formData.status === 'draft' && (
               <Text style={styles.statusDescription}>
-                Draft vouchers can be edited and are not included in financial reports.
+                يمكن تعديل السندات المسودة ولا تُحتسب في التقارير المالية.
               </Text>
             )}
             {formData.status === 'posted' && (
               <Text style={styles.statusDescription}>
-                Posted vouchers are final and will be included in financial reports.
+                السندات المرحلة نهائية وتُحتسب في التقارير المالية.
               </Text>
             )}
           </View>
@@ -254,7 +254,7 @@ export default function AddVoucherScreen() {
             style={styles.submitButton}
             contentStyle={styles.submitButtonContent}
           >
-            Create Voucher
+            إنشاء السند
           </Button>
         </View>
       </ScrollView>

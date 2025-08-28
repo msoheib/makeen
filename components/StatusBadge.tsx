@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Badge, Text } from 'react-native-paper';
 import { theme } from '@/lib/theme';
+import { addAlpha } from '@/lib/colors';
 
 // Define the status types
 type PropertyStatus = 'available' | 'rented' | 'maintenance' | 'reserved';
@@ -76,7 +77,7 @@ export default function StatusBadge({ status, size = 'medium', style }: StatusBa
       style={[
         styles.container,
         sizeStyles[size].container,
-        { backgroundColor: `${statusColors[status]}20` },
+        { backgroundColor: addAlpha((statusColors as any)[status] || theme.colors.onSurfaceVariant, 0.125) },
         style,
       ]}
     >
@@ -84,7 +85,7 @@ export default function StatusBadge({ status, size = 'medium', style }: StatusBa
         style={[
           styles.text,
           sizeStyles[size].text,
-          { color: statusColors[status] },
+          { color: (statusColors as any)[status] || theme.colors.onSurfaceVariant },
         ]}
       >
         {formattedStatus}

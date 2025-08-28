@@ -1,17 +1,19 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { View, StyleSheet, FlatList, SafeAreaView, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
-import { Text, Searchbar, Avatar, FAB } from 'react-native-paper';
+import { Text, Avatar, FAB } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { lightTheme, darkTheme, spacing } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
 import { getFlexDirection } from '@/lib/rtl';
 import { isRTL } from '@/lib/i18n';
-import { Users, Phone, Mail, Plus, Lock, Shield, Clock, Globe2 } from 'lucide-react-native';
+import { Users, Phone, Mail, Plus, Lock, Shield } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import { useScreenAccess } from '@/lib/permissions';
 import { useApi } from '@/hooks/useApi';
 import { profilesApi } from '@/lib/api';
+import MobileSearchBar from '@/components/MobileSearchBar';
+import QuickStats from '@/components/QuickStats';
 
 export default function TenantsScreen() {
   // ALL HOOKS MUST BE CALLED AT THE TOP LEVEL - NO CONDITIONAL LOGIC BEFORE THIS POINT
@@ -35,8 +37,7 @@ export default function TenantsScreen() {
   // Get owners count for property managers and admins
   const { 
     data: owners, 
-    loading: ownersLoading, 
-    error: ownersError 
+    loading: ownersLoading
   } = useApi(() => {
     // Only fetch owners if user is admin or manager
     if (userContext?.role === 'admin' || userContext?.role === 'manager') {
@@ -74,7 +75,6 @@ export default function TenantsScreen() {
     total: tenantsData.length,
     active: tenantsData.filter(t => t.status === 'active').length,
     pending: tenantsData.filter(t => t.status === 'pending').length,
-    foreign: tenantsData.filter(t => t.is_foreign === true).length,
     owners: owners?.length || 0, // Add owners count for admins/managers
   }), [tenantsData, owners]);
 
@@ -169,7 +169,7 @@ export default function TenantsScreen() {
   // Memoized ListHeaderComponent with stable dependencies
   const ListHeaderComponent = useMemo(() => (
     <View>
-      {/* Stats Section */}
+      {/* Quick Stats Section */}
       <View style={styles.statsSection}>
         <View style={[styles.sectionHeader, { flexDirection: getFlexDirection('row') }]}>
           <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
@@ -178,107 +178,15 @@ export default function TenantsScreen() {
               : 'إحصائيات المستأجرين'
             }
           </Text>
-          {(userContext?.role === 'admin' || userContext?.role === 'manager') && (
-            <TouchableOpacity
-              style={[styles.addButton, { backgroundColor: theme.colors.primary }]}
-              onPress={() => router.push('/people/add')}
-            >
-              <Plus size={16} color="white" />
-              <Text style={styles.addButtonText}>إضافة شخص</Text>
-            </TouchableOpacity>
-          )}
         </View>
-        <View style={[styles.horizontalStatsCard, { backgroundColor: theme.colors.surface }]}>
-          <View style={[styles.horizontalStatsRow, { flexDirection: getFlexDirection('row') }]}>
-            <View style={styles.horizontalStatItem}>
-              <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
-                <Users size={24} color={theme.colors.primary} />
-              </View>
-              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                إجمالي المستأجرين
-              </Text>
-              <Text style={[styles.horizontalStatValue, { color: theme.colors.primary }]}>
-                {isLoading ? '...' : String(tenantStats.total || 0)}
-              </Text>
-            </View>
-            
-            <View style={styles.horizontalStatItem}>
-              <View style={[styles.horizontalStatIcon, { backgroundColor: '#4CAF5020' }]}>
-                <Phone size={24} color="#4CAF50" />
-              </View>
-              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                مستأجرين نشطين
-              </Text>
-              <Text style={[styles.horizontalStatValue, { color: '#4CAF50' }]}>
-                {isLoading ? '...' : String(tenantStats.active || 0)}
-              </Text>
-            </View>
-
-            <View style={styles.horizontalStatItem}>
-              <View style={[styles.horizontalStatIcon, { backgroundColor: '#FF952020' }]}>
-                <Clock size={24} color="#FF9520" />
-              </View>
-              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                في الانتظار
-              </Text>
-              <Text style={[styles.horizontalStatValue, { color: '#FF9520' }]}>
-                {isLoading ? '...' : String(tenantStats.pending || 0)}
-              </Text>
-            </View>
-
-            <View style={styles.horizontalStatItem}>
-              <View style={[styles.horizontalStatIcon, { backgroundColor: '#2196F320' }]}>
-                <Globe2 size={24} color="#2196F3" />
-              </View>
-              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                أجانب
-              </Text>
-              <Text style={[styles.horizontalStatValue, { color: '#2196F3' }]}>
-                {isLoading ? '...' : String(tenantStats.foreign || 0)}
-              </Text>
-            </View>
-
-            {/* Owners count - only visible to admins and managers */}
-            {(userContext?.role === 'admin' || userContext?.role === 'manager') && (
-              <View style={styles.horizontalStatItem}>
-                <View style={[styles.horizontalStatIcon, { backgroundColor: '#9C27B020' }]}>
-                  <Shield size={24} color="#9C27B0" />
-                </View>
-                <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                  إجمالي الملاك
-                </Text>
-                <Text style={[styles.horizontalStatValue, { color: '#9C27B0' }]}>
-                  {ownersLoading ? '...' : String(tenantStats.owners || 0)}
-                </Text>
-              </View>
-            )}
-          </View>
-        </View>
-      </View>
-
-      {/* Search Bar */}
-      <View style={styles.searchSection}>
-        <Searchbar
-          placeholder="البحث عن مستأجر..."
-          onChangeText={setSearchQuery}
-          value={searchQuery}
-          style={[styles.searchBar, { 
-            backgroundColor: theme.colors.surface,
-            borderColor: theme.colors.outline
-          }]}
-          inputStyle={{ 
-            color: theme.colors.onSurface,
-            textAlign: 'right'
-          }}
-          placeholderTextColor={theme.colors.onSurfaceVariant}
-          icon="magnify"
-          clearIcon="close"
+        <QuickStats
+          total={tenantStats.total}
+          active={tenantStats.active}
+          pending={tenantStats.pending}
+          owners={tenantStats.owners}
+          showOwners={userContext?.role === 'admin' || userContext?.role === 'manager'}
+          loading={isLoading}
         />
-        
-        {/* Results Count */}
-        <Text style={[styles.resultCount, { color: theme.colors.onSurfaceVariant }]}>
-          {isLoading ? 'جاري التحميل...' : `${filteredTenants.length} نتيجة`}
-        </Text>
       </View>
     </View>
   ), [theme.colors, tenantStats, isLoading, searchQuery, filteredTenants.length, ownersLoading, userContext?.role]);
@@ -342,9 +250,34 @@ export default function TenantsScreen() {
       <ModernHeader 
         title="المستأجرين" 
         showNotifications={true}
+        showSearch={true}
+        onNotificationPress={() => router.push('/notifications')}
+        onSearchPress={() => router.push('/search')}
         variant="dark"
       />
       
+      {/* Search UI outside FlatList to keep focus stable */}
+      <View style={[styles.searchSection, { paddingHorizontal: spacing.m }]}> 
+        <MobileSearchBar
+          placeholder="البحث عن مستأجر..."
+          onChangeText={setSearchQuery}
+          value={searchQuery}
+          style={[styles.searchBar, { 
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.colors.outline
+          }]}
+          inputStyle={{ 
+            color: theme.colors.onSurface
+          }}
+          placeholderTextColor={theme.colors.onSurfaceVariant}
+          iconColor={theme.colors.onSurfaceVariant}
+          textAlign="right"
+        />
+        <Text style={[styles.resultCount, { color: theme.colors.onSurfaceVariant }]}>
+          {isLoading ? 'جاري التحميل...' : `${filteredTenants.length} نتيجة`}
+        </Text>
+      </View>
+
       {hasError ? (
         <View style={styles.errorContainer}>
           <Text style={[styles.errorText, { color: theme.colors.error }]}>
@@ -361,6 +294,7 @@ export default function TenantsScreen() {
           renderItem={renderTenantItem}
           ListHeaderComponent={ListHeaderComponent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="always"
           contentContainerStyle={[
             styles.flatListContainer, 
             { paddingBottom: 80 } // Space for FAB
@@ -500,59 +434,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'right',
   },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.s,
-    paddingHorizontal: spacing.m,
-    borderRadius: 8,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 1,
-  },
-  addButtonText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: 'bold',
-    marginLeft: spacing.s,
-  },
-  horizontalStatsCard: {
-    borderRadius: 12,
-    padding: spacing.m,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
-  },
-  horizontalStatsRow: {
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  horizontalStatItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  horizontalStatIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.s,
-  },
-  horizontalStatLabel: {
-    fontSize: 12,
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  horizontalStatValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
+
   searchSection: {
     marginBottom: spacing.m,
   },

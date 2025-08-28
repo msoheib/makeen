@@ -139,8 +139,6 @@ export default function AddMaintenanceRequestScreen() {
 
     if (!formData.description.trim()) {
       newErrors.description = t('common:required');
-    } else if (formData.description.trim().length < 10) {
-      newErrors.description = t('common:minLength', { length: 10 });
     }
 
     if (!formData.property_id) {
@@ -228,8 +226,8 @@ export default function AddMaintenanceRequestScreen() {
     switch (priority) {
       case 'low': return theme.colors.primary;
       case 'medium': return theme.colors.warning;
-      case 'high': return theme.colors.error;
-      case 'urgent': return '#d32f2f';
+      case 'high': return theme.colors.warning;
+      case 'urgent': return theme.colors.error;
       default: return theme.colors.primary;
     }
   };
@@ -283,7 +281,7 @@ export default function AddMaintenanceRequestScreen() {
             value={formData.description}
             onChangeText={(text) => {
               setFormData({ ...formData, description: text });
-              if (errors.description && text.trim().length >= 10) {
+              if (errors.description && text.trim().length > 0) {
                 setErrors({ ...errors, description: '' });
               }
             }}

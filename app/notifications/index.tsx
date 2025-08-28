@@ -7,12 +7,14 @@ import { useApi } from '@/hooks/useApi';
 import { notificationsApi } from '@/lib/api';
 import ModernHeader from '@/components/ModernHeader';
 import { useNotificationBadges } from '@/hooks/useNotificationBadges';
+import { useAppStore } from '@/lib/store';
 
 export default function NotificationsScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const [filter, setFilter] = useState<'all' | 'unread' | 'bid_submitted' | 'bid_approved'>('all');
   const { markAllAsRead } = useNotificationBadges();
+  const { triggerHeaderBadgeRefresh } = useAppStore();
 
   // Fetch notifications
   const { 
@@ -42,13 +44,15 @@ export default function NotificationsScreen() {
       const markNotificationsAsViewed = async () => {
         try {
           await markAllAsRead();
+          // Trigger header badge refresh
+          triggerHeaderBadgeRefresh();
         } catch (error) {
           console.error('Error marking notifications as read:', error);
         }
       };
       
       markNotificationsAsViewed();
-    }, [markAllAsRead])
+    }, [markAllAsRead, triggerHeaderBadgeRefresh])
   );
 
   // Handle refresh
@@ -62,6 +66,8 @@ export default function NotificationsScreen() {
     try {
       await notificationsApi.markAsRead(notificationId);
       handleRefresh();
+      // Trigger header badge refresh
+      triggerHeaderBadgeRefresh();
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
@@ -72,6 +78,8 @@ export default function NotificationsScreen() {
     try {
       await notificationsApi.markAllAsRead();
       handleRefresh();
+      // Trigger header badge refresh
+      triggerHeaderBadgeRefresh();
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
     }

@@ -76,6 +76,7 @@ class PDFGeneratorAPI {
       // Operations/Maintenance Reports
       'electrical-meter': 'maintenance',
       'maintenance-report': 'maintenance',
+      'water-meters': 'maintenance',
       
       // Summary Reports (default to revenue)
       'summary-report': 'revenue',
@@ -830,6 +831,32 @@ class PDFGeneratorAPI {
       type: reportId,
       title,
       titleEn: title,
+      userContext,
+      filters
+    });
+  }
+
+  /**
+   * Generate water meters report
+   */
+  async generateWaterMetersReport(userContext: any, filters?: any): Promise<PDFResponse> {
+    return this.generateReport({
+      type: 'water-meters',
+      title: 'Water Meters Report',
+      titleEn: 'Water Meters Report',
+      userContext,
+      filters
+    });
+  }
+
+  /**
+   * View water meters report (HTML format for viewing)
+   */
+  async viewWaterMetersReport(userContext: any, filters?: any): Promise<PDFResponse> {
+    return this.viewReport({
+      type: 'water-meters',
+      title: 'Water Meters Report',
+      titleEn: 'Water Meters Report',
       userContext,
       filters
     });

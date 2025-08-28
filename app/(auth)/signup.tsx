@@ -48,7 +48,7 @@ export default function SignUpScreen() {
     }
     
     // Validate role
-    if (!['tenant', 'owner', 'buyer'].includes(role)) {
+    if (!['tenant', 'owner', 'buyer', 'manager', 'accountant'].includes(role)) {
       setError('Please select a valid role');
       return;
     }
@@ -235,7 +235,8 @@ export default function SignUpScreen() {
                 { value: 'tenant', label: t('signup.tenant') },
                 { value: 'buyer', label: t('signup.buyer') },
                 { value: 'owner', label: t('signup.propertyOwner') },
-                { value: 'manager', label: t('signup.manager') }
+                { value: 'manager', label: t('signup.manager') },
+                { value: 'accountant', label: 'Accountant' }
               ]}
               style={styles.roleButtons}
               theme={{

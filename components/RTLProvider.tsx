@@ -44,7 +44,8 @@ export default function RTLProvider({ children }: RTLProviderProps) {
           console.log('[RTLProvider] ⚠️ Storage read failed, using default:', storageError);
         }
         
-        const shouldBeRTL = storedLanguage === 'ar';
+        // FORCE RTL ALWAYS - NO LTR ALLOWED ANYWHERE IN THE APP
+        const shouldBeRTL = true; // Always RTL, no exceptions
         
         console.log('[RTLProvider] 🔧 Initializing RTL:', {
           storedLanguage,
@@ -54,10 +55,10 @@ export default function RTLProvider({ children }: RTLProviderProps) {
           isDev: __DEV__
         });
 
-        // IMMEDIATE RTL SETUP
+        // IMMEDIATE RTL SETUP - ALWAYS RTL
         const forceRTLSetup = () => {
           I18nManager.allowRTL(true);
-          I18nManager.forceRTL(shouldBeRTL);
+          I18nManager.forceRTL(true); // Always RTL regardless of language
         };
 
         // Initial setup
@@ -95,7 +96,7 @@ export default function RTLProvider({ children }: RTLProviderProps) {
         
       } catch (error) {
         console.error('[RTLProvider] ❌ Error initializing RTL:', error);
-        // Fallback: Set RTL for Arabic
+        // Fallback: ALWAYS RTL - NO EXCEPTIONS
         I18nManager.allowRTL(true);
         I18nManager.forceRTL(true);
         setIsReady(true);
@@ -105,10 +106,10 @@ export default function RTLProvider({ children }: RTLProviderProps) {
     initializeRTL();
   }, []);
 
-  // Apply RTL styles to the container using expo-localization
+  // Apply RTL styles to the container - ALWAYS RTL
   const locales = getLocales();
   const deviceTextDirection = locales[0]?.textDirection || 'ltr';
-  const effectiveDirection = I18nManager.isRTL ? 'rtl' : 'ltr';
+  const effectiveDirection = 'rtl'; // ALWAYS RTL - NO EXCEPTIONS
   
   const containerStyle = {
     flex: 1,

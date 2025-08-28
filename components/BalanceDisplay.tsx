@@ -3,6 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { Text, Chip } from 'react-native-paper';
 import { CheckCircle, AlertCircle, Scale } from 'lucide-react-native';
 import { theme, spacing } from '@/lib/theme';
+import { toArabicNumerals } from '@/lib/formatters';
 
 interface BalanceDisplayProps {
   totalDebits: number;
@@ -19,7 +20,7 @@ export default function BalanceDisplay({
   const isBalanced = difference < 0.01; // Allow for minor floating point differences
   
   const formatAmount = (amount: number) => {
-    return `${currency} ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `${currency === 'SAR' ? 'ر.س' : currency} ${toArabicNumerals(new Intl.NumberFormat('ar-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount))}`;
   };
 
   const getBalanceStatus = () => {

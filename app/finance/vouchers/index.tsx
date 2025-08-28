@@ -200,7 +200,7 @@ const VoucherManagementScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <ModernHeader title="Voucher Management" />
+      <ModernHeader title="إدارة السندات" />
 
       <ScrollView
         style={styles.content}
@@ -212,7 +212,7 @@ const VoucherManagementScreen: React.FC = () => {
         {quickStats && (
           <View style={styles.statsContainer}>
             <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
-              Overview
+              نظرة عامة
             </Text>
             <View style={styles.statsGrid}>
               {quickStats.map((stat, index) => (
@@ -235,7 +235,7 @@ const VoucherManagementScreen: React.FC = () => {
             <MaterialIcons name="search" size={20} color={theme.colors.onSurfaceVariant} />
             <TextInput
               style={[styles.searchInput, { color: theme.colors.onSurface }]}
-              placeholder="Search vouchers..."
+              placeholder="ابحث في السندات..."
               placeholderTextColor={theme.colors.onSurfaceVariant}
               value={searchText}
               onChangeText={setSearchText}
@@ -268,7 +268,7 @@ const VoucherManagementScreen: React.FC = () => {
         {/* Quick Actions */}
         <View style={styles.actionsContainer}>
           <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
-            Quick Actions
+            الإجراءات السريعة
           </Text>
           <View style={styles.quickActions}>
             <TouchableOpacity
@@ -277,7 +277,7 @@ const VoucherManagementScreen: React.FC = () => {
             >
               <VoucherTypeIcon type="receipt" size={20} showBackground={false} />
               <Text style={[styles.actionText, { color: theme.colors.onSurface }]}>
-                Receipt Voucher
+                سند قبض
               </Text>
             </TouchableOpacity>
 
@@ -287,7 +287,7 @@ const VoucherManagementScreen: React.FC = () => {
             >
               <VoucherTypeIcon type="payment" size={20} showBackground={false} />
               <Text style={[styles.actionText, { color: theme.colors.onSurface }]}>
-                Payment Voucher
+                سند صرف
               </Text>
             </TouchableOpacity>
 
@@ -297,7 +297,7 @@ const VoucherManagementScreen: React.FC = () => {
             >
               <VoucherTypeIcon type="journal" size={20} showBackground={false} />
               <Text style={[styles.actionText, { color: theme.colors.onSurface }]}>
-                Journal Entry
+                قيد يومية
               </Text>
             </TouchableOpacity>
           </View>
@@ -306,14 +306,14 @@ const VoucherManagementScreen: React.FC = () => {
         {/* Vouchers List */}
         <View style={styles.vouchersContainer}>
           <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
-            All Vouchers
+            جميع السندات
             {vouchers && ` (${vouchers.length})`}
           </Text>
 
           {vouchersLoading && (
             <View style={styles.loadingContainer}>
               <Text style={[styles.loadingText, { color: theme.colors.onSurfaceVariant }]}>
-                Loading vouchers...
+                جاري تحميل السندات...
               </Text>
             </View>
           )}
@@ -321,14 +321,14 @@ const VoucherManagementScreen: React.FC = () => {
           {vouchersError && (
             <View style={styles.errorContainer}>
               <Text style={[styles.errorText, { color: theme.colors.error }]}>
-                Error loading vouchers: {vouchersError.message}
+                حدث خطأ أثناء تحميل السندات: {vouchersError.message}
               </Text>
               <TouchableOpacity
                 style={[styles.retryButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline }]}
                 onPress={refetchVouchers}
               >
                 <Text style={[styles.retryText, { color: theme.colors.primary }]}>
-                  Retry
+                  إعادة المحاولة
                 </Text>
               </TouchableOpacity>
             </View>
@@ -338,10 +338,10 @@ const VoucherManagementScreen: React.FC = () => {
             <View style={styles.emptyContainer}>
               <MaterialIcons name="receipt-long" size={48} color={theme.colors.onSurfaceVariant} />
               <Text style={[styles.emptyTitle, { color: theme.colors.onSurface }]}>
-                No vouchers found
+                لا توجد سندات
               </Text>
               <Text style={[styles.emptySubtitle, { color: theme.colors.onSurfaceVariant }]}>
-                Create your first voucher using the quick actions above
+                أنشئ أول سند باستخدام الإجراءات السريعة أعلاه
               </Text>
             </View>
           )}
@@ -371,7 +371,7 @@ const VoucherManagementScreen: React.FC = () => {
           <View style={[styles.filterModal, { backgroundColor: theme.colors.surface }]}>
             <View style={[styles.modalHeader, { borderBottomColor: theme.colors.outline }]}>
               <Text style={[styles.modalTitle, { color: theme.colors.onSurface }]}>
-                Filter Vouchers
+                تصفية السندات
               </Text>
               <TouchableOpacity onPress={() => setShowFilters(false)}>
                 <MaterialIcons name="close" size={24} color={theme.colors.onSurface} />
@@ -382,14 +382,14 @@ const VoucherManagementScreen: React.FC = () => {
               {/* Voucher Type Filter */}
               <View style={styles.filterSection}>
                 <Text style={[styles.filterLabel, { color: theme.colors.onSurface }]}>
-                  Voucher Type
+                  نوع السند
                 </Text>
                 <View style={styles.filterOptions}>
                   {[
-                    { value: '', label: 'All Types' },
-                    { value: 'receipt', label: 'Receipt' },
-                    { value: 'payment', label: 'Payment' },
-                    { value: 'journal', label: 'Journal' },
+                    { value: '', label: 'كل الأنواع' },
+                    { value: 'receipt', label: 'سند قبض' },
+                    { value: 'payment', label: 'سند صرف' },
+                    { value: 'journal', label: 'قيد يومية' },
                   ].map((option) => (
                     <TouchableOpacity
                       key={option.value}
@@ -420,14 +420,14 @@ const VoucherManagementScreen: React.FC = () => {
               {/* Status Filter */}
               <View style={styles.filterSection}>
                 <Text style={[styles.filterLabel, { color: theme.colors.onSurface }]}>
-                  Status
+                  الحالة
                 </Text>
                 <View style={styles.filterOptions}>
                   {[
-                    { value: '', label: 'All Status' },
-                    { value: 'draft', label: 'Draft' },
-                    { value: 'posted', label: 'Posted' },
-                    { value: 'cancelled', label: 'Cancelled' },
+                    { value: '', label: 'كل الحالات' },
+                    { value: 'draft', label: 'مسودة' },
+                    { value: 'posted', label: 'مُرحّل' },
+                    { value: 'cancelled', label: 'ملغى' },
                   ].map((option) => (
                     <TouchableOpacity
                       key={option.value}
@@ -462,7 +462,7 @@ const VoucherManagementScreen: React.FC = () => {
                 onPress={clearFilters}
               >
                 <Text style={[styles.modalButtonText, { color: theme.colors.onSurface }]}>
-                  Clear All
+                  مسح الكل
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -470,7 +470,7 @@ const VoucherManagementScreen: React.FC = () => {
                 onPress={() => applyFilters(filters)}
               >
                 <Text style={[styles.modalButtonText, { color: theme.colors.onPrimary }]}>
-                  Apply Filters
+                  تطبيق التصفية
                 </Text>
               </TouchableOpacity>
             </View>

@@ -16,6 +16,8 @@ import { maintenanceApi } from '@/lib/api';
 import { getCurrentUserContext } from '@/lib/security';
 import TenantEmptyState from '@/components/TenantEmptyState';
 import { HorizontalStatsShimmer, MaintenanceListShimmer } from '@/components/shimmer';
+import { formatDisplayNumber } from '@/lib/formatters';
+import MobileSearchBar from '@/components/MobileSearchBar';
 
 export default function MaintenanceScreen() {
   const router = useRouter();
@@ -151,9 +153,34 @@ export default function MaintenanceScreen() {
       <ModernHeader
         title={t('title')}
         subtitle={t('subtitle')}
+        showNotifications={true}
+        showSearch={true}
         onNotificationPress={() => router.push('/notifications')}
         onSearchPress={() => router.push('/search')}
       />
+
+      {/* Search UI outside FlatList to keep focus stable */}
+      <View style={styles.filtersSection}>
+        <MobileSearchBar
+          placeholder={t('searchPlaceholder')}
+          onChangeText={setSearchQuery}
+          value={searchQuery}
+          style={dynamicStyles.searchbar}
+          iconColor={theme.colors.onSurfaceVariant}
+          textAlign="right"
+        />
+        <SegmentedButtons
+          value={activeFilter}
+          onValueChange={setActiveFilter}
+          buttons={[
+            { value: 'all', label: t('common:all') },
+            { value: 'pending', label: t('statuses.pending') },
+            { value: 'in_progress', label: t('statuses.inProgress') },
+            { value: 'completed', label: t('statuses.completed') },
+          ]}
+          style={dynamicStyles.segmentedButtons}
+        />
+      </View>
 
       {/* Requests List */}
       {(loading && !requests) || userLoading ? (
@@ -170,6 +197,7 @@ export default function MaintenanceScreen() {
           )}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContent}
+          keyboardShouldPersistTaps="always"
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -198,8 +226,8 @@ export default function MaintenanceScreen() {
                         <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
                           إجمالي الطلبات
                         </Text>
-                        <Text style={[styles.horizontalStatValue, { color: theme.colors.primary, textAlign: 'center' }]}>
-                          {stats.total.toString()}
+                        <Text style={[styles.horizontalStatValue, { color: theme.colors.primary, textAlign: 'center' }]}> 
+                          {formatDisplayNumber(stats.total)}
                         </Text>
                       </View>
                       
@@ -210,8 +238,8 @@ export default function MaintenanceScreen() {
                         <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
                           قيد الانتظار
                         </Text>
-                        <Text style={[styles.horizontalStatValue, { color: '#FF9800', textAlign: 'center' }]}>
-                          {stats.pending.toString()}
+                        <Text style={[styles.horizontalStatValue, { color: '#FF9800', textAlign: 'center' }]}> 
+                          {formatDisplayNumber(stats.pending)}
                         </Text>
                       </View>
                       
@@ -222,8 +250,8 @@ export default function MaintenanceScreen() {
                         <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
                           قيد التنفيذ
                         </Text>
-                        <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary, textAlign: 'center' }]}>
-                          {stats.inProgress.toString()}
+                        <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary, textAlign: 'center' }]}> 
+                          {formatDisplayNumber(stats.inProgress)}
                         </Text>
                       </View>
                       
@@ -234,8 +262,8 @@ export default function MaintenanceScreen() {
                         <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
                           مكتملة
                         </Text>
-                        <Text style={[styles.horizontalStatValue, { color: '#4CAF50', textAlign: 'center' }]}>
-                          {stats.completed.toString()}
+                        <Text style={[styles.horizontalStatValue, { color: '#4CAF50', textAlign: 'center' }]}> 
+                          {formatDisplayNumber(stats.completed)}
                         </Text>
                       </View>
                     </View>
@@ -243,28 +271,7 @@ export default function MaintenanceScreen() {
                 )}
               </View>
 
-              {/* Search and Filters */}
-              <View style={styles.filtersSection}>
-                <Searchbar
-                  placeholder={t('searchPlaceholder')}
-                  onChangeText={setSearchQuery}
-                  value={searchQuery}
-                  style={dynamicStyles.searchbar}
-                  iconColor={theme.colors.onSurfaceVariant}
-                />
-                
-                <SegmentedButtons
-                  value={activeFilter}
-                  onValueChange={setActiveFilter}
-                  buttons={[
-                    { value: 'all', label: t('common:all') },
-                    { value: 'pending', label: t('statuses.pending') },
-                    { value: 'in_progress', label: t('statuses.inProgress') },
-                    { value: 'completed', label: t('statuses.completed') },
-                  ]}
-                  style={dynamicStyles.segmentedButtons}
-                />
-              </View>
+              {/* Search moved above FlatList to prevent unmounting */}
             </View>
           )}
           ListEmptyComponent={

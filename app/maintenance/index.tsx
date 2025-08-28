@@ -6,6 +6,7 @@ import { theme, spacing } from '@/lib/theme';
 import { useApi } from '@/hooks/useApi';
 import { maintenanceApi } from '@/lib/api';
 import ModernHeader from '@/components/ModernHeader';
+import { addAlpha } from '@/lib/colors';
 import ModernCard from '@/components/ModernCard';
 import StatusUpdateModal from '@/components/StatusUpdateModal';
 import { Wrench, Plus, Filter, Calendar, MapPin, User, AlertTriangle, CheckCircle2, Clock, XCircle } from 'lucide-react-native';
@@ -43,7 +44,7 @@ const STATUS_COLORS = {
 const PRIORITY_COLORS = {
   low: '#4CAF50',
   medium: '#FF9800',
-  high: '#FF5722',
+  high: '#FF9800',
   urgent: '#F44336',
 };
 
@@ -68,6 +69,8 @@ export default function MaintenanceRequestsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [selectedPriority, setSelectedPriority] = useState<string>('');
+  const [selectedPropertyType, setSelectedPropertyType] = useState<string>('');
+  const [selectedDateRange, setSelectedDateRange] = useState<{ from?: Date; to?: Date }>({});
   const [showFilters, setShowFilters] = useState(false);
   const [statusModalVisible, setStatusModalVisible] = useState(false);
   const [selectedRequestForUpdate, setSelectedRequestForUpdate] = useState<MaintenanceRequest | null>(null);
@@ -98,9 +101,23 @@ export default function MaintenanceRequestsScreen() {
       // Priority filter
       const matchesPriority = selectedPriority === '' || request.priority === selectedPriority;
 
-      return matchesSearch && matchesStatus && matchesPriority;
+      // Property type filter (from nested property)
+      const matchesPropertyType = selectedPropertyType === '' || request.property?.property_type === selectedPropertyType;
+
+      // Date range filter (created_at within range)
+      let matchesDate = true;
+      if (selectedDateRange.from) {
+        matchesDate = matchesDate && new Date(request.created_at) >= selectedDateRange.from;
+      }
+      if (selectedDateRange.to) {
+        const end = new Date(selectedDateRange.to);
+        end.setHours(23,59,59,999);
+        matchesDate = matchesDate && new Date(request.created_at) <= end;
+      }
+
+      return matchesSearch && matchesStatus && matchesPriority && matchesPropertyType && matchesDate;
     });
-  }, [maintenanceRequests, searchQuery, selectedStatus, selectedPriority]);
+  }, [maintenanceRequests, searchQuery, selectedStatus, selectedPriority, selectedPropertyType, selectedDateRange]);
 
   const handleStatusUpdate = useCallback(async (status: string, notes?: string, actualCost?: number) => {
     if (!selectedRequestForUpdate) return;
@@ -166,8 +183,11 @@ export default function MaintenanceRequestsScreen() {
             </Text>
           </View>
           <Chip 
-            style={[styles.priorityChip, { backgroundColor: PRIORITY_COLORS[item.priority] + '20' }]}
-            textStyle={{ color: PRIORITY_COLORS[item.priority], fontSize: 12 }}
+            style={[
+              styles.priorityChip, 
+              { backgroundColor: addAlpha((PRIORITY_COLORS as any)[item.priority] || theme.colors.onSurfaceVariant, 0.125) }
+            ]}
+            textStyle={{ color: (PRIORITY_COLORS as any)[item.priority] || theme.colors.onSurfaceVariant, fontSize: 12 }}
           >
             {t(`priorities.${item.priority}`)}
           </Chip>
@@ -224,8 +244,11 @@ export default function MaintenanceRequestsScreen() {
   const renderFilters = () => {
     if (!showFilters) return null;
 
-    const statusOptions = ['pending', 'approved', 'in_progress', 'completed', 'cancelled'];
-    const priorityOptions = ['low', 'medium', 'high', 'urgent'];
+    // Render right-to-left visually: Pending → Approved → In Progress → Completed → Cancelled
+    // Mapping left-to-right requires reversed array
+    const statusOptions = ['cancelled', 'completed', 'in_progress', 'approved', 'pending'];
+    const propertyTypeOptions = ['apartment', 'villa', 'office', 'retail', 'warehouse'];
+    const priorityOptions = ['urgent', 'high', 'medium', 'low'];
 
     return (
       <ModernCard style={styles.filtersCard}>
@@ -275,6 +298,43 @@ export default function MaintenanceRequestsScreen() {
               {t(`priorities.${priority}`)}
             </Chip>
           ))}
+        </View>
+
+        <Text style={styles.filtersTitle}>{t('filterByPropertyType')}</Text>
+        <View style={styles.filterChips}>
+          <Chip
+            selected={selectedPropertyType === ''}
+            onPress={() => setSelectedPropertyType('')}
+            style={styles.filterChip}
+          >
+            {t('common:all')}
+          </Chip>
+          {propertyTypeOptions.map(type => (
+            <Chip
+              key={type}
+              selected={selectedPropertyType === type}
+              onPress={() => setSelectedPropertyType(type)}
+              style={styles.filterChip}
+            >
+              {t(`properties:types.${type}`)}
+            </Chip>
+          ))}
+        </View>
+
+        <Text style={styles.filtersTitle}>{t('filterByDate')}</Text>
+        <View style={styles.filterChips}>
+          <Button mode="outlined" onPress={() => setSelectedDateRange({})} style={styles.filterChip}>
+            {t('common:clear')}
+          </Button>
+          <Button mode="outlined" onPress={() => setSelectedDateRange({ from: new Date(new Date().setDate(new Date().getDate()-7)) })} style={styles.filterChip}>
+            {t('dateRanges.last7Days')}
+          </Button>
+          <Button mode="outlined" onPress={() => setSelectedDateRange({ from: new Date(new Date().setDate(new Date().getDate()-30)) })} style={styles.filterChip}>
+            {t('dateRanges.last30Days')}
+          </Button>
+          <Button mode="outlined" onPress={() => setSelectedDateRange({ from: new Date(new Date().getFullYear(), new Date().getMonth(), 1) })} style={styles.filterChip}>
+            {t('dateRanges.thisMonth')}
+          </Button>
         </View>
       </ModernCard>
     );

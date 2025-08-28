@@ -1,9 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { lightTheme, darkTheme, spacing, borderRadius, shadows, rtlStyles } from '@/lib/theme';
+import { lightTheme, darkTheme, spacing, shadows } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
 import { formatCurrency } from '@/lib/formatters';
-import { isRTL } from '@/lib/i18n';
 
 interface RentCardProps {
   totalRent: number;
@@ -25,27 +24,32 @@ export default function RentCard({
 
   if (loading) {
     return (
-      <View style={[
-        styles.container, 
-        { 
-          backgroundColor: theme.colors.surface,
-          borderColor: theme.colors.outline,
-          minHeight: 200,
-          padding: spacing.m,
-          borderRadius: borderRadius.medium,
-          ...shadows.small,
-        }
-      ]}>
+      <View 
+        style={[
+          styles.container, 
+          { 
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.colors.outline,
+            minHeight: 200,
+            padding: spacing.m,
+            borderRadius: 12,
+            ...shadows.small,
+          }
+        ]}
+      >
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={[
-            styles.loadingText, 
-            { 
-              color: theme.colors.onSurfaceVariant,
-              fontSize: 14,
-              marginTop: spacing.s,
-            }
-          ]}>
+          <Text 
+            style={[
+              styles.loadingText, 
+              { 
+                color: theme.colors.onSurfaceVariant,
+                fontSize: 14,
+                marginTop: spacing.s,
+                textAlign: 'center',
+              }
+            ]}
+          >
             جاري التحميل...
           </Text>
         </View>
@@ -54,89 +58,127 @@ export default function RentCard({
   }
 
   return (
-    <View style={[
-      styles.container, 
-      { 
-        backgroundColor: theme.colors.surface,
-        borderColor: theme.colors.outline,
-        minHeight: 200,
-        padding: spacing.m,
-        borderRadius: borderRadius.medium,
-        ...shadows.small,
-      }
-    ]}>
-      <Text style={[
-        styles.title, 
-        rtlStyles.textAlign(),
+    <View 
+      style={[
+        styles.container, 
         { 
-          color: theme.colors.onSurface,
-          fontSize: 18,
-          marginBottom: spacing.m,
+          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.outline,
+          minHeight: 200,
+          padding: spacing.m,
+          borderRadius: 12,
+          ...shadows.small,
         }
-      ]}>
+      ]}
+    >
+      <Text 
+        style={[
+          styles.title, 
+          { 
+            color: theme.colors.onSurface,
+            fontSize: 18,
+            marginBottom: spacing.m,
+            fontWeight: '700',
+            textAlign: 'right',
+          }
+        ]}
+      >
         نظرة عامة على الإيجارات
       </Text>
       
       <View style={[styles.row, { marginBottom: spacing.s }]}>
-        <Text style={[
-          styles.value, 
-          { 
-            color: theme.colors.primary,
-            fontSize: 18,
-          }
-        ]}>
+        <View style={styles.bulletContainer}>
+          <View style={[styles.bullet, { backgroundColor: theme.colors.primary }]} />
+          <Text 
+            style={[
+              styles.label, 
+              { 
+                color: theme.colors.onSurfaceVariant,
+                fontSize: 14,
+                fontWeight: '500',
+                textAlign: 'right',
+              }
+            ]}
+          >
+            إجمالي الإيجار
+          </Text>
+        </View>
+        <Text 
+          style={[
+            styles.value, 
+            { 
+              color: theme.colors.primary,
+              fontSize: 18,
+              fontWeight: '600',
+              textAlign: 'left',
+            }
+          ]}
+        >
           {formatCurrency(totalRent)}
-        </Text>
-        <Text style={[
-          styles.label, 
-          { 
-            color: theme.colors.onSurfaceVariant,
-            fontSize: 14,
-          }
-        ]}>
-          إجمالي الإيجار
         </Text>
       </View>
 
       <View style={[styles.row, { marginBottom: spacing.s }]}>
-        <Text style={[
-          styles.value, 
-          { 
-            color: '#4CAF50',
-            fontSize: 18,
-          }
-        ]}>
+        <View style={styles.bulletContainer}>
+          <View style={[styles.bullet, { backgroundColor: '#4CAF50' }]} />
+          <Text 
+            style={[
+              styles.label, 
+              { 
+                color: theme.colors.onSurfaceVariant,
+                fontSize: 14,
+                fontWeight: '500',
+                textAlign: 'right',
+              }
+            ]}
+          >
+            المحصل
+          </Text>
+        </View>
+        <Text 
+          style={[
+            styles.value, 
+            { 
+              color: '#4CAF50',
+              fontSize: 18,
+              fontWeight: '600',
+              textAlign: 'left',
+            }
+          ]}
+        >
           {formatCurrency(collectedRent)}
-        </Text>
-        <Text style={[
-          styles.label, 
-          { 
-            color: theme.colors.onSurfaceVariant,
-            fontSize: 14,
-          }
-        ]}>
-          المحصل
         </Text>
       </View>
 
-      <View style={[styles.row]}>
-        <Text style={[
-          styles.value, 
-          { 
-            color: theme.colors.error,
-            fontSize: 18,
-          }
-        ]}>
+      <View style={styles.row}>
+        <View style={styles.bulletContainer}>
+          <View style={[styles.bullet, { backgroundColor: theme.colors.error }]} />
+          <Text 
+            style={[
+              styles.label, 
+              { 
+                color: theme.colors.onSurfaceVariant,
+                fontSize: 14,
+                fontWeight: '500',
+                textAlign: 'right',
+              }
+            ]}
+          >
+            المعلق
+          </Text>
+        </View>
+        <Text 
+          style={[
+            styles.value, 
+            { 
+              color: theme.colors.error,
+              fontSize: 18,
+              fontWeight: '600',
+              textAlign: 'left',
+            }
+          ]}
+        >
           {formatCurrency(pendingRent)}
-        </Text>
-        <Text style={[
-          styles.label, 
-          { 
-            color: theme.colors.onSurfaceVariant,
-            fontSize: 14,
-          }
-        ]}>
-          المعلق
         </Text>
       </View>
     </View>
@@ -151,22 +193,30 @@ const styles = StyleSheet.create({
   },
   title: {
     fontWeight: '600',
-    // RTL-aware text alignment is now handled by rtlStyles.textAlign()
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  bulletContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  bullet: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
+  },
   label: {
     fontWeight: '400',
-    textAlign: 'right',
     flex: 1,
   },
   value: {
     fontWeight: '600',
-    textAlign: 'left',
-    marginRight: 8,
+    marginLeft: 8,
   },
   loadingContainer: {
     flex: 1,

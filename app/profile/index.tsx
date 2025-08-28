@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert, Platform , ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, Platform , ActivityIndicator, I18nManager } from 'react-native';
 import { Text, IconButton, Button, TextInput, Avatar } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
 import { supabase } from '@/lib/supabase';
 import { useTranslation } from '@/lib/useTranslation';
-import { ArrowLeft, User, Mail, Phone, MapPin, Edit3, Save, X, Camera, Shield } from 'lucide-react-native';
+import { ArrowLeft, ArrowRight, User, Mail, Phone, MapPin, Edit3, Save, X, Camera, Shield } from 'lucide-react-native';
 import ModernCard from '@/components/ModernCard';
 import ProfilePictureUpload from '@/components/ProfilePictureUpload';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useRTL } from '@/hooks/useRTL';
 
 import ChangePasswordModal from '@/components/ChangePasswordModal';
 
@@ -17,13 +18,20 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { t } = useTranslation('settings');
   const { profile, loading, error, updateProfile } = useUserProfile();
+  const rtl = useRTL();
+  // Override RTL hook to always return RTL
+  const forcedRTL = {
+    isRTL: true,
+    direction: 'rtl',
+    textAlign: { start: 'right' as any, end: 'left' as any, center: 'center' as any },
+    flexDirection: { row: 'row-reverse' as any, rowReverse: 'row' as any },
+  };
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   const [editedProfile, setEditedProfile] = useState({
-    firstName: '',
-    lastName: '',
+    fullName: '',
     email: '',
     phone: '',
     company: '',
@@ -32,12 +40,94 @@ export default function ProfileScreen() {
     country: 'Saudi Arabia',
   });
 
+  // Force RTL ALWAYS - no LTR allowed anywhere in the app
+  const isRTLNative = true; // Always RTL, no exceptions
+
+    // Force RTL globally for this component
+  React.useEffect(() => {
+    if (isRTLNative) {
+      // Force RTL at the native level
+      I18nManager.forceRTL(true);
+      I18nManager.allowRTL(true);
+      
+      // For web, try to inject CSS if document exists
+      if (typeof document !== 'undefined') {
+        const style = document.createElement('style');
+        style.textContent = `
+          /* Force RTL on ALL elements */
+          * { direction: rtl !important; }
+          
+          /* Override React Native Paper surface elements */
+          [data-testid="surface"] { direction: rtl !important; }
+          [data-testid="surface"] * { direction: rtl !important; text-align: right !important; }
+          
+          /* Override specific CSS classes */
+          .css-view-g5y9jx { direction: rtl !important; }
+          .css-text-146c3p1 { direction: rtl !important; text-align: right !important; }
+          
+          /* Override dir="auto" elements */
+          [dir="auto"] { direction: rtl !important; }
+          [dir="auto"] * { direction: rtl !important; text-align: right !important; }
+          
+          /* Override all text elements */
+          div, span, p, h1, h2, h3, h4, h5, h6 { direction: rtl !important; text-align: right !important; }
+          
+          /* Override body and html */
+          body { direction: rtl !important; }
+          html { direction: rtl !important; }
+          
+          /* Force RTL on any element with direction: ltr */
+          [style*="direction: ltr"] { direction: rtl !important; }
+          [style*="text-align: left"] { text-align: right !important; }
+          
+          /* Override React Native Paper specific styles */
+          .r-textAlign-fdjqy7 { text-align: right !important; }
+          .r-maxWidth-dnmrzs { direction: rtl !important; }
+          
+          /* Force RTL on any element that might have LTR */
+          *[class*="r-"] { direction: rtl !important; }
+        `;
+        document.head.appendChild(style);
+        
+        // Also add a continuous observer to catch any new elements
+        const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+              if (node.nodeType === Node.ELEMENT_NODE) {
+                const element = node as Element;
+                // Force RTL on any new element
+                element.setAttribute('dir', 'rtl');
+                element.setAttribute('style', (element.getAttribute('style') || '') + '; direction: rtl !important; text-align: right !important;');
+                
+                // Also force RTL on all child elements
+                const allChildren = element.querySelectorAll('*');
+                allChildren.forEach((child) => {
+                  child.setAttribute('dir', 'rtl');
+                  child.setAttribute('style', (child.getAttribute('style') || '') + '; direction: rtl !important; text-align: right !important;');
+                });
+              }
+            });
+          });
+        });
+        
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true
+        });
+        
+        return () => {
+          document.head.removeChild(style);
+          observer.disconnect();
+        };
+      }
+    }
+  }, [isRTLNative]);
+
   // Update edited profile when database profile loads
   React.useEffect(() => {
     if (profile) {
       setEditedProfile({
-        firstName: profile.first_name || '',
-        lastName: profile.last_name || '',
+        fullName: `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
         email: profile.email || '',
         phone: profile.phone || '',
         company: '', // Not in database schema
@@ -49,7 +139,7 @@ export default function ProfileScreen() {
   }, [profile]);
 
   const handleSave = async () => {
-    if (!editedProfile.firstName.trim() && !editedProfile.lastName.trim()) {
+    if (!editedProfile.fullName.trim()) {
       Alert.alert(t('profile.missingInformation'), t('profile.nameRequired'));
       return;
     }
@@ -61,9 +151,12 @@ export default function ProfileScreen() {
 
     setSaving(true);
     try {
+      const parts = editedProfile.fullName.trim().split(/\s+/);
+      const first_name = parts.shift() || '';
+      const last_name = parts.join(' ');
       const success = await updateProfile({
-        first_name: editedProfile.firstName,
-        last_name: editedProfile.lastName,
+        first_name,
+        last_name,
         email: editedProfile.email,
         phone: editedProfile.phone,
         address: editedProfile.address,
@@ -88,8 +181,7 @@ export default function ProfileScreen() {
   const handleCancel = () => {
     if (profile) {
       setEditedProfile({
-        firstName: profile.first_name || '',
-        lastName: profile.last_name || '',
+        fullName: `${profile.first_name || ''} ${profile.last_name || ''}`.trim(),
         email: profile.email || '',
         phone: profile.phone || '',
         company: '',
@@ -141,7 +233,18 @@ export default function ProfileScreen() {
   };
 
   const getFullName = () => {
-    return `${editedProfile.firstName} ${editedProfile.lastName}`.trim() || t('common:user');
+    return editedProfile.fullName.trim() || t('common:user');
+  };
+
+  const handleBack = () => {
+    try {
+      // @ts-ignore: expo-router provides canGoBack at runtime
+      if (router.canGoBack && router.canGoBack()) {
+        router.back();
+        return;
+      }
+    } catch {}
+    router.push('/(tabs)/settings');
   };
 
   // Show loading state
@@ -181,13 +284,19 @@ export default function ProfileScreen() {
   ];
 
   return (
-    <View style={styles.container}>
+    <View style={[
+      styles.container,
+      { 
+        writingDirection: (isRTLNative ? 'rtl' : 'ltr') as any,
+        direction: (isRTLNative ? 'rtl' : 'ltr') as any,
+      }
+    ] }>
       <View style={styles.header}>
-        <IconButton
-          icon={() => <ArrowLeft size={24} color={theme.colors.onSurface} />}
-          onPress={() => router.back()}
-          style={styles.backButton}
-        />
+                 <IconButton
+           icon={() => <ArrowRight size={24} color={theme.colors.onSurface} />}
+           onPress={handleBack}
+           style={styles.backButton}
+         />
         <Text style={styles.headerTitle}>{t('profile.myProfile')}</Text>
         <IconButton
           icon={() => isEditing ? <X size={24} color={theme.colors.error} /> : <Edit3 size={24} color={theme.colors.primary} />}
@@ -196,10 +305,17 @@ export default function ProfileScreen() {
         />
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ 
+          writingDirection: (isRTLNative ? 'rtl' : 'ltr') as any,
+          direction: (isRTLNative ? 'rtl' : 'ltr') as any,
+        }}
+      >
         {/* Profile Header */}
-        <ModernCard style={styles.profileCard}>
-          <View style={styles.profileHeader}>
+        <ModernCard style={[styles.profileCard, { direction: (isRTLNative ? 'rtl' : 'ltr') as any }]}>
+          <View style={[styles.profileHeader, { flexDirection: (isRTLNative ? 'row-reverse' : 'row') as any }]}>
             <ProfilePictureUpload
               currentImageUrl={profile?.profile_picture_url}
               onImageChange={handleProfilePictureChange}
@@ -208,39 +324,54 @@ export default function ProfileScreen() {
               size={80}
             />
             <View style={styles.profileInfo}>
-              <Text style={styles.profileName}>
-                {getFullName()}
-              </Text>
-              <Text style={styles.profileEmail}>
-                {editedProfile.email || t('profile.noEmail')}
-              </Text>
-              <Text style={styles.profileCompany}>
-                {profile?.role || t('profile.realEstateProfessional')}
-              </Text>
+                             <Text 
+                 style={[styles.profileName, { textAlign: 'right' as any, direction: 'rtl' as any, writingDirection: 'rtl' as any }]}
+                 dir="rtl"
+               >
+                 {getFullName()}
+               </Text>
+               <Text 
+                 style={[styles.profileEmail, { textAlign: 'right' as any, direction: 'rtl' as any, writingDirection: 'rtl' as any }]}
+                 dir="rtl"
+               >
+                 {editedProfile.email || t('profile.noEmail')}
+               </Text>
+               <Text 
+                 style={[styles.profileCompany, { textAlign: 'right' as any, direction: 'rtl' as any, writingDirection: 'rtl' as any }]}
+                 dir="rtl"
+               >
+                 {profile?.role || t('profile.realEstateProfessional')}
+               </Text>
             </View>
           </View>
         </ModernCard>
 
         {/* Profile Stats */}
-        <ModernCard style={styles.statsCard}>
-          <Text style={styles.statsTitle}>{t('profile.accountOverview')}</Text>
+        <ModernCard style={[styles.statsCard, { direction: (isRTLNative ? 'rtl' : 'ltr') as any }]}>
+                     <Text 
+             style={[styles.statsTitle, { textAlign: (isRTLNative ? 'right' : 'left') as any, direction: 'rtl' as any, writingDirection: 'rtl' as any }]}
+             dir="rtl"
+           >{t('profile.accountOverview')}</Text>
           <View style={styles.statsContainer}>
             {profileStats.map((stat, index) => (
               <View key={index} style={styles.statItem}>
                 <View style={[styles.statIcon, { backgroundColor: `${theme.colors.primary}15` }]}>
                   <stat.icon size={20} color={theme.colors.primary} />
                 </View>
-                <Text style={styles.statValue}>{stat.value}</Text>
-                <Text style={styles.statLabel}>{stat.label}</Text>
+                                 <Text style={[styles.statValue, { direction: 'rtl' as any, writingDirection: 'rtl' as any }]} dir="rtl">{stat.value}</Text>
+                 <Text style={[styles.statLabel, { direction: 'rtl' as any, writingDirection: 'rtl' as any }]} dir="rtl">{stat.label}</Text>
               </View>
             ))}
           </View>
         </ModernCard>
 
         {/* Profile Details */}
-        <ModernCard style={styles.detailsCard}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{t('profile.personalInformation')}</Text>
+        <ModernCard style={[styles.detailsCard, { direction: (isRTLNative ? 'rtl' : 'ltr') as any }]}>
+          <View style={[styles.sectionHeader, { direction: (isRTLNative ? 'rtl' : 'ltr') as any }]}>
+                         <Text 
+               style={[styles.sectionTitle, { textAlign: (isRTLNative ? 'right' : 'left') as any, direction: (isRTLNative ? 'rtl' : 'ltr') as any }]}
+               dir="rtl"
+             >{t('profile.personalInformation')}</Text>
             {isEditing && (
               <Button
                 mode="contained"
@@ -257,61 +388,43 @@ export default function ProfileScreen() {
             )}
           </View>
 
-          <View style={styles.detailsContainer}>
-            <View style={styles.detailRow}>
-              <View style={styles.detailIcon}>
+                    <View style={[styles.detailsContainer, { direction: (isRTLNative ? 'rtl' : 'ltr') as any }]}>
+            <View style={[styles.detailRow, { flexDirection: (isRTLNative ? 'row-reverse' : 'row') as any, direction: (isRTLNative ? 'rtl' : 'ltr') as any }]}>
+              <View style={[styles.detailIcon, { direction: (isRTLNative ? 'rtl' : 'ltr') as any }]}>
                 <User size={20} color={theme.colors.onSurfaceVariant} />
               </View>
-              <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>{t('profile.firstName')}</Text>
+              <View style={[styles.detailContent, { direction: (isRTLNative ? 'rtl' : 'ltr') as any }]}>
+                                 <Text 
+                   style={[styles.detailLabel, { textAlign: (isRTLNative ? 'right' : 'left') as any, direction: (isRTLNative ? 'rtl' : 'ltr') as any }]}
+                   dir="rtl"
+                 >{t('profile.fullName') || 'Full Name'}</Text>
                 {isEditing ? (
                   <TextInput
                     mode="outlined"
-                    value={editedProfile.firstName}
-                    onChangeText={(text) => setEditedProfile(prev => ({ ...prev, firstName: text }))}
-                    placeholder={t('profile.enterFirstName')}
-                    style={styles.textInput}
+                    value={editedProfile.fullName}
+                    onChangeText={(text) => setEditedProfile(prev => ({ ...prev, fullName: text }))}
+                    placeholder={t('profile.enterFullName') || 'Enter full name'}
+                    style={[styles.textInput, { textAlign: (isRTLNative ? 'right' : 'left') as any, writingDirection: (isRTLNative ? 'rtl' : 'ltr') as any }]}
                     outlineColor={theme.colors.outline}
                     activeOutlineColor={theme.colors.primary}
                   />
                 ) : (
-                  <Text style={styles.detailValue}>
-                    {editedProfile.firstName || ''}
-                  </Text>
+                                  <Text style={[styles.detailValue, { textAlign: (isRTLNative ? 'right' : 'left') as any, direction: (isRTLNative ? 'rtl' : 'ltr') as any }]}>
+                  {editedProfile.fullName || ''}
+                </Text>
                 )}
               </View>
             </View>
 
-            <View style={styles.detailRow}>
-              <View style={styles.detailIcon}>
-                <User size={20} color={theme.colors.onSurfaceVariant} />
-              </View>
-              <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>{t('profile.lastName')}</Text>
-                {isEditing ? (
-                  <TextInput
-                    mode="outlined"
-                    value={editedProfile.lastName}
-                    onChangeText={(text) => setEditedProfile(prev => ({ ...prev, lastName: text }))}
-                    placeholder={t('profile.enterLastName')}
-                    style={styles.textInput}
-                    outlineColor={theme.colors.outline}
-                    activeOutlineColor={theme.colors.primary}
-                  />
-                ) : (
-                  <Text style={styles.detailValue}>
-                    {editedProfile.lastName || ''}
-                  </Text>
-                )}
-              </View>
-            </View>
-
-            <View style={styles.detailRow}>
-              <View style={styles.detailIcon}>
+            <View style={[styles.detailRow, { flexDirection: (isRTLNative ? 'row-reverse' : 'row') as any, direction: (isRTLNative ? 'rtl' : 'ltr') as any }]}>
+              <View style={[styles.detailIcon, { direction: (isRTLNative ? 'rtl' : 'ltr') as any }]}>
                 <Mail size={20} color={theme.colors.onSurfaceVariant} />
               </View>
-              <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>{t('profile.emailAddress')}</Text>
+              <View style={[styles.detailContent, { direction: (isRTLNative ? 'rtl' : 'ltr') as any }]}>
+                                 <Text 
+                   style={[styles.detailLabel, { textAlign: (isRTLNative ? 'right' : 'left') as any, direction: (isRTLNative ? 'rtl' : 'ltr') as any }]}
+                   dir="rtl"
+                 >{t('profile.emailAddress')}</Text>
                 {isEditing ? (
                   <TextInput
                     mode="outlined"
@@ -319,24 +432,24 @@ export default function ProfileScreen() {
                     onChangeText={(text) => setEditedProfile(prev => ({ ...prev, email: text }))}
                     placeholder={t('profile.enterEmail')}
                     keyboardType="email-address"
-                    style={styles.textInput}
+                    style={[styles.textInput, { textAlign: (isRTLNative ? 'right' : 'left') as any, writingDirection: (isRTLNative ? 'rtl' : 'ltr') as any }]}
                     outlineColor={theme.colors.outline}
                     activeOutlineColor={theme.colors.primary}
                   />
                 ) : (
-                  <Text style={styles.detailValue}>
+                  <Text style={[styles.detailValue, { textAlign: (isRTLNative ? 'right' : 'left') as any, direction: (isRTLNative ? 'rtl' : 'ltr') as any }]}>
                     {editedProfile.email || ''}
                   </Text>
                 )}
               </View>
             </View>
 
-            <View style={styles.detailRow}>
-              <View style={styles.detailIcon}>
+            <View style={[styles.detailRow, { flexDirection: (isRTLNative ? 'row-reverse' : 'row') as any, direction: (isRTLNative ? 'rtl' : 'ltr') as any }]}>
+              <View style={[styles.detailIcon, { direction: (isRTLNative ? 'rtl' : 'ltr') as any }]}>
                 <Phone size={20} color={theme.colors.onSurfaceVariant} />
               </View>
-              <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>{t('profile.phoneNumber')}</Text>
+              <View style={[styles.detailContent, { direction: (isRTLNative ? 'rtl' : 'ltr') as any }]}>
+                <Text style={[styles.detailLabel, { textAlign: (isRTLNative ? 'right' : 'left') as any, direction: (isRTLNative ? 'rtl' : 'ltr') as any }]}>{t('profile.phoneNumber')}</Text>
                 {isEditing ? (
                   <TextInput
                     mode="outlined"
@@ -344,36 +457,36 @@ export default function ProfileScreen() {
                     onChangeText={(text) => setEditedProfile(prev => ({ ...prev, phone: text }))}
                     placeholder={t('profile.enterPhone')}
                     keyboardType="phone-pad"
-                    style={styles.textInput}
+                    style={[styles.textInput, { textAlign: (isRTLNative ? 'right' : 'left') as any, writingDirection: (isRTLNative ? 'rtl' : 'ltr') as any }]}
                     outlineColor={theme.colors.outline}
                     activeOutlineColor={theme.colors.primary}
                   />
                 ) : (
-                  <Text style={styles.detailValue}>
+                  <Text style={[styles.detailValue, { textAlign: (isRTLNative ? 'right' : 'left') as any, direction: (isRTLNative ? 'rtl' : 'ltr') as any }]}>
                     {editedProfile.phone || ''}
                   </Text>
                 )}
               </View>
             </View>
 
-            <View style={styles.detailRow}>
-              <View style={styles.detailIcon}>
+            <View style={[styles.detailRow, { flexDirection: (isRTLNative ? 'row-reverse' : 'row') as any, direction: (isRTLNative ? 'rtl' : 'ltr') as any }]}>
+              <View style={[styles.detailIcon, { direction: (isRTLNative ? 'rtl' : 'ltr') as any }]}>
                 <MapPin size={20} color={theme.colors.onSurfaceVariant} />
               </View>
-              <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>{t('profile.company')}</Text>
+              <View style={[styles.detailContent, { direction: (isRTLNative ? 'rtl' : 'ltr') as any }]}>
+                <Text style={[styles.detailLabel, { textAlign: (isRTLNative ? 'right' : 'left') as any, direction: (isRTLNative ? 'rtl' : 'ltr') as any }]}>{t('profile.company')}</Text>
                 {isEditing ? (
                   <TextInput
                     mode="outlined"
                     value={editedProfile.company}
                     onChangeText={(text) => setEditedProfile(prev => ({ ...prev, company: text }))}
                     placeholder={t('profile.enterCompany')}
-                    style={styles.textInput}
+                    style={[styles.textInput, { textAlign: (isRTLNative ? 'right' : 'left') as any, writingDirection: (isRTLNative ? 'rtl' : 'ltr') as any }]}
                     outlineColor={theme.colors.outline}
                     activeOutlineColor={theme.colors.primary}
                   />
                 ) : (
-                  <Text style={styles.detailValue}>
+                  <Text style={[styles.detailValue, { textAlign: (isRTLNative ? 'right' : 'left') as any, direction: (isRTLNative ? 'rtl' : 'ltr') as any }]}>
                     {editedProfile.company || ''}
                   </Text>
                 )}
@@ -383,16 +496,16 @@ export default function ProfileScreen() {
         </ModernCard>
 
         {/* Address Information */}
-        <ModernCard style={styles.addressCard}>
-          <Text style={styles.sectionTitle}>{t('profile.addressInformation')}</Text>
+        <ModernCard style={[styles.addressCard, { direction: (isRTLNative ? 'rtl' : 'ltr') as any }]}>
+          <Text style={[styles.sectionTitle, { textAlign: (isRTLNative ? 'right' : 'left') as any }]}>{t('profile.addressInformation')}</Text>
           
           <View style={styles.detailsContainer}>
-            <View style={styles.detailRow}>
+            <View style={[styles.detailRow, { flexDirection: (isRTLNative ? 'row-reverse' : 'row') as any }]}>
               <View style={styles.detailIcon}>
                 <MapPin size={20} color={theme.colors.onSurfaceVariant} />
               </View>
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>{t('profile.streetAddress')}</Text>
+                <Text style={[styles.detailLabel, { textAlign: (isRTLNative ? 'right' : 'left') as any }]}>{t('profile.streetAddress')}</Text>
                 {isEditing ? (
                   <TextInput
                     mode="outlined"
@@ -401,52 +514,52 @@ export default function ProfileScreen() {
                     placeholder={t('profile.enterAddress')}
                     multiline
                     numberOfLines={2}
-                    style={styles.textInput}
+                    style={[styles.textInput, { textAlign: (isRTLNative ? 'right' : 'left') as any, writingDirection: (isRTLNative ? 'rtl' : 'ltr') as any }]}
                     outlineColor={theme.colors.outline}
                     activeOutlineColor={theme.colors.primary}
                   />
                 ) : (
-                  <Text style={styles.detailValue}>
+                  <Text style={[styles.detailValue, { textAlign: (isRTLNative ? 'right' : 'left') as any }]}>
                     {editedProfile.address || ''}
                   </Text>
                 )}
               </View>
             </View>
 
-            <View style={styles.addressRow}>
+            <View style={[styles.addressRow, { flexDirection: (isRTLNative ? 'row-reverse' : 'row') as any }]}> 
               <View style={styles.addressColumn}>
-                <Text style={styles.detailLabel}>{t('profile.city')}</Text>
+                <Text style={[styles.detailLabel, { textAlign: (isRTLNative ? 'right' : 'left') as any }]}>{t('profile.city')}</Text>
                 {isEditing ? (
                   <TextInput
                     mode="outlined"
                     value={editedProfile.city}
                     onChangeText={(text) => setEditedProfile(prev => ({ ...prev, city: text }))}
                     placeholder={t('profile.enterCity')}
-                    style={styles.smallTextInput}
+                    style={[styles.smallTextInput, { textAlign: (isRTLNative ? 'right' : 'left') as any, writingDirection: (isRTLNative ? 'rtl' : 'ltr') as any }]}
                     outlineColor={theme.colors.outline}
                     activeOutlineColor={theme.colors.primary}
                   />
                 ) : (
-                  <Text style={styles.detailValue}>
+                  <Text style={[styles.detailValue, { textAlign: (isRTLNative ? 'right' : 'left') as any }]}>
                     {editedProfile.city || ''}
                   </Text>
                 )}
               </View>
 
               <View style={styles.addressColumn}>
-                <Text style={styles.detailLabel}>{t('profile.country')}</Text>
+                <Text style={[styles.detailLabel, { textAlign: (isRTLNative ? 'right' : 'left') as any }]}>{t('profile.country')}</Text>
                 {isEditing ? (
                   <TextInput
                     mode="outlined"
                     value={editedProfile.country}
                     onChangeText={(text) => setEditedProfile(prev => ({ ...prev, country: text }))}
                     placeholder={t('profile.selectCountry')}
-                    style={styles.smallTextInput}
+                    style={[styles.smallTextInput, { textAlign: (isRTLNative ? 'right' : 'left') as any, writingDirection: (isRTLNative ? 'rtl' : 'ltr') as any }]}
                     outlineColor={theme.colors.outline}
                     activeOutlineColor={theme.colors.primary}
                   />
                 ) : (
-                  <Text style={styles.detailValue}>{editedProfile.country}</Text>
+                  <Text style={[styles.detailValue, { textAlign: (isRTLNative ? 'right' : 'left') as any }]}>{editedProfile.country}</Text>
                 )}
               </View>
             </View>
@@ -454,8 +567,8 @@ export default function ProfileScreen() {
         </ModernCard>
 
         {/* Account Actions */}
-        <ModernCard style={styles.actionsCard}>
-          <Text style={styles.sectionTitle}>{t('profile.accountActions')}</Text>
+        <ModernCard style={[styles.actionsCard, { direction: (isRTLNative ? 'rtl' : 'ltr') as any }]}>
+          <Text style={[styles.sectionTitle, { textAlign: (isRTLNative ? 'right' : 'left') as any }]}>{t('profile.accountActions')}</Text>
           
           <Button
             mode="outlined"
@@ -505,6 +618,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
+  },
+  // Force RTL override for React Native Paper components
+  rtlOverride: {
+    direction: 'rtl',
+    writingDirection: 'rtl',
   },
   loadingContainer: {
     justifyContent: 'center',

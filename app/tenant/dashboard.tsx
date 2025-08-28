@@ -356,8 +356,8 @@ export default function TenantDashboardScreen() {
           </View>
           <Chip 
             mode="flat" 
-            style={{ backgroundColor: getPriorityColor(request.priority) + '20' }}
-            textStyle={{ color: getPriorityColor(request.priority) }}
+            style={{ backgroundColor: (getPriorityColor(request.priority) || theme.colors.onSurfaceVariant) + '20' }}
+            textStyle={{ color: getPriorityColor(request.priority) || theme.colors.onSurfaceVariant }}
           >
             {getPriorityText(request.priority)}
           </Chip>
@@ -373,8 +373,8 @@ export default function TenantDashboardScreen() {
           </Text>
           <Chip 
             mode="outlined" 
-            style={{ backgroundColor: getMaintenanceStatusColor(request.status) + '20' }}
-            textStyle={{ color: getMaintenanceStatusColor(request.status) }}
+            style={{ backgroundColor: (getMaintenanceStatusColor(request.status) || theme.colors.onSurfaceVariant) + '20' }}
+            textStyle={{ color: getMaintenanceStatusColor(request.status) || theme.colors.onSurfaceVariant }}
           >
             {getMaintenanceStatusText(request.status)}
           </Chip>

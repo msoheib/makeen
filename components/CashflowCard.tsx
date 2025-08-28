@@ -31,7 +31,7 @@ export default function CashflowCard({
           borderColor: theme.colors.outline,
           minHeight: 200,
           padding: spacing.m,
-          borderRadius: borderRadius.medium,
+          borderRadius: 12,
           ...shadows.small,
         }
       ]}>
@@ -60,7 +60,7 @@ export default function CashflowCard({
         borderColor: theme.colors.outline,
         minHeight: 200,
         padding: spacing.m,
-        borderRadius: borderRadius.medium,
+        borderRadius: 12,
         ...shadows.small,
       }
     ]}>
@@ -70,50 +70,61 @@ export default function CashflowCard({
           color: theme.colors.onSurface,
           fontSize: 18,
           marginBottom: spacing.m,
+          fontWeight: '700',
         }
       ]}>
         التدفق النقدي
       </Text>
       
       <View style={[styles.row, { marginBottom: spacing.s }]}>
+        <View style={styles.bulletContainer}>
+          <View style={[styles.bullet, { backgroundColor: '#4CAF50' }]} />
+          <Text style={[
+            styles.label, 
+            { 
+              color: theme.colors.onSurface,
+              fontSize: 14,
+              fontWeight: '500',
+            }
+          ]}>
+            ر.س الدخل
+          </Text>
+        </View>
         <Text style={[
           styles.value, 
           { 
             color: '#4CAF50',
             fontSize: 18,
+            fontWeight: '600',
           }
         ]}>
           {formatCurrency(income)}
         </Text>
-        <Text style={[
-          styles.label, 
-          { 
-            color: theme.colors.onSurfaceVariant,
-            fontSize: 14,
-          }
-        ]}>
-          الدخل
-        </Text>
       </View>
 
       <View style={[styles.row, { marginBottom: spacing.s }]}>
+        <View style={styles.bulletContainer}>
+          <View style={[styles.bullet, { backgroundColor: theme.colors.error }]} />
+          <Text style={[
+            styles.label, 
+            { 
+              color: theme.colors.onSurface,
+              fontSize: 14,
+              fontWeight: '500',
+            }
+          ]}>
+            ر.س المصروفات
+          </Text>
+        </View>
         <Text style={[
           styles.value, 
           { 
             color: theme.colors.error,
             fontSize: 18,
+            fontWeight: '600',
           }
         ]}>
           {formatCurrency(expenses)}
-        </Text>
-        <Text style={[
-          styles.label, 
-          { 
-            color: theme.colors.onSurfaceVariant,
-            fontSize: 14,
-          }
-        ]}>
-          المصروفات
         </Text>
       </View>
 
@@ -123,6 +134,19 @@ export default function CashflowCard({
       }]} />
 
       <View style={styles.row}>
+        <View style={styles.bulletContainer}>
+          <View style={[styles.bullet, { backgroundColor: theme.colors.primary }]} />
+          <Text style={[
+            styles.label, 
+            { 
+              color: theme.colors.onSurface,
+              fontSize: 16,
+              fontWeight: '600',
+            }
+          ]}>
+            ر.س صافي الدخل
+          </Text>
+        </View>
         <Text style={[
           styles.value, 
           { 
@@ -132,16 +156,6 @@ export default function CashflowCard({
           }
         ]}>
           {formatCurrency(netIncome)}
-        </Text>
-        <Text style={[
-          styles.label, 
-          { 
-            color: theme.colors.onSurface,
-            fontSize: 16,
-            fontWeight: '600',
-          }
-        ]}>
-          صافي الدخل
         </Text>
       </View>
     </View>
@@ -163,6 +177,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  bulletContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  bullet: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
+  },
   label: {
     fontWeight: '400',
     textAlign: 'right',
@@ -171,7 +196,7 @@ const styles = StyleSheet.create({
   value: {
     fontWeight: '600',
     textAlign: 'left',
-    marginRight: 8,
+    marginLeft: 8,
   },
   separator: {
     height: 1,

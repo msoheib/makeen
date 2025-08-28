@@ -11,6 +11,7 @@ import ModernCard from '@/components/ModernCard';
 import StatCard from '@/components/StatCard';
 import VoucherCard from '@/components/VoucherCard';
 import { useTranslation } from 'react-i18next';
+import { toArabicNumerals } from '@/lib/formatters';
 
 export default function FinanceScreen() {
   const router = useRouter();
@@ -130,7 +131,7 @@ export default function FinanceScreen() {
       <View style={styles.invoiceHeader}>
         <Text style={styles.invoiceNumber}>{item.invoice_number}</Text>
         <Text style={styles.invoiceAmount}>
-          ${item.total_amount.toLocaleString()}
+          {toArabicNumerals(new Intl.NumberFormat('ar-SA', { maximumFractionDigits: 0 }).format(item.total_amount))} ر.س
         </Text>
       </View>
       <Text style={styles.invoiceDescription}>{item.description}</Text>
@@ -164,26 +165,26 @@ export default function FinanceScreen() {
           data={[
             {
               title: 'Total Income',
-              value: `$${stats.totalIncome.toLocaleString()}`,
+              value: `${toArabicNumerals(new Intl.NumberFormat('ar-SA', { maximumFractionDigits: 0 }).format(stats.totalIncome))} ر.س`,
               color: theme.colors.success,
               icon: <TrendingUp size={20} color={theme.colors.success} />,
               trend: { value: '+12.5%', isPositive: true },
             },
             {
               title: 'Total Expenses',
-              value: `$${stats.totalExpenses.toLocaleString()}`,
+              value: `${toArabicNumerals(new Intl.NumberFormat('ar-SA', { maximumFractionDigits: 0 }).format(stats.totalExpenses))} ر.س`,
               color: theme.colors.error,
               icon: <TrendingDown size={20} color={theme.colors.error} />,
             },
             {
               title: 'Pending',
-              value: `$${stats.pendingPayments.toLocaleString()}`,
+              value: `${toArabicNumerals(new Intl.NumberFormat('ar-SA', { maximumFractionDigits: 0 }).format(stats.pendingPayments))} ر.س`,
               color: theme.colors.warning,
               icon: <Receipt size={20} color={theme.colors.warning} />,
             },
             {
               title: 'Net Income',
-              value: `$${stats.thisMonth.toLocaleString()}`,
+              value: `${toArabicNumerals(new Intl.NumberFormat('ar-SA', { maximumFractionDigits: 0 }).format(stats.thisMonth))} ر.س`,
               color: theme.colors.primary,
               icon: <DollarSign size={20} color={theme.colors.primary} />,
               trend: { value: '+8.2%', isPositive: true },

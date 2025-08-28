@@ -209,11 +209,12 @@ describe('Maintenance Forms E2E Tests', () => {
     });
 
     it('should validate description length', async () => {
-      // Test minimum length
-      await element(by.testID('request-description-input')).typeText('Too short');
+      // Test that description is required (no minimum length)
+      await element(by.testID('request-description-input')).typeText('Short');
       await element(by.testID('submit-maintenance-button')).tap();
       
-      await expect(element(by.text('Description must be at least 20 characters'))).toBeVisible();
+      // Should not show minimum length error since validation was removed
+      // Only required field validation should apply
       
       // Test maximum length
       const longText = 'A'.repeat(1001);

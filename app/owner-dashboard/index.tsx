@@ -16,6 +16,7 @@ import { useApi } from '../../hooks/useApi';
 import { api } from '../../lib/api';
 import ModernHeader from '../../components/ModernHeader';
 import StatCard from '../../components/StatCard';
+import { toArabicNumerals, formatDisplayNumber } from '@/lib/formatters';
 
 interface PropertyOwnerDashboardProps {}
 
@@ -162,7 +163,7 @@ export default function PropertyOwnerDashboard({}: PropertyOwnerDashboardProps) 
           >
             <View style={styles.bidHeader}>
               <Text style={styles.bidProperty}>{bid.property?.title}</Text>
-              <Text style={styles.bidAmount}>{bid.bid_amount.toLocaleString()} SAR</Text>
+              <Text style={styles.bidAmount}>{toArabicNumerals(new Intl.NumberFormat('ar-SA', { maximumFractionDigits: 0 }).format(bid.bid_amount))} ر.س</Text>
             </View>
             <Text style={styles.bidBidder}>
               {bid.bidder?.first_name} {bid.bidder?.last_name}
@@ -265,28 +266,28 @@ export default function PropertyOwnerDashboard({}: PropertyOwnerDashboardProps) 
         <View style={styles.statsContainer}>
           <StatCard
             title="Total Properties"
-            value={totalProperties.toString()}
-            subtitle={`${occupiedProperties} occupied`}
+            value={totalProperties}
+            subtitle={`${toArabicNumerals(occupiedProperties)} occupied`}
             color={theme.colors.primary}
             loading={propertiesLoading}
           />
           <StatCard
             title="Monthly Revenue"
-            value={`${monthlyRevenue.toLocaleString()}`}
-            subtitle="SAR"
+            value={monthlyRevenue}
+            subtitle="ر.س"
             color={theme.colors.secondary}
             loading={propertiesLoading}
           />
           <StatCard
             title="Pending Bids"
-            value={pendingBids.toString()}
+            value={pendingBids}
             subtitle="Need response"
             color={theme.colors.tertiary}
             loading={bidsLoading}
           />
           <StatCard
             title="Urgent Maintenance"
-            value={urgentMaintenance.toString()}
+            value={urgentMaintenance}
             subtitle="High priority"
             color={urgentMaintenance > 0 ? theme.colors.error : theme.colors.primary}
             loading={maintenanceLoading}

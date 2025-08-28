@@ -79,6 +79,8 @@
   "noWorkOrders": "لا توجد أوامر عمل",
   "filterByStatus": "تصفية حسب الحالة",
   "filterByPriority": "تصفية حسب الأولوية",
+  "filterByPropertyType": "تصفية حسب نوع العقار",
+  "filterByDate": "تصفية حسب التاريخ",
   "searchPlaceholder": "البحث في طلبات الصيانة...",
   "createRequest": "إنشاء طلب",
   "saveRequest": "حفظ الطلب",

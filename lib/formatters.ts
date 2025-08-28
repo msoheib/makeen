@@ -32,10 +32,13 @@ const arabicNumerals: { [key: string]: string } = {
 };
 
 // Convert English numerals to Arabic numerals
-export const toArabicNumerals = (text: string): string => {
-  if (!isArabicLanguage()) return text;
-  
-  return text.toString().replace(/[0-9]/g, (digit: string) => arabicNumerals[digit] || digit);
+export const toArabicNumerals = (text: string | number | null | undefined): string => {
+  if (text === null || text === undefined) {
+    return isArabicLanguage() ? '٠' : '0';
+  }
+  const str = text.toString();
+  if (!isArabicLanguage()) return str;
+  return str.replace(/[0-9]/g, (digit: string) => arabicNumerals[digit] || digit);
 };
 
 export const formatDate = (date: Date | string, formatString: string = 'PPP'): string => {
@@ -45,15 +48,16 @@ export const formatDate = (date: Date | string, formatString: string = 'PPP'): s
   return toArabicNumerals(formatted);
 };
 
-export const formatCurrency = (amount: number, currency: string = 'SAR'): string => {
+export const formatCurrency = (amount: number | null | undefined, currency: string = 'SAR'): string => {
   const currentLanguage = getCurrentLanguage();
+  const safeAmount = typeof amount === 'number' && isFinite(amount) ? amount : 0;
   
   // Use language-appropriate number formatting
   const locale = currentLanguage === 'ar' ? 'ar-SA' : 'en-US';
   const formattedAmount = new Intl.NumberFormat(locale, {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(amount);
+  }).format(safeAmount);
   
   // Use different currency symbols based on language
   let currencySymbol: string;
@@ -73,37 +77,43 @@ export const formatCurrency = (amount: number, currency: string = 'SAR'): string
   }
 };
 
-export const formatNumber = (num: number | string): string => {
+export const formatNumber = (num: number | string | null | undefined): string => {
+  if (num === null || num === undefined || (typeof num === 'number' && !isFinite(num))) {
+    return isArabicLanguage() ? '٠' : '0';
+  }
   const numStr = num.toString();
   return isArabicLanguage() ? toArabicNumerals(numStr) : numStr;
 };
 
 // Enhanced number formatter for stats and displays
-export const formatDisplayNumber = (num: number | string): string => {
+export const formatDisplayNumber = (num: number | string | null | undefined): string => {
   const currentLanguage = getCurrentLanguage();
+  if (num === null || num === undefined || (typeof num === 'number' && !isFinite(num))) {
+    return currentLanguage === 'ar' ? '٠' : '0';
+  }
   
   if (currentLanguage === 'ar') {
     // For Arabic, format with Arabic-Indic digits and proper grouping
     const numValue = typeof num === 'string' ? parseFloat(num) : num;
-    if (isNaN(numValue)) return toArabicNumerals(num.toString());
+    if (isNaN(numValue as number)) return toArabicNumerals(num as any);
     
     // Format with Arabic locale for proper grouping
     const formatted = new Intl.NumberFormat('ar-SA', {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(numValue);
+    }).format(numValue as number);
     
     // Convert to Arabic-Indic digits
     return toArabicNumerals(formatted);
   } else {
     // For English, use standard formatting
     const numValue = typeof num === 'string' ? parseFloat(num) : num;
-    if (isNaN(numValue)) return num.toString();
+    if (isNaN(numValue as number)) return (num as any).toString();
     
     return new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(numValue);
+    }).format(numValue as number);
   }
 };
 
