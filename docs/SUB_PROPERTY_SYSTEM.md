@@ -287,3 +287,7 @@ const subProperty = await subPropertiesApi.getById("apartment-uuid");
 ## Conclusion
 
 The Sub-Property Management System provides a comprehensive solution for managing individual units within larger properties. It addresses all the required fields specified in the requirements while maintaining flexibility for optional features. The system is designed with scalability, security, and user experience in mind, making it suitable for both small property managers and large real estate companies.
+
+
+
+

@@ -169,24 +169,9 @@ const FilterModal: React.FC<FilterModalProps> = ({ visible, onClose, onApply, fi
             />
           )}
           
-          <View style={modalStyles.modalActions}>
+          <View style={[modalStyles.modalActions, { flexDirection: 'row' }]}>
             <TouchableOpacity
-              style={[modalStyles.modalButton, { backgroundColor: theme.colors.outline }]}
-              onPress={onClose}
-            >
-              <Text style={[modalStyles.modalButtonText, { color: theme.colors.onSurface }]}> 
-                {t('common:cancel')}
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[
-                modalStyles.modalButton, 
-                { 
-                  backgroundColor: selectedOption ? theme.colors.primary : theme.colors.outline,
-                  opacity: selectedOption ? 1 : 0.5
-                }
-              ]}
+              style={[modalStyles.modalButton, { backgroundColor: theme.colors.primary }]}
               onPress={() => selectedOption && onApply(selectedOption)}
               disabled={!selectedOption}
             >
@@ -195,6 +180,15 @@ const FilterModal: React.FC<FilterModalProps> = ({ visible, onClose, onApply, fi
                 { color: selectedOption ? theme.colors.onPrimary : theme.colors.onSurface }
               ]}>
                 {t('common:apply')}
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[modalStyles.modalButton, { backgroundColor: theme.colors.outline }]}
+              onPress={onClose}
+            >
+              <Text style={[modalStyles.modalButtonText, { color: theme.colors.onSurface }]}> 
+                {t('common:cancel')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -621,7 +615,7 @@ export default function ReportsScreen() {
   // Memoized formatDate function - PERFORMANCE OPTIMIZATION
   const formatDate = useCallback((isoString?: string) => {
     if (!isoString) return t('common:notAvailable');
-    return new Date(isoString).toLocaleDateString(I18nManager.isRTL ? 'ar-SA' : 'en-US');
+    return new Date(isoString).toLocaleDateString('en-US');
   }, [t]);
 
   // Memoized FlatList callback functions - PERFORMANCE OPTIMIZATION
@@ -1245,6 +1239,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 16,
     marginTop: 16,
+    textAlign: 'center',
     color: theme.colors.onSurface,
   },
   horizontalStatsCard: {

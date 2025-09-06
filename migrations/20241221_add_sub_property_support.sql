@@ -190,3 +190,7 @@ COMMENT ON COLUMN public.properties.contract_pdf_url IS 'URL to contract PDF doc
 COMMENT ON COLUMN public.contracts.contract_duration_years IS 'Contract duration in years (1-5 years)';
 COMMENT ON COLUMN public.contracts.base_price IS 'Base price (total contract value)';
 COMMENT ON COLUMN public.contracts.payment_frequency IS 'Payment frequency for the contract';
+
+
+
+

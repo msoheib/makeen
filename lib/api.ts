@@ -121,6 +121,7 @@ export const propertiesApi = {
         owner:profiles!properties_owner_id_fkey(id, first_name, last_name, email, phone),
         group:property_groups!properties_group_id_fkey(id, name, group_type)
       `)
+      .eq('is_sub_property', false) // Filter out sub-properties from main list
       .order('created_at', { ascending: false });
 
     // **SECURITY**: Apply role-based filtering BEFORE other filters

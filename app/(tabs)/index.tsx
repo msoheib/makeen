@@ -944,27 +944,28 @@ const createStyles = (theme: typeof lightTheme) => StyleSheet.create({
   activityTitle: {
     fontSize: 14,
     fontWeight: '600',
-    ...rtlStyles.textAlignEnd,
+    textAlign: 'right',
     marginBottom: 2,
     color: theme.colors.onSurface,
   },
   activityDescription: {
     fontSize: 12,
-    ...rtlStyles.textAlignEnd,
+    textAlign: 'center',
     color: theme.colors.onSurfaceVariant,
   },
   activityLeft: {
-    ...rtlStyles.alignItemsStart,
+    alignItems: 'flex-start',
   },
   activityAmount: {
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 2,
-    ...rtlStyles.marginEnd(8),
+    textAlign: 'left',
     color: theme.colors.primary,
   },
   activityDate: {
     fontSize: 11,
+    textAlign: 'left',
     color: theme.colors.onSurfaceVariant,
   },
   statCardWrapper: {

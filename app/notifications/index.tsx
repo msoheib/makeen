@@ -12,7 +12,7 @@ import { useAppStore } from '@/lib/store';
 export default function NotificationsScreen() {
   const router = useRouter();
   const { theme } = useTheme();
-  const [filter, setFilter] = useState<'all' | 'unread' | 'bid_submitted' | 'bid_approved'>('all');
+  const [filter, setFilter] = useState<'all' | 'unread' | 'bid_submitted' | 'bid_approved' | 'bid_rejected'>('all');
   const { markAllAsRead } = useNotificationBadges();
   const { triggerHeaderBadgeRefresh } = useAppStore();
 
@@ -302,7 +302,8 @@ export default function NotificationsScreen() {
                 { key: 'all', label: 'الكل' },
                 { key: 'unread', label: 'غير مقروءة' },
                 { key: 'bid_submitted', label: 'عروض جديدة' },
-                { key: 'bid_approved', label: 'موافقات' }
+                { key: 'bid_approved', label: 'تم الموافقة' },
+                { key: 'bid_rejected', label: 'تم الرفض' }
               ].map((filterItem) => (
                 <Chip
                   key={filterItem.key}

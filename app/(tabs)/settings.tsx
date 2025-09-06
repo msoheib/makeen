@@ -17,6 +17,7 @@ import {
   Shield, 
   FileText,
   ChevronRight,
+  ChevronLeft,
   LogOut
 } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
@@ -206,7 +207,7 @@ export default function SettingsScreen() {
                 color={theme.colors.primary}
               />
             ) : (
-              <ChevronRight size={20} color={theme.colors.onSurfaceVariant} />
+              <ChevronLeft size={20} color={theme.colors.onSurfaceVariant} />
             )
           )}
           onPress={!item.showSwitch ? item.onPress : undefined}
@@ -240,7 +241,7 @@ export default function SettingsScreen() {
             description={profile?.email || t('profile.loadingEmail')}
             titleStyle={[styles.profileName, { color: theme.colors.onSurface }]}
             descriptionStyle={[styles.profileEmail, { color: theme.colors.onSurfaceVariant }]}
-            right={() => <ChevronRight size={20} color={theme.colors.onSurfaceVariant} />}
+            right={() => <ChevronLeft size={20} color={theme.colors.onSurfaceVariant} />}
           />
         </View>
 
@@ -386,6 +387,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
+    marginLeft: 8, // Add spacing on the left side
   },
   profileDetails: {
     flex: 1,
@@ -428,6 +430,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
+    marginLeft: 8, // Add spacing on the left side
   },
   itemTitle: {
     fontSize: 16,

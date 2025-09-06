@@ -18,18 +18,18 @@ export default function LanguageSelectionScreen() {
 
   const languages = [
     {
-      code: 'en' as const,
-      name: 'English',
-      nativeName: 'English',
-      flag: '🇺🇸',
-      description: 'Default language for the application',
-    },
-    {
       code: 'ar' as const,
       name: 'Arabic',
       nativeName: 'العربية',
       flag: '🇸🇦',
-      description: 'Arabic language with full RTL support',
+      description: 'اللغة الأساسية للتطبيق مع دعم كامل للعربية',
+    },
+    {
+      code: 'en' as const,
+      name: 'English',
+      nativeName: 'English',
+      flag: '🇺🇸',
+      description: 'English language support',
     },
   ];
 

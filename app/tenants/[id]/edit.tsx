@@ -152,7 +152,7 @@ export default function EditTenantScreen() {
           <Text style={styles.sectionTitle}>{t('details.personalInfo')}</Text>
           
           <TextInput
-            label="First Name"
+            label="الاسم الأول"
             value={formData.first_name}
             onChangeText={(text) => setFormData(prev => ({ ...prev, first_name: text }))}
             mode="outlined"
@@ -160,7 +160,7 @@ export default function EditTenantScreen() {
           />
 
           <TextInput
-            label="Last Name"
+            label="الاسم الأخير"
             value={formData.last_name}
             onChangeText={(text) => setFormData(prev => ({ ...prev, last_name: text }))}
             mode="outlined"
@@ -196,7 +196,7 @@ export default function EditTenantScreen() {
 
           <View style={styles.row}>
             <TextInput
-              label="City"
+              label="المدينة"
               value={formData.city}
               onChangeText={(text) => setFormData(prev => ({ ...prev, city: text }))}
               mode="outlined"
@@ -204,7 +204,7 @@ export default function EditTenantScreen() {
             />
 
             <TextInput
-              label="Country"
+              label="البلد"
               value={formData.country}
               onChangeText={(text) => setFormData(prev => ({ ...prev, country: text }))}
               mode="outlined"
@@ -213,7 +213,7 @@ export default function EditTenantScreen() {
           </View>
 
           <View style={styles.switchRow}>
-            <Text style={styles.switchLabel}>Foreign Tenant</Text>
+            <Text style={styles.switchLabel}>مستأجر أجنبي</Text>
             <Switch
               value={formData.is_foreign}
               onValueChange={(value) => setFormData(prev => ({ ...prev, is_foreign: value }))}
@@ -230,14 +230,14 @@ export default function EditTenantScreen() {
             />
           )}
 
-          <Text style={styles.fieldLabel}>Status</Text>
+          <Text style={styles.fieldLabel}>الحالة</Text>
           <SegmentedButtons
             value={formData.status}
             onValueChange={(value) => setFormData(prev => ({ ...prev, status: value as any }))}
             buttons={[
-              { value: 'active', label: t('common:active') },
-              { value: 'inactive', label: t('common:inactive') },
-              { value: 'suspended', label: 'Suspended' },
+              { value: 'active', label: 'نشط' },
+              { value: 'inactive', label: 'غير نشط' },
+              { value: 'suspended', label: 'معلق' },
             ]}
           />
         </ModernCard>

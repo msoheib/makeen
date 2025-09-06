@@ -38,8 +38,8 @@ jest.mock('expo-localization', () => ({
     },
   ],
   isRTL: false,
-  locale: 'en',
-  locales: ['en'],
+  locale: 'ar',
+  locales: ['ar'],
   timezone: 'America/New_York',
 }));
 

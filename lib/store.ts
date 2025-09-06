@@ -321,7 +321,7 @@ export const useAppStore = create<AppState>()(
       },
       
       // Legacy UI state (kept for backwards compatibility)
-      locale: 'en',
+      locale: 'ar',
       theme: 'light',
       setLocale: (locale) => {
         set({ locale });

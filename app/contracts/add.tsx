@@ -184,7 +184,7 @@ export default function AddContractScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ModernHeader 
-        title="Add Contract" 
+        title="إضافة عقد" 
         showBackButton={true}
       />
 
@@ -195,7 +195,7 @@ export default function AddContractScreen() {
             <View style={styles.sectionHeader}>
               <FileText size={20} color={theme.colors.primary} />
               <Text variant="titleLarge" style={{ color: theme.colors.onSurface, marginLeft: 8 }}>
-                Contract Type
+                نوع العقد
               </Text>
             </View>
             
@@ -203,9 +203,9 @@ export default function AddContractScreen() {
               value={form.contract_type}
               onValueChange={(value) => setForm(prev => ({ ...prev, contract_type: value as any }))}
               buttons={[
-                { value: 'rental', label: 'Rental' },
-                { value: 'sale', label: 'Sale' },
-                { value: 'management', label: 'Management' },
+                { value: 'rental', label: 'إيجار' },
+                { value: 'sale', label: 'بيع' },
+                { value: 'management', label: 'إدارة' },
               ]}
               style={{ marginTop: 8 }}
             />
@@ -218,7 +218,7 @@ export default function AddContractScreen() {
             <View style={styles.sectionHeader}>
               <MapPin size={20} color={theme.colors.secondary} />
               <Text variant="titleLarge" style={{ color: theme.colors.onSurface, marginLeft: 8 }}>
-                Property Selection
+                اختيار العقار
               </Text>
             </View>
 
@@ -237,7 +237,7 @@ export default function AddContractScreen() {
                   ]}
                   loading={propertiesLoading}
                 >
-                  {selectedProperty ? selectedProperty.title : 'Select Property'}
+                  {selectedProperty ? selectedProperty.title : 'اختر العقار'}
                 </Button>
               }
             >
@@ -283,7 +283,7 @@ export default function AddContractScreen() {
             <View style={styles.sectionHeader}>
               <User size={20} color={theme.colors.tertiary} />
               <Text variant="titleLarge" style={{ color: theme.colors.onSurface, marginLeft: 8 }}>
-                Tenant Selection
+                اختيار المستأجر
               </Text>
             </View>
 
@@ -302,7 +302,7 @@ export default function AddContractScreen() {
                   ]}
                   loading={tenantsLoading}
                 >
-                  {selectedTenant ? `${selectedTenant.first_name} ${selectedTenant.last_name}` : 'Select Tenant'}
+                  {selectedTenant ? `${selectedTenant.first_name} ${selectedTenant.last_name}` : 'اختر المستأجر'}
                 </Button>
               }
             >
@@ -350,12 +350,12 @@ export default function AddContractScreen() {
             <View style={styles.sectionHeader}>
               <DollarSign size={20} color={theme.colors.primary} />
               <Text variant="titleLarge" style={{ color: theme.colors.onSurface, marginLeft: 8 }}>
-                Financial Terms
+                الشروط المالية
               </Text>
             </View>
 
             <TextInput
-              label="Rent Amount (SAR)"
+              label="مبلغ الإيجار (ر.س)"
               value={form.rent_amount}
               onChangeText={(text) => setForm(prev => ({ ...prev, rent_amount: text }))}
               keyboardType="numeric"
@@ -375,7 +375,7 @@ export default function AddContractScreen() {
             )}
 
             <TextInput
-              label="Security Deposit (SAR)"
+              label="الوديعة (ر.س)"
               value={form.security_deposit}
               onChangeText={(text) => setForm(prev => ({ ...prev, security_deposit: text }))}
               keyboardType="numeric"
@@ -395,21 +395,21 @@ export default function AddContractScreen() {
             )}
 
             <Text variant="bodyMedium" style={{ color: theme.colors.onSurface, marginTop: 16, marginBottom: 8 }}>
-              Payment Frequency
+              تكرار الدفع
             </Text>
             <SegmentedButtons
               value={form.payment_frequency}
               onValueChange={(value) => setForm(prev => ({ ...prev, payment_frequency: value as any }))}
               buttons={[
-                { value: 'monthly', label: 'Monthly' },
-                { value: 'quarterly', label: 'Quarterly' },
-                { value: 'annually', label: 'Annually' },
+                { value: 'monthly', label: 'شهري' },
+                { value: 'quarterly', label: 'ربعي' },
+                { value: 'annually', label: 'سنوي' },
               ]}
             />
 
             <View style={styles.row}>
               <TextInput
-                label="Late Fee (%)"
+                label="رسوم التأخير (%)"
                 value={form.late_fee_percentage}
                 onChangeText={(text) => setForm(prev => ({ ...prev, late_fee_percentage: text }))}
                 keyboardType="numeric"
@@ -417,7 +417,7 @@ export default function AddContractScreen() {
                 style={[styles.input, { flex: 1, marginRight: 8 }]}
               />
               <TextInput
-                label="Notice Period (days)"
+                label="فترة الإشعار (أيام)"
                 value={form.notice_period_days}
                 onChangeText={(text) => setForm(prev => ({ ...prev, notice_period_days: text }))}
                 keyboardType="numeric"
@@ -434,12 +434,12 @@ export default function AddContractScreen() {
             <View style={styles.sectionHeader}>
               <Calendar size={20} color={theme.colors.outline} />
               <Text variant="titleLarge" style={{ color: theme.colors.onSurface, marginLeft: 8 }}>
-                Contract Duration
+                مدة العقد
               </Text>
             </View>
 
             <TextInput
-              label="Start Date"
+              label="تاريخ البداية"
               value={form.start_date}
               onChangeText={(text) => {
                 setForm(prev => ({ ...prev, start_date: text }));
@@ -457,7 +457,7 @@ export default function AddContractScreen() {
             )}
 
             <TextInput
-              label="End Date"
+              label="تاريخ الانتهاء"
               value={form.end_date}
               onChangeText={(text) => setForm(prev => ({ ...prev, end_date: text }))}
               mode="outlined"
@@ -478,7 +478,7 @@ export default function AddContractScreen() {
                 onPress={() => setForm(prev => ({ ...prev, auto_renewal: !prev.auto_renewal }))}
                 icon={form.auto_renewal ? 'check' : undefined}
               >
-                Auto Renewal
+                تجديد تلقائي
               </Chip>
               <Chip
                 mode={form.utilities_included ? 'flat' : 'outlined'}
@@ -487,7 +487,7 @@ export default function AddContractScreen() {
                 icon={form.utilities_included ? 'check' : undefined}
                 style={{ marginLeft: 8 }}
               >
-                Utilities Included
+                المرافق مشمولة
               </Chip>
             </View>
           </Card.Content>
@@ -502,7 +502,7 @@ export default function AddContractScreen() {
             disabled={loading}
             style={styles.submitButton}
           >
-            Create Contract
+            إنشاء العقد
           </Button>
           <Button 
             mode="outlined" 
@@ -510,7 +510,7 @@ export default function AddContractScreen() {
             disabled={loading}
             style={styles.cancelButton}
           >
-            Cancel
+            إلغاء
           </Button>
         </View>
       </ScrollView>

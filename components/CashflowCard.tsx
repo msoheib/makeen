@@ -87,7 +87,7 @@ export default function CashflowCard({
               fontWeight: '500',
             }
           ]}>
-            ر.س الدخل
+            الدخل
           </Text>
         </View>
         <Text style={[
@@ -113,7 +113,7 @@ export default function CashflowCard({
               fontWeight: '500',
             }
           ]}>
-            ر.س المصروفات
+            المصروفات
           </Text>
         </View>
         <Text style={[
@@ -144,7 +144,7 @@ export default function CashflowCard({
               fontWeight: '600',
             }
           ]}>
-            ر.س صافي الدخل
+            صافي الدخل
           </Text>
         </View>
         <Text style={[

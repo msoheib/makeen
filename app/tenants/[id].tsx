@@ -159,7 +159,7 @@ export default function TenantDetailsScreen() {
 
         {/* Contact Information */}
         <ModernCard style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Contact Information</Text>
+          <Text style={styles.sectionTitle}>معلومات الاتصال</Text>
           <List.Item
             title={t('details.email')}
             description={tenant.email || 'No email provided'}
@@ -187,7 +187,7 @@ export default function TenantDetailsScreen() {
         {/* Current Property */}
         {activeContract && (
           <ModernCard style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Current Property</Text>
+            <Text style={styles.sectionTitle}>العقار الحالي</Text>
             <List.Item
               title={activeContract.property?.title || 'Property Name'}
               description={`${activeContract.property?.address || 'Address'}, ${activeContract.property?.city || 'City'}`}
@@ -271,7 +271,7 @@ export default function TenantDetailsScreen() {
             style={styles.editButton}
             icon="pencil"
           >
-            {t('common:edit')} {t('title').slice(0, -1)}
+تعديل بيانات المستأجر
           </Button>
         </View>
       </ScrollView>

@@ -184,25 +184,25 @@ export default function ModernHeader({
             )}
             {showNotifications && (
               <View style={styles.notificationContainer}>
-                <IconButton
-                  icon={() => <Bell size={24} color={iconColor} />}
-                  onPress={handleNotificationPress}
-                  style={styles.actionButton}
-                  accessibilityLabel="الإشعارات"
-                />
-                {unreadCount && unreadCount > 0 && (
-                  <Badge
-                    style={[
-                      styles.notificationBadge,
-                      { backgroundColor: theme.colors.error },
-                      // Flip badge side for RTL
-                      isRTL() ? { left: 8, right: undefined } : { right: 8, left: undefined },
-                    ]}
-                    size={18}
-                  >
-                    {unreadCount > 99 ? '99+' : String(unreadCount || 0)}
-                  </Badge>
-                )}
+                <View style={styles.bellContainer}>
+                  <IconButton
+                    icon={() => <Bell size={24} color={iconColor} />}
+                    onPress={handleNotificationPress}
+                    style={styles.actionButton}
+                    accessibilityLabel="الإشعارات"
+                  />
+                  {unreadCount && unreadCount > 0 && (
+                    <Badge
+                      style={[
+                        styles.notificationBadge,
+                        { backgroundColor: theme.colors.error },
+                      ]}
+                      size={18}
+                    >
+                      {unreadCount > 99 ? '99+' : String(unreadCount || 0)}
+                    </Badge>
+                  )}
+                </View>
               </View>
             )}
           </View>
@@ -269,10 +269,14 @@ const styles = StyleSheet.create({
   notificationContainer: {
     position: 'relative',
   },
+  bellContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   notificationBadge: {
     position: 'absolute',
-    top: 8,
-    right: 8,
+    top: 32,
+    alignSelf: 'center',
     minWidth: 18,
     height: 18,
     borderRadius: 9,
