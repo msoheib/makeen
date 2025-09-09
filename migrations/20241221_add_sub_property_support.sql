@@ -194,3 +194,5 @@ COMMENT ON COLUMN public.contracts.payment_frequency IS 'Payment frequency for t
 
 
 
+
+

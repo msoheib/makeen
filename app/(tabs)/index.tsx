@@ -299,6 +299,11 @@ export default function DashboardScreen() {
 
   // Check for errors only - always show dashboard content
   const hasError = summaryError || propertiesError || tenantsError;
+  const errorDetails = {
+    summary: summaryError || null,
+    properties: propertiesError || null,
+    tenants: tenantsError || null,
+  };
   
   console.log('[Dashboard Debug] Properties Data:', {
     propertiesCount: propertiesData.length,
@@ -803,16 +808,40 @@ export default function DashboardScreen() {
         ) : (
           /* Admin/Manager/Owner Dashboard - Full view */
           <>
-            {hasError ? (
-              renderErrorState()
-            ) : (
-              <>
-                {renderQuickStats()}
-                {renderFinancialCards()}
-                {renderPropertyOverview()}
-                {renderRecentActivity()}
-              </>
+            {/* Show a lightweight inline warning but keep content visible using fallbacks */}
+            {hasError && (
+              <View style={styles.emptyStateContainer}>
+                <View style={styles.emptyStateIcon}>
+                  <AlertCircle size={48} color="#FF5722" />
+                </View>
+                <Text style={[styles.emptyStateTitle, { color: theme.colors.onBackground }]}>
+                  خطأ في تحميل البيانات
+                </Text>
+                <Text style={[styles.emptyStateMessage, { color: theme.colors.onSurfaceVariant }]}>
+                  حدث خطأ أثناء تحميل بيانات لوحة التحكم. سيتم عرض بيانات تقريبية مؤقتاً.
+                </Text>
+                {/* Debug: show specific error messages */}
+                {!!errorDetails.summary && (
+                  <Text style={[styles.emptyStateActionText, { color: theme.colors.onSurfaceVariant }]}>
+                    ملخص لوحة التحكم: {String(errorDetails.summary)}
+                  </Text>
+                )}
+                {!!errorDetails.properties && (
+                  <Text style={[styles.emptyStateActionText, { color: theme.colors.onSurfaceVariant }]}>
+                    العقارات: {String(errorDetails.properties)}
+                  </Text>
+                )}
+                {!!errorDetails.tenants && (
+                  <Text style={[styles.emptyStateActionText, { color: theme.colors.onSurfaceVariant }]}>
+                    المستأجرون: {String(errorDetails.tenants)}
+                  </Text>
+                )}
+              </View>
             )}
+            {renderQuickStats()}
+            {renderFinancialCards()}
+            {renderPropertyOverview()}
+            {renderRecentActivity()}
           </>
         )}
       </ScrollView>
