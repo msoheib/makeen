@@ -122,23 +122,30 @@ export default function DashboardScreen() {
   const [directTenants, setDirectTenants] = useState<any[]>([]);
   
   useEffect(() => {
-    // Direct database queries for debugging
+    // Direct database queries for debugging (dev only)
     supabase.from('properties').select('*').then(result => {
       if (result.data) {
         setDirectProperties(result.data);
-        console.log('[Direct DB Debug] Properties loaded:', result.data.length);
+        if (__DEV__) {
+          // eslint-disable-next-line no-console
+          console.log('[Direct DB Debug] Properties loaded:', result.data.length);
+        }
       }
     });
     
     supabase.from('profiles').select('*').eq('role', 'tenant').then(result => {
       if (result.data) {
         setDirectTenants(result.data);
-        console.log('[Direct DB Debug] Tenants loaded:', result.data.length);
+        if (__DEV__) {
+          // eslint-disable-next-line no-console
+          console.log('[Direct DB Debug] Tenants loaded:', result.data.length);
+        }
       }
     });
   }, []);
 
   // Debug API errors and data
+  if (__DEV__) {
   console.log('[Dashboard Debug] API Data:', {
     propertiesError: propertiesError?.message,
     tenantsError: tenantsError?.message,
@@ -153,6 +160,7 @@ export default function DashboardScreen() {
     tenantsDataLength: tenants?.data?.length,
     summaryDataLength: dashboardSummary?.data ? Object.keys(dashboardSummary.data).length : 0
   });
+  }
 
   // Fetch tenant contracts for payment information
   const { 
@@ -200,6 +208,7 @@ export default function DashboardScreen() {
   }
 
   // DEBUG: Show user context for troubleshooting
+  if (__DEV__) {
   console.log('[Dashboard Debug] User Context:', {
     hasAccess: canAccessDashboard,
     userContext: userContext,
@@ -209,17 +218,20 @@ export default function DashboardScreen() {
     permissionLoading: permissionLoading,
     screenPermissionCheck: SCREEN_PERMISSIONS.find(p => p.screen === 'dashboard')
   });
+  }
 
 
 
   // More detailed debug for dashboard access
   if (!canAccessDashboard && !permissionLoading) {
+    if (__DEV__) {
     console.log('[Dashboard Debug] Access Denied Details:', {
       screenExists: SCREEN_PERMISSIONS.some(p => p.screen === 'dashboard'),
       userHasRole: userContext?.role,
       allowedRoles: SCREEN_PERMISSIONS.find(p => p.screen === 'dashboard')?.roles,
       isAuthenticated: userContext?.isAuthenticated
     });
+    }
   }
 
   // If user doesn't have dashboard access, show access denied
@@ -305,6 +317,7 @@ export default function DashboardScreen() {
     tenants: tenantsError || null,
   };
   
+  if (__DEV__) {
   console.log('[Dashboard Debug] Properties Data:', {
     propertiesCount: propertiesData.length,
     tenantsCount: tenantsData.length,
@@ -316,35 +329,47 @@ export default function DashboardScreen() {
     tenantStats: tenantStats,
     financialSummary: financialSummary
   });
+  }
 
   // Direct database query for debugging
+  if (__DEV__) {
   console.log('[Dashboard Debug] Direct Database Check:');
+  }
   
   // Check properties directly
   supabase.from('properties').select('*').then(result => {
-    console.log('[Direct DB] Properties:', {
-      count: result.data?.length || 0,
-      data: result.data?.slice(0, 3), // First 3 properties
-      error: result.error?.message
-    });
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.log('[Direct DB] Properties:', {
+        count: result.data?.length || 0,
+        data: result.data?.slice(0, 3), // First 3 properties
+        error: result.error?.message
+      });
+    }
   });
   
   // Check tenants directly
   supabase.from('profiles').select('*').eq('role', 'tenant').then(result => {
-    console.log('[Direct DB] Tenants:', {
-      count: result.data?.length || 0,
-      data: result.data?.slice(0, 3), // First 3 tenants
-      error: result.error?.message
-    });
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.log('[Direct DB] Tenants:', {
+        count: result.data?.length || 0,
+        data: result.data?.slice(0, 3), // First 3 tenants
+        error: result.error?.message
+      });
+    }
   });
   
   // Check contracts directly
   supabase.from('contracts').select('*').then(result => {
-    console.log('[Direct DB] Contracts:', {
-      count: result.data?.length || 0,
-      data: result.data?.slice(0, 3), // First 3 contracts
-      error: result.error?.message
-    });
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.log('[Direct DB] Contracts:', {
+        count: result.data?.length || 0,
+        data: result.data?.slice(0, 3), // First 3 contracts
+        error: result.error?.message
+      });
+    }
   });
 
   // Enhanced recent activities with more realistic data

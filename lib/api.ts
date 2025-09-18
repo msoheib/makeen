@@ -24,6 +24,20 @@ type LegacyApiResponse<T> = {
   count?: number;
 };
 
+// Role-based access guard
+async function checkRoleAccess(allowedRoles: string[]): Promise<boolean> {
+  try {
+    const userContext = await getCurrentUserContext();
+    if (!userContext) {
+      return false;
+    }
+    return allowedRoles.includes(userContext.role);
+  } catch (error) {
+    console.error('[API] Error checking role access:', error);
+    return false;
+  }
+}
+
 // Generic functions
 async function handleApiCall<T>(
   operation: () => Promise<{ data: T | null; error: any; count?: number }>
@@ -104,6 +118,15 @@ export const propertiesApi = {
     city?: string;
     group_id?: string; // new: filter by building/group
   }): Promise<ApiResponse<Tables<'properties'>[]>> {
+    // **SECURITY**: Check role access - tenants should not see properties
+    const hasAccess = await checkRoleAccess(['admin', 'manager', 'owner']);
+    if (!hasAccess) {
+      return {
+        data: null,
+        error: { message: 'Access denied: Insufficient permissions to view properties' }
+      };
+    }
+
     // **SECURITY**: Get current user context for role-based filtering
     const userContext = await getCurrentUserContext();
     
@@ -171,6 +194,15 @@ export const propertiesApi = {
 
   // Get property by ID with role-based access control
   async getById(id: string): Promise<ApiResponse<Tables<'properties'>>> {
+    // **SECURITY**: Check role access - tenants should not see properties
+    const hasAccess = await checkRoleAccess(['admin', 'manager', 'owner']);
+    if (!hasAccess) {
+      return {
+        data: null,
+        error: { message: 'Access denied: Insufficient permissions to view property details' }
+      };
+    }
+
     // **SECURITY**: Get current user context for access validation
     const userContext = await getCurrentUserContext();
     
@@ -182,16 +214,11 @@ export const propertiesApi = {
     }
 
     // **SECURITY**: Check if user has access to this specific property
-    const hasAccess = userContext.role === 'admin' || 
+    const hasPropertyAccess = userContext.role === 'admin' || 
                      userContext.role === 'manager' ||
-                     (userContext.role === 'owner' && userContext.ownedPropertyIds?.includes(id)) ||
-                     (userContext.role === 'tenant' && (
-                       userContext.rentedPropertyIds?.includes(id) || 
-                       // Also allow viewing available properties for tenants
-                       await this.isPropertyAvailable(id)
-                     ));
+                     (userContext.role === 'owner' && userContext.ownedPropertyIds?.includes(id));
 
-    if (!hasAccess) {
+    if (!hasPropertyAccess) {
       return {
         data: null,
         error: { message: 'Access denied: You do not have permission to view this property' }

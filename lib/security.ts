@@ -18,7 +18,10 @@ export async function getCurrentUserContext(): Promise<UserContext | null> {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
-      console.log('[Security] No authenticated user found:', authError?.message);
+      if (__DEV__) {
+        // eslint-disable-next-line no-console
+        console.log('[Security] No authenticated user found:', authError?.message);
+      }
       return null;
     }
 
@@ -31,7 +34,10 @@ export async function getCurrentUserContext(): Promise<UserContext | null> {
 
     // If profile doesn't exist, create one automatically
     if (profileError && profileError.code === 'PGRST116') { // No rows returned
-      console.log('[Security] No profile found for user, creating default profile...');
+      if (__DEV__) {
+        // eslint-disable-next-line no-console
+        console.log('[Security] No profile found for user, creating default profile...');
+      }
       
       // Extract role from auth metadata or default to admin for development
       const defaultRole = user.user_metadata?.role || user.app_metadata?.role || 'admin';
@@ -53,16 +59,44 @@ export async function getCurrentUserContext(): Promise<UserContext | null> {
         .single();
 
       if (createError) {
-        console.error('[Security] Failed to create user profile:', createError.message);
-        return null;
+        // Check if it's a duplicate key error (profile already exists)
+        if (createError.code === '23505' || createError.message?.includes('duplicate key')) {
+          console.log('[Security] Profile already exists, fetching existing profile');
+          // Profile was created by another process, fetch it
+          const { data: existingProfile, error: fetchError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+          
+          if (fetchError) {
+            console.error('[Security] Failed to fetch existing profile:', fetchError.message);
+            return null;
+          }
+          
+          profile = existingProfile;
+          if (__DEV__) {
+            console.log('[Security] Fetched existing profile for user:', { 
+              userId: user.id, 
+              role: profile.role, 
+              profileType: profile.profile_type 
+            });
+          }
+        } else {
+          console.error('[Security] Failed to create user profile:', createError.message);
+          return null;
+        }
+      } else {
+        profile = newProfile;
+        if (__DEV__) {
+          // eslint-disable-next-line no-console
+          console.log('[Security] Created new profile for user:', { 
+            userId: user.id, 
+            role: defaultRole, 
+            profileType: defaultProfileType 
+          });
+        }
       }
-
-      profile = newProfile;
-      console.log('[Security] Created new profile for user:', { 
-        userId: user.id, 
-        role: defaultRole, 
-        profileType: defaultProfileType 
-      });
     } else if (profileError) {
       console.error('[Security] Failed to fetch user profile:', profileError.message);
       return null;
@@ -115,15 +149,19 @@ export async function getCurrentUserContext(): Promise<UserContext | null> {
       userContext.rentedPropertyIds = validContracts.map(c => c.property_id);
       
       if (SECURITY_CONFIG.logAccessAttempts && contracts?.length !== validContracts.length) {
-        console.log('[Security] Filtered out expired/invalid contracts for tenant:', {
-          totalContracts: contracts?.length || 0,
-          validContracts: validContracts.length,
-          filteredOut: (contracts?.length || 0) - validContracts.length
-        });
+        if (__DEV__) {
+          // eslint-disable-next-line no-console
+          console.log('[Security] Filtered out expired/invalid contracts for tenant:', {
+            totalContracts: contracts?.length || 0,
+            validContracts: validContracts.length,
+            filteredOut: (contracts?.length || 0) - validContracts.length
+          });
+        }
       }
     }
 
-    if (SECURITY_CONFIG.logAccessAttempts) {
+    if (SECURITY_CONFIG.logAccessAttempts && __DEV__) {
+      // eslint-disable-next-line no-console
       console.log('[Security] User context loaded:', {
         userId: userContext.userId,
         role: userContext.role,
@@ -368,7 +406,8 @@ export function withSecurity<T>(apiFunction: (userContext: UserContext | null, .
   return async (...args: any[]): Promise<T> => {
     const userContext = await getCurrentUserContext();
     
-    if (SECURITY_CONFIG.logAccessAttempts) {
+    if (SECURITY_CONFIG.logAccessAttempts && __DEV__) {
+      // eslint-disable-next-line no-console
       console.log(`[Security] API call with user context:`, {
         userId: userContext?.userId,
         role: userContext?.role,

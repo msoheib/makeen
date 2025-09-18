@@ -1,4 +1,5 @@
 import { useTranslation as useI18nextTranslation } from 'react-i18next';
+import i18nInstance, { changeLanguage as changeAppLanguage } from './i18n';
 import type { TranslationKey, SupportedLanguage } from './translations/types';
 
 // Type-safe translation hook
@@ -9,15 +10,15 @@ export const useTranslation = (namespace?: TranslationKey) => {
     // Translation function with type safety
     t,
     
-    // Current language
-    language: i18n.language as SupportedLanguage,
+    // Current language (default to Arabic when unclear)
+    language: (i18n.language as SupportedLanguage) || ('ar' as SupportedLanguage),
     
     // Check if current language is RTL
     isRTL: i18n.language === 'ar',
     
-    // Change language function
+    // Change language function (persist + apply RTL)
     changeLanguage: async (lng: SupportedLanguage) => {
-      await i18n.changeLanguage(lng);
+      await changeAppLanguage(lng);
     },
     
     // Translation with fallback
@@ -67,11 +68,11 @@ export const useSettingsTranslation = () => {
 
 // Helper functions for RTL detection
 export const getCurrentDirection = (language?: SupportedLanguage): 'ltr' | 'rtl' => {
-  const currentLang = language || 'en';
+  const currentLang = language || (i18nInstance.language as SupportedLanguage) || 'ar';
   return currentLang === 'ar' ? 'rtl' : 'ltr';
 };
 
 export const isRTLLanguage = (language?: SupportedLanguage): boolean => {
-  const currentLang = language || 'en';
+  const currentLang = language || (i18nInstance.language as SupportedLanguage) || 'ar';
   return currentLang === 'ar';
-}; 
+};

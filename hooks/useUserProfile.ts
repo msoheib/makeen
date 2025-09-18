@@ -110,6 +110,31 @@ export const useUserProfile = (): UseUserProfileReturn => {
           console.log('[useUserProfile] Profile create response:', createResponse);
           
           if (createResponse.error) {
+            // Check if it's a duplicate key error (profile already exists)
+            if (createResponse.error.message?.includes('duplicate key') || 
+                createResponse.error.message?.includes('already exists') ||
+                createResponse.error.code === '23505') {
+              console.log('[useUserProfile] Profile already exists, fetching existing profile');
+              // Profile was created by another process, fetch it
+              const fetchResponse = await profilesApi.getById(user.id);
+              if (fetchResponse.data) {
+                setProfile(fetchResponse.data);
+                updateSettings({
+                  userProfile: {
+                    name: `${fetchResponse.data.first_name || ''} ${fetchResponse.data.last_name || ''}`.trim(),
+                    email: fetchResponse.data.email || '',
+                    phone: fetchResponse.data.phone || '',
+                    company: '',
+                    address: fetchResponse.data.address || '',
+                    city: fetchResponse.data.city || '',
+                    country: fetchResponse.data.country || 'Saudi Arabia',
+                    updatedAt: fetchResponse.data.updated_at || new Date().toISOString(),
+                  },
+                });
+                console.log('[useUserProfile] Existing profile fetched and store updated');
+                return;
+              }
+            }
             console.error('[useUserProfile] Failed to create user profile:', createResponse.error);
             setError(createResponse.error.message);
             return;
@@ -133,7 +158,35 @@ export const useUserProfile = (): UseUserProfileReturn => {
             },
           });
           console.log('[useUserProfile] New profile created and store updated');
-        } catch (createError) {
+        } catch (createError: any) {
+          // Handle duplicate profile creation race condition
+          if (createError?.message?.includes('duplicate key') || 
+              createError?.message?.includes('already exists') ||
+              createError?.code === '23505') {
+            console.log('[useUserProfile] Profile already exists due to race condition, fetching existing profile');
+            try {
+              const fetchResponse = await profilesApi.getById(user.id);
+              if (fetchResponse.data) {
+                setProfile(fetchResponse.data);
+                updateSettings({
+                  userProfile: {
+                    name: `${fetchResponse.data.first_name || ''} ${fetchResponse.data.last_name || ''}`.trim(),
+                    email: fetchResponse.data.email || '',
+                    phone: fetchResponse.data.phone || '',
+                    company: '',
+                    address: fetchResponse.data.address || '',
+                    city: fetchResponse.data.city || '',
+                    country: fetchResponse.data.country || 'Saudi Arabia',
+                    updatedAt: fetchResponse.data.updated_at || new Date().toISOString(),
+                  },
+                });
+                console.log('[useUserProfile] Existing profile fetched after race condition');
+                return;
+              }
+            } catch (fetchError) {
+              console.error('[useUserProfile] Failed to fetch existing profile after race condition:', fetchError);
+            }
+          }
           console.error('[useUserProfile] Failed to create user profile:', createError);
           setError('Failed to create user profile');
         }

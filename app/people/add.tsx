@@ -9,6 +9,7 @@ import { ArrowLeft, User, Mail, Phone, UserCheck, Lock, Eye, EyeOff, MapPin } fr
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import { useAuth } from '@/hooks/useAuth';
+import { createTenantComplete } from '@/lib/tenantCreation';
 import { rtlStyles, getFlexDirection } from '@/lib/rtl';
 
 export default function AddPersonScreen() {
@@ -138,52 +139,29 @@ export default function AddPersonScreen() {
 
     setLoading(true);
     try {
-      // First, create the user account with authentication
-      const signUpResult = await signUp(
-        formData.email.trim().toLowerCase(),
-        formData.password,
-        {
-          first_name: formData.first_name.trim(),
-          last_name: formData.last_name.trim(),
-          phone: formData.phone_number.trim() || undefined,
-          role: formData.role,
-        }
-      );
-
-      if (!signUpResult.success) {
-        throw new Error(signUpResult.error || 'Failed to create user account');
-      }
-
-      // Then, create the profile record in the database
-      const personData = {
+      console.log('[AddPerson] Starting tenant creation with ephemeral client');
+      
+      // Use the new ephemeral client approach to prevent session overwrite
+      const result = await createTenantComplete({
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password,
         first_name: formData.first_name.trim(),
         last_name: formData.last_name.trim(),
-        email: formData.email.trim().toLowerCase(),
-        phone: formData.phone_number.trim() || null,
+        phone: formData.phone_number.trim() || undefined,
         role: formData.role,
-        status: 'active',
-        profile_type: formData.role === 'owner' ? 'owner' : 
-                     formData.role === 'tenant' ? 'tenant' : 
-                     formData.role === 'manager' ? 'admin' : 'employee',
-        address: formData.address.trim() || null,
-        city: formData.city.trim() || null,
-        country: formData.country.trim() || null,
-        nationality: formData.nationality.trim() || null,
-        id_number: formData.id_number.trim() || null,
+        address: formData.address.trim() || undefined,
+        city: formData.city.trim() || undefined,
+        country: formData.country.trim() || undefined,
+        nationality: formData.nationality.trim() || undefined,
+        id_number: formData.id_number.trim() || undefined,
         is_foreign: formData.is_foreign,
-      };
+      });
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .insert([personData])
-        .select()
-        .single();
-
-      if (error) {
-        // If profile creation fails, we should handle this gracefully
-        console.error('Error creating profile:', error);
-        // Don't throw here as the auth account was created successfully
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create user account');
       }
+
+      console.log('[AddPerson] Tenant created successfully:', result.userId);
 
       // Send welcome email
       await sendWelcomeEmail(
@@ -198,7 +176,7 @@ export default function AddPersonScreen() {
         [
           {
             text: 'عرض التفاصيل',
-            onPress: () => router.push(`/people/${data?.id}`),
+            onPress: () => router.push(`/people/${result.userId}`),
           },
           {
             text: 'إضافة مستخدم آخر',
@@ -232,9 +210,9 @@ export default function AddPersonScreen() {
       // Automatically navigate back after a short delay
       setTimeout(() => {
         router.replace('/(tabs)/people');
-      }, 1500);
+      }, 3000);
     } catch (error: any) {
-      console.error('Error creating user:', error);
+      console.error('[AddPerson] Error creating person:', error);
       if (error.message?.includes('already registered')) {
         setErrors({ email: 'هذا البريد الإلكتروني مسجل مسبقاً' });
       } else if (error.message?.includes('password')) {

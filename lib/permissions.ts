@@ -30,11 +30,11 @@ export const SCREEN_PERMISSIONS: ScreenPermission[] = [
   { screen: 'dashboard', roles: ['admin', 'manager', 'owner', 'tenant'] },
   
   // Properties Management
-  { screen: 'properties', roles: ['admin', 'manager', 'owner', 'tenant'] },
+  { screen: 'properties', roles: ['admin', 'manager', 'owner'] },
   { screen: 'add-property', roles: ['admin', 'manager', 'owner'] },
   { screen: 'edit-property', roles: ['admin', 'manager', 'owner'], 
     condition: (ctx) => ctx.role === 'admin' || ctx.role === 'manager' || (ctx.role === 'owner' && !!ctx.ownedPropertyIds?.length) },
-  { screen: 'property-details', roles: ['admin', 'manager', 'owner', 'tenant'] },
+  { screen: 'property-details', roles: ['admin', 'manager', 'owner'] },
   
   // People Management  
   { screen: 'tenants', roles: ['admin', 'manager', 'owner'] },
@@ -141,7 +141,7 @@ export const SIDEBAR_PERMISSIONS: NavigationPermission[] = [
 // **BOTTOM TAB NAVIGATION PERMISSIONS**
 export const TAB_PERMISSIONS: NavigationPermission[] = [
   { id: 'dashboard', label: 'Dashboard', roles: ['admin', 'manager', 'owner', 'tenant'] },
-  { id: 'properties', label: 'Properties', roles: ['admin', 'manager', 'owner', 'tenant'] },
+  { id: 'properties', label: 'Properties', roles: ['admin', 'manager', 'owner'] },
   { id: 'tenants', label: 'Tenants', roles: ['admin', 'manager'] },
   { id: 'maintenance', label: 'Maintenance', roles: ['admin', 'manager', 'owner', 'tenant'] },
   { id: 'reports', label: 'Reports', roles: ['admin', 'manager', 'owner', 'accountant'] },
@@ -179,11 +179,14 @@ export function hasFinancialAccess(userContext: UserContext | null): boolean {
  * Check if user has permission to access a screen
  */
 export function hasScreenAccess(screen: string, userContext: UserContext | null): boolean {
-  console.log(`[Permissions] hasScreenAccess check for screen "${screen}":`, {
-    userContext: userContext,
-    isAuthenticated: userContext?.isAuthenticated,
-    role: userContext?.role
-  });
+  if (__DEV__) {
+    // eslint-disable-next-line no-console
+    console.log(`[Permissions] hasScreenAccess check for screen "${screen}":`, {
+      userContext: userContext,
+      isAuthenticated: userContext?.isAuthenticated,
+      role: userContext?.role
+    });
+  }
   
   if (!userContext || !userContext.isAuthenticated) {
     console.log(`[Permissions] Access denied: No user context or not authenticated`);
@@ -192,23 +195,32 @@ export function hasScreenAccess(screen: string, userContext: UserContext | null)
   
   // Admin and Manager have access to everything
   if (isAdminOrManager(userContext)) {
-    console.log(`[Permissions] Access granted: User is admin/manager`);
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.log(`[Permissions] Access granted: User is admin/manager`);
+    }
     return true;
   }
   
   const permission = SCREEN_PERMISSIONS.find(p => p.screen === screen);
   if (!permission) {
-    console.log(`[Permissions] Access denied: No permission found for screen "${screen}"`);
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.log(`[Permissions] Access denied: No permission found for screen "${screen}"`);
+    }
     return false;
   }
   
   // Check role-based access
   const hasRoleAccess = permission.roles.includes(userContext.role);
-  console.log(`[Permissions] Role access check:`, {
-    userRole: userContext.role,
-    allowedRoles: permission.roles,
-    hasRoleAccess
-  });
+  if (__DEV__) {
+    // eslint-disable-next-line no-console
+    console.log(`[Permissions] Role access check:`, {
+      userRole: userContext.role,
+      allowedRoles: permission.roles,
+      hasRoleAccess
+    });
+  }
   
   if (!hasRoleAccess) {
     console.log(`[Permissions] Access denied: Role not allowed`);
@@ -218,11 +230,17 @@ export function hasScreenAccess(screen: string, userContext: UserContext | null)
   // Check additional conditions if any
   if (permission.condition) {
     const conditionResult = permission.condition(userContext);
-    console.log(`[Permissions] Condition check result:`, conditionResult);
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.log(`[Permissions] Condition check result:`, conditionResult);
+    }
     return conditionResult;
   }
   
-  console.log(`[Permissions] Access granted: All checks passed`);
+  if (__DEV__) {
+    // eslint-disable-next-line no-console
+    console.log(`[Permissions] Access granted: All checks passed`);
+  }
   return true;
 }
 
@@ -313,11 +331,14 @@ export function useScreenAccess(screen: string) {
   
   const hasAccess = !loading && hasScreenAccess(screen, userContext);
   
-  console.log(`[Permissions] useScreenAccess for screen "${screen}":`, {
-    loading,
-    userContext,
-    hasAccess
-  });
+  if (__DEV__) {
+    // eslint-disable-next-line no-console
+    console.log(`[Permissions] useScreenAccess for screen "${screen}":`, {
+      loading,
+      userContext,
+      hasAccess
+    });
+  }
   
   return { hasAccess, loading, userContext };
 }
