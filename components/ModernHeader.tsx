@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, StyleSheet, Platform, StatusBar, TouchableOpacity } from 'react-native';
 import { Text, IconButton, Badge } from 'react-native-paper';
-import { Bell, Search, ArrowRight, ArrowLeft } from 'lucide-react-native';
+import { Bell, Search, ArrowRight, ArrowLeft, ChevronRight, ChevronLeft } from 'lucide-react-native';
 import { usePathname, useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -126,15 +126,9 @@ export default function ModernHeader({
   // Determine if we should show back button based on navigation state
   const shouldShowBackButton = showBackButton || router.canGoBack();
 
-  // Flip the arrow horizontally in RTL for consistent back direction
-  const BackArrowIcon = ArrowLeft;
-  const arrowFlipStyle = isRTL() ? { 
-    transform: [{ scaleX: -1 }],
-    width: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center'
-  } : undefined;
+  // Use a direction-specific chevron: left for LTR, right for RTL
+  const BackArrowIcon = isRTL() ? ChevronRight : ChevronLeft;
+  const arrowFlipStyle = undefined;
 
   return (
     <>
