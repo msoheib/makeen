@@ -1,26 +1,54 @@
 {
   "title": "Dashboard",
+  "welcomeMessage": "Welcome to the Real Estate Management System",
+  "quickStats": "Quick Statistics",
   "welcome": "Welcome",
   "overview": "Overview",
   "greetings": {
     "hello": "Hello {{name}},"
   },
   "totalProperties": "Total Properties",
+  "occupiedProperties": "Occupied Properties",
   "totalTenants": "Total Tenants",
   "totalRevenue": "Total Revenue",
   "monthlyIncome": "Monthly Income",
   "expenses": "Expenses",
   "netIncome": "Net Income",
   "occupancyRate": "Occupancy Rate",
+  "financialSummary": "Financial Summary",
+  "propertyOverview": "Property Overview",
   "recentActivity": "Recent Activity",
+  "activity": {
+    "monthlyRentReceived": "Monthly Rent Payment Received",
+    "activeContracts": "Active Contracts",
+    "maintenanceRequests": "Maintenance Requests",
+    "desc": {
+      "activeTenants": "{{count}} active tenants",
+      "activeContracts": "{{count}} active contracts",
+      "propertiesUnderMaintenance": "{{count}} properties under maintenance"
+    }
+  },
   "systemOverview": "System Overview",
   "activeTenants": "Active Tenants",
   "occupied": "Occupied",
   "available": "Available",
+  "maintenance": "Maintenance",
   "attentionRequired": "Attention Required",
   "contractsExpiring": "contract(s) expiring soon",
   "pendingMaintenance": "pending maintenance request(s)",
   "add": "Add",
+  "rent": {
+    "overview": "Rent Overview",
+    "total": "Total Rent",
+    "collected": "Collected",
+    "pending": "Pending"
+  },
+  "cashflow": {
+    "title": "Cash Flow",
+    "income": "Income",
+    "expenses": "Expenses",
+    "netIncome": "Net Income"
+  },
   "finance": {
     "rent": "Rent",
     "overview": "Finance Overview",

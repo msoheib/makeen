@@ -29,5 +29,6 @@
     "playwright",
     "puppeteer",
     "supabase"
-  ]
+  ],
+  "outputStyle": "Explanatory"
 }

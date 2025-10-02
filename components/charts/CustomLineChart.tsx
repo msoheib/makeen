@@ -177,7 +177,7 @@ export const CustomLineChart: React.FC<CustomLineChartProps> = ({
         // Animate tooltip appearance
         Animated.spring(animatedValue, {
           toValue: 1,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
           tension: 100,
           friction: 8,
         }).start();
@@ -195,7 +195,7 @@ export const CustomLineChart: React.FC<CustomLineChartProps> = ({
           Animated.timing(animatedValue, {
             toValue: 0,
             duration: 300,
-            useNativeDriver: true,
+            useNativeDriver: Platform.OS !== 'web',
           }).start(() => {
             setTooltipData(prev => ({ ...prev, visible: false }));
           });

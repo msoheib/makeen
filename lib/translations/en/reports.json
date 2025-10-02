@@ -9,6 +9,7 @@
   "processingTime": "Processing time",
   "allReports": "All Reports",
   "summary": "Summary",
+  "summaryDesc": "Comprehensive overview of all available reports",
   "financial": "Financial",
   "properties": "Properties",
   "tenants": "Tenants",
@@ -50,7 +51,9 @@
     "operations": "Operations"
   },
   "revenueReport": "Revenue Report",
+  "revenueReportDesc": "Comprehensive analysis of revenue and income",
   "expenseReport": "Expense Report",
+  "expenseReportDesc": "Detailed analysis of sales and maintenance expenses",
   "profitLoss": "Profit & Loss",
   "cashFlow": "Cash Flow Statement",
   "occupancyReport": "Occupancy Report",
@@ -83,4 +86,19 @@
   "noContentAvailable": "No content available for viewing",
   "tryDownloadInstead": "Try downloading the PDF instead",
   "quickStatistics": "Quick Statistics"
+  ,"activeTenants": "Active Tenants"
+  ,"occupiedProperties": "Occupied Properties"
+  ,"monthlyRevenue": "Monthly Revenue"
+  ,"universalFilters": "Universal Report Filters",
+  "financialStatements": "Financial Statements",
+  "financialStatementsDesc": "Comprehensive financial data for the company",
+  "tenantStatementForOwner": "Tenant Account Statement for Owner",
+  "tenantStatementForOwnerDesc": "Account statement for specific tenant for owner",
+  "paymentsAndLateTenants": "Payment Dates and Late Tenants",
+  "paymentsAndLateTenantsDesc": "Report of payments and late tenants",
+  "electricalMeterReport": "Electrical Meter Report",
+  "electricalMeterDesc": "Electricity consumption reports for properties",
+  "waterMetersReport": "Water Meters Report",
+  "waterMetersDesc": "Water consumption reports for properties",
+  "propertyReport": "Property Report"
 } 

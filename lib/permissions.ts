@@ -29,14 +29,14 @@ export const SCREEN_PERMISSIONS: ScreenPermission[] = [
   // Dashboard - All authenticated users can see dashboard
   { screen: 'dashboard', roles: ['admin', 'manager', 'owner', 'tenant'] },
   
-  // Properties Management
+  // Properties Management - Tenants explicitly excluded for security
   { screen: 'properties', roles: ['admin', 'manager', 'owner'] },
   { screen: 'add-property', roles: ['admin', 'manager', 'owner'] },
-  { screen: 'edit-property', roles: ['admin', 'manager', 'owner'], 
+  { screen: 'edit-property', roles: ['admin', 'manager', 'owner'],
     condition: (ctx) => ctx.role === 'admin' || ctx.role === 'manager' || (ctx.role === 'owner' && !!ctx.ownedPropertyIds?.length) },
   { screen: 'property-details', roles: ['admin', 'manager', 'owner'] },
   
-  // People Management  
+  // People Management - Tenants can only see their own profile
   { screen: 'tenants', roles: ['admin', 'manager', 'owner'] },
   { screen: 'owners', roles: ['admin', 'manager'] },
   { screen: 'buyers', roles: ['admin', 'manager', 'owner'] },
@@ -95,9 +95,9 @@ export const SIDEBAR_PERMISSIONS: NavigationPermission[] = [
   { id: 'people-management', label: 'People Management', roles: ['admin', 'manager'] },
   { id: 'add-person', label: 'Add Person', roles: ['admin', 'manager'] },
   
-  // Property Management section
-  { id: 'property-management', label: 'Property Management', roles: ['admin', 'manager', 'owner', 'tenant'] },
-  { id: 'properties-list', label: 'Properties List', roles: ['admin', 'manager', 'owner', 'tenant'] },
+  // Property Management section - Tenants explicitly excluded from property management
+  { id: 'property-management', label: 'Property Management', roles: ['admin', 'manager', 'owner'] },
+  { id: 'properties-list', label: 'Properties List', roles: ['admin', 'manager', 'owner'] },
   { id: 'rent-property', label: 'Rent a property', roles: ['admin', 'manager', 'owner'] },
   { id: 'foreign-contracts', label: 'Foreign Tenant Contracts', roles: ['admin', 'manager', 'owner'] },
   { id: 'cash-properties', label: 'List cash property', roles: ['admin', 'manager', 'owner'] },
@@ -141,14 +141,14 @@ export const SIDEBAR_PERMISSIONS: NavigationPermission[] = [
 // **BOTTOM TAB NAVIGATION PERMISSIONS**
 export const TAB_PERMISSIONS: NavigationPermission[] = [
   { id: 'dashboard', label: 'Dashboard', roles: ['admin', 'manager', 'owner', 'tenant'] },
-  { id: 'properties', label: 'Properties', roles: ['admin', 'manager', 'owner'] },
+  { id: 'properties', label: 'Properties', roles: ['admin', 'manager', 'owner'] }, // Tenants excluded
   { id: 'tenants', label: 'Tenants', roles: ['admin', 'manager'] },
   { id: 'maintenance', label: 'Maintenance', roles: ['admin', 'manager', 'owner', 'tenant'] },
-  { id: 'reports', label: 'Reports', roles: ['admin', 'manager', 'owner', 'accountant'] },
-  { id: 'finance', label: 'Finance', roles: ['admin', 'manager', 'owner', 'accountant'] },
+  { id: 'reports', label: 'Reports', roles: ['admin', 'manager', 'owner', 'accountant'] }, // Tenants excluded
+  { id: 'finance', label: 'Finance', roles: ['admin', 'manager', 'owner', 'accountant'] }, // Tenants excluded
   { id: 'documents', label: 'Documents', roles: ['admin', 'manager', 'owner', 'tenant'] },
-  { id: 'people', label: 'People', roles: ['admin', 'manager', 'owner'] },
-  { id: 'payments', label: 'Payments', roles: ['admin', 'manager', 'owner'] },
+  { id: 'people', label: 'People', roles: ['admin', 'manager', 'owner'] }, // Tenants excluded
+  { id: 'payments', label: 'Payments', roles: ['admin', 'manager', 'owner'] }, // Tenants excluded
   { id: 'settings', label: 'Settings', roles: ['admin', 'manager', 'owner', 'tenant'] },
 ];
 
@@ -179,67 +179,31 @@ export function hasFinancialAccess(userContext: UserContext | null): boolean {
  * Check if user has permission to access a screen
  */
 export function hasScreenAccess(screen: string, userContext: UserContext | null): boolean {
-  if (__DEV__) {
-    // eslint-disable-next-line no-console
-    console.log(`[Permissions] hasScreenAccess check for screen "${screen}":`, {
-      userContext: userContext,
-      isAuthenticated: userContext?.isAuthenticated,
-      role: userContext?.role
-    });
-  }
-  
   if (!userContext || !userContext.isAuthenticated) {
-    console.log(`[Permissions] Access denied: No user context or not authenticated`);
     return false;
   }
   
   // Admin and Manager have access to everything
   if (isAdminOrManager(userContext)) {
-    if (__DEV__) {
-      // eslint-disable-next-line no-console
-      console.log(`[Permissions] Access granted: User is admin/manager`);
-    }
     return true;
   }
   
   const permission = SCREEN_PERMISSIONS.find(p => p.screen === screen);
   if (!permission) {
-    if (__DEV__) {
-      // eslint-disable-next-line no-console
-      console.log(`[Permissions] Access denied: No permission found for screen "${screen}"`);
-    }
     return false;
   }
   
   // Check role-based access
   const hasRoleAccess = permission.roles.includes(userContext.role);
-  if (__DEV__) {
-    // eslint-disable-next-line no-console
-    console.log(`[Permissions] Role access check:`, {
-      userRole: userContext.role,
-      allowedRoles: permission.roles,
-      hasRoleAccess
-    });
-  }
   
   if (!hasRoleAccess) {
-    console.log(`[Permissions] Access denied: Role not allowed`);
     return false;
   }
   
   // Check additional conditions if any
   if (permission.condition) {
     const conditionResult = permission.condition(userContext);
-    if (__DEV__) {
-      // eslint-disable-next-line no-console
-      console.log(`[Permissions] Condition check result:`, conditionResult);
-    }
     return conditionResult;
-  }
-  
-  if (__DEV__) {
-    // eslint-disable-next-line no-console
-    console.log(`[Permissions] Access granted: All checks passed`);
   }
   return true;
 }
@@ -330,16 +294,6 @@ export function useScreenAccess(screen: string) {
   const { userContext, loading } = useUserContext();
   
   const hasAccess = !loading && hasScreenAccess(screen, userContext);
-  
-  if (__DEV__) {
-    // eslint-disable-next-line no-console
-    console.log(`[Permissions] useScreenAccess for screen "${screen}":`, {
-      loading,
-      userContext,
-      hasAccess
-    });
-  }
-  
   return { hasAccess, loading, userContext };
 }
 

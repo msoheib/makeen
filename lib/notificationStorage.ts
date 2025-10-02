@@ -161,7 +161,6 @@ class NotificationStorage {
         category: this.getCategoryFromType(event.type),
       });
 
-      console.log('📱 Notification stored from real-time event:', notification.id);
       return notification;
     } catch (error) {
       console.error('Error adding notification from real-time event:', error);
@@ -187,7 +186,6 @@ class NotificationStorage {
         category: this.getCategoryFromType(pushData.type),
       });
 
-      console.log('📱 Notification stored from push notification:', notification.id);
       return notification;
     } catch (error) {
       console.error('Error adding notification from push notification:', error);

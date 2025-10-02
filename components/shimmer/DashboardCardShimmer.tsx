@@ -1,14 +1,12 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { ShimmerLine, ShimmerCircle } from './ShimmerPlaceholder';
-import { useAppStore } from '@/lib/store';
-import { lightTheme, darkTheme } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { getFlexDirection } from '@/lib/rtl';
 
 // Rent Card Shimmer
 export const RentCardShimmer: React.FC = () => {
-  const { isDarkMode } = useAppStore();
-  const theme = isDarkMode ? darkTheme : lightTheme;
+  const { theme } = useAppTheme();
 
   return (
     <View style={[styles.cardContainer, { backgroundColor: theme.colors.surface }]}>
@@ -44,8 +42,7 @@ export const RentCardShimmer: React.FC = () => {
 
 // Cashflow Card Shimmer
 export const CashflowCardShimmer: React.FC = () => {
-  const { isDarkMode } = useAppStore();
-  const theme = isDarkMode ? darkTheme : lightTheme;
+  const { theme } = useAppTheme();
 
   return (
     <View style={[styles.cardContainer, { backgroundColor: theme.colors.surface }]}>
@@ -81,8 +78,7 @@ export const CashflowCardShimmer: React.FC = () => {
 
 // Property Overview Card Shimmer
 export const PropertyOverviewShimmer: React.FC = () => {
-  const { isDarkMode } = useAppStore();
-  const theme = isDarkMode ? darkTheme : lightTheme;
+  const { theme } = useAppTheme();
 
   return (
     <View style={[styles.cardContainer, { backgroundColor: theme.colors.surface }]}>
@@ -118,8 +114,7 @@ export const PropertyOverviewShimmer: React.FC = () => {
 
 // Recent Activity Card Shimmer
 export const RecentActivityShimmer: React.FC<{ count?: number }> = ({ count = 3 }) => {
-  const { isDarkMode } = useAppStore();
-  const theme = isDarkMode ? darkTheme : lightTheme;
+  const { theme } = useAppTheme();
 
   return (
     <>

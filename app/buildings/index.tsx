@@ -6,13 +6,11 @@ import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import { useApi } from '@/hooks/useApi';
 import { propertyGroupsApi } from '@/lib/api';
-import { lightTheme, darkTheme } from '@/lib/theme';
-import { useAppStore } from '@/lib/store';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 
 export default function BuildingsListScreen() {
   const router = useRouter();
-  const { isDarkMode } = useAppStore();
-  const theme = isDarkMode ? darkTheme : lightTheme;
+  const { theme } = useAppTheme();
 
   const { data: groups, loading, error, refetch } = useApi(() => propertyGroupsApi.getAll(), []);
 

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList, Image, RefreshControl, Alert } from 'react-native';
 import { Text, Searchbar, SegmentedButtons, IconButton, Chip } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { theme, spacing } from '@/lib/theme';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { documentsApi } from '@/lib/api';
 import { 
   FileText, 
@@ -36,6 +37,7 @@ interface Document {
 }
 
 export default function DocumentsScreen() {
+  const { theme } = useAppTheme();
   const router = useRouter();
   const { t } = useTranslation('documents');
   const [loading, setLoading] = useState(true);
@@ -74,9 +76,7 @@ export default function DocumentsScreen() {
           tenant: doc.related_entity_type === 'tenant' ? 'Tenant' : undefined,
           url: doc.file_path,
         }));
-        setDocuments(transformedDocs);
-        console.log('Loaded documents:', transformedDocs.length);
-      } else if (response.error) {
+        setDocuments(transformedDocs);      } else if (response.error) {
         console.error('API Error:', response.error);
       }
     } catch (error) {
@@ -208,143 +208,29 @@ export default function DocumentsScreen() {
       <View style={styles.documentActions}>
         <IconButton
           icon={() => <Eye size={20} color={theme.colors.primary} />}
-          onPress={() => {
-            console.log('Navigating to document:', item.id);
-            router.push(`/documents/${item.id}`);
+          onPress={() => {            router.push(`/documents/${item.id}`);
           }}
           style={styles.actionButton}
         />
         <IconButton
           icon={() => <Download size={20} color={theme.colors.secondary} />}
-          onPress={() => console.log('Download document', item.id)}
+          onPress={() => {
+            // TODO: Implement file download
+          }}
           style={styles.actionButton}
         />
         <IconButton
           icon={() => <Share size={20} color={theme.colors.tertiary} />}
-          onPress={() => console.log('Share document', item.id)}
+          onPress={() => {
+            // TODO: Implement file share
+          }}
           style={styles.actionButton}
         />
       </View>
     </ModernCard>
   );
 
-  return (
-    <View style={styles.container}>
-      <ModernHeader
-        title={t('title')}
-        subtitle={t('subtitle')}
-        variant="dark"
-        showNotifications={true}
-      />
-
-      {/* Stats Overview */}
-      <View style={styles.statsSection}>
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          data={[
-            {
-              title: t('totalDocuments'),
-              value: stats.totalDocuments.toString(),
-              color: theme.colors.primary,
-              icon: <FileText size={20} color={theme.colors.primary} />,
-            },
-            {
-              title: t('thisMonth'),
-              value: stats.thisMonth.toString(),
-              subtitle: t('uploaded'),
-              color: theme.colors.success,
-              icon: <Upload size={20} color={theme.colors.success} />,
-              trend: { value: '+15%', isPositive: true },
-            },
-            {
-              title: t('totalSize'),
-              value: stats.totalSize,
-              color: theme.colors.secondary,
-              icon: <File size={20} color={theme.colors.secondary} />,
-            },
-            {
-              title: t('avgSize'),
-              value: stats.avgSize,
-              subtitle: t('perDocument'),
-              color: theme.colors.warning,
-              icon: <FileText size={20} color={theme.colors.warning} />,
-            },
-          ]}
-          renderItem={({ item }) => (
-            <StatCard
-              title={item.title}
-              value={item.value}
-              subtitle={item.subtitle}
-              color={item.color}
-              icon={item.icon}
-              trend={item.trend}
-            />
-          )}
-          keyExtractor={(item) => item.title}
-          contentContainerStyle={styles.statsContainer}
-        />
-      </View>
-
-      {/* Search and Filters */}
-      <View style={styles.filtersSection}>
-        <Searchbar
-          placeholder={t('searchPlaceholder')}
-          onChangeText={setSearchQuery}
-          value={searchQuery}
-          style={styles.searchbar}
-          iconColor={theme.colors.onSurfaceVariant}
-        />
-        
-        <SegmentedButtons
-          value={activeFilter}
-          onValueChange={setActiveFilter}
-          buttons={[
-            { value: 'all', label: t('common:all') },
-            { value: 'contract', label: t('documentTypes.contract') },
-            { value: 'invoice', label: t('documentTypes.invoice') },
-            { value: 'image', label: t('documentTypes.photo') },
-          ]}
-          style={styles.segmentedButtons}
-        />
-      </View>
-
-      {/* Documents List */}
-      <FlatList
-        data={filteredDocuments}
-        renderItem={renderDocument}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <ModernCard style={styles.emptyState}>
-            <FileText size={48} color={theme.colors.onSurfaceVariant} />
-            <Text style={styles.emptyStateTitle}>{t('noDocumentsFound')}</Text>
-            <Text style={styles.emptyStateSubtitle}>
-              {searchQuery || activeFilter !== 'all' 
-                ? t('adjustSearchOrFilters') 
-                : t('uploadFirstDocument')}
-            </Text>
-          </ModernCard>
-        }
-      />
-
-      {/* Upload Document FAB */}
-      <View style={styles.fabContainer}>
-        <ModernCard style={styles.fab}>
-          <Text
-            style={styles.fabText}
-            onPress={() => router.push('/documents/upload')}
-          >
-            <Plus size={24} color="white" />
-          </Text>
-        </ModernCard>
-      </View>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
+    const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
@@ -498,3 +384,120 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
+  return (
+    <View style={styles.container}>
+      <ModernHeader
+        title={t('title')}
+        subtitle={t('subtitle')}
+        variant="dark"
+        showNotifications={true}
+      />
+
+      {/* Stats Overview */}
+      <View style={styles.statsSection}>
+        <FlatList
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          data={[
+            {
+              title: t('totalDocuments'),
+              value: stats.totalDocuments.toString(),
+              color: theme.colors.primary,
+              icon: <FileText size={20} color={theme.colors.primary} />,
+            },
+            {
+              title: t('thisMonth'),
+              value: stats.thisMonth.toString(),
+              subtitle: t('uploaded'),
+              color: theme.colors.success,
+              icon: <Upload size={20} color={theme.colors.success} />,
+              trend: { value: '+15%', isPositive: true },
+            },
+            {
+              title: t('totalSize'),
+              value: stats.totalSize,
+              color: theme.colors.secondary,
+              icon: <File size={20} color={theme.colors.secondary} />,
+            },
+            {
+              title: t('avgSize'),
+              value: stats.avgSize,
+              subtitle: t('perDocument'),
+              color: theme.colors.warning,
+              icon: <FileText size={20} color={theme.colors.warning} />,
+            },
+          ]}
+          renderItem={({ item }) => (
+            <StatCard
+              title={item.title}
+              value={item.value}
+              subtitle={item.subtitle}
+              color={item.color}
+              icon={item.icon}
+              trend={item.trend}
+            />
+          )}
+          keyExtractor={(item) => item.title}
+          contentContainerStyle={styles.statsContainer}
+        />
+      </View>
+
+      {/* Search and Filters */}
+      <View style={styles.filtersSection}>
+        <Searchbar
+          placeholder={t('searchPlaceholder')}
+          onChangeText={setSearchQuery}
+          value={searchQuery}
+          style={styles.searchbar}
+          iconColor={theme.colors.onSurfaceVariant}
+        />
+        
+        <SegmentedButtons
+          value={activeFilter}
+          onValueChange={setActiveFilter}
+          buttons={[
+            { value: 'all', label: t('common:all') },
+            { value: 'contract', label: t('documentTypes.contract') },
+            { value: 'invoice', label: t('documentTypes.invoice') },
+            { value: 'image', label: t('documentTypes.photo') },
+          ]}
+          style={styles.segmentedButtons}
+        />
+      </View>
+
+      {/* Documents List */}
+      <FlatList
+        data={filteredDocuments}
+        renderItem={renderDocument}
+        keyExtractor={item => item.id}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <ModernCard style={styles.emptyState}>
+            <FileText size={48} color={theme.colors.onSurfaceVariant} />
+            <Text style={styles.emptyStateTitle}>{t('noDocumentsFound')}</Text>
+            <Text style={styles.emptyStateSubtitle}>
+              {searchQuery || activeFilter !== 'all' 
+                ? t('adjustSearchOrFilters') 
+                : t('uploadFirstDocument')}
+            </Text>
+          </ModernCard>
+        }
+      />
+
+      {/* Upload Document FAB */}
+      <View style={styles.fabContainer}>
+        <ModernCard style={styles.fab}>
+          <Text
+            style={styles.fabText}
+            onPress={() => router.push('/documents/upload')}
+          >
+            <Plus size={24} color="white" />
+          </Text>
+        </ModernCard>
+      </View>
+    </View>
+  );
+}
+

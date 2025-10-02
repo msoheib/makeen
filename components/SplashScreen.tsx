@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Animated, Dimensions, Image } from 'react-native';
+import { View, Text, StyleSheet, Animated, Dimensions, Image, Platform } from 'react-native';
 import { ActivityIndicator } from 'react-native-paper';
 import * as SplashScreen from 'expo-splash-screen';
 
@@ -26,13 +26,13 @@ export const CustomSplashScreen: React.FC<SplashScreenProps> = ({
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 800,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }),
       Animated.spring(logoScale, {
         toValue: 1,
         tension: 100,
         friction: 8,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }),
     ]).start();
 

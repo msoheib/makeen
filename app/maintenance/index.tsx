@@ -2,7 +2,8 @@ import React, { useState, useCallback } from 'react';
 import { View, StyleSheet, FlatList, RefreshControl, Alert } from 'react-native';
 import { Text, Button, FAB, Searchbar, Chip, ActivityIndicator } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { theme, spacing } from '@/lib/theme';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { useApi } from '@/hooks/useApi';
 import { maintenanceApi } from '@/lib/api';
 import ModernHeader from '@/components/ModernHeader';
@@ -64,6 +65,7 @@ const PRIORITY_LABELS = {
 };
 
 export default function MaintenanceRequestsScreen() {
+  const { theme } = useAppTheme();
   const router = useRouter();
   const { t } = useTranslation('maintenance');
   const [searchQuery, setSearchQuery] = useState('');
@@ -167,7 +169,186 @@ export default function MaintenanceRequestsScreen() {
   const renderMaintenanceCard = ({ item }: { item: MaintenanceRequest }) => {
     const StatusIcon = STATUS_ICONS[item.status];
     
-    return (
+      const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: spacing.md,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  searchBar: {
+    flex: 1,
+    elevation: 2,
+  },
+  filterButton: {
+    elevation: 2,
+  },
+  filtersCard: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: 12,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    elevation: 1,
+  },
+  filtersHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  filtersTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+  },
+  filterChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  filterChip: {
+    marginRight: 0,
+  },
+  listContainer: {
+    paddingBottom: 100,
+  },
+  requestCard: {
+    marginBottom: spacing.md,
+    padding: spacing.md,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: spacing.xs,
+  },
+  priorityChip: {
+    height: 28,
+  },
+  requestTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginBottom: spacing.sm,
+  },
+  requestDescription: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    lineHeight: 20,
+    marginBottom: spacing.md,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  infoText: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    marginLeft: spacing.xs,
+    flex: 1,
+  },
+  phoneText: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    marginLeft: spacing.xs,
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: spacing.md,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.outline + '30',
+  },
+  dateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dateText: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
+    marginLeft: spacing.xs,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: spacing.md,
+    fontSize: 16,
+    color: theme.colors.onSurfaceVariant,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.xl,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+    textAlign: 'center',
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: spacing.xl,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.xl,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: theme.colors.error,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+    textAlign: 'center',
+  },
+  errorSubtitle: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: spacing.xl,
+  },
+  fab: {
+    position: 'absolute',
+    margin: spacing.md,
+    right: 0,
+    bottom: 0,
+    backgroundColor: theme.colors.primary,
+  },
+});
+
+  return (
       <ModernCard 
         style={styles.requestCard}
         onPress={() => router.push(`/maintenance/${item.id}`)}
@@ -453,181 +634,4 @@ export default function MaintenanceRequestsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: spacing.md,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  searchBar: {
-    flex: 1,
-    elevation: 2,
-  },
-  filterButton: {
-    elevation: 2,
-  },
-  filtersCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: 12,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-    elevation: 1,
-  },
-  filtersHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  filtersTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-  },
-  filterChips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  filterChip: {
-    marginRight: 0,
-  },
-  listContainer: {
-    paddingBottom: 100,
-  },
-  requestCard: {
-    marginBottom: spacing.md,
-    padding: spacing.md,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  statusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginLeft: spacing.xs,
-  },
-  priorityChip: {
-    height: 28,
-  },
-  requestTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.sm,
-  },
-  requestDescription: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    lineHeight: 20,
-    marginBottom: spacing.md,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
-  },
-  infoText: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    marginLeft: spacing.xs,
-    flex: 1,
-  },
-  phoneText: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    marginLeft: spacing.xs,
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: spacing.md,
-    paddingTop: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.outline + '30',
-  },
-  dateContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  dateText: {
-    fontSize: 12,
-    color: theme.colors.onSurfaceVariant,
-    marginLeft: spacing.xs,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: spacing.md,
-    fontSize: 16,
-    color: theme.colors.onSurfaceVariant,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing.xl,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginTop: spacing.md,
-    marginBottom: spacing.sm,
-    textAlign: 'center',
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: spacing.xl,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing.xl,
-  },
-  errorTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: theme.colors.error,
-    marginTop: spacing.md,
-    marginBottom: spacing.sm,
-    textAlign: 'center',
-  },
-  errorSubtitle: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: spacing.xl,
-  },
-  fab: {
-    position: 'absolute',
-    margin: spacing.md,
-    right: 0,
-    bottom: 0,
-    backgroundColor: theme.colors.primary,
-  },
-}); 
+ 

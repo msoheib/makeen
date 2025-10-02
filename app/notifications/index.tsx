@@ -12,7 +12,15 @@ import { useAppStore } from '@/lib/store';
 export default function NotificationsScreen() {
   const router = useRouter();
   const { theme } = useTheme();
-  const [filter, setFilter] = useState<'all' | 'unread' | 'bid_submitted' | 'bid_approved' | 'bid_rejected'>('all');
+  const [filter, setFilter] = useState<
+    'all' |
+    'unread' |
+    'bid_submitted' |
+    'bid_approved' |
+    'bid_rejected' |
+    'maintenance_request' |
+    'contract_expiring'
+  >('all');
   const { markAllAsRead } = useNotificationBadges();
   const { triggerHeaderBadgeRefresh } = useAppStore();
 
@@ -98,6 +106,8 @@ export default function NotificationsScreen() {
         return <Icon source="file-document" size={20} color={theme.colors.tertiary} />;
       case 'maintenance_request':
         return <Icon source="home-repair" size={20} color={theme.colors.warning} />;
+      case 'contract_expiring':
+        return <Icon source="calendar-alert" size={20} color={theme.colors.error} />;
       default:
         return <Icon source="bell" size={20} color={theme.colors.onSurfaceVariant} />;
     }
@@ -110,6 +120,8 @@ export default function NotificationsScreen() {
         return theme.colors.error;
       case 'high':
         return theme.colors.warning;
+      case 'medium':
+        return theme.colors.primary;
       case 'normal':
         return theme.colors.primary;
       case 'low':
@@ -233,7 +245,7 @@ export default function NotificationsScreen() {
           >
             {item.priority === 'urgent' ? 'عاجل' : 
              item.priority === 'high' ? 'عالي' : 
-             item.priority === 'normal' ? 'عادي' : 'منخفض'}
+             item.priority === 'medium' || item.priority === 'normal' ? 'عادي' : 'منخفض'}
           </Chip>
           
           {item.sender && (
@@ -303,7 +315,9 @@ export default function NotificationsScreen() {
                 { key: 'unread', label: 'غير مقروءة' },
                 { key: 'bid_submitted', label: 'عروض جديدة' },
                 { key: 'bid_approved', label: 'تم الموافقة' },
-                { key: 'bid_rejected', label: 'تم الرفض' }
+                { key: 'bid_rejected', label: 'تم الرفض' },
+                { key: 'maintenance_request', label: 'طلبات الصيانة' },
+                { key: 'contract_expiring', label: 'عقود تنتهي قريبًا' }
               ].map((filterItem) => (
                 <Chip
                   key={filterItem.key}

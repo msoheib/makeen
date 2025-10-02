@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList, Alert } from 'react-native';
 import { Text, Searchbar, SegmentedButtons, Avatar, List, ActivityIndicator, Chip, FAB } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { theme, spacing } from '@/lib/theme';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
 import { User } from '@/lib/types';
 import { Users, UserPlus, Phone, Mail, Plus, MapPin } from 'lucide-react-native';
@@ -12,6 +13,7 @@ import StatCard from '@/components/StatCard';
 import { useTranslation } from 'react-i18next';
 
 export default function PeopleScreen() {
+  const { theme } = useAppTheme();
   const router = useRouter();
   const { t } = useTranslation('people');
   const [loading, setLoading] = useState(true);
@@ -163,6 +165,99 @@ export default function PeopleScreen() {
     return colors[role as keyof typeof colors] || { background: theme.colors.surfaceVariant, color: theme.colors.onSurfaceVariant };
   };
 
+    const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  statsSection: {
+    marginBottom: spacing.m,
+  },
+  statsContainer: {
+    paddingHorizontal: spacing.m,
+  },
+  filtersSection: {
+    paddingHorizontal: spacing.m,
+    marginBottom: spacing.m,
+  },
+  searchbar: {
+    marginBottom: spacing.m,
+    backgroundColor: theme.colors.surface,
+  },
+  segmentedButtons: {
+    backgroundColor: theme.colors.surface,
+  },
+  listContent: {
+    paddingHorizontal: spacing.m,
+    paddingBottom: spacing.xxxl,
+  },
+  personCard: {
+    marginBottom: spacing.m,
+  },
+  listItem: {
+    paddingVertical: spacing.s,
+  },
+  personActions: {
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+  },
+  roleChip: {
+    borderRadius: 12,
+  },
+  personDetails: {
+    marginTop: spacing.s,
+    paddingHorizontal: spacing.s,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  detailText: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    marginLeft: spacing.xs,
+  },
+  fab: {
+    position: 'absolute',
+    margin: 16,
+    right: 0,
+    bottom: 0,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  emptyState: {
+    alignItems: 'center',
+    padding: spacing.xl,
+    marginTop: spacing.xl,
+  },
+  emptyStateTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginTop: spacing.m,
+    marginBottom: spacing.s,
+  },
+  emptyStateSubtitle: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    textAlign: 'center',
+  },
+  fabContainer: {
+    position: 'absolute',
+    bottom: spacing.m,
+    right: spacing.m,
+  },
+  fabText: {
+    color: 'white',
+    fontSize: 24,
+    fontWeight: '600',
+  },
+});
+
   return (
     <View style={styles.container}>
       <ModernHeader
@@ -270,95 +365,3 @@ export default function PeopleScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  statsSection: {
-    marginBottom: spacing.m,
-  },
-  statsContainer: {
-    paddingHorizontal: spacing.m,
-  },
-  filtersSection: {
-    paddingHorizontal: spacing.m,
-    marginBottom: spacing.m,
-  },
-  searchbar: {
-    marginBottom: spacing.m,
-    backgroundColor: theme.colors.surface,
-  },
-  segmentedButtons: {
-    backgroundColor: theme.colors.surface,
-  },
-  listContent: {
-    paddingHorizontal: spacing.m,
-    paddingBottom: spacing.xxxl,
-  },
-  personCard: {
-    marginBottom: spacing.m,
-  },
-  listItem: {
-    paddingVertical: spacing.s,
-  },
-  personActions: {
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-  },
-  roleChip: {
-    borderRadius: 12,
-  },
-  personDetails: {
-    marginTop: spacing.s,
-    paddingHorizontal: spacing.s,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
-  },
-  detailText: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    marginLeft: spacing.xs,
-  },
-  fab: {
-    position: 'absolute',
-    margin: 16,
-    right: 0,
-    bottom: 0,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-  },
-  emptyState: {
-    alignItems: 'center',
-    padding: spacing.xl,
-    marginTop: spacing.xl,
-  },
-  emptyStateTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginTop: spacing.m,
-    marginBottom: spacing.s,
-  },
-  emptyStateSubtitle: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    textAlign: 'center',
-  },
-  fabContainer: {
-    position: 'absolute',
-    bottom: spacing.m,
-    right: spacing.m,
-  },
-  fabText: {
-    color: 'white',
-    fontSize: 24,
-    fontWeight: '600',
-  },
-});

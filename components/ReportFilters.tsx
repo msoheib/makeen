@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, Card, useTheme, Button, Chip, Divider } from 'react-native-paper';
+import { useTranslation } from 'react-i18next';
 import { MaterialIcons } from '@expo/vector-icons';
 import DateRangePicker from './DateRangePicker';
 
@@ -49,11 +50,12 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
   showAdvancedFilters = false
 }) => {
   const theme = useTheme();
+  const { t } = useTranslation(['reports','common']);
   const [filters, setFilters] = useState<ReportFilters>({
     dateRange: {
       startDate: new Date(new Date().getFullYear(), 0, 1),
       endDate: new Date(),
-      label: 'This Year'
+      label: t('reports:thisYear', { defaultValue: 'This Year' })
     },
     propertyTypes: [],
     cities: [],
@@ -129,7 +131,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
       <Card.Content>
         <View style={styles.header}>
           <MaterialIcons name="filter-list" size={24} color={theme.colors.primary} />
-          <Text variant="titleMedium" style={styles.title}>Report Filters</Text>
+          <Text variant="titleMedium" style={styles.title}>{t('reports:reportFilters', { defaultValue: 'Report Filters' })}</Text>
           {hasActiveFilters() && (
             <Chip 
               mode="outlined" 
@@ -137,14 +139,14 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
               style={styles.activeChip}
               textStyle={{ color: theme.colors.primary }}
             >
-              Active
+              {t('reports:active', { defaultValue: 'Active' })}
             </Chip>
           )}
         </View>
 
         {/* Date Range Filter */}
         <View style={styles.section}>
-          <Text variant="titleSmall" style={styles.sectionTitle}>Date Range</Text>
+          <Text variant="titleSmall" style={styles.sectionTitle}>{t('reports:dateRange', { defaultValue: 'Date Range' })}</Text>
           <DateRangePicker
             selectedRange={filters.dateRange}
             onRangeChange={(dateRange) => updateFilter('dateRange', dateRange)}
@@ -155,7 +157,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
 
         {/* Property Types Filter */}
         <View style={styles.section}>
-          <Text variant="titleSmall" style={styles.sectionTitle}>Property Types</Text>
+          <Text variant="titleSmall" style={styles.sectionTitle}>{t('reports:propertyTypes', { defaultValue: 'Property Types' })}</Text>
           <View style={styles.chipContainer}>
             {availablePropertyTypes.map(type => (
               <Chip
@@ -181,7 +183,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
           <>
             <Divider style={styles.divider} />
             <View style={styles.section}>
-              <Text variant="titleSmall" style={styles.sectionTitle}>Cities</Text>
+              <Text variant="titleSmall" style={styles.sectionTitle}>{t('reports:cities', { defaultValue: 'Cities' })}</Text>
               <View style={styles.chipContainer}>
                 {availableCities.map(city => (
                   <Chip
@@ -211,7 +213,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
             onPress={() => setShowAdvanced(!showAdvanced)}
             icon={showAdvanced ? 'chevron-up' : 'chevron-down'}
           >
-            {showAdvanced ? 'Hide Advanced Filters' : 'Show Advanced Filters'}
+            {showAdvanced ? t('reports:hideAdvanced', { defaultValue: 'Hide Advanced Filters' }) : t('reports:showAdvanced', { defaultValue: 'Show Advanced Filters' })}
           </Button>
         </View>
 
@@ -222,7 +224,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
             
             {/* Payment Status Filter */}
             <View style={styles.section}>
-              <Text variant="titleSmall" style={styles.sectionTitle}>Payment Status</Text>
+              <Text variant="titleSmall" style={styles.sectionTitle}>{t('reports:paymentStatus', { defaultValue: 'Payment Status' })}</Text>
               <View style={styles.chipContainer}>
                 {DEFAULT_PAYMENT_STATUSES.map(status => (
                   <Chip
@@ -245,18 +247,18 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
 
             {/* Amount Range Filter */}
             <View style={styles.section}>
-              <Text variant="titleSmall" style={styles.sectionTitle}>Amount Range (SAR)</Text>
+              <Text variant="titleSmall" style={styles.sectionTitle}>{t('reports:amountRange', { defaultValue: 'Amount Range (SAR)' })}</Text>
               <View style={styles.amountContainer}>
                 <View style={styles.amountInput}>
-                  <Text variant="bodySmall">Min</Text>
+                  <Text variant="bodySmall">{t('reports:min', { defaultValue: 'Min' })}</Text>
                   <Text variant="bodyMedium">
-                    {filters.minAmount ? `${filters.minAmount.toLocaleString()}` : 'Any'}
+                    {filters.minAmount ? `${filters.minAmount.toLocaleString('en-US')}` : t('reports:any', { defaultValue: 'Any' })}
                   </Text>
                 </View>
                 <View style={styles.amountInput}>
-                  <Text variant="bodySmall">Max</Text>
+                  <Text variant="bodySmall">{t('reports:max', { defaultValue: 'Max' })}</Text>
                   <Text variant="bodyMedium">
-                    {filters.maxAmount ? `${filters.maxAmount.toLocaleString()}` : 'Any'}
+                    {filters.maxAmount ? `${filters.maxAmount.toLocaleString('en-US')}` : t('reports:any', { defaultValue: 'Any' })}
                   </Text>
                 </View>
               </View>
@@ -264,7 +266,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
 
             {/* Sub-Properties Toggle */}
             <View style={styles.section}>
-              <Text variant="titleSmall" style={styles.sectionTitle}>Include Sub-Properties</Text>
+              <Text variant="titleSmall" style={styles.sectionTitle}>{t('reports:includeSubProperties', { defaultValue: 'Include Sub-Properties' })}</Text>
               <Chip
                 mode={filters.includeSubProperties ? 'flat' : 'outlined'}
                 selected={filters.includeSubProperties}
@@ -276,7 +278,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
                     : theme.colors.onSurface
                 }}
               >
-                {filters.includeSubProperties ? 'Yes' : 'No'}
+                {filters.includeSubProperties ? t('common:yes', { defaultValue: 'Yes' }) : t('common:no', { defaultValue: 'No' })}
               </Chip>
             </View>
           </>
@@ -290,14 +292,14 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
             style={styles.actionButton}
             disabled={!hasActiveFilters()}
           >
-            Clear Filters
+            {t('reports:clearFilters', { defaultValue: 'Clear Filters' })}
           </Button>
           <Button
             mode="contained"
             onPress={() => onFiltersChange(filters)}
             style={styles.actionButton}
           >
-            Apply Filters
+            {t('reports:applyFilters', { defaultValue: 'Apply Filters' })}
           </Button>
         </View>
       </Card.Content>

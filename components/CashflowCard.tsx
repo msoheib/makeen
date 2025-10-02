@@ -1,15 +1,16 @@
 import React from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { lightTheme, darkTheme, spacing, borderRadius, shadows } from '@/lib/theme';
-import { useAppStore } from '@/lib/store';
+import { spacing, borderRadius, shadows, type AppTheme } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { formatCurrency } from '@/lib/formatters';
+import { useTranslation } from 'react-i18next';
 
 interface CashflowCardProps {
   income: number;
   expenses: number;
   netIncome: number;
   loading?: boolean;
-  theme?: any;
+  theme?: AppTheme;
 }
 
 export default function CashflowCard({ 
@@ -19,8 +20,9 @@ export default function CashflowCard({
   loading = false,
   theme: propTheme
 }: CashflowCardProps) {
-  const { isDarkMode } = useAppStore();
-  const theme = propTheme || (isDarkMode ? darkTheme : lightTheme);
+  const { theme: appTheme } = useAppTheme();
+  const theme = propTheme || appTheme;
+  const { t } = useTranslation(['dashboard','common']);
 
   if (loading) {
     return (
@@ -45,7 +47,7 @@ export default function CashflowCard({
               marginTop: spacing.s,
             }
           ]}>
-            جاري التحميل...
+            {t('common:loading', { defaultValue: 'Loading...' })}
           </Text>
         </View>
       </View>
@@ -73,7 +75,7 @@ export default function CashflowCard({
           fontWeight: '700',
         }
       ]}>
-        التدفق النقدي
+        {t('dashboard:cashflow.title')}
       </Text>
       
       <View style={[styles.row, { marginBottom: spacing.s }]}>
@@ -87,7 +89,7 @@ export default function CashflowCard({
               fontWeight: '500',
             }
           ]}>
-            الدخل
+            {t('dashboard:cashflow.income')}
           </Text>
         </View>
         <Text style={[
@@ -113,7 +115,7 @@ export default function CashflowCard({
               fontWeight: '500',
             }
           ]}>
-            المصروفات
+            {t('dashboard:cashflow.expenses')}
           </Text>
         </View>
         <Text style={[
@@ -144,7 +146,7 @@ export default function CashflowCard({
               fontWeight: '600',
             }
           ]}>
-            صافي الدخل
+            {t('dashboard:cashflow.netIncome')}
           </Text>
         </View>
         <Text style={[

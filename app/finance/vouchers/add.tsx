@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Text, TextInput, Button, SegmentedButtons, IconButton } from 'react-native-paper';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { theme, spacing } from '@/lib/theme';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/lib/store';
 import { VoucherType, VoucherStatus } from '@/lib/types';
@@ -11,6 +12,7 @@ import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 
 export default function AddVoucherScreen() {
+  const { theme } = useAppTheme();
   const router = useRouter();
   const { property, tenant } = useLocalSearchParams();
   const user = useAppStore(state => state.user);
@@ -114,13 +116,92 @@ export default function AddVoucherScreen() {
     }
   };
 
+    const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+
+  content: {
+    flex: 1,
+  },
+  section: {
+    marginHorizontal: spacing.m,
+    marginBottom: spacing.m,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.m,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginLeft: spacing.s,
+  },
+  input: {
+    marginBottom: spacing.m,
+    backgroundColor: theme.colors.surface,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  amountInput: {
+    width: '70%',
+  },
+  currencyInput: {
+    width: '25%',
+  },
+  segmentedButtons: {
+    marginBottom: spacing.m,
+  },
+  typeInfo: {
+    backgroundColor: theme.colors.primaryContainer,
+    padding: spacing.m,
+    borderRadius: 8,
+  },
+  typeDescription: {
+    fontSize: 14,
+    color: theme.colors.primary,
+    lineHeight: 20,
+  },
+  statusInfo: {
+    backgroundColor: theme.colors.surfaceVariant,
+    padding: spacing.m,
+    borderRadius: 8,
+  },
+  statusDescription: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    lineHeight: 20,
+  },
+  errorText: {
+    color: theme.colors.error,
+    fontSize: 12,
+    marginTop: -spacing.s,
+    marginBottom: spacing.s,
+  },
+  submitContainer: {
+    padding: spacing.m,
+    paddingBottom: spacing.xxxl,
+  },
+  submitButton: {
+    backgroundColor: theme.colors.primary,
+  },
+  submitButtonContent: {
+    paddingVertical: spacing.s,
+  },
+});
+
   return (
     <View style={styles.container}>
       <ModernHeader
         title="إضافة سند"
         showBackButton={true}
         showNotifications={false}
-        onBackPress={() => router.back()}
+        onBackPress={() => navigateBack()}
       />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -262,81 +343,3 @@ export default function AddVoucherScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-
-  content: {
-    flex: 1,
-  },
-  section: {
-    marginHorizontal: spacing.m,
-    marginBottom: spacing.m,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.m,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginLeft: spacing.s,
-  },
-  input: {
-    marginBottom: spacing.m,
-    backgroundColor: theme.colors.surface,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  amountInput: {
-    width: '70%',
-  },
-  currencyInput: {
-    width: '25%',
-  },
-  segmentedButtons: {
-    marginBottom: spacing.m,
-  },
-  typeInfo: {
-    backgroundColor: theme.colors.primaryContainer,
-    padding: spacing.m,
-    borderRadius: 8,
-  },
-  typeDescription: {
-    fontSize: 14,
-    color: theme.colors.primary,
-    lineHeight: 20,
-  },
-  statusInfo: {
-    backgroundColor: theme.colors.surfaceVariant,
-    padding: spacing.m,
-    borderRadius: 8,
-  },
-  statusDescription: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    lineHeight: 20,
-  },
-  errorText: {
-    color: theme.colors.error,
-    fontSize: 12,
-    marginTop: -spacing.s,
-    marginBottom: spacing.s,
-  },
-  submitContainer: {
-    padding: spacing.m,
-    paddingBottom: spacing.xxxl,
-  },
-  submitButton: {
-    backgroundColor: theme.colors.primary,
-  },
-  submitButtonContent: {
-    paddingVertical: spacing.s,
-  },
-});

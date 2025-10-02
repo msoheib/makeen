@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, KeyboardAvoidingView, ScrollView, Platform, Image, Alert } from 'react-native';
+import { View, StyleSheet, KeyboardAvoidingView, ScrollView, Platform, Image, Alert, I18nManager } from 'react-native';
 import { Text, TextInput, Button, Divider, SegmentedButtons } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { theme, spacing } from '@/lib/theme';
@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { UserRole } from '@/lib/types';
 import { AuthApiError } from '@supabase/supabase-js';
 import { useTranslation } from '@/lib/useTranslation';
+import { isRTL } from '@/lib/rtl';
 
 export default function SignUpScreen() {
   const router = useRouter();
@@ -58,8 +59,6 @@ export default function SignUpScreen() {
     
     try {
       // Create user in Supabase Auth
-      console.log('Attempting signup with:', { email, role, firstName, lastName });
-      
       const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -72,8 +71,6 @@ export default function SignUpScreen() {
         }
       });
       
-      console.log('Signup response:', { data, error: authError });
-      
       if (authError) {
         console.error('Auth signup error:', authError);
         throw authError;
@@ -83,17 +80,6 @@ export default function SignUpScreen() {
         // Determine initial status and approval status based on role
         const initialStatus = 'active'; // All users start with active status
         const approvalStatus = role === 'owner' ? 'pending' : 'approved'; // Use approval_status for pending
-        
-        console.log('Creating profile for user:', data.user.id);
-        console.log('Profile data:', {
-          id: data.user.id,
-          first_name: firstName,
-          last_name: lastName,
-          email: email,
-          role: role,
-          status: initialStatus,
-          approval_status: approvalStatus,
-        });
         
         // Create user profile with selected role and status
         const { error: profileError } = await supabase
@@ -115,14 +101,8 @@ export default function SignUpScreen() {
           throw profileError;
         }
         
-        console.log('Profile created successfully!');
-        
         // Show appropriate message based on role
-        console.log('User role:', role);
-        console.log('About to show success alert...');
-        
         if (role === 'owner') {
-          console.log('Showing owner success alert...');
           Alert.alert(
             'Registration Successful! 🎉',
             'Your account has been created successfully and is pending approval. A property manager will review your registration and you will receive notification once approved. You can now sign in with your credentials.',
@@ -130,7 +110,6 @@ export default function SignUpScreen() {
               { 
                 text: 'Sign In Now', 
                 onPress: () => {
-                  console.log('Owner: Sign In Now button pressed, redirecting...');
                   router.replace('/(auth)');
                 }
               }
@@ -139,12 +118,10 @@ export default function SignUpScreen() {
           
           // Fallback redirect after 3 seconds if Alert doesn't work
           setTimeout(() => {
-            console.log('Fallback redirect triggered for owner...');
             router.replace('/(auth)');
           }, 3000);
         } else {
           // For non-owner roles, show immediate success and redirect
-          console.log('Showing non-owner success alert...');
           Alert.alert(
             'Registration Successful! 🎉',
             'Your account has been created successfully. You can now sign in with your credentials.',
@@ -152,7 +129,6 @@ export default function SignUpScreen() {
               { 
                 text: 'Sign In Now', 
                 onPress: () => {
-                  console.log('Non-owner: Sign In Now button pressed, redirecting...');
                   router.replace('/(auth)');
                 }
               }
@@ -161,12 +137,10 @@ export default function SignUpScreen() {
           
           // Fallback redirect after 3 seconds if Alert doesn't work
           setTimeout(() => {
-            console.log('Fallback redirect triggered...');
             router.replace('/(auth)');
           }, 3000);
         }
       } else {
-        console.log('No user data in response, showing signup initiated message');
         setError(t('signup.signupInitiated'));
       }
     } catch (error: any) {
@@ -228,16 +202,20 @@ export default function SignUpScreen() {
           {/* Role Selection */}
           <View style={styles.roleContainer}>
             <Text style={styles.roleLabel}>{t('signup.iAmA')}</Text>
-            <SegmentedButtons
-              value={role}
-              onValueChange={value => setRole(value as UserRole)}
-              buttons={[
+            {(() => {
+              const baseButtons = [
                 { value: 'tenant', label: t('signup.tenant') },
                 { value: 'buyer', label: t('signup.buyer') },
                 { value: 'owner', label: t('signup.propertyOwner') },
                 { value: 'manager', label: t('signup.manager') },
                 { value: 'accountant', label: 'Accountant' }
-              ]}
+              ];
+              const buttons = isRTL() ? [...baseButtons].reverse() : baseButtons;
+              return (
+            <SegmentedButtons
+              value={role}
+              onValueChange={value => setRole(value as UserRole)}
+                buttons={buttons}
               style={styles.roleButtons}
               theme={{
                 colors: {
@@ -249,6 +227,8 @@ export default function SignUpScreen() {
                 }
               }}
             />
+              );
+            })()}
           </View>
           
           <View style={styles.nameRow}>

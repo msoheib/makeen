@@ -1,37 +1,65 @@
 {
   "title": "لوحة التحكم",
-  "welcome": "مرحباً",
+  "welcomeMessage": "مرحبًا بك في نظام إدارة العقارات",
+  "quickStats": "إحصائيات سريعة",
+  "welcome": "مرحبًا",
   "overview": "نظرة عامة",
   "greetings": {
-    "hello": "أهلاً {{name}}،"
+    "hello": "مرحبًا {{name}}،"
   },
   "totalProperties": "إجمالي العقارات",
+  "occupiedProperties": "العقارات المشغولة",
   "totalTenants": "إجمالي المستأجرين",
   "totalRevenue": "إجمالي الإيرادات",
   "monthlyIncome": "الدخل الشهري",
   "expenses": "المصروفات",
   "netIncome": "صافي الدخل",
-  "occupancyRate": "معدل الإشغال",
-  "recentActivity": "النشاط الأخير",
+  "occupancyRate": "نسبة الإشغال",
+  "financialSummary": "الملخص المالي",
+  "propertyOverview": "نظرة عامة على العقارات",
+  "recentActivity": "آخر الأنشطة",
+  "activity": {
+    "monthlyRentReceived": "تم استلام دفعة الإيجار الشهرية",
+    "activeContracts": "العقود النشطة",
+    "maintenanceRequests": "طلبات الصيانة",
+    "desc": {
+      "activeTenants": "{{count}} مستأجرين نشطين",
+      "activeContracts": "{{count}} عقدًا نشطًا",
+      "propertiesUnderMaintenance": "{{count}} عقار تحت الصيانة"
+    }
+  },
   "systemOverview": "نظرة عامة على النظام",
-  "activeTenants": "المستأجرين النشطين",
+  "activeTenants": "مستأجرون نشطون",
   "occupied": "مشغول",
   "available": "متاح",
-  "attentionRequired": "يتطلب اهتمام",
-  "contractsExpiring": "عقد/عقود تنتهي قريباً",
+  "maintenance": "صيانة",
+  "attentionRequired": "يتطلب الانتباه",
+  "contractsExpiring": "عقد/عقود تنتهي قريبًا",
   "pendingMaintenance": "طلبات صيانة معلقة",
   "add": "إضافة",
+  "rent": {
+    "overview": "نظرة عامة على الإيجارات",
+    "total": "إجمالي الإيجار",
+    "collected": "المحصل",
+    "pending": "المعلق"
+  },
+  "cashflow": {
+    "title": "التدفق النقدي",
+    "income": "الدخل",
+    "expenses": "المصروفات",
+    "netIncome": "صافي الدخل"
+  },
   "finance": {
     "rent": "الإيجار",
     "overview": "نظرة عامة مالية",
     "totalDue": "إجمالي المستحق",
-    "outstandingPayments": "المدفوعات المعلقة",
-    "collectedThisMonth": "المحصل هذا الشهر"
+    "outstandingPayments": "مدفوعات معلقة",
+    "collectedThisMonth": "تم تحصيله هذا الشهر"
   },
   "quickActions": {
     "addProperty": "إضافة عقار",
     "addTenant": "إضافة مستأجر",
-    "createVoucher": "إنشاء قسيمة",
+    "createVoucher": "إنشاء سند",
     "viewReports": "عرض التقارير"
   }
-} 
+}

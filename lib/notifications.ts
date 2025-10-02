@@ -88,7 +88,6 @@ class NotificationService {
       this.setupNotificationListeners();
 
       this.isInitialized = true;
-      console.log('📱 Notification service initialized successfully');
       
       return { 
         success: true, 
@@ -149,7 +148,6 @@ class NotificationService {
       // Store token for future use
       await AsyncStorage.setItem('expoPushToken', token);
       
-      console.log('📱 Push token obtained:', token);
       return { success: true, pushToken: token };
     } catch (error) {
       // Special handling for web VAPID key errors - these are not critical for testing
@@ -175,13 +173,11 @@ class NotificationService {
   private setupNotificationListeners(): void {
     // Handle notification received while app is foregrounded
     Notifications.addNotificationReceivedListener(notification => {
-      console.log('📱 Notification received in foreground:', notification);
       // Could show in-app notification here
     });
 
     // Handle user tapping on notification
     Notifications.addNotificationResponseReceivedListener(response => {
-      console.log('📱 Notification tapped:', response);
       this.handleNotificationTap(response);
     });
   }
@@ -207,12 +203,7 @@ class NotificationService {
    */
   private navigateFromNotification(data: PushNotificationData): void {
     // This would use your navigation service to deep link
-    // For now, we'll just log the intended navigation
-    console.log('📱 Should navigate to:', {
-      type: data.type,
-      entityId: data.entityId,
-      action: data.action
-    });
+    // For now, we skip navigation logic in web/dev environments
 
     // Example navigation logic (would need actual navigation service):
     // switch (data.type) {
@@ -244,7 +235,6 @@ class NotificationService {
 
     // Check user preferences
     if (!this.shouldSendNotification(data.type)) {
-      console.log(`Notification type ${data.type} disabled in preferences`);
       return false;
     }
 
@@ -320,7 +310,6 @@ class NotificationService {
       if (result.data && result.data[0] && result.data[0].status === 'error') {
         console.error('Push notification error:', result.data[0].message);
       } else {
-        console.log('📱 Push notification sent successfully');
       }
     } catch (error) {
       console.error('Error sending push notification:', error);
@@ -433,7 +422,6 @@ class NotificationService {
     try {
       this.preferences = { ...this.preferences, ...preferences };
       await AsyncStorage.setItem('notificationPreferences', JSON.stringify(this.preferences));
-      console.log('📱 Notification preferences saved');
     } catch (error) {
       console.error('Error saving notification preferences:', error);
     }
@@ -467,7 +455,6 @@ class NotificationService {
     try {
       await Notifications.dismissAllNotificationsAsync();
       await Notifications.setBadgeCountAsync(0);
-      console.log('📱 All notifications cleared');
     } catch (error) {
       console.error('Error clearing notifications:', error);
     }
@@ -492,7 +479,6 @@ class NotificationService {
         },
         trigger: trigger || null,
       });
-      console.log('📱 Local notification scheduled:', id);
       return id;
     } catch (error) {
       console.error('Error scheduling local notification:', error);

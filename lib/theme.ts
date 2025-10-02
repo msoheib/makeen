@@ -1,5 +1,26 @@
-import { MD3LightTheme, MD3DarkTheme, MD3Theme } from 'react-native-paper';
+import { MD3LightTheme, MD3DarkTheme, MD3Theme, configureFonts } from 'react-native-paper';
+import { Platform } from 'react-native';
 import { isRTL, getTextDirection, getFlexDirection, getTextAlign } from './rtl';
+const fontConfig = {
+  displayLarge: { fontFamily: 'Cairo_700Bold', fontWeight: '700' },
+  displayMedium: { fontFamily: 'Cairo_600SemiBold', fontWeight: '600' },
+  displaySmall: { fontFamily: 'Cairo_600SemiBold', fontWeight: '600' },
+  headlineLarge: { fontFamily: 'Cairo_700Bold', fontWeight: '700' },
+  headlineMedium: { fontFamily: 'Cairo_600SemiBold', fontWeight: '600' },
+  headlineSmall: { fontFamily: 'Cairo_600SemiBold', fontWeight: '600' },
+  titleLarge: { fontFamily: 'Cairo_600SemiBold', fontWeight: '600' },
+  titleMedium: { fontFamily: 'Cairo_500Medium', fontWeight: '500' },
+  titleSmall: { fontFamily: 'Cairo_500Medium', fontWeight: '500' },
+  labelLarge: { fontFamily: 'Cairo_500Medium', fontWeight: '500' },
+  labelMedium: { fontFamily: 'Cairo_500Medium', fontWeight: '500' },
+  labelSmall: { fontFamily: 'Cairo_400Regular', fontWeight: '400' },
+  bodyLarge: { fontFamily: 'Cairo_400Regular', fontWeight: '400' },
+  bodyMedium: { fontFamily: 'Cairo_400Regular', fontWeight: '400' },
+  bodySmall: { fontFamily: 'Cairo_400Regular', fontWeight: '400' },
+};
+
+const paperFonts = configureFonts({ config: fontConfig });
+
 
 // RTL-aware spacing system
 export const rtlSpacing = {
@@ -17,7 +38,7 @@ export const rtlLayout = {
   // Container layouts
   container: {
     flex: 1,
-    direction: getTextDirection(),
+    writingDirection: getTextDirection(),
   },
   
   // Row layouts with RTL support
@@ -77,6 +98,22 @@ export const rtlLayout = {
   }),
 };
 
+// Utility function to convert shadow properties to boxShadow for web
+export const createShadowStyle = (shadowColor: string, shadowOffset: { width: number; height: number }, shadowOpacity: number, shadowRadius: number) => {
+  if (Platform.OS === 'web') {
+    return {
+      boxShadow: `${shadowOffset.width}px ${shadowOffset.height}px ${shadowRadius}px rgba(0, 0, 0, ${shadowOpacity})`,
+    };
+  }
+  return {
+    shadowColor,
+    shadowOffset,
+    shadowOpacity,
+    shadowRadius,
+    elevation: shadowRadius,
+  };
+};
+
 // RTL-aware component styles
 export const rtlComponents = {
   // Card styles
@@ -84,11 +121,7 @@ export const rtlComponents = {
     marginHorizontal: rtlSpacing.md,
     marginBottom: rtlSpacing.md,
     borderRadius: 12,
-    elevation: 2,
-    shadowOffset: {
-      width: isRTL() ? -1 : 1,
-      height: 2,
-    },
+    ...createShadowStyle('#000', { width: isRTL() ? -1 : 1, height: 2 }, 0.1, 4),
   },
   
   // Input styles
@@ -179,7 +212,7 @@ export const rtlComponents = {
   
   drawer: {
     flex: 1,
-    direction: getTextDirection(),
+    writingDirection: getTextDirection(),
   },
   
   // Search styles
@@ -447,6 +480,7 @@ export const spacing = {
 // Enhanced theme with RTL support
 export const lightTheme: MD3Theme = {
   ...MD3LightTheme,
+  fonts: paperFonts,
   // Add RTL-aware colors and properties
   colors: {
     ...MD3LightTheme.colors,
@@ -459,6 +493,7 @@ export const lightTheme: MD3Theme = {
 
 export const darkTheme: MD3Theme = {
   ...MD3DarkTheme,
+  fonts: paperFonts,
   // Add RTL-aware colors and properties
   colors: {
     ...MD3DarkTheme.colors,
@@ -472,6 +507,8 @@ export const darkTheme: MD3Theme = {
 // Export the theme object
 export const theme = lightTheme;
 
+export type AppTheme = typeof lightTheme;
+
 // Export all RTL-aware utilities
 export {
   rtlSpacing,
@@ -482,25 +519,7 @@ export {
 
 // Backwards-compatible shadow styles
 export const shadows = {
-  small: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  medium: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  large: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 4,
-  },
+  small: createShadowStyle('#000', { width: 0, height: 1 }, 0.05, 2),
+  medium: createShadowStyle('#000', { width: 0, height: 2 }, 0.08, 3),
+  large: createShadowStyle('#000', { width: 0, height: 4 }, 0.1, 6),
 };

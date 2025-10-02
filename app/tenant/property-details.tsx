@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, SafeAreaView, Image, Dimensions } from 'react-native';
 import { Text, Card, Button, Chip, FAB, Divider } from 'react-native-paper';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { lightTheme, darkTheme } from '@/lib/theme';
-import { useAppStore } from '@/lib/store';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { 
   ArrowLeft,
   Home,
@@ -36,8 +35,7 @@ const { width } = Dimensions.get('window');
 export default function PropertyDetailsScreen() {
   const router = useRouter();
   const { propertyId } = useLocalSearchParams();
-  const { isDarkMode } = useAppStore();
-  const theme = isDarkMode ? darkTheme : lightTheme;
+  const { theme } = useAppTheme();
 
   // Get property details
   const { 

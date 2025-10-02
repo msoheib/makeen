@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
 import { Text, Card, Button, Chip, Avatar, IconButton, Searchbar, Menu, Divider } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { theme, spacing } from '@/lib/theme';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import { useTranslation } from '@/lib/useTranslation';
@@ -11,6 +12,7 @@ import { PendingUser, UserRole } from '@/lib/types';
 import { User, Clock, CheckCircle, XCircle, Mail, Phone, MoreVertical } from 'lucide-react-native';
 
 export default function UserApprovalsScreen() {
+  const { theme } = useAppTheme();
   const router = useRouter();
   const { t } = useTranslation('common');
   const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
@@ -143,7 +145,151 @@ export default function UserApprovalsScreen() {
   const filteredUsers = pendingUsers.filter(user => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
-    return (
+      const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  content: {
+    flex: 1,
+    padding: spacing.m,
+  },
+  headerSection: {
+    marginBottom: spacing.l,
+  },
+  description: {
+    fontSize: 16,
+    color: theme.colors.onSurfaceVariant,
+    marginBottom: spacing.m,
+    lineHeight: 24,
+  },
+  searchBar: {
+    marginBottom: spacing.m,
+    backgroundColor: theme.colors.surface,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    marginBottom: spacing.m,
+  },
+  statCard: {
+    flex: 1,
+    marginRight: spacing.s,
+  },
+  statContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.s,
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: theme.colors.primary,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: spacing.xl,
+  },
+  emptyState: {
+    marginTop: spacing.xl,
+  },
+  emptyStateContent: {
+    alignItems: 'center',
+    paddingVertical: spacing.xl,
+  },
+  emptyStateTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginTop: spacing.m,
+    marginBottom: spacing.s,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: theme.colors.onSurfaceVariant,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  usersList: {
+    gap: spacing.m,
+  },
+  userCard: {
+    overflow: 'hidden',
+  },
+  userHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: spacing.s,
+  },
+  userInfo: {
+    flexDirection: 'row',
+    flex: 1,
+  },
+  userDetails: {
+    flex: 1,
+    marginLeft: spacing.m,
+  },
+  userName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginBottom: spacing.xs,
+  },
+  userEmail: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    marginBottom: spacing.s,
+  },
+  userMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  roleChip: {
+    height: 28,
+  },
+  userContact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.s,
+  },
+  contactText: {
+    marginLeft: spacing.s,
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+  },
+  userMetadata: {
+    marginBottom: spacing.m,
+  },
+  metadataText: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
+  },
+  divider: {
+    marginVertical: spacing.m,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: spacing.m,
+  },
+  actionButton: {
+    flex: 1,
+  },
+  rejectButton: {
+    borderColor: theme.colors.error,
+  },
+});
+
+  return (
       user.first_name?.toLowerCase().includes(query) ||
       user.last_name?.toLowerCase().includes(query) ||
       user.email?.toLowerCase().includes(query) ||
@@ -324,146 +470,3 @@ export default function UserApprovalsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  content: {
-    flex: 1,
-    padding: spacing.m,
-  },
-  headerSection: {
-    marginBottom: spacing.l,
-  },
-  description: {
-    fontSize: 16,
-    color: theme.colors.onSurfaceVariant,
-    marginBottom: spacing.m,
-    lineHeight: 24,
-  },
-  searchBar: {
-    marginBottom: spacing.m,
-    backgroundColor: theme.colors.surface,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    marginBottom: spacing.m,
-  },
-  statCard: {
-    flex: 1,
-    marginRight: spacing.s,
-  },
-  statContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.s,
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: theme.colors.primary,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: theme.colors.onSurfaceVariant,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: spacing.xl,
-  },
-  emptyState: {
-    marginTop: spacing.xl,
-  },
-  emptyStateContent: {
-    alignItems: 'center',
-    paddingVertical: spacing.xl,
-  },
-  emptyStateTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginTop: spacing.m,
-    marginBottom: spacing.s,
-  },
-  emptyStateText: {
-    fontSize: 16,
-    color: theme.colors.onSurfaceVariant,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  usersList: {
-    gap: spacing.m,
-  },
-  userCard: {
-    overflow: 'hidden',
-  },
-  userHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    marginBottom: spacing.s,
-  },
-  userInfo: {
-    flexDirection: 'row',
-    flex: 1,
-  },
-  userDetails: {
-    flex: 1,
-    marginLeft: spacing.m,
-  },
-  userName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.xs,
-  },
-  userEmail: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    marginBottom: spacing.s,
-  },
-  userMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  roleChip: {
-    height: 28,
-  },
-  userContact: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.s,
-  },
-  contactText: {
-    marginLeft: spacing.s,
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-  },
-  userMetadata: {
-    marginBottom: spacing.m,
-  },
-  metadataText: {
-    fontSize: 12,
-    color: theme.colors.onSurfaceVariant,
-  },
-  divider: {
-    marginVertical: spacing.m,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: spacing.m,
-  },
-  actionButton: {
-    flex: 1,
-  },
-  rejectButton: {
-    borderColor: theme.colors.error,
-  },
-});

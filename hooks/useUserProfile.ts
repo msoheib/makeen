@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { profilesApi } from '@/lib/api';
+import { profileService } from '@/lib/profileService';
 import { useAppStore } from '@/lib/store';
 import type { Database } from '@/lib/database.types';
 
@@ -25,7 +26,6 @@ export const useUserProfile = (): UseUserProfileReturn => {
   // Fetch user profile from database
   const fetchProfile = useCallback(async () => {
     if (!user?.id) {
-      console.log('[useUserProfile] No user ID available, clearing profile state');
       setProfile(null);
       setLoading(false);
       setError('No authenticated user');
@@ -33,17 +33,13 @@ export const useUserProfile = (): UseUserProfileReturn => {
     }
 
     try {
-      console.log('[useUserProfile] Fetching profile for user ID:', user.id);
       setLoading(true);
       setError(null);
 
       // Try to fetch existing profile
-      console.log('[useUserProfile] Calling profilesApi.getById with user ID:', user.id);
       const apiResponse = await profilesApi.getById(user.id);
-      console.log('[useUserProfile] Profile API full response:', apiResponse);
       
       const existingProfile = apiResponse.data;
-      console.log('[useUserProfile] Profile data extracted:', existingProfile ? 'Profile found' : 'No profile found');
       
       if (apiResponse.error) {
         console.error('[useUserProfile] Profile API error:', apiResponse.error);
@@ -53,16 +49,6 @@ export const useUserProfile = (): UseUserProfileReturn => {
       }
       
       if (existingProfile) {
-        console.log('[useUserProfile] Profile data:', {
-          id: existingProfile.id,
-          first_name: existingProfile.first_name,
-          last_name: existingProfile.last_name,
-          email: existingProfile.email,
-          phone: existingProfile.phone,
-          address: existingProfile.address,
-          city: existingProfile.city,
-          country: existingProfile.country
-        });
         setProfile(existingProfile);
         
         // Sync with app store for consistency
@@ -78,116 +64,34 @@ export const useUserProfile = (): UseUserProfileReturn => {
             updatedAt: existingProfile.updated_at || new Date().toISOString(),
           },
         });
-        console.log('[useUserProfile] Profile loaded and store updated successfully');
       } else {
-        console.log('[useUserProfile] No existing profile found, creating new profile from auth metadata');
-        console.log('[useUserProfile] User metadata:', {
-          id: user.id,
-          email: user.email,
-          first_name: user.user_metadata?.first_name || user.first_name,
-          last_name: user.user_metadata?.last_name || user.last_name,
-          phone: user.user_metadata?.phone || user.phone,
-          role: user.user_metadata?.role
-        });
-        
-        // Profile doesn't exist, create one from auth metadata
-        const newProfile: Database['public']['Tables']['profiles']['Insert'] = {
-          id: user.id,
-          first_name: user.user_metadata?.first_name || user.first_name || '',
-          last_name: user.user_metadata?.last_name || user.last_name || '',
-          email: user.email || '',
-          phone: user.user_metadata?.phone || user.phone || '',
-          role: user.user_metadata?.role || 'tenant',
-          status: 'active',
-          country: 'Saudi Arabia',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-
         try {
-          console.log('[useUserProfile] Creating new profile with data:', newProfile);
-          const createResponse = await profilesApi.create(newProfile);
-          console.log('[useUserProfile] Profile create response:', createResponse);
-          
-          if (createResponse.error) {
-            // Check if it's a duplicate key error (profile already exists)
-            if (createResponse.error.message?.includes('duplicate key') || 
-                createResponse.error.message?.includes('already exists') ||
-                createResponse.error.code === '23505') {
-              console.log('[useUserProfile] Profile already exists, fetching existing profile');
-              // Profile was created by another process, fetch it
-              const fetchResponse = await profilesApi.getById(user.id);
-              if (fetchResponse.data) {
-                setProfile(fetchResponse.data);
-                updateSettings({
-                  userProfile: {
-                    name: `${fetchResponse.data.first_name || ''} ${fetchResponse.data.last_name || ''}`.trim(),
-                    email: fetchResponse.data.email || '',
-                    phone: fetchResponse.data.phone || '',
-                    company: '',
-                    address: fetchResponse.data.address || '',
-                    city: fetchResponse.data.city || '',
-                    country: fetchResponse.data.country || 'Saudi Arabia',
-                    updatedAt: fetchResponse.data.updated_at || new Date().toISOString(),
-                  },
-                });
-                console.log('[useUserProfile] Existing profile fetched and store updated');
-                return;
-              }
-            }
-            console.error('[useUserProfile] Failed to create user profile:', createResponse.error);
-            setError(createResponse.error.message);
-            return;
-          }
-          
-          const createdProfile = createResponse.data;
-          console.log('[useUserProfile] Profile created successfully:', createdProfile);
-          setProfile(createdProfile);
+          // Use centralized profile service to ensure profile exists
+          const ensuredProfile = await profileService.ensureProfileExists(user.id, {
+            email: user.email || '',
+            first_name: user.user_metadata?.first_name || user.first_name || '',
+            last_name: user.user_metadata?.last_name || user.last_name || '',
+            phone: user.user_metadata?.phone || user.phone || '',
+            role: user.user_metadata?.role || 'tenant',
+          });
+
+          setProfile(ensuredProfile);
 
           // Sync with app store
           updateSettings({
             userProfile: {
-              name: `${createdProfile.first_name || ''} ${createdProfile.last_name || ''}`.trim(),
-              email: createdProfile.email || '',
-              phone: createdProfile.phone || '',
+              name: `${ensuredProfile.first_name || ''} ${ensuredProfile.last_name || ''}`.trim(),
+              email: ensuredProfile.email || '',
+              phone: ensuredProfile.phone || '',
               company: '',
-              address: createdProfile.address || '',
-              city: createdProfile.city || '',
-              country: createdProfile.country || 'Saudi Arabia',
-              updatedAt: createdProfile.updated_at || new Date().toISOString(),
+              address: ensuredProfile.address || '',
+              city: ensuredProfile.city || '',
+              country: ensuredProfile.country || 'Saudi Arabia',
+              updatedAt: ensuredProfile.updated_at || new Date().toISOString(),
             },
           });
-          console.log('[useUserProfile] New profile created and store updated');
         } catch (createError: any) {
-          // Handle duplicate profile creation race condition
-          if (createError?.message?.includes('duplicate key') || 
-              createError?.message?.includes('already exists') ||
-              createError?.code === '23505') {
-            console.log('[useUserProfile] Profile already exists due to race condition, fetching existing profile');
-            try {
-              const fetchResponse = await profilesApi.getById(user.id);
-              if (fetchResponse.data) {
-                setProfile(fetchResponse.data);
-                updateSettings({
-                  userProfile: {
-                    name: `${fetchResponse.data.first_name || ''} ${fetchResponse.data.last_name || ''}`.trim(),
-                    email: fetchResponse.data.email || '',
-                    phone: fetchResponse.data.phone || '',
-                    company: '',
-                    address: fetchResponse.data.address || '',
-                    city: fetchResponse.data.city || '',
-                    country: fetchResponse.data.country || 'Saudi Arabia',
-                    updatedAt: fetchResponse.data.updated_at || new Date().toISOString(),
-                  },
-                });
-                console.log('[useUserProfile] Existing profile fetched after race condition');
-                return;
-              }
-            } catch (fetchError) {
-              console.error('[useUserProfile] Failed to fetch existing profile after race condition:', fetchError);
-            }
-          }
-          console.error('[useUserProfile] Failed to create user profile:', createError);
+          console.error('[useUserProfile] Failed to ensure user profile exists:', createError);
           setError('Failed to create user profile');
         }
       }
@@ -196,7 +100,6 @@ export const useUserProfile = (): UseUserProfileReturn => {
       setError('Failed to load user profile');
     } finally {
       setLoading(false);
-      console.log('[useUserProfile] Profile fetch completed, loading:', false);
     }
   }, [user?.id, user?.email, user?.first_name, user?.last_name, user?.phone, user?.user_metadata, updateSettings]);
 
@@ -209,42 +112,31 @@ export const useUserProfile = (): UseUserProfileReturn => {
 
     try {
       setError(null);
-      
-      const updateResponse = await profilesApi.update(user.id, {
+
+      const updatedProfile = await profileService.update(user.id, {
         ...updates,
         updated_at: new Date().toISOString(),
       });
 
-      if (updateResponse.error) {
-        console.error('[useUserProfile] Failed to update user profile:', updateResponse.error);
-        setError(updateResponse.error.message);
-        return false;
-      }
+      setProfile(updatedProfile);
 
-      const updatedProfile = updateResponse.data;
-      if (updatedProfile) {
-        setProfile(updatedProfile);
+      // Sync with app store
+      updateSettings({
+        userProfile: {
+          name: `${updatedProfile.first_name || ''} ${updatedProfile.last_name || ''}`.trim(),
+          email: updatedProfile.email || '',
+          phone: updatedProfile.phone || '',
+          company: '', // Not in database schema
+          address: updatedProfile.address || '',
+          city: updatedProfile.city || '',
+          country: updatedProfile.country || 'Saudi Arabia',
+          updatedAt: updatedProfile.updated_at || new Date().toISOString(),
+        },
+      });
 
-        // Sync with app store
-        updateSettings({
-          userProfile: {
-            name: `${updatedProfile.first_name || ''} ${updatedProfile.last_name || ''}`.trim(),
-            email: updatedProfile.email || '',
-            phone: updatedProfile.phone || '',
-            company: '', // Not in database schema
-            address: updatedProfile.address || '',
-            city: updatedProfile.city || '',
-            country: updatedProfile.country || 'Saudi Arabia',
-            updatedAt: updatedProfile.updated_at || new Date().toISOString(),
-          },
-        });
-
-        return true;
-      }
-      
-      return false;
+      return true;
     } catch (err) {
-      console.error('Failed to update user profile:', err);
+      console.error('[useUserProfile] Failed to update user profile:', err);
       setError('Failed to update profile');
       return false;
     }

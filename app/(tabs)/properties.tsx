@@ -1,23 +1,25 @@
 import React, { useState, useMemo } from 'react';
 import { View, StyleSheet, FlatList, SafeAreaView, TouchableOpacity, RefreshControl, Alert } from 'react-native';
-import { Text, FAB, Button, IconButton, Portal, Modal, Card, Title, Paragraph, SegmentedButtons } from 'react-native-paper';
+import { Text, FAB, Button, IconButton, Portal, Modal, Card, Title, Paragraph } from 'react-native-paper';
 import MobileSearchBar from '@/components/MobileSearchBar';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useApi } from '@/hooks/useApi';
 import { propertiesApi, propertyGroupsApi } from '@/lib/api';
-import { lightTheme, spacing } from '@/lib/theme';
+import { spacing, type AppTheme } from '@/lib/theme';
 import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import ModernHeader from '@/components/ModernHeader';
 import TenantEmptyState from '@/components/TenantEmptyState';
 import { HorizontalStatsShimmer, PropertyListShimmer } from '@/components/shimmer';
 import { Building2, Home, Users, MessageSquare } from 'lucide-react-native';
 import { formatDisplayNumber, toArabicNumerals } from '@/lib/formatters';
+import { useTranslation } from 'react-i18next';
 
 export default function PropertiesScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { theme, isDark } = useAppTheme();
+  const { t } = useTranslation(['properties', 'common']);
   const styles = React.useMemo(() => createStyles(theme), [theme]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddPropertyModal, setShowAddPropertyModal] = useState(false);
@@ -30,11 +32,9 @@ export default function PropertiesScreen() {
     error: propertiesError, 
     refetch: refetchProperties 
   } = useApi(async () => {
-    console.log('[PropertiesScreen] Calling propertiesApi.getAll()...');
     const result = await propertiesApi.getAll();
-    console.log('[PropertiesScreen] API result:', result);
     return result;
-  }, [isDark], { timeoutMs: 15000 });
+  }, []);
 
   // Fetch property groups (buildings/compounds)
   const { 
@@ -42,7 +42,7 @@ export default function PropertiesScreen() {
     loading: groupsLoading, 
     error: groupsError, 
     refetch: refetchGroups 
-  } = useApi(() => propertyGroupsApi.getAll(), [isDark], { timeoutMs: 15000 });
+  } = useApi(() => propertyGroupsApi.getAll(), []);
 
   // Merge properties and groups into one list
   const combinedItems = useMemo(() => {
@@ -81,7 +81,7 @@ export default function PropertiesScreen() {
     loading: statsLoading, 
     error: statsError, 
     refetch: refetchStats 
-  } = useApi(() => propertiesApi.getDashboardSummary(), [isDark], { timeoutMs: 15000 });
+  } = useApi(() => propertiesApi.getDashboardSummary(), []);
 
   // Calculate stats from properties data
   const stats = dashboardStats ? {
@@ -107,9 +107,9 @@ export default function PropertiesScreen() {
   const handleRequestContract = async (property: any) => {
     if (!user || user.user_metadata?.role !== 'tenant') {
       Alert.alert(
-        'خطأ في الصلاحية',
-        'يجب أن تكون مستأجرًا لطلب عقد إيجار',
-        [{ text: 'موافق', style: 'default' }]
+        'Permission Error',
+        'You must be a tenant to request a rental contract',
+        [{ text: 'OK', style: 'default' }]
       );
       return;
     }
@@ -146,7 +146,7 @@ export default function PropertiesScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <ModernHeader 
-          title="العقارات" 
+          title={t('properties:title')} 
           showNotifications={true}
             variant="dark"
         />
@@ -155,14 +155,14 @@ export default function PropertiesScreen() {
         ) : (
           <View style={styles.errorContainer}>
             <Text style={[styles.errorText, { color: theme.colors.error }]}>
-              خطأ في تحميل البيانات: {propertiesError || statsError || groupsError}
+              Error loading data: {propertiesError || statsError || groupsError}
             </Text>
             <TouchableOpacity 
               style={[styles.retryButton, { backgroundColor: theme.colors.primary }]}
               onPress={handleRefresh}
             >
               <Text style={[styles.retryButtonText, { color: theme.colors.onPrimary }]}>
-                إعادة المحاولة
+                Retry
               </Text>
             </TouchableOpacity>
           </View>
@@ -206,7 +206,7 @@ export default function PropertiesScreen() {
           {item.__kind === 'group' ? (
             <View style={[styles.groupBadge, { backgroundColor: theme.colors.surfaceVariant }]}> 
               <Text style={[styles.groupBadgeText, { color: theme.colors.onSurfaceVariant }]}> 
-                {item.group.group_type === 'villa_compound' ? 'مجمع فلل' : item.group.group_type === 'apartment_block' ? 'مجمع شقق' : 'مبنى'}
+                {item.group.group_type === 'villa_compound' ? t('properties:villaCompound') : item.group.group_type === 'apartment_block' ? t('properties:apartmentBlock') : t('properties:building')}
               </Text>
             </View>
           ) : (
@@ -214,7 +214,7 @@ export default function PropertiesScreen() {
               {item.group && (
                 <View style={[styles.groupBadge, { backgroundColor: theme.colors.surfaceVariant }]}> 
                   <Text style={[styles.groupBadgeText, { color: theme.colors.onSurfaceVariant }]}> 
-                    {item.group.group_type === 'villa_compound' ? 'مجمع فلل' : item.group.group_type === 'apartment_block' ? 'مجمع شقق' : 'مبنى'}: {item.group.name}
+                    {item.group.group_type === 'villa_compound' ? t('properties:villaCompound') : item.group.group_type === 'apartment_block' ? t('properties:apartmentBlock') : t('properties:building')}: {item.group.name}
                   </Text>
                 </View>
               )}
@@ -238,18 +238,18 @@ export default function PropertiesScreen() {
                       : theme.colors.error
                   }
                 ]}>
-                  {item.status === 'available' ? 'متاح' : item.status === 'rented' ? 'مؤجر' : 'صيانة'}
+                  {item.status === 'available' ? t('properties:statusAvailable') : item.status === 'rented' ? t('properties:statusRented') : t('properties:statusMaintenance')}
                 </Text>
               </View>
               
               {/* Property Type Badge */}
               <View style={[styles.typeBadge, { backgroundColor: theme.colors.surfaceVariant }]}>
                 <Text style={[styles.typeBadgeText, { color: theme.colors.onSurfaceVariant }]}>
-                  {item.property_type === 'apartment' ? 'شقة' : 
-                   item.property_type === 'villa' ? 'فيلا' : 
-                   item.property_type === 'office' ? 'مكتب' : 
-                   item.property_type === 'retail' ? 'محل تجاري' : 
-                   item.property_type === 'warehouse' ? 'مستودع' : 'عقار'}
+                  {item.property_type === 'apartment' ? t('properties:typeApartment') : 
+                   item.property_type === 'villa' ? t('properties:typeVilla') : 
+                   item.property_type === 'office' ? t('properties:typeOffice') : 
+                   item.property_type === 'retail' ? t('properties:typeRetail') : 
+                   item.property_type === 'warehouse' ? t('properties:typeWarehouse') : t('properties:typeProperty')}
                 </Text>
               </View>
             </>
@@ -268,26 +268,26 @@ export default function PropertiesScreen() {
       <View style={styles.propertyDetails}>
         <View style={styles.detailItem}>
           <Text style={[styles.detailLabel, { color: theme.colors.onSurfaceVariant }]}>
-            غرف النوم
+            {t('properties:bedrooms')}
           </Text>
           <Text style={[styles.detailValue, { color: theme.colors.onSurface }]}>
-            {item.bedrooms != null ? formatDisplayNumber(item.bedrooms) : '٠'}
+            {item.bedrooms != null ? formatDisplayNumber(item.bedrooms) : '0'}
           </Text>
         </View>
         <View style={styles.detailItem}>
           <Text style={[styles.detailLabel, { color: theme.colors.onSurfaceVariant }]}>
-            الحمامات
+            {t('properties:bathrooms')}
           </Text>
           <Text style={[styles.detailValue, { color: theme.colors.onSurface }]}>
-            {item.bathrooms != null ? formatDisplayNumber(item.bathrooms) : '٠'}
+            {item.bathrooms != null ? formatDisplayNumber(item.bathrooms) : '0'}
           </Text>
         </View>
         <View style={styles.detailItem}>
           <Text style={[styles.detailLabel, { color: theme.colors.onSurfaceVariant }]}>
-            المساحة
+            {t('properties:area')}
           </Text>
           <Text style={[styles.detailValue, { color: theme.colors.onSurface }]}>
-            {formatDisplayNumber(item.area_sqm)} م²
+            {formatDisplayNumber(item.area_sqm)} m²
           </Text>
         </View>
       </View>
@@ -295,16 +295,16 @@ export default function PropertiesScreen() {
       <View style={styles.propertyFooter}>
         <View style={styles.priceAndTypeContainer}>
           <Text style={[styles.propertyPrice, { color: theme.colors.primary }]}>
-            {toArabicNumerals(new Intl.NumberFormat('ar-SA', { maximumFractionDigits: 0 }).format(Number(item.annual_rent || item.price)))} ريال
-            {item.annual_rent && '/سنة'}
+            {new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(Number(item.annual_rent || item.price))} SAR
+            {item.annual_rent && '/year'}
           </Text>
           <View style={[styles.typeTag, { backgroundColor: theme.colors.surfaceVariant }]}>
             <Text style={[styles.typeText, { color: theme.colors.onSurfaceVariant }]}>
-              {item.property_type === 'villa' ? 'فيلا' : 
-               item.property_type === 'apartment' ? 'شقة' : 
-               item.property_type === 'office' ? 'مكتب' :
-               item.property_type === 'retail' ? 'تجاري' :
-               item.property_type === 'warehouse' ? 'مستودع' : (item.property_type || 'غير محدد')}
+              {item.property_type === 'villa' ? t('properties:typeVilla') : 
+               item.property_type === 'apartment' ? t('properties:typeApartment') : 
+               item.property_type === 'office' ? t('properties:typeOffice') :
+               item.property_type === 'retail' ? t('properties:typeRetail') :
+               item.property_type === 'warehouse' ? t('properties:typeWarehouse') : (item.property_type || t('properties:unknown'))}
             </Text>
           </View>
         </View>
@@ -320,7 +320,7 @@ export default function PropertiesScreen() {
               labelStyle={styles.requestButtonText}
               compact
             >
-              طلب عقد إيجار
+              Request Rental Contract
             </Button>
           </View>
         )}
@@ -351,7 +351,7 @@ export default function PropertiesScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ModernHeader 
-        title="العقارات" 
+        title={t('properties:title')} 
         showNotifications={true}
         variant="dark"
       />
@@ -359,7 +359,7 @@ export default function PropertiesScreen() {
       {/* Top Search (keeps keyboard stable on mobile) */}
       <View style={[styles.searchSection, { paddingHorizontal: 16 }]}>
         <MobileSearchBar
-          placeholder="البحث في العقارات..."
+          placeholder={t('properties:searchPlaceholder')}
           value={searchQuery}
           onChangeText={setSearchQuery}
           style={[styles.searchbar, { backgroundColor: theme.colors.surface }]}
@@ -385,7 +385,7 @@ export default function PropertiesScreen() {
               onRefresh={handleRefresh}
               colors={[theme.colors.primary]}
               tintColor={theme.colors.primary}
-              title="سحب للتحديث"
+              title="Pull to refresh"
               titleColor={theme.colors.onBackground}
             />
           }
@@ -394,7 +394,7 @@ export default function PropertiesScreen() {
               {/* Stats Section */}
               <View style={styles.statsSection}>
                 <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
-                  إحصائيات العقارات
+                  {t('properties:statistics')}
                 </Text>
                 {showInitialLoading ? (
                   <HorizontalStatsShimmer />
@@ -406,7 +406,7 @@ export default function PropertiesScreen() {
                           <Building2 size={24} color={theme.colors.primary} />
                         </View>
                         <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                          إجمالي العقارات
+                          {t('properties:totalProperties')}
                         </Text>
                         <Text style={[styles.horizontalStatValue, { color: theme.colors.primary }]}>
                           {statsLoading ? '...' : stats.total}
@@ -418,7 +418,7 @@ export default function PropertiesScreen() {
                           <Home size={24} color="#4CAF50" />
                         </View>
                         <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                          عقارات متاحة
+                          {t('properties:available')}
                         </Text>
                         <Text style={[styles.horizontalStatValue, { color: '#4CAF50' }]}>
                           {statsLoading ? '...' : stats.available}
@@ -430,7 +430,7 @@ export default function PropertiesScreen() {
                           <Users size={24} color={theme.colors.secondary} />
                         </View>
                         <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                          عقارات مؤجرة
+                          {t('properties:rented')}
                         </Text>
                         <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary }]}>
                           {statsLoading ? '...' : stats.rented}
@@ -442,7 +442,7 @@ export default function PropertiesScreen() {
                           <MessageSquare size={24} color="#F44336" />
                         </View>
                         <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                          تحت الصيانة
+                          {t('properties:underMaintenance')}
                         </Text>
                         <Text style={[styles.horizontalStatValue, { color: '#F44336' }]}>
                           {statsLoading ? '...' : stats.maintenance}
@@ -456,22 +456,44 @@ export default function PropertiesScreen() {
               {/* Search moved above FlatList to avoid input unmount */}
 
               {/* Filter Section */}
-              <View style={{ marginBottom: 12 }}>
-                <SegmentedButtons
-                  value={viewFilter}
-                  onValueChange={(v: any) => setViewFilter(v)}
-                  buttons={[
-                    { value: 'all', label: 'الكل' },
-                    { value: 'units', label: 'وحدات' },
-                    { value: 'groups', label: 'مبانٍ' },
-                  ]}
-                />
+              <View style={{ marginBottom: 12, flexDirection: 'row', gap: 8 }}>
+                {[
+                  { value: 'all', label: t('properties:filterAll') },
+                  { value: 'units', label: t('properties:filterUnits') },
+                  { value: 'groups', label: t('properties:filterBuildings') },
+                ].map((filter) => (
+                  <TouchableOpacity
+                    key={filter.value}
+                    onPress={() => setViewFilter(filter.value as any)}
+                    style={{
+                      flex: 1,
+                      paddingVertical: 10,
+                      paddingHorizontal: 16,
+                      borderRadius: 20,
+                      borderWidth: 1,
+                      borderColor: viewFilter === filter.value ? theme.colors.primary : theme.colors.outlineVariant,
+                      backgroundColor: viewFilter === filter.value ? theme.colors.primary : theme.colors.surface,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 15,
+                        fontWeight: '600',
+                        color: viewFilter === filter.value ? theme.colors.onPrimary : theme.colors.onSurface,
+                      }}
+                    >
+                      {filter.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
 
               {/* Properties List Header */}
               <View style={styles.propertiesSection}>
                 <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
-                  قائمة العقارات {!showInitialLoading && `(${toArabicNumerals(String(filteredProperties.length))})`}
+                  {t('properties:listTitle')} {!showInitialLoading && `(${filteredProperties.length})`}
                 </Text>
               </View>
             </View>
@@ -483,10 +505,10 @@ export default function PropertiesScreen() {
               <View style={[styles.emptyState, { backgroundColor: theme.colors.surface }]}>
                 <Home size={48} color={theme.colors.onSurfaceVariant} />
                 <Text style={[styles.emptyStateTitle, { color: theme.colors.onSurface }]}>
-                  لا توجد عقارات
+                  No Properties Found
                 </Text>
                 <Text style={[styles.emptyStateSubtitle, { color: theme.colors.onSurfaceVariant }]}>
-                  {searchQuery ? 'جرب البحث بكلمات أخرى' : 'ابدأ بإضافة عقار جديد'}
+                  {searchQuery ? 'Try searching with different words' : 'Start by adding a new property'}
                 </Text>
               </View>
             )
@@ -501,7 +523,7 @@ export default function PropertiesScreen() {
         style={[styles.fab, { backgroundColor: theme.colors.primary }]}
         size="medium"
         onPress={() => setShowAddPropertyModal(true)}
-        label="إضافة عقار"
+        label={t('properties:addProperty')}
       />
 
       {/* Add Property Type Selection Modal */}
@@ -513,9 +535,9 @@ export default function PropertiesScreen() {
         >
           <Card style={styles.modalCard}>
             <Card.Content>
-              <Title style={styles.modalTitle}>اختر نوع العقار المراد إضافته</Title>
+              <Title style={styles.modalTitle}>{t('properties:addTypeTitle', 'Choose Property Type to Add')}</Title>
               <Paragraph style={styles.modalDescription}>
-                يمكنك إضافة عقار منفرد أو مبنى يحتوي على عدة شقق
+                {t('properties:addTypeDesc', 'You can add a single property or a building with multiple units')}
               </Paragraph>
               
               <View style={styles.modalButtons}>
@@ -525,7 +547,7 @@ export default function PropertiesScreen() {
                   style={styles.modalButton}
                   icon="home"
                 >
-                  إضافة عقار منفرد
+                  {t('properties:addSingleProperty', 'Add Single Property')}
                 </Button>
                 
                 <TouchableOpacity
@@ -545,7 +567,7 @@ export default function PropertiesScreen() {
                     fontWeight: '600',
                     textAlign: 'center'
                   }}>
-                    إنشاء مبنى جديد
+                    {t('properties:createBuilding', 'Create New Building')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -557,7 +579,7 @@ export default function PropertiesScreen() {
   );
 }
 
-const createStyles = (theme: typeof lightTheme) => StyleSheet.create({
+const createStyles = (theme: AppTheme) => StyleSheet.create({
   container: {
     flex: 1,
   },

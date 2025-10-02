@@ -10,8 +10,8 @@ export const useTranslation = (namespace?: TranslationKey) => {
     // Translation function with type safety
     t,
     
-    // Current language (default to Arabic when unclear)
-    language: (i18n.language as SupportedLanguage) || ('ar' as SupportedLanguage),
+    // Current language (default to English when unclear)
+    language: (i18n.language as SupportedLanguage) || ('en' as SupportedLanguage),
     
     // Check if current language is RTL
     isRTL: i18n.language === 'ar',
@@ -68,11 +68,11 @@ export const useSettingsTranslation = () => {
 
 // Helper functions for RTL detection
 export const getCurrentDirection = (language?: SupportedLanguage): 'ltr' | 'rtl' => {
-  const currentLang = language || (i18nInstance.language as SupportedLanguage) || 'ar';
+  const currentLang = language || (i18nInstance.language as SupportedLanguage) || 'en';
   return currentLang === 'ar' ? 'rtl' : 'ltr';
 };
 
 export const isRTLLanguage = (language?: SupportedLanguage): boolean => {
-  const currentLang = language || (i18nInstance.language as SupportedLanguage) || 'ar';
+  const currentLang = language || (i18nInstance.language as SupportedLanguage) || 'en';
   return currentLang === 'ar';
 };

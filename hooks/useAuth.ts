@@ -26,8 +26,6 @@ export const useAuth = () => {
 
     const initializeAuth = async () => {
       try {
-        console.log('[useAuth] Initializing authentication');
-        
         // First check if we have a valid session
         const authenticated = await isAuthenticated();
         
@@ -35,7 +33,6 @@ export const useAuth = () => {
           const { session, error } = await getSession();
           
           if (mounted && session && !error) {
-            console.log('[useAuth] Valid session found');
             setAuthState({
               user: session.user,
               session,
@@ -56,7 +53,6 @@ export const useAuth = () => {
             });
             setAuthenticated(true);
           } else {
-            console.log('[useAuth] No valid session found');
             if (mounted) {
               setAuthState({
                 user: null,
@@ -69,7 +65,6 @@ export const useAuth = () => {
             }
           }
         } else {
-          console.log('[useAuth] User not authenticated');
           if (mounted) {
             setAuthState({
               user: null,
@@ -112,10 +107,7 @@ export const useAuth = () => {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('[useAuth] Auth state changed:', event);
-        
         if (event === 'SIGNED_IN' && session) {
-          console.log('[useAuth] User signed in');
           setAuthState({
             user: session.user,
             session,
@@ -136,7 +128,6 @@ export const useAuth = () => {
           });
           setAuthenticated(true);
         } else if (event === 'SIGNED_OUT') {
-          console.log('[useAuth] User signed out');
           setAuthState({
             user: null,
             session: null,
@@ -149,7 +140,6 @@ export const useAuth = () => {
           setAuthenticated(false);
           await clearSession();
         } else if (event === 'TOKEN_REFRESHED' && session) {
-          console.log('[useAuth] Token refreshed');
           setAuthState(prev => ({
             ...prev,
             session,
@@ -288,7 +278,6 @@ export const useAuth = () => {
       const { session, error } = await refreshSession();
       
       if (session && !error) {
-        console.log('[useAuth] Session recovered successfully');
         setAuthState({
           user: session.user,
           session,
@@ -311,7 +300,6 @@ export const useAuth = () => {
         
         return { success: true, error: null };
       } else {
-        console.log('[useAuth] Session recovery failed');
         setAuthState({
           user: null,
           session: null,

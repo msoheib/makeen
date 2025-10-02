@@ -3,12 +3,13 @@ import { createClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
+// Note: clearUserContextCache is imported dynamically to avoid circular dependency
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || 
+export const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || 
                    Constants.expoConfig?.extra?.EXPO_PUBLIC_SUPABASE_URL ||
                    'https://fbabpaorcvatejkrelrf.supabase.co';
 
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 
+export const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 
                        Constants.expoConfig?.extra?.EXPO_PUBLIC_SUPABASE_ANON_KEY ||
                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZiYWJwYW9yY3ZhdGVqa3JlbHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyNjYzMzMsImV4cCI6MjA2Mzg0MjMzM30.L_DLnMQUw7cepGKjtrbkFZ_E6Rsz4pecAtnUrbc0F5w';
 
@@ -95,6 +96,14 @@ export const signOut = async () => {
   try {
     const { error } = await supabase.auth.signOut();
     
+    // Clear user context cache on logout (dynamic import to avoid circular dependency)
+    try {
+      const { clearUserContextCache } = await import('./security');
+      clearUserContextCache();
+    } catch (error) {
+      // Ignore if security module can't be loaded
+    }
+    
     if (error) {
       console.warn('[Auth] Sign out error:', error.message);
       // Even if sign out fails, clear local session
@@ -112,8 +121,6 @@ export const signOut = async () => {
 // Clear local session data
 export const clearSession = async () => {
   try {
-    console.log('[Auth] Clearing local session data');
-    
     const storage = new ReactNativeStorage();
     
     // Clear Supabase auth tokens
@@ -132,8 +139,6 @@ export const clearSession = async () => {
       }
       keysToRemove.forEach(key => localStorage.removeItem(key));
     }
-    
-    console.log('[Auth] Local session data cleared');
   } catch (error) {
     console.error('[Auth] Error clearing session:', error);
   }
@@ -150,7 +155,6 @@ export const isAuthenticated = async (): Promise<boolean> => {
     
     // Check if session is expired
     if (session.expires_at && new Date(session.expires_at * 1000) < new Date()) {
-      console.log('[Auth] Session expired');
       await clearSession();
       return false;
     }
@@ -165,8 +169,6 @@ export const isAuthenticated = async (): Promise<boolean> => {
 // Refresh session with error handling
 export const refreshSession = async () => {
   try {
-    console.log('[Auth] Attempting to refresh session');
-    
     const { data, error } = await supabase.auth.refreshSession();
     
     if (error) {
@@ -174,8 +176,6 @@ export const refreshSession = async () => {
       await clearSession();
       return { session: null, error };
     }
-    
-    console.log('[Auth] Session refreshed successfully');
     return { session: data.session, error: null };
   } catch (error: any) {
     console.error('[Auth] Unexpected refresh error:', error);
@@ -185,15 +185,10 @@ export const refreshSession = async () => {
 };
 
 // Handle auth state changes
-supabase.auth.onAuthStateChange(async (event, session) => {
-  console.log('[Auth] State change:', event, session ? 'Session exists' : 'No session');
-  
-  if (event === 'TOKEN_REFRESHED') {
-    console.log('[Auth] Token refreshed successfully');
-  } else if (event === 'SIGNED_OUT') {
-    console.log('[Auth] User signed out');
-    await clearSession();
-  } else if (event === 'SIGNED_IN') {
-    console.log('[Auth] User signed in');
-  }
-});
+if (supabase && supabase.auth) {
+  supabase.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_OUT') {
+      await clearSession();
+    }
+  });
+}

@@ -1,12 +1,10 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform, I18nManager } from 'react-native';
+import { I18nManager, Platform } from 'react-native';
 import * as RNLocalize from 'react-native-localize';
-import { getLocales } from 'expo-localization';
 import * as Updates from 'expo-updates';
 
-// Import translation files
 import commonEn from './translations/en/common.json';
 import navigationEn from './translations/en/navigation.json';
 import dashboardEn from './translations/en/dashboard.json';
@@ -35,35 +33,9 @@ import paymentsAr from './translations/ar/payments.json';
 
 export type SupportedLanguage = 'en' | 'ar';
 
-// Safe storage wrapper for web compatibility
-const safeStorage = {
-  async getItem(key: string): Promise<string | null> {
-    try {
-      if (Platform.OS === 'web' && typeof window === 'undefined') {
-        console.warn('Window not available, using memory storage fallback');
-        return null;
-      }
-      return await AsyncStorage.getItem(key);
-    } catch (error) {
-      console.warn('AsyncStorage getItem failed, using fallback:', error);
-      return null;
-    }
-  },
-  
-  async setItem(key: string, value: string): Promise<void> {
-    try {
-      if (Platform.OS === 'web' && typeof window === 'undefined') {
-        console.warn('Window not available, skipping storage');
-        return;
-      }
-      await AsyncStorage.setItem(key, value);
-    } catch (error) {
-      console.warn('AsyncStorage setItem failed:', error);
-    }
-  }
-};
+const LANGUAGE_STORAGE_KEY = 'app-language';
+const supportedLanguages: SupportedLanguage[] = ['en', 'ar'];
 
-// Translation resources
 const resources = {
   en: {
     common: commonEn,
@@ -95,208 +67,220 @@ const resources = {
   },
 };
 
-/**
- * Applies the RTL layout direction using expo-localization and native I18nManager.
- * @param isRTLLanguage - Whether the language requires RTL layout.
- */
-const applyRTLDirectly = (isRTLLanguage: boolean): void => {
-  try {
-    console.log(`[i18n] Applying RTL config: isRTLLanguage=${isRTLLanguage}, Platform=${Platform.OS}`);
-    console.log(`[i18n] Current RTL state BEFORE: ${I18nManager.isRTL}`);
-    
-    // Get device locale information from expo-localization
-    const locales = getLocales();
-    const deviceTextDirection = locales[0]?.textDirection;
-    console.log(`[i18n] Device locale info:`, {
-      textDirection: deviceTextDirection,
-      languageCode: locales[0]?.languageCode,
-      isRTLDevice: deviceTextDirection === 'rtl'
-    });
-    
-    // Step 1: Always allow RTL support (required for Expo RTL)
-    I18nManager.allowRTL(true);
-    
-    // Step 2: Force RTL direction
-    I18nManager.forceRTL(isRTLLanguage);
-    
-    // Step 3: Immediate verification and retry if needed
-    setTimeout(() => {
-      if (I18nManager.isRTL !== isRTLLanguage) {
-        console.log('[i18n] ⚠️ Immediate RTL verification failed, retrying...');
-        I18nManager.forceRTL(isRTLLanguage);
+// Platform-specific storage key generator
+const getPlatformStorageKey = (baseKey: string): string => {
+  const platform = Platform.OS;
+  return `${baseKey}-${platform}`;
+};
+
+const safeStorage = {
+  async getItem(key: string): Promise<string | null> {
+    try {
+      if (Platform.OS === 'web' && typeof window === 'undefined') {
+        return null;
       }
-    }, 1);
-    
-    console.log(`[i18n] RTL applied. Final state AFTER: ${I18nManager.isRTL}`);
-    
-    // Log detailed state for debugging
-    console.log(`[i18n] RTL Configuration Details:`, {
-      isRTLLanguage,
-      'I18nManager.isRTL': I18nManager.isRTL,
-      'Platform.OS': Platform.OS,
-      '__DEV__': __DEV__,
-      'Direction': I18nManager.isRTL ? 'RTL' : 'LTR',
-      'DeviceDirection': deviceTextDirection
-    });
-    
-  } catch (error) {
-    console.error('[i18n] Error applying RTL configuration:', error);
+      const platformKey = getPlatformStorageKey(key);
+      return await AsyncStorage.getItem(platformKey);
+    } catch (error) {
+      console.warn('[i18n] Failed to read from storage:', error);
+      return null;
+    }
+  },
+  async setItem(key: string, value: string): Promise<void> {
+    try {
+      if (Platform.OS === 'web' && typeof window === 'undefined') {
+        return;
+      }
+      const platformKey = getPlatformStorageKey(key);
+      await AsyncStorage.setItem(platformKey, value);
+    } catch (error) {
+      console.warn('[i18n] Failed to write to storage:', error);
+    }
+  },
+};
+
+const shouldUseRTL = (language: SupportedLanguage): boolean => language === 'ar';
+
+const setWebDirection = (language: SupportedLanguage) => {
+  if (Platform.OS === 'web' && typeof document !== 'undefined') {
+    document.documentElement.dir = shouldUseRTL(language) ? 'rtl' : 'ltr';
+    document.documentElement.lang = language;
   }
 };
 
-// Get device language (COMPLETELY UNUSED - app ignores device language entirely)
-// This function exists but is NOT called anywhere - app defaults to Arabic always
-const getDeviceLanguage = (): 'en' | 'ar' => {
-  try {
-    const locales = RNLocalize.getLocales();
-    if (locales && locales.length > 0) {
-      const deviceLanguage = locales[0].languageCode;
-      // This logic is irrelevant since function is never called
-      return deviceLanguage === 'en' ? 'en' : 'ar';
-    }
-  } catch (error) {
-    console.warn('Error getting device language:', error);
-  }
-  // This fallback is irrelevant since function is never called
-  return 'ar';
-};
+const ensureNativeDirection = async (
+  language: SupportedLanguage
+): Promise<boolean> => {
+  const targetRTL = shouldUseRTL(language);
 
-// Get stored language - ONLY returns English if explicitly set
-const getStoredLanguage = async (): Promise<'en' | 'ar'> => {
-  try {
-    // Use consistent storage key throughout the app
-    const stored = await safeStorage.getItem('app-language');
-    // ONLY return English if explicitly stored as 'en'
-    if (stored === 'en') {
-      return 'en';
-    }
-    // ALL other cases (including 'ar', null, undefined, any other value) return Arabic
-  } catch (error) {
-    console.warn('Error getting stored language:', error);
-  }
-  // ALWAYS default to Arabic unless explicitly set to English
-  return 'ar';
-};
+  // Always allow RTL so we can toggle both directions
+  I18nManager.allowRTL(true);
 
-// Initialize i18next with aggressive RTL handling for production compatibility
-const initializeI18n = async () => {
-  try {
-    console.log('[i18n] ========== I18N INITIALIZATION START ==========');
-    console.log('[i18n] Build type:', __DEV__ ? 'development' : 'production');
-    console.log('[i18n] Platform:', Platform.OS);
-    console.log('[i18n] Current I18nManager.isRTL:', I18nManager.isRTL);
-    
-    const desiredLanguage = await getStoredLanguage();
-    const isRTLLanguage = desiredLanguage === 'ar';
-    
-    console.log(`[i18n] 📱 Language config:`, {
-      desiredLanguage,
-      isRTLLanguage,
-      currentNativeRTL: I18nManager.isRTL
-    });
-
-    // AGGRESSIVE RTL SETUP - Multiple attempts to ensure it works in production
-    console.log('[i18n] 🔧 Applying aggressive RTL configuration...');
-    
-    // Step 1: Initial RTL setup
-    applyRTLDirectly(isRTLLanguage);
-    
-    // Step 2: For production builds, apply multiple times with delays
-    if (!__DEV__ && Platform.OS === 'android') {
-      console.log('[i18n] 🔧 Production mode: Applying aggressive RTL configuration...');
-      
-      // Multiple attempts with increasing delays
-      setTimeout(() => applyRTLDirectly(isRTLLanguage), 10);
-      setTimeout(() => applyRTLDirectly(isRTLLanguage), 100);
-      setTimeout(() => applyRTLDirectly(isRTLLanguage), 500);
-      setTimeout(() => applyRTLDirectly(isRTLLanguage), 1000);
-      
-      // Final verification after 2 seconds
-      setTimeout(() => {
-        console.log('[i18n] 🔧 Final RTL verification:', {
-          expected: isRTLLanguage,
-          actual: I18nManager.isRTL,
-          match: I18nManager.isRTL === isRTLLanguage
-        });
-        if (I18nManager.isRTL !== isRTLLanguage) {
-          console.log('[i18n] ⚠️ RTL mismatch detected, applying one more time...');
-          applyRTLDirectly(isRTLLanguage);
-        }
-      }, 2000);
-    }
-    
-    // Initialize i18next
-    console.log('[i18n] 🔧 Initializing i18next with language:', desiredLanguage);
-    await i18n
-      .use(initReactI18next)
-      .init({
-        resources,
-        lng: desiredLanguage,
-        fallbackLng: 'ar',
-        defaultNS: 'common',
-        ns: ['common', 'navigation', 'dashboard', 'properties', 'settings', 'reports', 'tenants', 'maintenance', 'people', 'documents', 'finance', 'payments'],
-        interpolation: {
-          escapeValue: false,
-        },
-        react: {
-          useSuspense: false,
-        },
-        debug: __DEV__,
-      });
-      
-    console.log('[i18n] ========== I18N INITIALIZATION COMPLETE ==========');
-    console.log('[i18n] Final state:', {
-      language: i18n.language,
-      isRTL: I18nManager.isRTL,
-      direction: I18nManager.isRTL ? 'RTL' : 'LTR'
-    });
-    return true;
-  } catch (error) {
-    console.log('[i18n] ❌ I18N INITIALIZATION FAILED:', error);
-    console.log('[i18n] Stack trace:', error.stack);
+  if (Platform.OS === 'web') {
+    setWebDirection(language);
     return false;
   }
+
+  const requiresReload = I18nManager.isRTL !== targetRTL;
+  I18nManager.forceRTL(targetRTL);
+
+  if (requiresReload) {
+    try {
+      await Updates.reloadAsync();
+      return true;
+    } catch (error) {
+      console.warn('[i18n] Failed to reload after direction change:', error);
+    }
+  }
+
+  return false;
 };
 
-// Don't auto-initialize - let app/_layout.tsx handle initialization with proper timing
-// initializeI18n();
+const detectInitialLanguage = async (): Promise<SupportedLanguage> => {
+  // First check if we have a stored language preference
+  const stored = await safeStorage.getItem(LANGUAGE_STORAGE_KEY);
+  if (stored === 'en' || stored === 'ar') {
+    return stored;
+  }
 
-// Export the initialization function for manual control
+  // Default to English for new users to prevent Arabic showing unexpectedly
+  // Only auto-detect Arabic if explicitly set in browser/system preferences
+  if (Platform.OS === 'web' && typeof navigator !== 'undefined') {
+    const browserLang = navigator.language || navigator.languages?.[0] || 'en';
+    // Only use Arabic if the browser language is explicitly Arabic
+    if (browserLang.startsWith('ar-') || browserLang === 'ar') {
+      return 'ar';
+    }
+    return 'en';
+  }
+
+  // Native fallback - only try on native platforms
+  if (Platform.OS !== 'web') {
+    try {
+      const device = RNLocalize.findBestAvailableLanguage(supportedLanguages);
+      if (device?.languageTag?.startsWith('ar-') || device?.languageTag === 'ar') {
+        return 'ar';
+      }
+    } catch (error) {
+      console.warn('[i18n] RNLocalize not available, using fallback');
+    }
+  }
+
+  return 'en';
+};
+
+const initializeI18n = async (): Promise<boolean> => {
+  const initialLanguage = await detectInitialLanguage();
+  const reloaded = await ensureNativeDirection(initialLanguage);
+  if (reloaded) {
+    return false;
+  }
+
+  await i18n
+    .use(initReactI18next)
+    .init({
+      resources,
+      lng: initialLanguage,
+      fallbackLng: 'en',
+      supportedLngs: supportedLanguages,
+      defaultNS: 'common',
+      ns: [
+        'common',
+        'navigation',
+        'dashboard',
+        'properties',
+        'settings',
+        'reports',
+        'tenants',
+        'maintenance',
+        'people',
+        'documents',
+        'finance',
+        'payments',
+      ],
+      interpolation: {
+        escapeValue: false,
+      },
+      react: {
+        useSuspense: false,
+      },
+      compatibilityJSON: 'v3',
+      returnEmptyString: false,
+      returnNull: false,
+      debug: false,
+    });
+
+  await safeStorage.setItem(LANGUAGE_STORAGE_KEY, initialLanguage);
+  setWebDirection(initialLanguage);
+
+  i18n.on('languageChanged', (language) => {
+    const normalized = normalizeLanguage(language);
+    setWebDirection(normalized);
+  });
+
+  return true;
+};
+
+const normalizeLanguage = (language: string | undefined | null): SupportedLanguage => {
+  if (!language) {
+    return 'en';
+  }
+  return language.startsWith('ar') ? 'ar' : 'en';
+};
+
 export const manualInitializeI18n = initializeI18n;
 
-// Get current language - ALWAYS defaults to Arabic
-export const getCurrentLanguage = (): 'en' | 'ar' => {
-  const current = i18n.language as 'en' | 'ar';
-  // ONLY return English if explicitly set to 'en', otherwise ALWAYS Arabic
-  return current === 'en' ? 'en' : 'ar';
+export const getCurrentLanguage = (): SupportedLanguage => {
+  return normalizeLanguage(i18n.language as string);
 };
 
-// Check if current language is RTL
-export const isRTL = (): boolean => {
-  return getCurrentLanguage() === 'ar';
+export const isRTL = (): boolean => shouldUseRTL(getCurrentLanguage());
+
+export const changeLanguage = async (language: SupportedLanguage): Promise<void> => {
+  const normalized: SupportedLanguage = supportedLanguages.includes(language)
+    ? language
+    : 'en';
+
+  const current = getCurrentLanguage();
+  if (current === normalized) {
+    setWebDirection(normalized);
+    await safeStorage.setItem(LANGUAGE_STORAGE_KEY, normalized);
+    return;
+  }
+
+  // Store the language preference first
+  await safeStorage.setItem(LANGUAGE_STORAGE_KEY, normalized);
+  
+  // Then change the i18n language
+  await i18n.changeLanguage(normalized);
+
+  const reloaded = await ensureNativeDirection(normalized);
+  if (!reloaded) {
+    setWebDirection(normalized);
+  }
 };
 
-// Change language function with direct RTL application (no reload for production compatibility)
-export const changeLanguage = async (language: 'en' | 'ar'): Promise<void> => {
+// Function to sync store with current i18n language
+export const syncStoreWithI18n = async (): Promise<void> => {
   try {
-    console.log('[i18n] Changing language to:', language);
-    
-    const newIsRTL = language === 'ar';
-    
-    // Change i18next language
-    await i18n.changeLanguage(language);
-    
-    // Store the language preference using consistent key
-    await safeStorage.setItem('app-language', language);
-    
-    // Apply RTL changes immediately without reload
-    console.log('[i18n] Applying RTL direction directly...');
-    applyRTLDirectly(newIsRTL);
-    
-    console.log('[i18n] Language changed successfully to:', language);
+    const currentLang = getCurrentLanguage();
+    // This will be called by the store during rehydration
+    // to ensure both systems are in sync
+    await safeStorage.setItem(LANGUAGE_STORAGE_KEY, currentLang);
   } catch (error) {
-    console.error('[i18n] Failed to change language:', error);
-    throw error;
+    console.warn('[i18n] Failed to sync with store:', error);
+  }
+};
+
+// Force reset language to English (useful for debugging)
+export const resetToEnglish = async (): Promise<void> => {
+  await safeStorage.setItem(LANGUAGE_STORAGE_KEY, 'en');
+  await i18n.changeLanguage('en');
+  setWebDirection('en');
+  
+  if (Platform.OS === 'web' && typeof document !== 'undefined') {
+    document.documentElement.dir = 'ltr';
+    document.documentElement.lang = 'en';
   }
 };
 

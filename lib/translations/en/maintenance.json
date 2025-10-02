@@ -96,5 +96,10 @@
   "totalRequests": "Total Requests",
   "adjustSearchOrFilters": "Try adjusting your search or filters",
   "addFirstRequest": "Submit your first maintenance request to get started",
-  "noActiveContracts": "You currently have no active rental contracts. Contact your property manager to rent a property first."
+  "noActiveContracts": "You currently have no active rental contracts. Contact your property manager to rent a property first.",
+  "statistics": "Maintenance Statistics",
+  "totalRequestsStat": "Total Requests",
+  "pendingStat": "Pending",
+  "inProgressStat": "In Progress",
+  "completedStat": "Completed"
 } 

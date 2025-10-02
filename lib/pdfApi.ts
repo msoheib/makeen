@@ -90,7 +90,6 @@ class PDFGeneratorAPI {
    */
   async generateReport(request: PDFRequest): Promise<PDFResponse> {
     try {
-      console.log('Generating report for request:', request);
       
       if (!this.anonKey) {
         throw new Error('Missing Supabase authentication key');
@@ -107,7 +106,6 @@ class PDFGeneratorAPI {
         format: 'pdf' // Request PDF format
       };
 
-      console.log('Backend request:', backendRequest);
 
       // Prefer supabase functions client to avoid CORS/HTML responses
       const { data: result, error } = await supabase.functions.invoke('pdf-generator', {
@@ -118,7 +116,6 @@ class PDFGeneratorAPI {
         throw new Error(error.message || 'Failed to invoke pdf-generator');
       }
 
-      console.log('Backend response:', result);
 
       // If function returned raw HTML string (under-development placeholder), treat as HTML content
       if (typeof result === 'string') {
@@ -159,7 +156,6 @@ class PDFGeneratorAPI {
    */
   async viewReport(request: PDFRequest): Promise<PDFResponse> {
     try {
-      console.log('Viewing report for request:', request);
       
       if (!this.anonKey) {
         throw new Error('Missing Supabase authentication key');
@@ -176,7 +172,6 @@ class PDFGeneratorAPI {
         format: 'html' // Request HTML format for viewing
       };
 
-      console.log('Backend request for viewing:', backendRequest);
 
       // Prefer supabase functions client to avoid CORS/HTML responses
       const { data: result, error } = await supabase.functions.invoke('pdf-generator', {
@@ -187,7 +182,6 @@ class PDFGeneratorAPI {
         throw new Error(error.message || 'Failed to invoke pdf-generator');
       }
 
-      console.log('Backend response for viewing:', result);
 
       // Handle raw HTML string responses
       if (typeof result === 'string') {
@@ -229,21 +223,14 @@ class PDFGeneratorAPI {
    */
   async convertHTMLToPDF(htmlContent: string, filename: string): Promise<boolean> {
     try {
-      console.log('🔄 Converting HTML to PDF using Expo Print...');
-      console.log('📱 Platform.OS:', Platform.OS);
-      console.log('📄 Filename:', filename);
-      console.log('📝 HTML content length:', htmlContent.length);
       
       // For React Native - use expo-print to generate PDF
       if (Platform.OS !== 'web') {
-        console.log('📱 Using React Native path for PDF conversion...');
         const { uri } = await Print.printToFileAsync({
           html: htmlContent,
           base64: false
         });
         
-        console.log('✅ PDF generated successfully at:', uri);
-        console.log('📁 PDF file URI:', uri);
         
         // Check if sharing is available
         const isAvailable = await Sharing.isAvailableAsync();
@@ -578,7 +565,6 @@ class PDFGeneratorAPI {
     if (result.success && result.filename) {
       // Handle PDF response (preferred)
       if (result.pdfData && result.contentType === 'application/pdf') {
-        console.log('Downloading PDF report...');
         const downloaded = await this.downloadPDF(result.pdfData, result.filename);
         
         if (!downloaded) {
@@ -594,13 +580,9 @@ class PDFGeneratorAPI {
       
       // Handle HTML response (convert to PDF on client-side)
       else if (result.htmlContent && result.contentType === 'text/html') {
-        console.log('Converting HTML to PDF on client-side...');
-        console.log('Platform.OS:', Platform.OS);
-        console.log('Original filename:', result.filename);
         
         // Try to convert HTML to PDF using Expo Print
         const pdfFilename = result.filename.replace('.html', '.pdf');
-        console.log('PDF filename:', pdfFilename);
         
         const converted = await this.convertHTMLToPDF(result.htmlContent, pdfFilename);
         
@@ -615,7 +597,6 @@ class PDFGeneratorAPI {
           };
         } else {
           // Fallback to HTML handling if PDF conversion fails
-          console.log('PDF conversion failed, falling back to HTML...');
           
           // For web - try to open in new tab first, fallback to download
           if (typeof window !== 'undefined') {
@@ -868,3 +849,4 @@ export const pdfApi = new PDFGeneratorAPI();
 
 // Export default for convenience
 export default pdfApi; 
+

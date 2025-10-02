@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, RefreshControl, TouchableOpacity, Alert } from 'react-native';
 import { Text, Card, Button, FAB, Chip, Avatar, Searchbar } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { lightTheme, darkTheme, spacing } from '@/lib/theme';
-import { useAppStore } from '@/lib/store';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { 
   Home, 
   Search, 
@@ -29,8 +29,7 @@ import { tenantApi, bidsApi } from '@/lib/api';
 
 export default function TenantDashboardScreen() {
   const router = useRouter();
-  const { isDarkMode } = useAppStore();
-  const theme = isDarkMode ? darkTheme : lightTheme;
+  const { theme } = useAppTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'browse' | 'mybids' | 'maintenance'>('browse');
 

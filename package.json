@@ -27,9 +27,16 @@
     "e2e:test:full": "npm run detox:build:android && npm run e2e:test:forms",
     "clear-auth": "node scripts/clear-auth.js",
     "android": "expo run:android",
-    "ios": "expo run:ios"
+    "ios": "expo run:ios",
+    "lint:i18n": "node scripts/lint-i18n.js",
+    "test:playwright": "npx playwright test",
+    "test:playwright:ui": "npx playwright test --ui",
+    "test:qa": "node playwright/qa-runner.js",
+    "test:qa:theme": "npx playwright test qa-theme-language.spec.ts",
+    "test:qa:theme:ui": "npx playwright test qa-theme-language.spec.ts --ui"
   },
   "dependencies": {
+    "@expo-google-fonts/cairo": "^0.2.3",
     "@expo-google-fonts/inter": "^0.2.3",
     "@expo/vector-icons": "^14.1.0",
     "@lucide/lab": "^0.1.2",
@@ -101,12 +108,13 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@babel/plugin-proposal-export-namespace-from": "^7.18.9",
-    "babel-plugin-transform-remove-console": "^6.9.4",
+    "@playwright/test": "^1.55.0",
     "@testing-library/jest-native": "^5.4.3",
     "@testing-library/react-native": "^13.2.0",
     "@types/jest": "^29.5.14",
     "@types/react-i18next": "^7.8.3",
     "babel-plugin-module-resolver": "^5.0.2",
+    "babel-plugin-transform-remove-console": "^6.9.4",
     "cross-env": "^7.0.3",
     "detox": "^20.39.0",
     "eslint": "^9.0.0",
@@ -114,6 +122,7 @@
     "jest": "~29.7.0",
     "jest-circus": "^30.0.0",
     "jest-expo": "^53.0.7",
+    "playwright": "^1.55.0",
     "react-test-renderer": "^19.0.0",
     "tailwindcss": "^3.3.2",
     "typescript": "~5.8.3"

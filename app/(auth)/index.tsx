@@ -6,6 +6,7 @@ import { theme, spacing, shadows } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/lib/store';
 import { useCommonTranslation } from '@/lib/useTranslation';
+import { navigateBack, navigateBackToSection } from '@/lib/navigation';
 import { getTextAlign, getFlexDirection } from '@/lib/rtl';
 
 export default function SignInScreen() {
@@ -30,44 +31,73 @@ export default function SignInScreen() {
     setLoading(true);
     setError(null);
     
-    console.log('Attempting sign-in for email:', email);
-    
     try {
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
-      console.log('Supabase auth.signInWithPassword response:', { data, signInError });
-      
       if (signInError) {
         console.error('Supabase auth.signInWithPassword error:', signInError);
         throw signInError;
       }
-      
       if (data.user) {
-        console.log('Sign-in successful for user ID:', data.user.id, 'Attempting to fetch profile.');
-        // Fetch user profile details
-        const { data: profileData, error: profileError } = await supabase
+        // Fetch user profile details (avoid 406 by using maybeSingle)
+        let { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', data.user.id)
-          .single();
-        
-        console.log('Supabase profiles.select response:', { profileData, profileError });
-          
-        if (profileError) {
+          .maybeSingle();
+
+        // If no row exists, create a default profile for the signed-in user
+        if (!profileData && !profileError) {
+          const defaultRole = 'tenant';
+          const defaultProfileType = 'tenant';
+          const insertPayload: any = {
+            id: data.user.id,
+            email: data.user.email,
+            first_name: data.user.user_metadata?.first_name ?? null,
+            last_name: data.user.user_metadata?.last_name ?? null,
+            role: defaultRole,
+            profile_type: defaultProfileType,
+            status: 'active',
+          };
+
+          const { data: createdProfile, error: insertError } = await supabase
+            .from('profiles')
+            .insert(insertPayload)
+            .select('*')
+            .single();
+
+          if (insertError) {
+            // If duplicate due to race, fetch again
+            if (insertError.code === '23505' || insertError.message?.includes('duplicate')) {
+              const { data: existing, error: fetchErr } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', data.user.id)
+                .single();
+              if (fetchErr) {
+                console.error('Failed to fetch existing profile after duplicate:', fetchErr);
+                throw fetchErr;
+              }
+              profileData = existing;
+            } else {
+              console.error('Failed to create profile after sign-in:', insertError);
+              throw insertError;
+            }
+          } else {
+            profileData = createdProfile;
+          }
+        } else if (profileError) {
           console.error('Supabase profiles.select error (likely cause of JSON object/406 error):', profileError);
           throw profileError;
         }
-        
+
         if (!profileData) {
-          console.error('Profile data is null or undefined even after a successful select without error. This should not happen if profileError is null.');
-          throw new Error('User profile not found after sign-in, but no specific database error was returned.');
+          throw new Error('User profile not found after sign-in.');
         }
-        
-        console.log('Profile fetched successfully:', profileData);
-        
+
         // Check if user is approved
         if (profileData.status === 'pending') {
           Alert.alert(
@@ -115,7 +145,6 @@ export default function SignInScreen() {
       } else {
         // This case should ideally not be reached if signInError is null, 
         // as data.user should be present on successful sign-in.
-        console.warn('Supabase auth.signInWithPassword did not return a user object, but no explicit error was thrown.');
         setError(t('signInFailed', 'Sign-in failed: No user data returned.'));
       }
     } catch (error: any) {
@@ -132,7 +161,7 @@ export default function SignInScreen() {
 
   const rtlStyles = {
     container: {
-      direction: isRTL ? 'rtl' : 'ltr',
+      writingDirection: isRTL ? 'rtl' : 'ltr',
     },
     textAlign: {
       textAlign: getTextAlign('left'),

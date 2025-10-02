@@ -5,9 +5,11 @@ import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import { useRouter } from 'expo-router';
 import { propertyGroupsApi, profilesApi } from '@/lib/api';
-import { theme, spacing } from '@/lib/theme';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 
 export default function AddBuildingScreen() {
+  const { theme } = useAppTheme();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState<{ visible: boolean; message: string; type: 'success' | 'error' }>({ visible: false, message: '', type: 'success' });
@@ -137,6 +139,136 @@ export default function AddBuildingScreen() {
       setLoading(false);
     }
   };
+
+    const styles = StyleSheet.create({
+  container: { 
+    flex: 1, 
+    backgroundColor: theme.colors.background,
+    writingDirection: 'rtl',
+  },
+  content: { 
+    flex: 1,
+    writingDirection: 'rtl',
+  },
+  section: { margin: spacing.m },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    textAlign: 'right',
+    marginBottom: spacing.s,
+    writingDirection: 'rtl',
+  },
+  input: { 
+    marginBottom: spacing.m, 
+    backgroundColor: theme.colors.surface,
+    textAlign: 'right',
+    writingDirection: 'rtl',
+  },
+  submitContainer: { 
+    padding: spacing.m, 
+    paddingBottom: spacing.xxxl,
+    alignItems: 'center',
+  },
+  segmentedButtons: { 
+    marginBottom: spacing.m,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: theme.colors.onSurface,
+    marginBottom: spacing.s,
+    textAlign: 'right',
+    writingDirection: 'rtl',
+  },
+  sectionDescription: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    marginBottom: spacing.m,
+    textAlign: 'right',
+    writingDirection: 'rtl',
+  },
+  subsectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: theme.colors.onSurface,
+    marginTop: spacing.m,
+    marginBottom: spacing.s,
+    textAlign: 'right',
+    writingDirection: 'rtl',
+  },
+  fieldDescription: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    marginBottom: spacing.s,
+    textAlign: 'right',
+    writingDirection: 'rtl',
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: spacing.s,
+  },
+  halfWidth: {
+    width: '48%', // Adjust as needed for spacing
+  },
+  summaryBox: {
+    backgroundColor: theme.colors.surfaceVariant,
+    padding: spacing.m,
+    borderRadius: spacing.s,
+    marginTop: spacing.m,
+  },
+  summaryTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: theme.colors.onSurface,
+    marginBottom: spacing.s,
+    textAlign: 'right',
+    writingDirection: 'rtl',
+  },
+  summaryText: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    marginBottom: spacing.s,
+    textAlign: 'right',
+    writingDirection: 'rtl',
+  },
+  disabledInput: {
+    opacity: 0.7,
+    backgroundColor: theme.colors.surfaceVariant,
+  },
+  wrappedButtonsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: spacing.m,
+  },
+  wrappedButton: {
+    backgroundColor: theme.colors.surface,
+    paddingVertical: spacing.s,
+    paddingHorizontal: spacing.m,
+    borderRadius: spacing.s,
+    marginBottom: spacing.s,
+    minWidth: '48%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.outline,
+  },
+  wrappedButtonSelected: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  wrappedButtonText: {
+    fontSize: 14,
+    color: theme.colors.onSurface,
+    textAlign: 'center',
+    writingDirection: 'rtl',
+  },
+  wrappedButtonTextSelected: {
+    color: theme.colors.onPrimary,
+  },
+});
 
   return (
     <View style={styles.container}>
@@ -526,134 +658,6 @@ export default function AddBuildingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: theme.colors.background,
-    writingDirection: 'rtl',
-  },
-  content: { 
-    flex: 1,
-    writingDirection: 'rtl',
-  },
-  section: { margin: spacing.m },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    textAlign: 'right',
-    marginBottom: spacing.s,
-    writingDirection: 'rtl',
-  },
-  input: { 
-    marginBottom: spacing.m, 
-    backgroundColor: theme.colors.surface,
-    textAlign: 'right',
-    writingDirection: 'rtl',
-  },
-  submitContainer: { 
-    padding: spacing.m, 
-    paddingBottom: spacing.xxxl,
-    alignItems: 'center',
-  },
-  segmentedButtons: { 
-    marginBottom: spacing.m,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.s,
-    textAlign: 'right',
-    writingDirection: 'rtl',
-  },
-  sectionDescription: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    marginBottom: spacing.m,
-    textAlign: 'right',
-    writingDirection: 'rtl',
-  },
-  subsectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: theme.colors.onSurface,
-    marginTop: spacing.m,
-    marginBottom: spacing.s,
-    textAlign: 'right',
-    writingDirection: 'rtl',
-  },
-  fieldDescription: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    marginBottom: spacing.s,
-    textAlign: 'right',
-    writingDirection: 'rtl',
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.s,
-  },
-  halfWidth: {
-    width: '48%', // Adjust as needed for spacing
-  },
-  summaryBox: {
-    backgroundColor: theme.colors.surfaceVariant,
-    padding: spacing.m,
-    borderRadius: spacing.s,
-    marginTop: spacing.m,
-  },
-  summaryTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.s,
-    textAlign: 'right',
-    writingDirection: 'rtl',
-  },
-  summaryText: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    marginBottom: spacing.s,
-    textAlign: 'right',
-    writingDirection: 'rtl',
-  },
-  disabledInput: {
-    opacity: 0.7,
-    backgroundColor: theme.colors.surfaceVariant,
-  },
-  wrappedButtonsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: spacing.m,
-  },
-  wrappedButton: {
-    backgroundColor: theme.colors.surface,
-    paddingVertical: spacing.s,
-    paddingHorizontal: spacing.m,
-    borderRadius: spacing.s,
-    marginBottom: spacing.s,
-    minWidth: '48%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.outline,
-  },
-  wrappedButtonSelected: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
-  },
-  wrappedButtonText: {
-    fontSize: 14,
-    color: theme.colors.onSurface,
-    textAlign: 'center',
-    writingDirection: 'rtl',
-  },
-  wrappedButtonTextSelected: {
-    color: theme.colors.onPrimary,
-  },
-});
+
 
 

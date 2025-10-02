@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, Image, Alert, TouchableOpacity } from 'react-native';
 import { Text, Button, IconButton, Chip, Modal, Portal } from 'react-native-paper';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { theme, spacing } from '@/lib/theme';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { Property } from '@/lib/types';
 import { getCurrentUserContext } from '@/lib/security';
 import { useApi } from '@/hooks/useApi';
@@ -14,6 +15,7 @@ import StatCard from '@/components/StatCard';
 import { usePropertiesTranslation, useCommonTranslation } from '@/lib/useTranslation';
 
 export default function PropertyDetailsScreen() {
+  const { theme } = useAppTheme();
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const [loading, setLoading] = useState(true);
@@ -199,7 +201,198 @@ export default function PropertyDetailsScreen() {
   };
 
   if (loading || !property) {
-    return (
+      const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  headerActions: {
+    flexDirection: 'row',
+  },
+  content: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageContainer: {
+    position: 'relative',
+    height: 250,
+    marginBottom: spacing.m,
+  },
+  mainImage: {
+    width: '100%',
+    height: '100%',
+  },
+  statusBadge: {
+    position: 'absolute',
+    top: spacing.m,
+    right: spacing.m,
+  },
+  statusChip: {
+    height: 32,
+  },
+  infoCard: {
+    marginHorizontal: spacing.m,
+    marginBottom: spacing.m,
+  },
+  propertyTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: theme.colors.onSurface,
+    marginBottom: spacing.s,
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.m,
+  },
+  locationText: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    marginLeft: 6,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.m,
+  },
+  price: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: theme.colors.primary,
+  },
+  paymentChip: {
+    borderColor: theme.colors.outline,
+  },
+  paymentText: {
+    color: theme.colors.onSurfaceVariant,
+  },
+  description: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    lineHeight: 20,
+  },
+  statsSection: {
+    marginBottom: spacing.m,
+  },
+  statsContainer: {
+    paddingHorizontal: spacing.m,
+  },
+  ownerCard: {
+    marginHorizontal: spacing.m,
+    marginBottom: spacing.m,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginBottom: spacing.m,
+  },
+  ownerInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  ownerDetails: {
+    flex: 1,
+  },
+  ownerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.s,
+  },
+  ownerText: {
+    fontSize: 14,
+    color: theme.colors.onSurface,
+    marginLeft: 8,
+  },
+  contactButton: {
+    borderColor: theme.colors.primary,
+  },
+  actionsCard: {
+    marginHorizontal: spacing.m,
+    marginBottom: spacing.xxxl,
+  },
+  actionButtons: {
+    gap: spacing.m,
+  },
+  actionButton: {
+    paddingVertical: 4,
+  },
+  modalContainer: {
+    backgroundColor: theme.colors.surface,
+    margin: spacing.lg,
+    borderRadius: 12,
+    padding: spacing.lg,
+    maxHeight: '80%',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginBottom: spacing.s,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    marginBottom: spacing.lg,
+  },
+  ownerSelectionContainer: {
+    marginBottom: spacing.lg,
+  },
+  ownersList: {
+    maxHeight: 300,
+  },
+  ownerOptionModal: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing.m,
+    marginBottom: spacing.s,
+    borderRadius: 8,
+    backgroundColor: theme.colors.surfaceVariant,
+    borderWidth: 1,
+    borderColor: theme.colors.outline,
+  },
+  selectedOwnerOptionModal: {
+    backgroundColor: theme.colors.primaryContainer,
+    borderColor: theme.colors.primary,
+  },
+  ownerNameModal: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.onSurfaceVariant,
+  },
+  selectedOwnerNameModal: {
+    color: theme.colors.primary,
+  },
+  ownerEmailModal: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
+    marginTop: 2,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: spacing.m,
+  },
+  cancelButton: {
+    flex: 1,
+  },
+  transferButton: {
+    flex: 1,
+  },
+  loadingText: {
+    textAlign: 'center',
+    color: theme.colors.onSurfaceVariant,
+    padding: spacing.lg,
+  },
+});
+
+  return (
       <View style={styles.container}>
         <ModernHeader
           title={tProps('details.title')}
@@ -486,193 +679,3 @@ export default function PropertyDetailsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  headerActions: {
-    flexDirection: 'row',
-  },
-  content: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  imageContainer: {
-    position: 'relative',
-    height: 250,
-    marginBottom: spacing.m,
-  },
-  mainImage: {
-    width: '100%',
-    height: '100%',
-  },
-  statusBadge: {
-    position: 'absolute',
-    top: spacing.m,
-    right: spacing.m,
-  },
-  statusChip: {
-    height: 32,
-  },
-  infoCard: {
-    marginHorizontal: spacing.m,
-    marginBottom: spacing.m,
-  },
-  propertyTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.s,
-  },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.m,
-  },
-  locationText: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    marginLeft: 6,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.m,
-  },
-  price: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: theme.colors.primary,
-  },
-  paymentChip: {
-    borderColor: theme.colors.outline,
-  },
-  paymentText: {
-    color: theme.colors.onSurfaceVariant,
-  },
-  description: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    lineHeight: 20,
-  },
-  statsSection: {
-    marginBottom: spacing.m,
-  },
-  statsContainer: {
-    paddingHorizontal: spacing.m,
-  },
-  ownerCard: {
-    marginHorizontal: spacing.m,
-    marginBottom: spacing.m,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.m,
-  },
-  ownerInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  ownerDetails: {
-    flex: 1,
-  },
-  ownerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.s,
-  },
-  ownerText: {
-    fontSize: 14,
-    color: theme.colors.onSurface,
-    marginLeft: 8,
-  },
-  contactButton: {
-    borderColor: theme.colors.primary,
-  },
-  actionsCard: {
-    marginHorizontal: spacing.m,
-    marginBottom: spacing.xxxl,
-  },
-  actionButtons: {
-    gap: spacing.m,
-  },
-  actionButton: {
-    paddingVertical: 4,
-  },
-  modalContainer: {
-    backgroundColor: theme.colors.surface,
-    margin: spacing.lg,
-    borderRadius: 12,
-    padding: spacing.lg,
-    maxHeight: '80%',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.s,
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    marginBottom: spacing.lg,
-  },
-  ownerSelectionContainer: {
-    marginBottom: spacing.lg,
-  },
-  ownersList: {
-    maxHeight: 300,
-  },
-  ownerOptionModal: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: spacing.m,
-    marginBottom: spacing.s,
-    borderRadius: 8,
-    backgroundColor: theme.colors.surfaceVariant,
-    borderWidth: 1,
-    borderColor: theme.colors.outline,
-  },
-  selectedOwnerOptionModal: {
-    backgroundColor: theme.colors.primaryContainer,
-    borderColor: theme.colors.primary,
-  },
-  ownerNameModal: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.onSurfaceVariant,
-  },
-  selectedOwnerNameModal: {
-    color: theme.colors.primary,
-  },
-  ownerEmailModal: {
-    fontSize: 12,
-    color: theme.colors.onSurfaceVariant,
-    marginTop: 2,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    gap: spacing.m,
-  },
-  cancelButton: {
-    flex: 1,
-  },
-  transferButton: {
-    flex: 1,
-  },
-  loadingText: {
-    textAlign: 'center',
-    color: theme.colors.onSurfaceVariant,
-    padding: spacing.lg,
-  },
-});

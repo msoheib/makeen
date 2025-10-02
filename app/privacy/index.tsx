@@ -2,13 +2,160 @@ import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, IconButton } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { theme, spacing } from '@/lib/theme';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { ArrowLeft, Shield, Calendar, Lock } from 'lucide-react-native';
 import ModernCard from '@/components/ModernCard';
 
 export default function PrivacyPolicyScreen() {
+  const { theme } = useAppTheme();
   const router = useRouter();
   const lastUpdated = "December 21, 2024";
+
+    const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.m,
+    paddingTop: spacing.l,
+    paddingBottom: spacing.m,
+    backgroundColor: theme.colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.outline,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+  },
+  backButton: {
+    margin: 0,
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 20,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    textAlign: 'center',
+    marginRight: 48,
+  },
+  headerSpacer: {
+    width: 48,
+  },
+  content: {
+    flex: 1,
+    padding: spacing.m,
+  },
+  infoCard: {
+    marginBottom: spacing.m,
+    backgroundColor: '#E3F2FD',
+    borderColor: '#1976D2',
+    borderWidth: 1,
+  },
+  infoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.s,
+  },
+  infoTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: theme.colors.primary,
+    marginLeft: spacing.s,
+  },
+  infoDescription: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    lineHeight: 20,
+    marginBottom: spacing.s,
+  },
+  lastUpdated: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.s,
+  },
+  lastUpdatedText: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    marginLeft: spacing.s,
+  },
+  privacyCard: {
+    marginBottom: spacing.m,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginTop: spacing.m,
+    marginBottom: spacing.s,
+  },
+  sectionContent: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    lineHeight: 22,
+    marginBottom: spacing.s,
+  },
+  protectionCard: {
+    marginBottom: spacing.m,
+    backgroundColor: '#F5F5F5',
+    borderColor: '#424242',
+    borderWidth: 1,
+  },
+  protectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.m,
+  },
+  protectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.secondary,
+    marginLeft: spacing.s,
+  },
+  protectionList: {
+    gap: spacing.s,
+  },
+  protectionItem: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    lineHeight: 20,
+  },
+  complianceCard: {
+    marginBottom: spacing.m,
+    backgroundColor: '#FFF8E1',
+    borderColor: '#FF9800',
+    borderWidth: 1,
+  },
+  complianceTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FF9800',
+    marginBottom: spacing.s,
+  },
+  complianceText: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    lineHeight: 20,
+  },
+  contactCard: {
+    marginBottom: spacing.xl,
+    backgroundColor: '#E8F5E8',
+    borderColor: '#4CAF50',
+    borderWidth: 1,
+  },
+  contactTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#4CAF50',
+    marginBottom: spacing.s,
+  },
+  contactText: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    lineHeight: 20,
+  },
+});
 
   return (
     <View style={styles.container}>
@@ -171,147 +318,4 @@ export default function PrivacyPolicyScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.m,
-    paddingTop: spacing.l,
-    paddingBottom: spacing.m,
-    backgroundColor: theme.colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.outline,
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
-  },
-  backButton: {
-    margin: 0,
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 20,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    textAlign: 'center',
-    marginRight: 48,
-  },
-  headerSpacer: {
-    width: 48,
-  },
-  content: {
-    flex: 1,
-    padding: spacing.m,
-  },
-  infoCard: {
-    marginBottom: spacing.m,
-    backgroundColor: '#E3F2FD',
-    borderColor: '#1976D2',
-    borderWidth: 1,
-  },
-  infoHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.s,
-  },
-  infoTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.primary,
-    marginLeft: spacing.s,
-  },
-  infoDescription: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    lineHeight: 20,
-    marginBottom: spacing.s,
-  },
-  lastUpdated: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: spacing.s,
-  },
-  lastUpdatedText: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    marginLeft: spacing.s,
-  },
-  privacyCard: {
-    marginBottom: spacing.m,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginTop: spacing.m,
-    marginBottom: spacing.s,
-  },
-  sectionContent: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    lineHeight: 22,
-    marginBottom: spacing.s,
-  },
-  protectionCard: {
-    marginBottom: spacing.m,
-    backgroundColor: '#F5F5F5',
-    borderColor: '#424242',
-    borderWidth: 1,
-  },
-  protectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.m,
-  },
-  protectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.secondary,
-    marginLeft: spacing.s,
-  },
-  protectionList: {
-    gap: spacing.s,
-  },
-  protectionItem: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    lineHeight: 20,
-  },
-  complianceCard: {
-    marginBottom: spacing.m,
-    backgroundColor: '#FFF8E1',
-    borderColor: '#FF9800',
-    borderWidth: 1,
-  },
-  complianceTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FF9800',
-    marginBottom: spacing.s,
-  },
-  complianceText: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    lineHeight: 20,
-  },
-  contactCard: {
-    marginBottom: spacing.xl,
-    backgroundColor: '#E8F5E8',
-    borderColor: '#4CAF50',
-    borderWidth: 1,
-  },
-  contactTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#4CAF50',
-    marginBottom: spacing.s,
-  },
-  contactText: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    lineHeight: 20,
-  },
-}); 
+ 

@@ -1,16 +1,16 @@
 import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, FlatList, SafeAreaView, RefreshControl, TouchableOpacity } from 'react-native';
-import { Text, Searchbar, SegmentedButtons } from 'react-native-paper';
+import { View, StyleSheet, FlatList, SafeAreaView, RefreshControl, TouchableOpacity, I18nManager, ScrollView } from 'react-native';
+import { Text } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { lightTheme, darkTheme, spacing } from '@/lib/theme';
-import { useAppStore } from '@/lib/store';
+import { spacing, createShadowStyle } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { PenTool as Tool, Plus, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, Clock, Settings } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import StatCard from '@/components/StatCard';
 import MaintenanceRequestCard from '@/components/MaintenanceRequestCard';
 import { useTranslation } from '@/lib/useTranslation';
-import { getFlexDirection, getTextAlign, rtlStyles } from '@/lib/rtl';
+import { getFlexDirection, getTextAlign, rtlStyles, isRTL } from '@/lib/rtl';
 import { useApi } from '@/hooks/useApi';
 import { maintenanceApi } from '@/lib/api';
 import { getCurrentUserContext } from '@/lib/security';
@@ -19,14 +19,15 @@ import { HorizontalStatsShimmer, MaintenanceListShimmer } from '@/components/shi
 import { formatDisplayNumber } from '@/lib/formatters';
 import MobileSearchBar from '@/components/MobileSearchBar';
 
+type MaintenanceFilter = 'all' | 'pending' | 'in_progress' | 'completed';
+
 export default function MaintenanceScreen() {
   const router = useRouter();
   const { t } = useTranslation('maintenance');
-  const { isDarkMode } = useAppStore();
-  const theme = isDarkMode ? darkTheme : lightTheme;
+  const { theme } = useAppTheme();
   
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState('all');
+  const [activeFilter, setActiveFilter] = useState<MaintenanceFilter>('all');
 
   // Get current user context for role-based functionality
   const { 
@@ -92,13 +93,51 @@ export default function MaintenanceScreen() {
   }, [refetch]);
 
   // Create dynamic styles with access to theme
+  // Note: isRTL is imported from @/lib/rtl
+
+  const filterOptions = React.useMemo<{ value: MaintenanceFilter; label: string }[]>(() => [
+    { value: 'all', label: t('common:all') },
+    { value: 'pending', label: t('statuses.pending') },
+    { value: 'in_progress', label: t('statuses.inProgress') },
+    { value: 'completed', label: t('statuses.completed') },
+  ], [t]);
+
   const dynamicStyles = StyleSheet.create({
     searchbar: {
       marginBottom: spacing.m,
       backgroundColor: theme.colors.surface,
     },
-    segmentedButtons: {
+    filterRow: {
+      flexDirection: isRTL ? 'row-reverse' : 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: spacing.sm,
+    },
+    filterChip: {
+      paddingVertical: 10,
+      paddingHorizontal: 18,
+      borderWidth: 1,
+      borderColor: theme.colors.outlineVariant,
       backgroundColor: theme.colors.surface,
+      borderRadius: 20,
+      marginHorizontal: 4,
+      ...createShadowStyle('#000', { width: 0, height: 1 }, 0.06, 3),
+    },
+    filterChipActive: {
+      backgroundColor: theme.colors.primary,
+      borderColor: theme.colors.primary,
+      ...createShadowStyle('#000', { width: 0, height: 3 }, 0.12, 4),
+    },
+    filterChipStart: {},
+    filterChipEnd: {},
+    filterChipText: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: theme.colors.onSurface,
+      textAlign: 'center',
+    },
+    filterChipTextActive: {
+      color: theme.colors.onPrimary,
     },
     fab: {
       width: 56,
@@ -169,17 +208,38 @@ export default function MaintenanceScreen() {
           iconColor={theme.colors.onSurfaceVariant}
           textAlign="right"
         />
-        <SegmentedButtons
-          value={activeFilter}
-          onValueChange={setActiveFilter}
-          buttons={[
-            { value: 'all', label: t('common:all') },
-            { value: 'pending', label: t('statuses.pending') },
-            { value: 'in_progress', label: t('statuses.inProgress') },
-            { value: 'completed', label: t('statuses.completed') },
-          ]}
-          style={dynamicStyles.segmentedButtons}
-        />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View style={dynamicStyles.filterRow}>
+            {filterOptions.map((option, index, array) => {
+              const isActive = activeFilter === option.value;
+              const isFirst = index === 0;
+              const isLast = index === array.length - 1;
+
+              return (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[
+                    dynamicStyles.filterChip,
+                    isFirst && dynamicStyles.filterChipStart,
+                    isLast && dynamicStyles.filterChipEnd,
+                    isActive && dynamicStyles.filterChipActive,
+                  ]}
+                  activeOpacity={0.85}
+                  onPress={() => setActiveFilter(option.value)}
+                >
+                  <Text
+                    style={[
+                      dynamicStyles.filterChipText,
+                      isActive && dynamicStyles.filterChipTextActive,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </ScrollView>
       </View>
 
       {/* Requests List */}
@@ -211,8 +271,8 @@ export default function MaintenanceScreen() {
             <View>
               {/* Stats Overview */}
               <View style={styles.statsSection}>
-                <Text style={[styles.sectionTitle, { color: theme.colors.onBackground, textAlign: getTextAlign() }]}>
-                  إحصائيات الصيانة
+                <Text style={[styles.sectionTitle, { color: theme.colors.onBackground, textAlign: 'center' }]}>
+                  {t('statistics')}
                 </Text>
                 {(loading && !requests) || userLoading ? (
                   <HorizontalStatsShimmer />
@@ -224,7 +284,7 @@ export default function MaintenanceScreen() {
                           <Tool size={24} color={theme.colors.primary} />
                         </View>
                         <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
-                          إجمالي الطلبات
+                          {t('totalRequestsStat')}
                         </Text>
                         <Text style={[styles.horizontalStatValue, { color: theme.colors.primary, textAlign: 'center' }]}> 
                           {formatDisplayNumber(stats.total)}
@@ -236,7 +296,7 @@ export default function MaintenanceScreen() {
                           <Clock size={24} color="#FF9800" />
                         </View>
                         <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
-                          قيد الانتظار
+                          {t('pendingStat')}
                         </Text>
                         <Text style={[styles.horizontalStatValue, { color: '#FF9800', textAlign: 'center' }]}> 
                           {formatDisplayNumber(stats.pending)}
@@ -248,7 +308,7 @@ export default function MaintenanceScreen() {
                           <AlertTriangle size={24} color={theme.colors.secondary} />
                         </View>
                         <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
-                          قيد التنفيذ
+                          {t('inProgressStat')}
                         </Text>
                         <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary, textAlign: 'center' }]}> 
                           {formatDisplayNumber(stats.inProgress)}
@@ -260,7 +320,7 @@ export default function MaintenanceScreen() {
                           <CheckCircle size={24} color="#4CAF50" />
                         </View>
                         <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant, textAlign: 'center' }]}>
-                          مكتملة
+                          {t('completedStat')}
                         </Text>
                         <Text style={[styles.horizontalStatValue, { color: '#4CAF50', textAlign: 'center' }]}> 
                           {formatDisplayNumber(stats.completed)}

@@ -1,17 +1,18 @@
 import React, { useEffect } from 'react';
 import { View, StyleSheet, Platform, StatusBar, TouchableOpacity } from 'react-native';
 import { Text, IconButton, Badge } from 'react-native-paper';
-import { lightTheme, darkTheme, spacing } from '@/lib/theme';
 import { Bell, Search, ArrowRight, ArrowLeft } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
 import { usePathname, useRouter, useFocusEffect } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { spacing, createShadowStyle } from '@/lib/theme';
 import { useAppStore } from '@/lib/store';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { useApi } from '@/hooks/useApi';
 import { notificationsApi } from '@/lib/api';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { rtlStyles, getFlexDirection } from '@/lib/rtl';
-import { isRTL } from '@/lib/i18n';
-
+import { rtlStyles, getFlexDirection, isRTL } from '@/lib/rtl';
+import { useTranslation } from '@/lib/useTranslation';
+import { navigateBack, navigateBackToSection } from '@/lib/navigation';
 interface ModernHeaderProps {
   title?: string;
   subtitle?: string;
@@ -35,13 +36,13 @@ export default function ModernHeader({
   onBackPress,
   variant = 'dark'
 }: ModernHeaderProps) {
-  const navigation = useNavigation();
   const router = useRouter();
-  const { isDarkMode, lastNotificationUpdate } = useAppStore();
+  const { t } = useTranslation('common');
+  const lastNotificationUpdate = useAppStore(state => state.lastNotificationUpdate);
+  const { theme } = useAppTheme();
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
   
-  const theme = isDarkMode ? darkTheme : lightTheme;
   const isDark = variant === 'dark';
   const textColor = isDark ? '#FFFFFF' : theme.colors.onPrimary;
   const iconColor = isDark ? '#FFFFFF' : theme.colors.onPrimary;
@@ -107,11 +108,8 @@ export default function ModernHeader({
   const handleBackPress = () => {
     if (onBackPress) {
       onBackPress();
-    } else if (router.canGoBack()) {
-      router.back();
     } else {
-      const dest = resolveSectionFallback(pathname);
-      router.push(dest);
+      navigateBack();
     }
   };
 
@@ -128,8 +126,15 @@ export default function ModernHeader({
   // Determine if we should show back button based on navigation state
   const shouldShowBackButton = showBackButton || router.canGoBack();
 
-  // Use proper RTL-aware arrow direction
-  const BackArrowIcon = isRTL() ? ArrowRight : ArrowLeft;
+  // Flip the arrow horizontally in RTL for consistent back direction
+  const BackArrowIcon = ArrowLeft;
+  const arrowFlipStyle = isRTL() ? { 
+    transform: [{ scaleX: -1 }],
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center'
+  } : undefined;
 
   return (
     <>
@@ -144,10 +149,14 @@ export default function ModernHeader({
           <View style={[styles.navigationSection, rtlStyles.alignItemsStart]}>
             {shouldShowBackButton ? (
               <IconButton
-                icon={() => <BackArrowIcon size={24} color={iconColor} />}
+                icon={() => (
+                  <View style={arrowFlipStyle}>
+                    <BackArrowIcon size={24} color={iconColor} />
+                  </View>
+                )}
                 onPress={handleBackPress}
                 style={styles.navButton}
-                accessibilityLabel="العودة"
+                accessibilityLabel={t('goBack')}
               />
             ) : null}
           </View>
@@ -179,7 +188,7 @@ export default function ModernHeader({
                 icon={() => <Search size={24} color={iconColor} />}
                 onPress={onSearchPress}
                 style={styles.actionButton}
-                accessibilityLabel="البحث"
+                accessibilityLabel={t('search')}
               />
             )}
             {showNotifications && (
@@ -189,7 +198,7 @@ export default function ModernHeader({
                     icon={() => <Bell size={24} color={iconColor} />}
                     onPress={handleNotificationPress}
                     style={styles.actionButton}
-                    accessibilityLabel="الإشعارات"
+                    accessibilityLabel={t('notifications')}
                   />
                   {unreadCount && unreadCount > 0 && (
                     <Badge
@@ -219,10 +228,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
     elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    ...createShadowStyle('#000', { width: 0, height: 2 }, 0.1, 4),
   },
   content: {
     alignItems: 'center',
@@ -285,9 +291,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#FFFFFF',
     elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
+    ...createShadowStyle('#000', { width: 0, height: 1 }, 0.2, 2),
   },
 });

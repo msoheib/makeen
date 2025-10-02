@@ -1,6 +1,11 @@
 import { supabase } from './supabase';
+import { profileService } from './profileService';
 import { UserContext, UserRole, SecurityConfig } from './types';
 import { Tables } from './database.types';
+
+// User context cache to prevent repeated database queries
+let userContextCache: { [userId: string]: { context: UserContext; timestamp: number } } = {};
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
 
 // Security configuration
 const SECURITY_CONFIG: SecurityConfig = {
@@ -11,6 +16,7 @@ const SECURITY_CONFIG: SecurityConfig = {
 
 /**
  * Get current authenticated user context with role and property relationships
+ * Uses caching to prevent repeated database queries
  */
 export async function getCurrentUserContext(): Promise<UserContext | null> {
   try {
@@ -18,11 +24,13 @@ export async function getCurrentUserContext(): Promise<UserContext | null> {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
-      if (__DEV__) {
-        // eslint-disable-next-line no-console
-        console.log('[Security] No authenticated user found:', authError?.message);
-      }
       return null;
+    }
+
+    // Check cache first
+    const cached = userContextCache[user.id];
+    if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
+      return cached.context;
     }
 
     // Get user profile with role information
@@ -32,70 +40,21 @@ export async function getCurrentUserContext(): Promise<UserContext | null> {
       .eq('id', user.id)
       .single();
 
-    // If profile doesn't exist, create one automatically
+    // If profile doesn't exist, use centralized profile service to ensure it exists
     if (profileError && profileError.code === 'PGRST116') { // No rows returned
-      if (__DEV__) {
-        // eslint-disable-next-line no-console
-        console.log('[Security] No profile found for user, creating default profile...');
-      }
-      
-      // Extract role from auth metadata or default to admin for development
-      const defaultRole = user.user_metadata?.role || user.app_metadata?.role || 'admin';
-      const defaultProfileType = user.user_metadata?.profile_type || user.app_metadata?.profile_type || 'admin';
-      
-      // Create profile record
-      const { data: newProfile, error: createError } = await supabase
-        .from('profiles')
-        .insert({
-          id: user.id,
-          email: user.email,
-          role: defaultRole,
-          profile_type: defaultProfileType,
-          first_name: user.user_metadata?.first_name || 'Demo',
-          last_name: user.user_metadata?.last_name || 'Admin',
-          status: 'active'
-        })
-        .select()
-        .single();
 
-      if (createError) {
-        // Check if it's a duplicate key error (profile already exists)
-        if (createError.code === '23505' || createError.message?.includes('duplicate key')) {
-          console.log('[Security] Profile already exists, fetching existing profile');
-          // Profile was created by another process, fetch it
-          const { data: existingProfile, error: fetchError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-          
-          if (fetchError) {
-            console.error('[Security] Failed to fetch existing profile:', fetchError.message);
-            return null;
-          }
-          
-          profile = existingProfile;
-          if (__DEV__) {
-            console.log('[Security] Fetched existing profile for user:', { 
-              userId: user.id, 
-              role: profile.role, 
-              profileType: profile.profile_type 
-            });
-          }
-        } else {
-          console.error('[Security] Failed to create user profile:', createError.message);
-          return null;
-        }
-      } else {
-        profile = newProfile;
-        if (__DEV__) {
-          // eslint-disable-next-line no-console
-          console.log('[Security] Created new profile for user:', { 
-            userId: user.id, 
-            role: defaultRole, 
-            profileType: defaultProfileType 
-          });
-        }
+      try {
+        // Use centralized profile service to ensure profile exists
+        profile = await profileService.ensureProfileExists(user.id, {
+          email: user.email || '',
+          first_name: user.user_metadata?.first_name || user.first_name || 'Demo',
+          last_name: user.user_metadata?.last_name || user.last_name || 'Admin',
+          phone: user.user_metadata?.phone || user.phone || '',
+          role: user.user_metadata?.role || user.app_metadata?.role || 'admin',
+        });
+      } catch (error) {
+        console.error('[Security] Failed to ensure user profile exists:', error);
+        return null;
       }
     } else if (profileError) {
       console.error('[Security] Failed to fetch user profile:', profileError.message);
@@ -125,56 +84,67 @@ export async function getCurrentUserContext(): Promise<UserContext | null> {
       userContext.ownedPropertyIds = ownedProperties?.map(p => p.id) || [];
     }
 
-    // For tenants, get their rented property IDs with strict validation
+    // For tenants, get their rented property IDs with optimized query
     if (profile.role === 'tenant') {
-      const currentDate = new Date().toISOString();
-      
-      const { data: contracts } = await supabase
+      // Use a more efficient query with proper date handling and timeout
+      const contractsPromise = supabase
         .from('contracts')
-        .select('property_id, start_date, end_date, status')
+        .select('property_id')
         .eq('tenant_id', user.id)
         .eq('status', 'active')
-        .lte('start_date', currentDate)  // Contract must have started
-        .gte('end_date', currentDate);   // Contract must not have expired
+        .lte('start_date', 'now()')  // Use SQL function instead of JS date
+        .gte('end_date', 'now()');   // Use SQL function instead of JS date
       
-      // Additional validation: ensure contracts are actually current
-      const validContracts = contracts?.filter(contract => {
-        const startDate = new Date(contract.start_date);
-        const endDate = new Date(contract.end_date);
-        const now = new Date();
-        
-        return startDate <= now && endDate >= now && contract.status === 'active';
-      }) || [];
+      // Add timeout for this specific query
+      const { data: contracts, error: contractsError } = await Promise.race([
+        contractsPromise,
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Tenant contracts query timeout')), 10000)
+        )
+      ]) as any;
       
-      userContext.rentedPropertyIds = validContracts.map(c => c.property_id);
-      
-      if (SECURITY_CONFIG.logAccessAttempts && contracts?.length !== validContracts.length) {
-        if (__DEV__) {
-          // eslint-disable-next-line no-console
-          console.log('[Security] Filtered out expired/invalid contracts for tenant:', {
-            totalContracts: contracts?.length || 0,
-            validContracts: validContracts.length,
-            filteredOut: (contracts?.length || 0) - validContracts.length
-          });
-        }
+      if (contractsError) {
+        userContext.rentedPropertyIds = [];
+      } else if (contracts) {
+        userContext.rentedPropertyIds = contracts.map(c => c.property_id);
+      } else {
+        userContext.rentedPropertyIds = [];
       }
     }
 
-    if (SECURITY_CONFIG.logAccessAttempts && __DEV__) {
-      // eslint-disable-next-line no-console
-      console.log('[Security] User context loaded:', {
-        userId: userContext.userId,
-        role: userContext.role,
-        profileType: userContext.profileType,
-        propertiesOwned: userContext.ownedPropertyIds?.length || 0,
-        propertiesRented: userContext.rentedPropertyIds?.length || 0,
-      });
-    }
+    // Cache the result
+    userContextCache[user.id] = {
+      context: userContext,
+      timestamp: Date.now()
+    };
 
     return userContext;
   } catch (error) {
     console.error('[Security] Error getting user context:', error);
+    
+    // If it's a timeout error, try to return a minimal context to prevent complete failure
+    if (error.message === 'Tenant contracts query timeout') {
+      return {
+        userId: user.id,
+        role: 'tenant' as UserRole,
+        profileType: 'tenant',
+        isAuthenticated: true,
+        rentedPropertyIds: [] // Empty array to prevent access to all properties
+      };
+    }
+    
     return null;
+  }
+}
+
+/**
+ * Clear user context cache (call when user logs out or profile changes)
+ */
+export function clearUserContextCache(userId?: string): void {
+  if (userId) {
+    delete userContextCache[userId];
+  } else {
+    userContextCache = {};
   }
 }
 
@@ -406,15 +376,6 @@ export function withSecurity<T>(apiFunction: (userContext: UserContext | null, .
   return async (...args: any[]): Promise<T> => {
     const userContext = await getCurrentUserContext();
     
-    if (SECURITY_CONFIG.logAccessAttempts && __DEV__) {
-      // eslint-disable-next-line no-console
-      console.log(`[Security] API call with user context:`, {
-        userId: userContext?.userId,
-        role: userContext?.role,
-        authenticated: userContext?.isAuthenticated,
-      });
-    }
-
     return apiFunction(userContext, ...args);
   };
 }

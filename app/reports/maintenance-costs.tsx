@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { Text, Card, Button } from 'react-native-paper';
-import { theme, spacing } from '@/lib/theme';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { useApi } from '@/hooks/useApi';
 import { reportsApi } from '@/lib/api';
 import ModernHeader from '@/components/ModernHeader';
@@ -54,6 +55,7 @@ interface PriorityDistribution {
 }
 
 export default function MaintenanceCostsScreen() {
+  const { theme } = useAppTheme();
   const [refreshing, setRefreshing] = useState(false);
 
   // API calls for maintenance cost data
@@ -130,6 +132,139 @@ export default function MaintenanceCostsScreen() {
       </View>
     </ModernCard>
   );
+
+    const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  content: {
+    flex: 1,
+  },
+  statsSection: {
+    padding: spacing.md,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: theme.colors.onBackground,
+    marginBottom: spacing.sm,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    marginBottom: spacing.md,
+  },
+  statsContainer: {
+    gap: spacing.sm,
+    paddingRight: spacing.md,
+  },
+  chartSection: {
+    padding: spacing.md,
+    paddingTop: 0,
+  },
+  chartCard: {
+    padding: spacing.md,
+  },
+  chartHeader: {
+    marginBottom: spacing.md,
+  },
+  chartTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginBottom: spacing.xs,
+  },
+  chartSubtitle: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
+  },
+  propertiesSection: {
+    padding: spacing.md,
+    paddingTop: 0,
+  },
+  propertyCard: {
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  propertyHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: spacing.md,
+  },
+  propertyInfo: {
+    flex: 1,
+  },
+  propertyName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginBottom: spacing.xs,
+  },
+  propertyTotal: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: theme.colors.primary,
+  },
+  propertyStats: {
+    alignItems: 'flex-end',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
+  },
+  propertyMetrics: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.outline,
+  },
+  metric: {
+    alignItems: 'center',
+  },
+  metricLabel: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
+    marginBottom: spacing.xs,
+  },
+  metricValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+  },
+  insightsSection: {
+    padding: spacing.md,
+    paddingTop: 0,
+  },
+  insightCard: {
+    padding: spacing.md,
+  },
+  insightItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: spacing.md,
+  },
+  insightText: {
+    flex: 1,
+    marginLeft: spacing.sm,
+  },
+  insightTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginBottom: spacing.xs,
+  },
+  insightDescription: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
+    lineHeight: 16,
+  },
+  bottomSpacing: {
+    height: spacing.xl,
+  },
+});
 
   return (
     <View style={styles.container}>
@@ -304,135 +439,4 @@ export default function MaintenanceCostsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  content: {
-    flex: 1,
-  },
-  statsSection: {
-    padding: spacing.md,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.onBackground,
-    marginBottom: spacing.sm,
-  },
-  sectionSubtitle: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    marginBottom: spacing.md,
-  },
-  statsContainer: {
-    gap: spacing.sm,
-    paddingRight: spacing.md,
-  },
-  chartSection: {
-    padding: spacing.md,
-    paddingTop: 0,
-  },
-  chartCard: {
-    padding: spacing.md,
-  },
-  chartHeader: {
-    marginBottom: spacing.md,
-  },
-  chartTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.xs,
-  },
-  chartSubtitle: {
-    fontSize: 12,
-    color: theme.colors.onSurfaceVariant,
-  },
-  propertiesSection: {
-    padding: spacing.md,
-    paddingTop: 0,
-  },
-  propertyCard: {
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  propertyHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: spacing.md,
-  },
-  propertyInfo: {
-    flex: 1,
-  },
-  propertyName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.xs,
-  },
-  propertyTotal: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: theme.colors.primary,
-  },
-  propertyStats: {
-    alignItems: 'flex-end',
-  },
-  statLabel: {
-    fontSize: 12,
-    color: theme.colors.onSurfaceVariant,
-  },
-  propertyMetrics: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingTop: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.outline,
-  },
-  metric: {
-    alignItems: 'center',
-  },
-  metricLabel: {
-    fontSize: 12,
-    color: theme.colors.onSurfaceVariant,
-    marginBottom: spacing.xs,
-  },
-  metricValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-  },
-  insightsSection: {
-    padding: spacing.md,
-    paddingTop: 0,
-  },
-  insightCard: {
-    padding: spacing.md,
-  },
-  insightItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: spacing.md,
-  },
-  insightText: {
-    flex: 1,
-    marginLeft: spacing.sm,
-  },
-  insightTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.xs,
-  },
-  insightDescription: {
-    fontSize: 12,
-    color: theme.colors.onSurfaceVariant,
-    lineHeight: 16,
-  },
-  bottomSpacing: {
-    height: spacing.xl,
-  },
-}); 
+ 

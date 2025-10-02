@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Image, Alert, ActivityIndicator } from 'react-native';
 import { Text, Button, Card, Chip, Portal, Modal, SegmentedButtons } from 'react-native-paper';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { theme, spacing } from '@/lib/theme';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { addAlpha } from '@/lib/colors';
 import { supabase } from '@/lib/supabase';
 import { MaintenanceRequest } from '@/lib/types';
@@ -13,24 +14,25 @@ import { useMaintenanceTranslation } from '@/lib/useTranslation';
 import { getFlexDirection, getTextAlign, rtlStyles } from '@/lib/rtl';
 import { format } from 'date-fns';
 
-// Status color mapping
-const statusColors = {
-  pending: '#FF9800',
-  approved: theme.colors.primary,
-  in_progress: theme.colors.secondary,
-  completed: '#4CAF50',
-  cancelled: theme.colors.error,
-};
-
-// Priority color mapping
-const priorityColors = {
-  low: '#4CAF50',
-  medium: theme.colors.secondary,
-  high: '#FF9800',
-  urgent: theme.colors.error,
-};
-
 export default function MaintenanceRequestDetails() {
+  const { theme } = useAppTheme();
+  
+  // Status color mapping
+  const statusColors = {
+    pending: '#FF9800',
+    approved: theme.colors.primary,
+    in_progress: theme.colors.secondary,
+    completed: '#4CAF50',
+    cancelled: theme.colors.error,
+  };
+
+  // Priority color mapping
+  const priorityColors = {
+    low: '#4CAF50',
+    medium: theme.colors.secondary,
+    high: '#FF9800',
+    urgent: theme.colors.error,
+  };
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useMaintenanceTranslation();
@@ -114,7 +116,157 @@ export default function MaintenanceRequestDetails() {
   };
 
   if (loading) {
-    return (
+      const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  scrollView: {
+    flex: 1,
+    paddingHorizontal: spacing.m,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.m,
+  },
+  loadingText: {
+    marginTop: spacing.m,
+    fontSize: 16,
+    color: theme.colors.onSurfaceVariant,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.m,
+  },
+  errorText: {
+    marginTop: spacing.m,
+    fontSize: 16,
+    color: theme.colors.error,
+  },
+  headerCard: {
+    marginTop: spacing.m,
+    marginBottom: spacing.m,
+  },
+  headerRow: {
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  headerContent: {
+    flex: 1,
+    paddingRight: spacing.m,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: theme.colors.onSurface,
+    marginBottom: spacing.xs,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+  },
+  statusContainer: {
+    alignItems: 'center',
+  },
+  statusChip: {
+    height: 32,
+  },
+  infoCard: {
+    marginBottom: spacing.m,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginBottom: spacing.m,
+  },
+  infoRow: {
+    alignItems: 'flex-start',
+    marginBottom: spacing.m,
+  },
+  infoContent: {
+    flex: 1,
+    marginLeft: spacing.s,
+  },
+  infoLabel: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
+    marginBottom: spacing.xs,
+  },
+  infoValue: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: theme.colors.onSurface,
+  },
+  infoSubValue: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    marginTop: spacing.xs,
+  },
+  descriptionCard: {
+    marginBottom: spacing.m,
+  },
+  description: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: theme.colors.onSurface,
+  },
+  imagesCard: {
+    marginBottom: spacing.m,
+  },
+  imagesGrid: {
+    flexWrap: 'wrap',
+    gap: spacing.s,
+  },
+  imageContainer: {
+    width: '48%',
+    aspectRatio: 16/9,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  actionsContainer: {
+    paddingVertical: spacing.l,
+    paddingBottom: spacing.xl,
+  },
+  actionButton: {
+    marginBottom: spacing.m,
+  },
+  buttonContent: {
+    paddingVertical: spacing.s,
+  },
+  modalContainer: {
+    backgroundColor: theme.colors.surface,
+    padding: spacing.l,
+    margin: spacing.l,
+    borderRadius: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginBottom: spacing.l,
+  },
+  segmentedButtons: {
+    marginBottom: spacing.l,
+  },
+  modalActions: {
+    justifyContent: 'space-between',
+    gap: spacing.m,
+  },
+  modalButton: {
+    flex: 1,
+  },
+});
+
+  return (
       <View style={styles.container}>
         <ModernHeader
           title={t('requestDetails')}
@@ -350,152 +502,4 @@ export default function MaintenanceRequestDetails() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  scrollView: {
-    flex: 1,
-    paddingHorizontal: spacing.m,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing.m,
-  },
-  loadingText: {
-    marginTop: spacing.m,
-    fontSize: 16,
-    color: theme.colors.onSurfaceVariant,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing.m,
-  },
-  errorText: {
-    marginTop: spacing.m,
-    fontSize: 16,
-    color: theme.colors.error,
-  },
-  headerCard: {
-    marginTop: spacing.m,
-    marginBottom: spacing.m,
-  },
-  headerRow: {
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  headerContent: {
-    flex: 1,
-    paddingRight: spacing.m,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.xs,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-  },
-  statusContainer: {
-    alignItems: 'center',
-  },
-  statusChip: {
-    height: 32,
-  },
-  infoCard: {
-    marginBottom: spacing.m,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.m,
-  },
-  infoRow: {
-    alignItems: 'flex-start',
-    marginBottom: spacing.m,
-  },
-  infoContent: {
-    flex: 1,
-    marginLeft: spacing.s,
-  },
-  infoLabel: {
-    fontSize: 12,
-    color: theme.colors.onSurfaceVariant,
-    marginBottom: spacing.xs,
-  },
-  infoValue: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: theme.colors.onSurface,
-  },
-  infoSubValue: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    marginTop: spacing.xs,
-  },
-  descriptionCard: {
-    marginBottom: spacing.m,
-  },
-  description: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: theme.colors.onSurface,
-  },
-  imagesCard: {
-    marginBottom: spacing.m,
-  },
-  imagesGrid: {
-    flexWrap: 'wrap',
-    gap: spacing.s,
-  },
-  imageContainer: {
-    width: '48%',
-    aspectRatio: 16/9,
-    borderRadius: 8,
-    overflow: 'hidden',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-  actionsContainer: {
-    paddingVertical: spacing.l,
-    paddingBottom: spacing.xl,
-  },
-  actionButton: {
-    marginBottom: spacing.m,
-  },
-  buttonContent: {
-    paddingVertical: spacing.s,
-  },
-  modalContainer: {
-    backgroundColor: theme.colors.surface,
-    padding: spacing.l,
-    margin: spacing.l,
-    borderRadius: 16,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.l,
-  },
-  segmentedButtons: {
-    marginBottom: spacing.l,
-  },
-  modalActions: {
-    justifyContent: 'space-between',
-    gap: spacing.m,
-  },
-  modalButton: {
-    flex: 1,
-  },
-}); 
+ 

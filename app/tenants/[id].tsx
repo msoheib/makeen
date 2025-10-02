@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, ActivityIndicator, Button, List, Chip, Divider } from 'react-native-paper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { theme, spacing } from '@/lib/theme';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import { profilesApi } from '@/lib/api';
@@ -22,6 +23,7 @@ import { toArabicNumerals } from '@/lib/formatters';
 export default function TenantDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { theme } = useAppTheme();
   const { t } = useTranslation('tenants');
   const [tenant, setTenant] = useState<Tables<'profiles'> | null>(null);
   const [contracts, setContracts] = useState<any[]>([]);
@@ -278,6 +280,103 @@ export default function TenantDetailsScreen() {
     );
   };
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    content: {
+      flex: 1,
+    },
+    centerContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: spacing.xl,
+    },
+    loadingText: {
+      marginTop: spacing.m,
+      color: theme.colors.onSurfaceVariant,
+    },
+    errorCard: {
+      padding: spacing.l,
+      alignItems: 'center',
+    },
+    errorTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: theme.colors.error,
+      marginBottom: spacing.s,
+    },
+    errorSubtitle: {
+      fontSize: 14,
+      color: theme.colors.onSurfaceVariant,
+      textAlign: 'center',
+      marginBottom: spacing.l,
+    },
+    errorActions: {
+      flexDirection: 'row',
+      gap: spacing.m,
+    },
+    backButton: {
+      borderColor: theme.colors.outline,
+    },
+    profileCard: {
+      margin: spacing.m,
+      padding: spacing.l,
+    },
+    profileHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    avatar: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: theme.colors.surfaceVariant,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    profileInfo: {
+      marginLeft: spacing.l,
+      flex: 1,
+    },
+    tenantName: {
+      fontSize: 24,
+      fontWeight: '600',
+      color: theme.colors.onSurface,
+      marginBottom: spacing.s,
+    },
+    statusChip: {
+      alignSelf: 'flex-start',
+      marginBottom: spacing.xs,
+    },
+    foreignChip: {
+      alignSelf: 'flex-start',
+      backgroundColor: theme.colors.primaryContainer,
+    },
+    sectionCard: {
+      marginHorizontal: spacing.m,
+      marginBottom: spacing.m,
+      padding: spacing.m,
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: theme.colors.onSurface,
+      marginBottom: spacing.m,
+    },
+    contractStatusChip: {
+      alignSelf: 'center',
+    },
+    editButtonContainer: {
+      padding: spacing.l,
+    },
+    editButton: {
+      marginTop: spacing.s,
+    },
+  });
+
   return (
     <View style={styles.container}>
       <ModernHeader
@@ -292,101 +391,4 @@ export default function TenantDetailsScreen() {
       {loading ? renderLoadingState() : error ? renderErrorState() : renderTenantInfo()}
     </View>
   );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  content: {
-    flex: 1,
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xl,
-  },
-  loadingText: {
-    marginTop: spacing.m,
-    color: theme.colors.onSurfaceVariant,
-  },
-  errorCard: {
-    padding: spacing.l,
-    alignItems: 'center',
-  },
-  errorTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.error,
-    marginBottom: spacing.s,
-  },
-  errorSubtitle: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    textAlign: 'center',
-    marginBottom: spacing.l,
-  },
-  errorActions: {
-    flexDirection: 'row',
-    gap: spacing.m,
-  },
-  backButton: {
-    borderColor: theme.colors.outline,
-  },
-  profileCard: {
-    margin: spacing.m,
-    padding: spacing.l,
-  },
-  profileHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: theme.colors.surfaceVariant,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  profileInfo: {
-    marginLeft: spacing.l,
-    flex: 1,
-  },
-  tenantName: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.s,
-  },
-  statusChip: {
-    alignSelf: 'flex-start',
-    marginBottom: spacing.xs,
-  },
-  foreignChip: {
-    alignSelf: 'flex-start',
-    backgroundColor: theme.colors.primaryContainer,
-  },
-  sectionCard: {
-    marginHorizontal: spacing.m,
-    marginBottom: spacing.m,
-    padding: spacing.m,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.m,
-  },
-  contractStatusChip: {
-    alignSelf: 'center',
-  },
-  editButtonContainer: {
-    padding: spacing.l,
-  },
-  editButton: {
-    marginTop: spacing.s,
-  },
-}); 
+} 

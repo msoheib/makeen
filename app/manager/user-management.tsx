@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
 import { Text, Card, Button, Chip, Avatar, IconButton, Searchbar, Menu, FAB, Portal, Modal, TextInput, SegmentedButtons, Divider } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { theme, spacing } from '@/lib/theme';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 import { useTranslation } from '@/lib/useTranslation';
@@ -26,6 +27,7 @@ interface ExtendedUser {
 }
 
 export default function UserManagementScreen() {
+  const { theme } = useAppTheme();
   const router = useRouter();
   const { t } = useTranslation('common');
   const [users, setUsers] = useState<ExtendedUser[]>([]);
@@ -262,7 +264,206 @@ export default function UserManagementScreen() {
   const filteredUsers = users.filter(user => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
-    return (
+      const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  content: {
+    flex: 1,
+    padding: spacing.m,
+  },
+  headerSection: {
+    marginBottom: spacing.l,
+  },
+  description: {
+    fontSize: 16,
+    color: theme.colors.onSurfaceVariant,
+    marginBottom: spacing.m,
+    lineHeight: 24,
+  },
+  searchBar: {
+    marginBottom: spacing.m,
+    backgroundColor: theme.colors.surface,
+  },
+  statsContainer: {
+    marginBottom: spacing.m,
+  },
+  statCard: {
+    marginRight: spacing.s,
+    minWidth: 100,
+  },
+  statContent: {
+    alignItems: 'center',
+    paddingVertical: spacing.s,
+  },
+  statNumber: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: theme.colors.primary,
+    marginTop: spacing.xs,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
+    marginTop: spacing.xs,
+  },
+  bulkActionCard: {
+    backgroundColor: theme.colors.primaryContainer,
+    marginBottom: spacing.m,
+  },
+  bulkActionContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.s,
+  },
+  bulkActionText: {
+    color: theme.colors.onPrimaryContainer,
+    fontWeight: '500',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: spacing.xl,
+  },
+  emptyState: {
+    marginTop: spacing.xl,
+  },
+  emptyStateContent: {
+    alignItems: 'center',
+    paddingVertical: spacing.xl,
+  },
+  emptyStateTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginTop: spacing.m,
+    marginBottom: spacing.s,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: theme.colors.onSurfaceVariant,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  usersList: {
+    gap: spacing.m,
+  },
+  userCard: {
+    overflow: 'hidden',
+  },
+  selectedCard: {
+    borderColor: theme.colors.primary,
+    borderWidth: 2,
+  },
+  userHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: spacing.s,
+  },
+  userInfo: {
+    flexDirection: 'row',
+    flex: 1,
+  },
+  userDetails: {
+    flex: 1,
+    marginLeft: spacing.m,
+  },
+  userName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginBottom: spacing.xs,
+  },
+  userEmail: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    marginBottom: spacing.s,
+  },
+  userMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.s,
+  },
+  roleChip: {
+    height: 28,
+  },
+  statusChip: {
+    height: 28,
+  },
+  userContact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.s,
+  },
+  contactText: {
+    marginLeft: spacing.s,
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+  },
+  userMetadata: {
+    gap: spacing.xs,
+  },
+  metadataRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.s,
+  },
+  metadataText: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
+  },
+  modalContainer: {
+    backgroundColor: theme.colors.surface,
+    padding: spacing.l,
+    margin: spacing.l,
+    borderRadius: 12,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginBottom: spacing.l,
+  },
+  modalSubtitle: {
+    fontSize: 16,
+    color: theme.colors.onSurfaceVariant,
+    marginBottom: spacing.l,
+  },
+  filterLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: theme.colors.onSurface,
+    marginBottom: spacing.s,
+    marginTop: spacing.m,
+  },
+  segmentedButtons: {
+    marginBottom: spacing.m,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: spacing.m,
+    marginTop: spacing.l,
+  },
+  bulkActionButton: {
+    marginBottom: spacing.m,
+  },
+  fab: {
+    position: 'absolute',
+    margin: spacing.l,
+    right: 0,
+    bottom: 0,
+  },
+});
+
+  return (
       user.first_name?.toLowerCase().includes(query) ||
       user.last_name?.toLowerCase().includes(query) ||
       user.email?.toLowerCase().includes(query) ||
@@ -637,201 +838,3 @@ export default function UserManagementScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  content: {
-    flex: 1,
-    padding: spacing.m,
-  },
-  headerSection: {
-    marginBottom: spacing.l,
-  },
-  description: {
-    fontSize: 16,
-    color: theme.colors.onSurfaceVariant,
-    marginBottom: spacing.m,
-    lineHeight: 24,
-  },
-  searchBar: {
-    marginBottom: spacing.m,
-    backgroundColor: theme.colors.surface,
-  },
-  statsContainer: {
-    marginBottom: spacing.m,
-  },
-  statCard: {
-    marginRight: spacing.s,
-    minWidth: 100,
-  },
-  statContent: {
-    alignItems: 'center',
-    paddingVertical: spacing.s,
-  },
-  statNumber: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: theme.colors.primary,
-    marginTop: spacing.xs,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: theme.colors.onSurfaceVariant,
-    marginTop: spacing.xs,
-  },
-  bulkActionCard: {
-    backgroundColor: theme.colors.primaryContainer,
-    marginBottom: spacing.m,
-  },
-  bulkActionContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing.s,
-  },
-  bulkActionText: {
-    color: theme.colors.onPrimaryContainer,
-    fontWeight: '500',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: spacing.xl,
-  },
-  emptyState: {
-    marginTop: spacing.xl,
-  },
-  emptyStateContent: {
-    alignItems: 'center',
-    paddingVertical: spacing.xl,
-  },
-  emptyStateTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginTop: spacing.m,
-    marginBottom: spacing.s,
-  },
-  emptyStateText: {
-    fontSize: 16,
-    color: theme.colors.onSurfaceVariant,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  usersList: {
-    gap: spacing.m,
-  },
-  userCard: {
-    overflow: 'hidden',
-  },
-  selectedCard: {
-    borderColor: theme.colors.primary,
-    borderWidth: 2,
-  },
-  userHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    marginBottom: spacing.s,
-  },
-  userInfo: {
-    flexDirection: 'row',
-    flex: 1,
-  },
-  userDetails: {
-    flex: 1,
-    marginLeft: spacing.m,
-  },
-  userName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.xs,
-  },
-  userEmail: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    marginBottom: spacing.s,
-  },
-  userMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.s,
-  },
-  roleChip: {
-    height: 28,
-  },
-  statusChip: {
-    height: 28,
-  },
-  userContact: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.s,
-  },
-  contactText: {
-    marginLeft: spacing.s,
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-  },
-  userMetadata: {
-    gap: spacing.xs,
-  },
-  metadataRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.s,
-  },
-  metadataText: {
-    fontSize: 12,
-    color: theme.colors.onSurfaceVariant,
-  },
-  modalContainer: {
-    backgroundColor: theme.colors.surface,
-    padding: spacing.l,
-    margin: spacing.l,
-    borderRadius: 12,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.l,
-  },
-  modalSubtitle: {
-    fontSize: 16,
-    color: theme.colors.onSurfaceVariant,
-    marginBottom: spacing.l,
-  },
-  filterLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.s,
-    marginTop: spacing.m,
-  },
-  segmentedButtons: {
-    marginBottom: spacing.m,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: spacing.m,
-    marginTop: spacing.l,
-  },
-  bulkActionButton: {
-    marginBottom: spacing.m,
-  },
-  fab: {
-    position: 'absolute',
-    margin: spacing.l,
-    right: 0,
-    bottom: 0,
-  },
-});

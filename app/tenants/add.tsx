@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Text, TextInput, Button, SegmentedButtons, Card, Divider } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
+import { navigateBack, navigateBackToSection } from '@/lib/navigation';
 import { Picker } from '@react-native-picker/picker';
 import { useRouter } from 'expo-router';
-import { theme, spacing } from '@/lib/theme';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
 import { useApi } from '@/hooks/useApi';
 import { profilesApi, propertiesApi, contractsApi } from '@/lib/api';
@@ -28,6 +30,7 @@ interface PropertyOption {
 }
 
 export default function AssignTenantScreen() {
+  const { theme } = useAppTheme();
   const { t } = useTranslation(['tenants', 'common']);
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -178,14 +181,14 @@ export default function AssignTenantScreen() {
         [
           {
             text: 'موافق',
-            onPress: () => router.replace('/(tabs)/tenants')
+            onPress: () => navigateBackToSection()
           }
         ]
       );
       
       // Automatically navigate back after a short delay
       setTimeout(() => {
-        router.replace('/(tabs)/tenants');
+        navigateBackToSection();
       }, 1500);
 
     } catch (error) {
@@ -199,12 +202,94 @@ export default function AssignTenantScreen() {
   const selectedPropertyData = availableProperties.find(p => p.id === selectedProperty);
   const selectedTenantData = availableTenants.find(t => t.id === selectedTenant);
 
+    const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  content: {
+    padding: spacing.m,
+  },
+  section: {
+    marginBottom: spacing.m,
+    padding: spacing.m,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.m,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginLeft: spacing.s,
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: theme.colors.outline,
+    borderRadius: 8,
+    marginBottom: spacing.m,
+  },
+  picker: {
+    height: 50,
+  },
+  selectedInfo: {
+    backgroundColor: theme.colors.surfaceVariant,
+    padding: spacing.m,
+    borderRadius: 8,
+    marginTop: spacing.s,
+  },
+  selectedLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: spacing.xs,
+  },
+  selectedValue: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: spacing.xs,
+  },
+  selectedDetail: {
+    fontSize: 14,
+    marginBottom: spacing.xs,
+  },
+  input: {
+    marginBottom: spacing.m,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: spacing.s,
+    marginTop: spacing.s,
+  },
+  segmentedButtons: {
+    marginBottom: spacing.m,
+  },
+  loadingText: {
+    textAlign: 'center',
+    fontSize: 16,
+    padding: spacing.l,
+  },
+  emptyText: {
+    textAlign: 'center',
+    fontSize: 16,
+    padding: spacing.l,
+    fontWeight: '500',
+  },
+  submitButton: {
+    marginTop: spacing.l,
+    marginBottom: spacing.xl,
+  },
+  submitButtonContent: {
+    paddingVertical: spacing.s,
+  },
+});
+
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ModernHeader
         title="تخصيص مستأجر لعقار"
         showBackButton
-        onBackPress={() => router.push('/(tabs)/tenants')}
+        onBackPress={() => navigateBack()}
       />
 
       <View style={styles.content}>
@@ -426,84 +511,4 @@ export default function AssignTenantScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    padding: spacing.m,
-  },
-  section: {
-    marginBottom: spacing.m,
-    padding: spacing.m,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.m,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginLeft: spacing.s,
-  },
-  pickerContainer: {
-    borderWidth: 1,
-    borderColor: theme.colors.outline,
-    borderRadius: 8,
-    marginBottom: spacing.m,
-  },
-  picker: {
-    height: 50,
-  },
-  selectedInfo: {
-    backgroundColor: theme.colors.surfaceVariant,
-    padding: spacing.m,
-    borderRadius: 8,
-    marginTop: spacing.s,
-  },
-  selectedLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: spacing.xs,
-  },
-  selectedValue: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: spacing.xs,
-  },
-  selectedDetail: {
-    fontSize: 14,
-    marginBottom: spacing.xs,
-  },
-  input: {
-    marginBottom: spacing.m,
-  },
-  inputLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: spacing.s,
-    marginTop: spacing.s,
-  },
-  segmentedButtons: {
-    marginBottom: spacing.m,
-  },
-  loadingText: {
-    textAlign: 'center',
-    fontSize: 16,
-    padding: spacing.l,
-  },
-  emptyText: {
-    textAlign: 'center',
-    fontSize: 16,
-    padding: spacing.l,
-    fontWeight: '500',
-  },
-  submitButton: {
-    marginTop: spacing.l,
-    marginBottom: spacing.xl,
-  },
-  submitButtonContent: {
-    paddingVertical: spacing.s,
-  },
-}); 
+ 

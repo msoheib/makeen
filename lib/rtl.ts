@@ -101,7 +101,7 @@ export const rtlStyles = {
   // Container styles
   container: {
     flex: 1,
-    direction: getTextDirection(),
+    writingDirection: getTextDirection(),
   },
   
   // Row layout with RTL support
@@ -355,7 +355,7 @@ export const rtlNavigation = {
   // Drawer with RTL support
   drawer: {
     flex: 1,
-    direction: getTextDirection(),
+    writingDirection: getTextDirection(),
   },
 };
 
@@ -397,7 +397,7 @@ export const rtlForm = {
 export const rtlModal = {
   // Modal content
   content: {
-    direction: getTextDirection(),
+    writingDirection: getTextDirection(),
   },
   
   // Modal header

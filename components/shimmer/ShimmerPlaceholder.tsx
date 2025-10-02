@@ -2,9 +2,8 @@ import React, { useEffect, useRef } from 'react';
 import { ViewStyle, AppState, AppStateStatus } from 'react-native';
 import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useAppStore } from '@/lib/store';
-import { isRTL } from '@/lib/i18n';
-import { darkTheme } from '@/lib/theme';
+import { isRTL } from '@/lib/rtl';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 
 const ShimmerPlaceholderBase = createShimmerPlaceholder(LinearGradient);
 
@@ -33,12 +32,12 @@ export const ShimmerPlaceholder: React.FC<ShimmerPlaceholderProps> = ({
   children,
   isLoading = true,
 }) => {
-  const { isDarkMode } = useAppStore();
+  const { isDark } = useAppTheme();
   const appState = useRef(AppState.currentState);
   const shimmerRef = useRef<any>(null);
 
   // Determine shimmer colors based on theme
-  const colors = shimmerColors || (isDarkMode 
+  const colors = shimmerColors || (isDark 
     ? ['#2A2A2A', '#3A3A3A', '#2A2A2A'] // Dark mode colors
     : ['#F0F0F0', '#E0E0E0', '#F0F0F0'] // Light mode colors
   );

@@ -15,7 +15,7 @@
     "addressInformation": "Address Information",
     "accountActions": "Account Actions",
     "fullName": "Full Name",
-    "emailAddress": "Email Address", 
+    "emailAddress": "Email Address",
     "phoneNumber": "Phone Number",
     "company": "Company",
     "address": "Address",
@@ -77,7 +77,7 @@
       "description": "Get notified when new maintenance requests are submitted"
     },
     "paymentReminders": {
-      "title": "Payment Reminders", 
+      "title": "Payment Reminders",
       "description": "Receive alerts for upcoming or overdue payments"
     },
     "contractExpirations": {
@@ -107,9 +107,25 @@
     "available": "Available Languages",
     "confirmChange": {
       "title": "Change Language",
-      "message": "Are you sure you want to change the language to {{language}}? The app will restart to apply the changes."
+      "message": "Are you sure you want to change the language to {{language}}? The app will restart to apply the changes.",
+      "success": "Language changed successfully.",
+      "error": "Failed to change language. Please try again."
     },
-    "changeError": "Failed to change language. Please try again."
+    "changeError": "Failed to change language. Please try again.",
+    "options": {
+      "ar": {
+        "name": "Arabic",
+        "nativeName": "العربية",
+        "description": "Use the full Arabic experience with right-to-left layouts.",
+        "flag": "🇸🇦"
+      },
+      "en": {
+        "name": "English",
+        "nativeName": "English",
+        "description": "Use the app in English with a left-to-right layout.",
+        "flag": "🇺🇸"
+      }
+    }
   },
   "theme": {
     "title": "Theme",
@@ -125,7 +141,7 @@
       "benefit": "Better visibility in bright environments, reduces eye strain during day time"
     },
     "darkTheme": {
-      "title": "Dark Theme", 
+      "title": "Dark Theme",
       "description": "Easy on the eyes for night time or low light environments",
       "benefit": "Reduces eye strain in low light, saves battery on OLED displays"
     },
@@ -152,24 +168,24 @@
     "saudiArabia": "Saudi Arabia (SA)",
     "currencyCodeLabel": "Currency Code:",
     "currencySymbolLabel": "Currency Symbol:",
-    "currencySymbolValue": "﷼ / SR",
+    "currencySymbolValue": "ï·¼ / SR",
     "decimalPlaces": "Decimal Places:",
     "formatExample": "Format Example:",
-    "formatExampleValue": "﷼ 1,250.50",
+    "formatExampleValue": "ï·¼ 1,250.50",
     "whyLocked": "Why Currency is Locked",
     "lockedExplanation": "The currency setting is locked to ensure:",
-    "complianceRegulations": "• Compliance with Saudi financial regulations",
-    "consistencyValuations": "• Consistency in property valuations and contracts",
-    "taxCalculations": "• Proper tax calculations and reporting",
-    "financialStatements": "• Accurate financial statements and records",
-    "bankingIntegration": "• Integration with local banking systems",
+    "complianceRegulations": "â€¢ Compliance with Saudi financial regulations",
+    "consistencyValuations": "â€¢ Consistency in property valuations and contracts",
+    "taxCalculations": "â€¢ Proper tax calculations and reporting",
+    "financialStatements": "â€¢ Accurate financial statements and records",
+    "bankingIntegration": "â€¢ Integration with local banking systems",
     "currencyFeatures": "Currency Features",
     "automaticFormatting": {
       "title": "Automatic Formatting",
       "description": "All amounts are automatically formatted according to Saudi standards"
     },
     "vatIntegration": {
-      "title": "VAT Integration", 
+      "title": "VAT Integration",
       "description": "Built-in support for Saudi VAT calculations and reporting"
     },
     "numberFormatting": {
@@ -188,7 +204,7 @@
       "description": "App bugs, login problems, sync issues"
     },
     "accountSupport": {
-      "title": "Account Support", 
+      "title": "Account Support",
       "description": "Profile, settings, subscription questions"
     },
     "featureRequests": {
@@ -235,7 +251,6 @@
   "logout": "Logout",
   "logoutConfirm": "Are you sure you want to logout?",
   "accountSettings": "Account Settings",
-  "appSettings": "App Settings",
   "legal": "Legal",
   "languageSettings": {
     "currentLanguage": "Current Language",
@@ -243,10 +258,9 @@
     "languageChanged": "Language changed successfully",
     "availableLanguages": {
       "en": "English",
-      "ar": "العربية (Coming Soon)"
+      "ar": "Arabic"
     }
   },
-  "helpSection": "Help & Support",
   "password": {
     "title": "Change Password",
     "subtitle": "Enter your new password",
@@ -275,7 +289,7 @@
   "help": {
     "title": "Help Center",
     "description": "Get help and learn how to use the application",
-    "quickActions": "Quick Actions", 
+    "quickActions": "Quick Actions",
     "downloadManual": "Download User Manual",
     "videoTutorials": "Video Tutorials",
     "contactSupport": "Contact Support",
@@ -317,4 +331,4 @@
     "platform": "Platform:",
     "webApplication": "Web Application"
   }
-} 
+}

@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, SafeAreaView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { Text, TextInput, Button, Card, Chip, RadioButton, Switch, HelperText } from 'react-native-paper';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { lightTheme, darkTheme } from '@/lib/theme';
-import { useAppStore } from '@/lib/store';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { 
   ArrowLeft,
   Home,
@@ -24,8 +23,7 @@ import { propertiesApi, bidsApi } from '@/lib/api';
 export default function PlaceBidScreen() {
   const router = useRouter();
   const { propertyId } = useLocalSearchParams();
-  const { isDarkMode } = useAppStore();
-  const theme = isDarkMode ? darkTheme : lightTheme;
+  const { theme } = useAppTheme();
 
   // Get property details
   const { 

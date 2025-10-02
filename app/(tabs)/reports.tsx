@@ -382,9 +382,7 @@ export default function ReportsScreen() {
       
       switch (filterType) {
         case 'tenant':
-          console.log('[Reports Debug] Fetching tenants for filter...');
           const tenantsResponse = await reportFiltersApi.getAllTenantsForReports();
-          console.log('[Reports Debug] Tenants response:', tenantsResponse);
           if (tenantsResponse.data) {
             options = tenantsResponse.data.map((tenant: any) => ({
               id: tenant.id,
@@ -395,9 +393,7 @@ export default function ReportsScreen() {
           break;
           
         case 'owner':
-          console.log('[Reports Debug] Fetching owners for filter...');
           const ownersResponse = await reportFiltersApi.getAllOwnersForReports();
-          console.log('[Reports Debug] Owners response:', ownersResponse);
           if (ownersResponse.data) {
             options = ownersResponse.data.map((owner: any) => ({
               id: owner.id,
@@ -408,9 +404,7 @@ export default function ReportsScreen() {
           break;
           
         case 'property':
-          console.log('[Reports Debug] Fetching properties for filter...');
           const propertiesResponse = await reportFiltersApi.getAllPropertiesForReports();
-          console.log('[Reports Debug] Properties response:', propertiesResponse);
           if (propertiesResponse.data) {
             options = propertiesResponse.data.map((property: any) => ({
               id: property.id,
@@ -431,8 +425,6 @@ export default function ReportsScreen() {
         default:
           options = [];
       }
-      
-      console.log(`[Reports Debug] Filter options for ${filterType}:`, options);
       setFilterOptions(options);
     } catch (error) {
       console.error('Error fetching filter options:', error);
@@ -449,7 +441,7 @@ export default function ReportsScreen() {
       type: 'summary',
       title: t('reports:summary'), 
       titleEn: 'Summary of Reports',
-      description: 'نظرة عامة شاملة على جميع التقارير المتاحة',
+      description: t('reports:summaryDesc', { defaultValue: 'Comprehensive overview of all available reports' }),
       category: 'summary',
       iconName: 'summarize',
       color: theme.colors.primary,
@@ -460,9 +452,9 @@ export default function ReportsScreen() {
     { 
       id: 'account-statement', 
       type: 'account-statement',
-      title: t('reports:account-statement'),
+      title: t('reports:accountStatementOwner', { defaultValue: 'Owner Account Statement' }),
       titleEn: 'General Account Statement',
-      description: 'كشف حساب شامل للمالك المحدد',
+      description: t('reports:accountStatementOwnerDesc', { defaultValue: 'Comprehensive account statement for selected owner' }),
       category: 'financial',
       iconName: 'account-balance',
       color: theme.colors.secondary,
@@ -474,9 +466,9 @@ export default function ReportsScreen() {
     { 
       id: 'expense-report', 
       type: 'expense-report',
-      title: t('reports:expense-report'),
+      title: t('reports:expenseReport'),
       titleEn: 'Expense Report',
-      description: 'تحليل مفصل لمصروفات المبيعات والصيانة',
+      description: t('reports:expenseReportDesc', { defaultValue: 'Detailed analysis of sales and maintenance expenses' }),
       category: 'financial',
       iconName: 'trending-down',
       color: theme.colors.error,
@@ -488,9 +480,9 @@ export default function ReportsScreen() {
     { 
       id: 'revenue-report', 
       type: 'revenue-report',
-      title: 'تقرير الإيرادات', 
+      title: t('reports:revenueReport'), 
       titleEn: 'Revenue Report',
-      description: 'تحليل شامل للإيرادات والدخل',
+      description: t('reports:revenueReportDesc', { defaultValue: 'Comprehensive analysis of revenue and income' }),
       category: 'financial',
       iconName: 'trending-up',
       color: theme.colors.tertiary,
@@ -501,9 +493,9 @@ export default function ReportsScreen() {
     { 
       id: 'financial-statements', 
       type: 'financial-statements',
-      title: 'البيانات المالية', 
+      title: t('reports:financialStatements', { defaultValue: 'Financial Statements' }), 
       titleEn: 'Financial Statements',
-      description: 'البيانات المالية الشاملة للشركة',
+      description: t('reports:financialStatementsDesc', { defaultValue: 'Comprehensive financial data for the company' }),
       category: 'financial',
       iconName: 'assessment',
       color: theme.colors.primary,
@@ -514,9 +506,9 @@ export default function ReportsScreen() {
     { 
       id: 'property-report', 
       type: 'property-report',
-      title: 'تقرير العقار', 
+      title: t('reports:propertyReport'), 
       titleEn: 'Property Report',
-      description: 'تقرير مفصل لعقار محدد',
+      description: t('reports:propertyReportDesc', { defaultValue: 'Detailed report for a specific property' }),
       category: 'properties',
       iconName: 'home',
       color: theme.colors.secondary,
@@ -528,9 +520,9 @@ export default function ReportsScreen() {
     { 
       id: 'tenant-statement', 
       type: 'tenant-statement',
-      title: 'كشف حساب المستأجرين للمالك', 
+      title: t('reports:tenantStatementForOwner', { defaultValue: 'Tenant Account Statement for Owner' }), 
       titleEn: 'Tenants Statement for Owner',
-      description: 'كشف حساب مستأجر محدد للمالك',
+      description: t('reports:tenantStatementForOwnerDesc', { defaultValue: 'Account statement for specific tenant for owner' }),
       category: 'tenants',
       iconName: 'people',
       color: theme.colors.tertiary,
@@ -542,9 +534,9 @@ export default function ReportsScreen() {
     { 
       id: 'owner-financial', 
       type: 'owner-financial',
-      title: 'التقرير المالي للمالك', 
+      title: t('reports:ownerFinancialReport', { defaultValue: 'Owner Financial Report' }), 
       titleEn: 'Owner Financial Report',
-      description: 'التقرير المالي الشامل لمالك محدد',
+      description: t('reports:ownerFinancialReportDesc', { defaultValue: 'Comprehensive financial report for specific owner' }),
       category: 'owners',
       iconName: 'business',
       color: theme.colors.primary,
@@ -556,9 +548,9 @@ export default function ReportsScreen() {
     { 
       id: 'payments-late-tenants', 
       type: 'payments-late-tenants',
-      title: 'مواعيد الدفع والمستأجرين المتأخرين', 
+      title: t('reports:paymentsAndLateTenants', { defaultValue: 'Payment Dates and Late Tenants' }), 
       titleEn: 'Payment Dates and Late Tenants',
-      description: 'تقرير المدفوعات والمستأجرين المتأخرين',
+      description: t('reports:paymentsAndLateTenantsDesc', { defaultValue: 'Report of payments and late tenants' }),
       category: 'tenants',
       iconName: 'schedule',
       color: theme.colors.error,
@@ -569,9 +561,9 @@ export default function ReportsScreen() {
     { 
       id: 'electrical-meter', 
       type: 'electrical-meter',
-      title: 'تقرير عداد الكهرباء', 
+      title: t('reports:electricalMeterReport', { defaultValue: 'Electrical Meter Report' }), 
       titleEn: 'Electrical Meter Report',
-      description: 'تقارير استهلاك الكهرباء للعقارات',
+      description: t('reports:electricalMeterDesc', { defaultValue: 'Electricity consumption reports for properties' }),
       category: 'operations',
       iconName: 'electrical-services',
       color: theme.colors.secondary,
@@ -582,9 +574,9 @@ export default function ReportsScreen() {
     { 
       id: 'water-meters', 
       type: 'water-meters',
-      title: 'تقرير عدادات المياه', 
+      title: t('reports:waterMetersReport', { defaultValue: 'Water Meters Report' }), 
       titleEn: 'Water Meters Report',
-      description: 'تقارير استهلاك المياه للعقارات',
+      description: t('reports:waterMetersDesc', { defaultValue: 'Water consumption reports for properties' }),
       category: 'operations',
       iconName: 'water-drop',
       color: '#2196F3',
@@ -975,7 +967,7 @@ export default function ReportsScreen() {
   // Render Quick Statistics (matching dashboard's horizontal stats container)
   const renderQuickStats = () => (
     <View style={styles.quickStatsSection}>
-      <Text style={[styles.sectionTitle, rtlStyles.textAlign(), { color: theme.colors.onBackground }]}>
+      <Text style={[styles.sectionTitle, rtlStyles.textAlignStart, { color: theme.colors.onBackground }]}>
         {t('reports:quickStatistics')}
       </Text>
       <View style={[styles.horizontalStatsCard, { backgroundColor: theme.colors.surface }]}>
@@ -997,7 +989,7 @@ export default function ReportsScreen() {
               <MaterialIcons name="people" size={24} color="#4CAF50" />
             </View>
             <Text style={[styles.horizontalStatLabel, rtlStyles.textAlign(), { color: theme.colors.onSurfaceVariant }]}>
-              المستأجرين النشطين
+              {t('reports:activeTenants', { defaultValue: t('dashboard:activeTenants') })}
             </Text>
             <Text style={[styles.horizontalStatValue, rtlStyles.textAlign(), { color: '#4CAF50' }]}> 
               {tenantsLoading ? '...' : formatDisplayNumber(connectedStats.activeTenants)}
@@ -1009,7 +1001,7 @@ export default function ReportsScreen() {
               <MaterialIcons name="home" size={24} color="#2196F3" />
             </View>
             <Text style={[styles.horizontalStatLabel, rtlStyles.textAlign(), { color: theme.colors.onSurfaceVariant }]}>
-              العقارات المشغولة
+              {t('reports:occupiedProperties', { defaultValue: t('dashboard:occupiedProperties') })}
             </Text>
             <Text style={[styles.horizontalStatValue, rtlStyles.textAlign(), { color: '#2196F3' }]}> 
               {dashboardLoading ? '...' : formatDisplayNumber(connectedStats.occupiedProperties)}
@@ -1021,10 +1013,10 @@ export default function ReportsScreen() {
               <MaterialIcons name="attach-money" size={24} color="#FF9800" />
             </View>
             <Text style={[styles.horizontalStatLabel, rtlStyles.textAlign(), { color: theme.colors.onSurfaceVariant }]}>
-              الإيرادات الشهرية
+              {t('reports:monthlyRevenue', { defaultValue: t('dashboard:monthlyIncome') })}
             </Text>
             <Text style={[styles.horizontalStatValue, rtlStyles.textAlign(), { color: '#FF9800' }]}> 
-              {dashboardLoading ? '...' : `${toArabicNumerals((connectedStats.monthlyRevenue / 1000).toFixed(0))}K`}
+              {dashboardLoading ? '...' : `${formatDisplayNumber(Math.round(connectedStats.monthlyRevenue / 1000))}K`}
             </Text>
           </View>
         </View>
@@ -1137,7 +1129,7 @@ export default function ReportsScreen() {
         <View style={styles.universalFiltersContainer}>
           <View style={styles.universalFiltersHeader}>
             <Text style={[styles.mainTitle, rtlStyles.textStart, { color: theme.colors.onBackground, marginBottom: 16 }]}>
-              Universal Report Filters
+              {t('reports:universalFilters')}
             </Text>
             <TouchableOpacity
               style={styles.filterToggleButton}
@@ -1149,7 +1141,7 @@ export default function ReportsScreen() {
                 color={theme.colors.primary}
               />
               <Text style={[styles.filterToggleText, { color: theme.colors.primary }]}>
-                {showUniversalFilters ? 'Hide Filters' : 'Show Filters'}
+                {showUniversalFilters ? t('common:hideFilters', { defaultValue: 'Hide Filters' }) : t('common:showFilters', { defaultValue: 'Show Filters' })}
               </Text>
             </TouchableOpacity>
           </View>
@@ -1165,7 +1157,7 @@ export default function ReportsScreen() {
         </View>
 
         <View style={styles.reportsContainer}>
-          <Text style={[styles.mainTitle, rtlStyles.textStart, { color: theme.colors.onBackground, marginBottom: 16, marginTop: 24 }]}> 
+          <Text style={[styles.mainTitle, rtlStyles.textAlignStart, { color: theme.colors.onBackground, marginBottom: 16, marginTop: 24 }]}> 
             {t('reports:availableReportsCount', { count: filteredReports.length })}
           </Text>
           

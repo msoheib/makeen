@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Text, TextInput, Button, SegmentedButtons, IconButton, Chip } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { theme, spacing } from '@/lib/theme';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { useAppStore } from '@/lib/store';
 import { ArrowLeft, Receipt, DollarSign, FileText, Calendar, Building, Users, CreditCard } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
@@ -11,6 +12,7 @@ import AccountPicker from '@/components/AccountPicker';
 import PropertyPicker from '@/components/PropertyPicker';
 import CostCenterPicker from '@/components/CostCenterPicker';
 import api from '@/lib/api';
+import { navigateBack, navigateBackToSection } from '@/lib/navigation';
 
 interface Account {
   id: string;
@@ -47,6 +49,7 @@ interface Tenant {
 }
 
 export default function ReceiptVoucherScreen() {
+  const { theme } = useAppTheme();
   const router = useRouter();
   const user = useAppStore(state => state.user);
   const [loading, setLoading] = useState(false);
@@ -212,14 +215,14 @@ export default function ReceiptVoucherScreen() {
         [
           {
             text: 'حسناً',
-            onPress: () => router.replace('/(tabs)/payments'),
+            onPress: () => navigateBackToSection(),
           },
         ]
       );
       
       // Automatically navigate back after a short delay
       setTimeout(() => {
-        router.replace('/(tabs)/payments');
+        navigateBackToSection();
       }, 1500);
     } catch (error: any) {
       console.error('Error creating receipt voucher:', error);
@@ -232,6 +235,115 @@ export default function ReceiptVoucherScreen() {
       setLoading(false);
     }
   };
+
+    const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  content: {
+    flex: 1,
+  },
+  section: {
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.md,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginLeft: spacing.sm,
+  },
+  input: {
+    marginBottom: spacing.sm,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    alignItems: 'flex-end',
+  },
+  dateInput: {
+    flex: 2,
+  },
+  currencyContainer: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  currencyLabel: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
+    marginBottom: spacing.xs,
+  },
+  currencyChip: {
+    backgroundColor: theme.colors.primaryContainer,
+  },
+  currencyText: {
+    fontWeight: '600',
+    color: theme.colors.primary,
+  },
+  errorText: {
+    color: theme.colors.error,
+    fontSize: 12,
+    marginTop: -spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  segmentedButtons: {
+    marginBottom: spacing.sm,
+  },
+  statusInfo: {
+    marginTop: spacing.xs,
+  },
+  statusDescription: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
+    fontStyle: 'italic',
+  },
+  tenantSection: {
+    marginTop: spacing.sm,
+  },
+  tenantLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: theme.colors.onSurfaceVariant,
+    marginBottom: spacing.xs,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    padding: spacing.md,
+  },
+  tenantsList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+  },
+  tenantChip: {
+    marginBottom: spacing.xs,
+  },
+  noTenantsText: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    padding: spacing.sm,
+  },
+  submitContainer: {
+    padding: spacing.md,
+  },
+  submitButton: {
+    borderRadius: 12,
+  },
+  submitButtonContent: {
+    paddingVertical: spacing.sm,
+  },
+});
 
   return (
     <View style={styles.container}>
@@ -485,111 +597,4 @@ export default function ReceiptVoucherScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  content: {
-    flex: 1,
-  },
-  section: {
-    marginHorizontal: spacing.md,
-    marginBottom: spacing.md,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginLeft: spacing.sm,
-  },
-  input: {
-    marginBottom: spacing.sm,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    alignItems: 'flex-end',
-  },
-  dateInput: {
-    flex: 2,
-  },
-  currencyContainer: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  currencyLabel: {
-    fontSize: 12,
-    color: theme.colors.onSurfaceVariant,
-    marginBottom: spacing.xs,
-  },
-  currencyChip: {
-    backgroundColor: theme.colors.primaryContainer,
-  },
-  currencyText: {
-    fontWeight: '600',
-    color: theme.colors.primary,
-  },
-  errorText: {
-    color: theme.colors.error,
-    fontSize: 12,
-    marginTop: -spacing.xs,
-    marginBottom: spacing.sm,
-  },
-  segmentedButtons: {
-    marginBottom: spacing.sm,
-  },
-  statusInfo: {
-    marginTop: spacing.xs,
-  },
-  statusDescription: {
-    fontSize: 12,
-    color: theme.colors.onSurfaceVariant,
-    fontStyle: 'italic',
-  },
-  tenantSection: {
-    marginTop: spacing.sm,
-  },
-  tenantLabel: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: theme.colors.onSurfaceVariant,
-    marginBottom: spacing.xs,
-  },
-  loadingText: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    fontStyle: 'italic',
-    textAlign: 'center',
-    padding: spacing.md,
-  },
-  tenantsList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-  },
-  tenantChip: {
-    marginBottom: spacing.xs,
-  },
-  noTenantsText: {
-    fontSize: 12,
-    color: theme.colors.onSurfaceVariant,
-    fontStyle: 'italic',
-    textAlign: 'center',
-    padding: spacing.sm,
-  },
-  submitContainer: {
-    padding: spacing.md,
-  },
-  submitButton: {
-    borderRadius: 12,
-  },
-  submitButtonContent: {
-    paddingVertical: spacing.sm,
-  },
-}); 
+ 

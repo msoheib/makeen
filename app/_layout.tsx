@@ -1,162 +1,110 @@
 import 'react-native-gesture-handler';
-import { useEffect, useState } from 'react';
-import { Platform, I18nManager } from 'react-native';
-import { getLocales } from 'expo-localization';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useRef, useState } from 'react';
+import { Platform } from 'react-native';
 import { Slot } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { lightTheme, darkTheme } from '@/lib/theme';
-import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { useFonts } from 'expo-font';
-import { Inter_400Regular, Inter_500Medium, Inter_700Bold } from '@expo-google-fonts/inter';
+import {
+  Cairo_400Regular,
+  Cairo_500Medium,
+  Cairo_600SemiBold,
+  Cairo_700Bold,
+} from '@expo-google-fonts/cairo';
 import * as SplashScreen from 'expo-splash-screen';
-import * as Updates from 'expo-updates';
-import i18n, { manualInitializeI18n } from '@/lib/i18n';
+
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
+import { manualInitializeI18n } from '@/lib/i18n';
 import { useAppStore } from '@/lib/store';
 import CustomSplashScreen from '@/components/SplashScreen';
 import RTLProvider from '@/components/RTLProvider';
+import LanguageDebugger from '@/components/LanguageDebugger';
 
-// Prevent the splash screen from auto-hiding only on native platforms
 if (Platform.OS !== 'web') {
-  SplashScreen.preventAutoHideAsync();
+  SplashScreen.preventAutoHideAsync().catch(() => {
+    // Splash screen prevention can fail in dev reloads; ignore.
+  });
 }
 
-// CRITICAL: Set RTL IMMEDIATELY on app startup before any UI renders
-// This ensures RTL persists across app restarts
-const initializeRTLImmediately = () => {
-  try {
-    console.log('[Layout] 🚀 IMMEDIATE RTL initialization');
-    
-    // Try to get stored language synchronously if possible
-    let storedLanguage = 'ar'; // Default to Arabic
-    
-    // For web, try localStorage synchronously
-    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.localStorage) {
-      try {
-        const stored = window.localStorage.getItem('app-language');
-        if (stored === 'en') {
-          storedLanguage = 'en';
-        }
-      } catch (e) {
-        console.log('[Layout] Web localStorage not available, using default');
-      }
-    }
-    
-    // FORCE RTL ALWAYS - NO LTR ALLOWED ANYWHERE IN THE APP
-    const shouldBeRTL = true; // Always RTL, no exceptions
-    
-    console.log('[Layout] 🔧 Setting immediate RTL:', { 
-      storedLanguage, 
-      shouldBeRTL, 
-      platform: Platform.OS 
-    });
-    
-    // Set RTL IMMEDIATELY - ALWAYS RTL
-    I18nManager.allowRTL(true);
-    I18nManager.forceRTL(true); // Force RTL regardless of language
-    
-    console.log('[Layout] ✅ Immediate RTL set:', I18nManager.isRTL);
-  } catch (error) {
-    console.error('[Layout] ❌ Immediate RTL setup failed:', error);
-    // Fallback: ALWAYS RTL - NO EXCEPTIONS
-    I18nManager.allowRTL(true);
-    I18nManager.forceRTL(true);
-  }
-};
-
-// Run RTL initialization IMMEDIATELY
-initializeRTLImmediately();
-
 export default function RootLayout() {
-  const { settings, isHydrated } = useAppStore();
-  const [isI18nReady, setI18nReady] = useState(false);
+  const { isHydrated } = useAppStore();
   const { theme, isDark } = useAppTheme();
+  const [isI18nReady, setI18nReady] = useState(false);
+  const [showLanguageDebugger, setShowLanguageDebugger] = useState(false);
+  const hasInitialized = useRef(false);
 
   const [fontsLoaded, fontError] = useFonts({
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_700Bold,
+    Cairo_400Regular,
+    Cairo_500Medium,
+    Cairo_600SemiBold,
+    Cairo_700Bold,
   });
 
+  // Keyboard shortcut for language debugger (Ctrl+Shift+L)
   useEffect(() => {
-    async function prepare() {
-      try {
-        console.log('[Layout] ========== APP PREPARATION START ==========');
-        console.log('[Layout] Build type:', __DEV__ ? 'development' : 'production');
-        console.log('[Layout] Platform:', Platform.OS);
-        console.log('[Layout] Store hydrated:', isHydrated);
-        console.log('[Layout] Current settings:', settings);
-        console.log('[Layout] Updates available:', Updates.isAvailableAsync ? 'Yes' : 'No');
-        
-        // This effect should only run once the store has been rehydrated
-        if (!isHydrated) {
-          console.log('[Layout] ❌ Waiting for store hydration...');
-          return;
-        }
-
-        // First, initialize i18n properly
-        console.log('[Layout] 🔧 Initializing i18n...');
-        await manualInitializeI18n();
-        
-        const currentLanguage = settings?.language || 'ar'; // Default to Arabic
-        // FORCE RTL ALWAYS - NO LTR ALLOWED ANYWHERE IN THE APP
-        const isRTL = true; // Always RTL, no exceptions
-        
-        // Force RTL direction immediately after i18n initialization
-        console.log('[Layout] 🔄 Forcing RTL direction:', { currentLanguage, isRTL });
-        I18nManager.allowRTL(true);
-        I18nManager.forceRTL(true); // Always RTL regardless of language
-        
-        console.log('[Layout] 🌐 Language config:', { 
-          currentLanguage, 
-          isRTL, 
-          nativeIsRTL: I18nManager.isRTL,
-          i18nLanguage: i18n.language 
-        });
-
-        // Check layout direction (simplified for production compatibility)
-        console.log('[Layout] ✅ Layout direction check:', {
-          nativeRTL: I18nManager.isRTL,
-          desiredRTL: isRTL,
-          match: I18nManager.isRTL === isRTL
-        });
-        
-        // Always set as ready since RTL is now applied during i18n initialization
-        setI18nReady(true);
-        
-        console.log('[Layout] ========== APP PREPARATION COMPLETE ==========');
-      } catch (e) {
-        console.error('[Layout] ❌ Error during app preparation:', e);
-        console.error('[Layout] Stack trace:', e.stack);
-        // Even if there's an error, we should proceed to avoid getting stuck.
-        setI18nReady(true);
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.shiftKey && event.key === 'L') {
+        event.preventDefault();
+        setShowLanguageDebugger(true);
       }
+    };
+
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrated || hasInitialized.current) {
+      return;
     }
 
-    prepare();
-  }, [isHydrated, settings?.language]); // Depend on hydration status and language
+    hasInitialized.current = true;
+
+    (async () => {
+      try {
+        const ready = await manualInitializeI18n();
+        setI18nReady(ready);
+      } catch (error) {
+        console.warn('[Layout] Failed to initialize i18n', error);
+        // Set a fallback language for web
+        if (Platform.OS === 'web') {
+          try {
+            // Initialize with basic fallback
+            const { i18n } = await import('i18next');
+            await i18n.init({
+              lng: 'en',
+              fallbackLng: 'en',
+              resources: {
+                en: { translation: {} },
+                ar: { translation: {} }
+              }
+            });
+          } catch (fallbackError) {
+            console.warn('[Layout] Fallback i18n init failed', fallbackError);
+          }
+        }
+        setI18nReady(true);
+      }
+    })();
+  }, [isHydrated]);
 
   useEffect(() => {
-    // Hide the splash screen once fonts are loaded AND i18n is ready
     if ((fontsLoaded || fontError) && isI18nReady) {
-      console.log('[Layout] All ready, hiding splash screen');
-      SplashScreen.hideAsync();
+      SplashScreen.hideAsync().catch(() => {
+        // Ignore hide errors caused by rapid reloads
+      });
     }
   }, [fontsLoaded, fontError, isI18nReady]);
 
   if (!fontsLoaded || !isI18nReady) {
-    // Return null or show splash while waiting
-    console.log('[Layout] Still loading...', { fontsLoaded, isI18nReady });
     return (
       <SafeAreaProvider>
         <PaperProvider theme={theme}>
           <StatusBar style={isDark ? 'light' : 'dark'} />
-          <CustomSplashScreen 
-            onFinish={() => {}}
-            isInitialized={false}
-          />
+          <CustomSplashScreen onFinish={() => {}} isInitialized={false} />
         </PaperProvider>
       </SafeAreaProvider>
     );
@@ -168,6 +116,10 @@ export default function RootLayout() {
         <RTLProvider>
           <StatusBar style={isDark ? 'light' : 'dark'} />
           <Slot />
+          <LanguageDebugger 
+            visible={showLanguageDebugger} 
+            onClose={() => setShowLanguageDebugger(false)} 
+          />
         </RTLProvider>
       </PaperProvider>
     </SafeAreaProvider>

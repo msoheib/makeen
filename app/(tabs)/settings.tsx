@@ -2,7 +2,6 @@ import React from 'react';
 import { View, StyleSheet, ScrollView, SafeAreaView, Alert, Platform, I18nManager, TouchableOpacity, Pressable } from 'react-native';
 import { Text, List, Switch, Divider } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { lightTheme, darkTheme } from '@/lib/theme';
 import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { useAppStore } from '@/lib/store';
 import { supabase } from '@/lib/supabase';
@@ -26,12 +25,14 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 export default function SettingsScreen() {
   const router = useRouter();
   const { t } = useTranslation(['settings', 'common']);
-  const { isDarkMode, language, setLanguage } = useAppStore();
-  const { isDark, toggleTheme } = useAppTheme();
+  const { language, setLanguage } = useAppStore(state => ({
+    language: state.language,
+    setLanguage: state.setLanguage,
+  }));
+  const { theme, isDark, toggleTheme } = useAppTheme();
   const setUser = useAppStore(state => state.setUser);
   const setAuthenticated = useAppStore(state => state.setAuthenticated);
   const { profile } = useUserProfile();
-  const theme = isDarkMode ? darkTheme : lightTheme;
 
   const handleLogout = async () => {
     Alert.alert(
@@ -46,58 +47,35 @@ export default function SettingsScreen() {
           text: t('logout', { ns: 'common' }),
           style: 'destructive',
           onPress: async () => {
-            try {
-              console.log('🚀 Starting logout process...');
-              console.log('Platform:', Platform.OS);
-              
+            try {              
               // Get current session before logout
-              const { data: sessionBefore } = await supabase.auth.getSession();
-              console.log('Session before logout:', sessionBefore.session ? 'EXISTS' : 'NONE');
-              
-              // Sign out from Supabase
-              console.log('📤 Calling supabase.auth.signOut()...');
+              const { data: sessionBefore } = await supabase.auth.getSession();              
+              // Sign out from Supabase...');
               const { error } = await supabase.auth.signOut();
               
               if (error) {
                 console.error('❌ Supabase signOut error:', error);
                 Alert.alert(t('error', { ns: 'common' }), error.message);
                 return;
-              }
-              
-              console.log('✅ Supabase signOut successful');
-              
+              }              
               // Verify session was cleared
-              const { data: sessionAfter } = await supabase.auth.getSession();
-              console.log('Session after logout:', sessionAfter.session ? 'STILL EXISTS' : 'CLEARED');
-              
-              // Clear user state
-              console.log('🗑️ Clearing user state...');
-              setUser(null);
-              setAuthenticated(false);
-              
-              console.log('🧭 Navigating to auth screen...');
-              
+              const { data: sessionAfter } = await supabase.auth.getSession();              
+              // Clear user state              setUser(null);
+              setAuthenticated(false);              
               // For web, try different navigation approaches
               if (Platform.OS === 'web') {
                 // Try multiple navigation methods for web
-                try {
-                  console.log('🌐 Web platform detected, using replace navigation');
-                  router.replace('/(auth)');
+                try {                  router.replace('/(auth)');
                 } catch (navError) {
                   console.error('❌ Navigation error, trying push instead:', navError);
                   router.push('/(auth)');
                 }
               } else {
                 router.replace('/(auth)');
-              }
-              
-              console.log('✅ Logout process completed successfully');
-              
+              }              
               // Additional verification after a short delay
               setTimeout(async () => {
-                const { data: finalSession } = await supabase.auth.getSession();
-                console.log('Final session check:', finalSession.session ? 'STILL EXISTS - PROBLEM!' : 'CLEARED - SUCCESS');
-              }, 1000);
+                const { data: finalSession } = await supabase.auth.getSession();              }, 1000);
               
             } catch (error: any) {
               console.error('💥 Unexpected error during logout:', error);
@@ -115,9 +93,7 @@ export default function SettingsScreen() {
   };
 
   // Simple fallback logout for web debugging
-  const handleSimpleLogout = async () => {
-    console.log('🔧 SIMPLE LOGOUT FOR DEBUGGING');
-    try {
+  const handleSimpleLogout = async () => {    try {
       await supabase.auth.signOut();
       setUser(null);
       setAuthenticated(false);
@@ -267,12 +243,12 @@ export default function SettingsScreen() {
         {Platform.OS === 'android' && (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
-              معلومات التخطيط (Android Debug)
+              Layout Information (Android Debug)
             </Text>
             <View style={[styles.sectionCard, { backgroundColor: theme.colors.surface }]}>
               <List.Item
-                title="حالة RTL"
-                description={`isRTL: ${I18nManager.isRTL ? 'مفعل' : 'معطل'} | allowRTL: ${I18nManager.allowRTL ? 'مفعل' : 'معطل'}`}
+                title="RTL Status"
+                description={`isRTL: ${I18nManager.isRTL ? 'Enabled' : 'Disabled'} | allowRTL: ${I18nManager.allowRTL ? 'Enabled' : 'Disabled'}`}
                 titleStyle={[styles.itemTitle, { color: theme.colors.onSurface }]}
                 descriptionStyle={[styles.itemDescription, { color: theme.colors.onSurfaceVariant }]}
                 left={() => (
@@ -283,7 +259,7 @@ export default function SettingsScreen() {
               />
               <Divider style={styles.divider} />
               <List.Item
-                title="المنصة"
+                title="Platform"
                 description={`Platform: ${Platform.OS} | Version: ${Platform.Version}`}
                 titleStyle={[styles.itemTitle, { color: theme.colors.onSurface }]}
                 descriptionStyle={[styles.itemDescription, { color: theme.colors.onSurfaceVariant }]}
@@ -316,8 +292,8 @@ export default function SettingsScreen() {
               <>
                 <Divider style={styles.divider} />
                 <List.Item
-                  title="تسجيل الخروج (تصحيح - ويب)"
-                  description="خروج مبسط للويب"
+                  title="Logout (Debug - Web)"
+                  description="Simplified logout for web"
                   titleStyle={[styles.itemTitle, { color: '#ff9800' }]}
                   descriptionStyle={[styles.itemDescription, { color: theme.colors.onSurfaceVariant }]}
                   left={() => (

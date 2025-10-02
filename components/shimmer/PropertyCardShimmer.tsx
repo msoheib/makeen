@@ -1,8 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { ShimmerBox, ShimmerLine, ShimmerCircle } from './ShimmerPlaceholder';
-import { useAppStore } from '@/lib/store';
-import { lightTheme, darkTheme } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { getFlexDirection } from '@/lib/rtl';
 
 interface PropertyCardShimmerProps {
@@ -10,8 +9,7 @@ interface PropertyCardShimmerProps {
 }
 
 export const PropertyCardShimmer: React.FC<PropertyCardShimmerProps> = ({ compact = false }) => {
-  const { isDarkMode } = useAppStore();
-  const theme = isDarkMode ? darkTheme : lightTheme;
+  const { theme } = useAppTheme();
 
   return (
     <View style={[

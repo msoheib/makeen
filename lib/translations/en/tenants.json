@@ -13,8 +13,11 @@
   "addFirstTenant": "Add your first tenant to get started",
   "activeStatus": "Active",
   "pendingStatus": "Pending",
+  "unknownStatus": "Unknown",
   "searchPlaceholder": "Search tenants...",
   "balance": "Balance",
+  "contractInfo": "Contract Information:",
+  "contractAvailableSoon": "Contract information will be available soon",
   "details": {
     "title": "Tenant Details",
     "loading": "Loading...",

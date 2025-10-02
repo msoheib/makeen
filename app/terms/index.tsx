@@ -2,13 +2,129 @@ import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, IconButton } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { theme, spacing } from '@/lib/theme';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { ArrowLeft, FileText, Calendar } from 'lucide-react-native';
 import ModernCard from '@/components/ModernCard';
 
 export default function TermsOfServiceScreen() {
+  const { theme } = useAppTheme();
   const router = useRouter();
   const lastUpdated = "December 21, 2024";
+
+    const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.m,
+    paddingTop: spacing.l,
+    paddingBottom: spacing.m,
+    backgroundColor: theme.colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.outline,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+  },
+  backButton: {
+    margin: 0,
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 20,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    textAlign: 'center',
+    marginRight: 48,
+  },
+  headerSpacer: {
+    width: 48,
+  },
+  content: {
+    flex: 1,
+    padding: spacing.m,
+  },
+  infoCard: {
+    marginBottom: spacing.m,
+    backgroundColor: `${theme.colors.primary}08`,
+    borderColor: `${theme.colors.primary}20`,
+    borderWidth: 1,
+  },
+  infoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.s,
+  },
+  infoTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: theme.colors.primary,
+    marginLeft: spacing.s,
+  },
+  lastUpdated: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.s,
+  },
+  lastUpdatedText: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    marginLeft: spacing.s,
+  },
+  termsCard: {
+    marginBottom: spacing.m,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginTop: spacing.m,
+    marginBottom: spacing.s,
+  },
+  sectionContent: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    lineHeight: 22,
+    marginBottom: spacing.s,
+  },
+  disclaimerCard: {
+    marginBottom: spacing.m,
+    backgroundColor: `${theme.colors.warning}08`,
+    borderColor: `${theme.colors.warning}20`,
+    borderWidth: 1,
+  },
+  disclaimerTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.warning,
+    marginBottom: spacing.s,
+  },
+  disclaimerText: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    lineHeight: 20,
+  },
+  complianceCard: {
+    marginBottom: spacing.xl,
+    backgroundColor: `${theme.colors.secondary}08`,
+    borderColor: `${theme.colors.secondary}20`,
+    borderWidth: 1,
+  },
+  complianceTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.secondary,
+    marginBottom: spacing.s,
+  },
+  complianceText: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    lineHeight: 20,
+  },
+});
 
   return (
     <View style={styles.container}>
@@ -142,116 +258,4 @@ export default function TermsOfServiceScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.m,
-    paddingTop: spacing.l,
-    paddingBottom: spacing.m,
-    backgroundColor: theme.colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.outline,
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
-  },
-  backButton: {
-    margin: 0,
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 20,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    textAlign: 'center',
-    marginRight: 48,
-  },
-  headerSpacer: {
-    width: 48,
-  },
-  content: {
-    flex: 1,
-    padding: spacing.m,
-  },
-  infoCard: {
-    marginBottom: spacing.m,
-    backgroundColor: `${theme.colors.primary}08`,
-    borderColor: `${theme.colors.primary}20`,
-    borderWidth: 1,
-  },
-  infoHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.s,
-  },
-  infoTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.primary,
-    marginLeft: spacing.s,
-  },
-  lastUpdated: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: spacing.s,
-  },
-  lastUpdatedText: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    marginLeft: spacing.s,
-  },
-  termsCard: {
-    marginBottom: spacing.m,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginTop: spacing.m,
-    marginBottom: spacing.s,
-  },
-  sectionContent: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    lineHeight: 22,
-    marginBottom: spacing.s,
-  },
-  disclaimerCard: {
-    marginBottom: spacing.m,
-    backgroundColor: `${theme.colors.warning}08`,
-    borderColor: `${theme.colors.warning}20`,
-    borderWidth: 1,
-  },
-  disclaimerTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.warning,
-    marginBottom: spacing.s,
-  },
-  disclaimerText: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    lineHeight: 20,
-  },
-  complianceCard: {
-    marginBottom: spacing.xl,
-    backgroundColor: `${theme.colors.secondary}08`,
-    borderColor: `${theme.colors.secondary}20`,
-    borderWidth: 1,
-  },
-  complianceTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.secondary,
-    marginBottom: spacing.s,
-  },
-  complianceText: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    lineHeight: 20,
-  },
-}); 
+ 

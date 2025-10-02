@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Text, TextInput, Button, SegmentedButtons, Chip } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { theme, spacing } from '@/lib/theme';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { useAppStore } from '@/lib/store';
 import { ArrowLeft, FileText, Calendar, Plus, Scale, DollarSign } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
@@ -21,6 +22,7 @@ interface EntryLine {
 }
 
 export default function JournalEntryScreen() {
+  const { theme } = useAppTheme();
   const router = useRouter();
   const { currency } = useAppStore();
 
@@ -227,6 +229,113 @@ export default function JournalEntryScreen() {
       description: errors[`${type}_${entryId}_description`],
     };
   };
+
+    const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  content: {
+    flex: 1,
+    padding: spacing.md,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  halfWidth: {
+    flex: 1,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginBottom: spacing.xs,
+  },
+  input: {
+    marginBottom: spacing.md,
+    backgroundColor: theme.colors.surface,
+  },
+  errorText: {
+    fontSize: 12,
+    color: theme.colors.error,
+    marginTop: -spacing.sm,
+    marginBottom: spacing.md,
+  },
+  sectionNote: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    fontStyle: 'italic',
+    marginBottom: spacing.md,
+    padding: spacing.sm,
+    backgroundColor: theme.colors.surfaceVariant,
+    borderRadius: 8,
+  },
+  addButton: {
+    marginTop: spacing.md,
+    borderColor: theme.colors.primary,
+  },
+  summaryContainer: {
+    padding: spacing.sm,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  summaryLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+  },
+  summaryAmount: {
+    fontSize: 16,
+    fontWeight: '700',
+    fontFamily: 'monospace',
+  },
+  debitColor: {
+    color: theme.colors.primary,
+  },
+  creditColor: {
+    color: theme.colors.secondary,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: theme.colors.outline,
+    marginVertical: spacing.sm,
+  },
+  balanceChip: {
+    paddingHorizontal: spacing.sm,
+  },
+  balancedChip: {
+    backgroundColor: theme.colors.primaryContainer,
+  },
+  unbalancedChip: {
+    backgroundColor: theme.colors.errorContainer,
+  },
+  segmentedButtons: {
+    marginBottom: spacing.md,
+  },
+  statusNote: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
+    fontStyle: 'italic',
+    marginTop: spacing.sm,
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginTop: spacing.lg,
+    marginBottom: spacing.xl,
+  },
+  button: {
+    flex: 1,
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+});
 
   return (
     <View style={styles.container}>
@@ -435,109 +544,4 @@ export default function JournalEntryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  content: {
-    flex: 1,
-    padding: spacing.md,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  halfWidth: {
-    flex: 1,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.xs,
-  },
-  input: {
-    marginBottom: spacing.md,
-    backgroundColor: theme.colors.surface,
-  },
-  errorText: {
-    fontSize: 12,
-    color: theme.colors.error,
-    marginTop: -spacing.sm,
-    marginBottom: spacing.md,
-  },
-  sectionNote: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    fontStyle: 'italic',
-    marginBottom: spacing.md,
-    padding: spacing.sm,
-    backgroundColor: theme.colors.surfaceVariant,
-    borderRadius: 8,
-  },
-  addButton: {
-    marginTop: spacing.md,
-    borderColor: theme.colors.primary,
-  },
-  summaryContainer: {
-    padding: spacing.sm,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  summaryLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-  },
-  summaryAmount: {
-    fontSize: 16,
-    fontWeight: '700',
-    fontFamily: 'monospace',
-  },
-  debitColor: {
-    color: theme.colors.primary,
-  },
-  creditColor: {
-    color: theme.colors.secondary,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: theme.colors.outline,
-    marginVertical: spacing.sm,
-  },
-  balanceChip: {
-    paddingHorizontal: spacing.sm,
-  },
-  balancedChip: {
-    backgroundColor: theme.colors.primaryContainer,
-  },
-  unbalancedChip: {
-    backgroundColor: theme.colors.errorContainer,
-  },
-  segmentedButtons: {
-    marginBottom: spacing.md,
-  },
-  statusNote: {
-    fontSize: 12,
-    color: theme.colors.onSurfaceVariant,
-    fontStyle: 'italic',
-    marginTop: spacing.sm,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    marginTop: spacing.lg,
-    marginBottom: spacing.xl,
-  },
-  button: {
-    flex: 1,
-  },
-  disabledButton: {
-    opacity: 0.6,
-  },
-}); 
+ 

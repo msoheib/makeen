@@ -1,10 +1,77 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import { User, Property, MaintenanceRequest, Invoice, Voucher } from './types';
-import i18n, { changeLanguage as changeI18nLanguage } from './i18n';
-import { applyRTL } from './rtl';
+import i18n, { changeLanguage as changeI18nLanguage, syncStoreWithI18n } from './i18n';
 import type { SupportedLanguage } from './translations/types';
+
+// Platform-specific storage wrapper to prevent conflicts between web and mobile
+const getPlatformStorageKey = (baseKey: string): string => {
+  const platform = Platform.OS;
+  return `${baseKey}-${platform}`;
+};
+
+// Function to clean up old non-platform-specific storage keys
+const cleanupOldStorageKeys = async () => {
+  if (Platform.OS === 'web' && typeof window === 'undefined') {
+    return;
+  }
+  
+  try {
+    const oldKeys = [
+      'real-estate-app-storage',
+      'app-language'
+    ];
+    
+    for (const key of oldKeys) {
+      try {
+        await AsyncStorage.removeItem(key);
+      } catch (error) {
+        // Ignore errors for keys that don't exist
+      }
+    }
+  } catch (error) {
+    console.warn('[Store] Failed to cleanup old storage keys:', error);
+  }
+};
+
+const safeAsyncStorage = {
+  getItem: async (key: string): Promise<string | null> => {
+    if (Platform.OS === 'web' && typeof window === 'undefined') {
+      return null;
+    }
+    try {
+      const platformKey = getPlatformStorageKey(key);
+      return await AsyncStorage.getItem(platformKey);
+    } catch (error) {
+      console.warn('[Store] Failed to read from storage:', error);
+      return null;
+    }
+  },
+  setItem: async (key: string, value: string): Promise<void> => {
+    if (Platform.OS === 'web' && typeof window === 'undefined') {
+      return;
+    }
+    try {
+      const platformKey = getPlatformStorageKey(key);
+      await AsyncStorage.setItem(platformKey, value);
+    } catch (error) {
+      console.warn('[Store] Failed to write to storage:', error);
+    }
+  },
+  removeItem: async (key: string): Promise<void> => {
+    if (Platform.OS === 'web' && typeof window === 'undefined') {
+      return;
+    }
+    try {
+      const platformKey = getPlatformStorageKey(key);
+      await AsyncStorage.removeItem(platformKey);
+    } catch (error) {
+      console.warn('[Store] Failed to remove from storage:', error);
+    }
+  },
+};
 
 // Settings types
 export interface NotificationSettings {
@@ -265,7 +332,7 @@ export const useAppStore = create<AppState>()(
       // Settings state
       settings: {
         theme: 'system',
-        language: 'ar',
+        language: 'en',
         currency: 'SAR',
         notifications: {
           maintenanceRequests: true,
@@ -289,21 +356,23 @@ export const useAppStore = create<AppState>()(
       
       // Language management
       changeLanguage: async (language: 'en' | 'ar') => {
+        // Skip language change during SSR
+        if (Platform.OS === 'web' && typeof window === 'undefined') {
+          return;
+        }
+        
         try {
-          console.log('Store: Starting language change to:', language);
           
           // Update i18n language and RTL (this will also persist it)
           await changeI18nLanguage(language);
-          console.log('Store: i18n language changed successfully');
           
-          // Update store state
+          // Update ALL language-related state fields to keep them in sync
           set((state) => ({
             settings: { ...state.settings, language },
             locale: language, // Update legacy state too
+            language: language, // Update the separate language field
           }));
-          console.log('Store: State updated successfully');
           
-          console.log('Store: Language change completed successfully');
         } catch (error) {
           console.error('Store: Failed to change language:', error);
           throw error; // Re-throw to handle in UI
@@ -342,7 +411,7 @@ export const useAppStore = create<AppState>()(
       
       // Theme and preferences
       isDarkMode: false,
-      language: 'ar',
+      language: 'en',
       currency: 'SAR',
       
       // Notifications
@@ -362,7 +431,7 @@ export const useAppStore = create<AppState>()(
       setFinancialNotifications: (enabled) => set({ financialNotifications: enabled }),
       
       // Language settings
-      language: 'ar' as SupportedLanguage,
+      language: 'en' as SupportedLanguage,
       setLanguage: (language) => set({ language }),
       
       // Currency settings 
@@ -394,7 +463,7 @@ export const useAppStore = create<AppState>()(
       // Reset function
       reset: () =>
         set({
-          language: 'ar',
+          language: 'en',
           currency: 'SAR',
           notificationPreferences: defaultNotificationPreferences,
           userProfile: null,
@@ -411,17 +480,59 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'real-estate-app-storage',
-      storage: AsyncStorage,
+      storage: safeAsyncStorage,
       // Only persist settings, auth state, and some UI preferences
       partialize: (state) => ({
         settings: state.settings,
         locale: state.locale,
+        language: state.language, // Include the separate language field
         theme: state.theme,
         isAuthenticated: state.isAuthenticated,
       }),
-      onRehydrateStorage: () => (state) => {
-        console.log('[Store] Hydration completed');
-        state?.setHydrated(true);
+      onRehydrateStorage: () => async (state) => {
+        // Skip rehydration during SSR
+        if (Platform.OS === 'web' && typeof window === 'undefined') {
+          return;
+        }
+        
+        try {
+          // Clean up old storage keys that might conflict
+          await cleanupOldStorageKeys();
+          
+          // Mark as hydrated first
+          state?.setHydrated(true);
+          
+          // Apply persisted language to i18n/RTL immediately after hydration
+          // Check multiple sources for the language preference
+          const settingsLang = state?.settings?.language as 'en' | 'ar' | undefined;
+          const legacyLang = state?.language as 'en' | 'ar' | undefined;
+          const localeLang = state?.locale as 'en' | 'ar' | undefined;
+          
+          // Use the most recent language setting (prioritize settings.language)
+          const lang = settingsLang || legacyLang || localeLang || 'en';
+          
+          
+          if (lang) {
+            // Always sync the language, even if it's English
+            await changeI18nLanguage(lang);
+            // Keep all language fields in sync
+            useAppStore.setState({ 
+              locale: lang,
+              language: lang,
+              settings: { ...state?.settings, language: lang }
+            });
+            // Also sync the i18n storage
+            await syncStoreWithI18n();
+          }
+          
+          // Apply persisted theme to legacy isDarkMode for components reading it
+          const themeMode = state?.settings?.theme as 'light' | 'dark' | 'system' | undefined;
+          if (themeMode && themeMode !== 'system') {
+            useAppStore.setState({ isDarkMode: themeMode === 'dark', theme: themeMode });
+          }
+        } catch (e) {
+          console.warn('[store] Rehydrate apply settings failed:', e);
+        }
       },
     }
   )

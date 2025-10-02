@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { Text, TextInput, Button, SegmentedButtons, ActivityIndicator, Chip, Modal, Portal, Searchbar } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { theme, spacing } from '@/lib/theme';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { useApi } from '@/hooks/useApi';
 import { maintenanceApi, propertiesApi, tenantApi } from '@/lib/api';
 import { Tables, TablesInsert } from '@/lib/database.types';
@@ -12,6 +13,8 @@ import ModernCard from '@/components/ModernCard';
 import PhotoCapture from '@/components/PhotoCapture';
 import { Wrench, AlertTriangle, Building, Search, Check, Camera } from 'lucide-react-native';
 import { useTranslation } from '@/lib/useTranslation';
+import { navigateBack, navigateBackToSection } from '@/lib/navigation';
+import { rtlStyles, isRTL } from '@/lib/rtl';
 
 // TypeScript interface for contract with property response
 interface ContractWithProperty {
@@ -39,6 +42,7 @@ interface FormData {
 }
 
 export default function AddMaintenanceRequestScreen() {
+  const { theme } = useAppTheme();
   const router = useRouter();
   const { t } = useTranslation('maintenance');
   const [loading, setLoading] = useState(false);
@@ -190,14 +194,14 @@ export default function AddMaintenanceRequestScreen() {
         [
           {
             text: t('common:ok'),
-            onPress: () => router.replace('/(tabs)/maintenance'),
+            onPress: () => navigateBackToSection(),
           },
         ]
       );
       
       // Automatically navigate back after a short delay
       setTimeout(() => {
-        router.replace('/(tabs)/maintenance');
+        navigateBackToSection();
       }, 1500);
     } catch (error: any) {
       console.error('Error submitting maintenance request:', error);
@@ -242,13 +246,232 @@ export default function AddMaintenanceRequestScreen() {
     return descriptions[priority] || '';
   };
 
+    const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  content: {
+    flex: 1,
+    padding: spacing.md,
+  },
+  section: {
+    marginBottom: spacing.md,
+  },
+  sectionHeader: {
+    flexDirection: rtlStyles.row().flexDirection,
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    ...rtlStyles.marginStart(spacing.sm),
+    color: theme.colors.onSurface,
+  },
+  sectionDescription: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    marginBottom: spacing.md,
+    lineHeight: 20,
+  },
+  input: {
+    marginBottom: spacing.sm,
+  },
+  errorText: {
+    color: theme.colors.error,
+    fontSize: 12,
+    marginTop: 4,
+    ...rtlStyles.marginStart(12),
+  },
+  characterCount: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
+    textAlign: 'right',
+    marginTop: 4,
+  },
+  segmentedButtons: {
+    marginBottom: spacing.md,
+  },
+  priorityInfo: {
+    backgroundColor: theme.colors.surfaceVariant,
+    padding: spacing.sm,
+    borderRadius: 8,
+  },
+  priorityDescription: {
+    fontSize: 14,
+    fontStyle: 'italic',
+  },
+  propertySelector: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: spacing.md,
+    minHeight: 80,
+    justifyContent: 'center',
+  },
+  selectedPropertyContainer: {
+    flexDirection: rtlStyles.row().flexDirection,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  selectedPropertyInfo: {
+    flex: 1,
+  },
+  selectedPropertyTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginBottom: 4,
+  },
+  selectedPropertyAddress: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    marginBottom: 8,
+  },
+  propertyCodeChip: {
+    alignSelf: 'flex-start',
+  },
+  emptyPropertySelector: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.md,
+  },
+  placeholderText: {
+    fontSize: 16,
+    color: theme.colors.onSurfaceVariant,
+    marginTop: spacing.sm,
+  },
+  submitContainer: {
+    marginTop: spacing.lg,
+    marginBottom: spacing.xl,
+  },
+  submitButton: {
+    borderRadius: 8,
+  },
+  submitButtonContent: {
+    paddingVertical: spacing.sm,
+  },
+  modalContainer: {
+    backgroundColor: theme.colors.surface,
+    margin: spacing.lg,
+    borderRadius: 12,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: rtlStyles.row().flexDirection,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.outline,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+  },
+  searchBar: {
+    margin: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  modalContent: {
+    flex: 1,
+    padding: spacing.md,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xl,
+  },
+  loadingText: {
+    marginTop: spacing.md,
+    fontSize: 16,
+    color: theme.colors.onSurfaceVariant,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xl,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.xl,
+  },
+  emptyText: {
+    marginTop: spacing.md,
+    fontSize: 16,
+    color: theme.colors.onSurfaceVariant,
+    textAlign: 'center',
+  },
+  propertyItem: {
+    backgroundColor: theme.colors.surfaceVariant,
+    borderRadius: 8,
+    marginBottom: spacing.sm,
+    overflow: 'hidden',
+  },
+  propertyItemContent: {
+    padding: spacing.md,
+  },
+  propertyItemTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginBottom: 4,
+  },
+  propertyItemAddress: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    marginBottom: spacing.sm,
+  },
+  propertyItemDetails: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  statusChip: {
+    alignSelf: 'flex-start',
+  },
+  codeChip: {
+    alignSelf: 'flex-start',
+  },
+  chipContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: spacing.md,
+  },
+  chip: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: theme.colors.outlineVariant,
+    backgroundColor: theme.colors.surface,
+    borderRadius: 20,
+    flex: 1,
+    minWidth: '22%',
+    alignItems: 'center',
+  },
+  chipActive: {
+    borderColor: theme.colors.primary,
+  },
+  chipText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: theme.colors.onSurface,
+    textAlign: 'center',
+  },
+  chipTextActive: {
+    color: theme.colors.onPrimary,
+  },
+});
+
   return (
     <View style={styles.container}>
       <ModernHeader 
         title={t('addRequest')}
         showBackButton={true}
         showNotifications={false}
-        onBackPress={() => router.back()}
+        onBackPress={() => navigateBack()}
       />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -269,10 +492,12 @@ export default function AddMaintenanceRequestScreen() {
               }
             }}
             mode="outlined"
-            style={styles.input}
+            style={[styles.input, rtlStyles.textAlign('right')]}
             error={!!errors.title}
             placeholder={t('common:enterTitle')}
             maxLength={100}
+            textAlign="right"
+            writingDirection={isRTL() ? 'rtl' : 'ltr'}
           />
           {errors.title && <Text style={styles.errorText}>{errors.title}</Text>}
 
@@ -288,10 +513,12 @@ export default function AddMaintenanceRequestScreen() {
             mode="outlined"
             multiline
             numberOfLines={4}
-            style={styles.input}
+            style={[styles.input, rtlStyles.textAlign('right')]}
             error={!!errors.description}
             placeholder={t('enterDescription')}
             maxLength={500}
+            textAlign="right"
+            writingDirection={isRTL() ? 'rtl' : 'ltr'}
           />
           {errors.description && <Text style={styles.errorText}>{errors.description}</Text>}
           
@@ -304,39 +531,40 @@ export default function AddMaintenanceRequestScreen() {
         <ModernCard style={styles.section}>
           <View style={styles.sectionHeader}>
             <AlertTriangle size={20} color={getPriorityColor(formData.priority)} />
-            <Text style={styles.sectionTitle}>{t('priorities.title')}</Text>
+            <Text style={[styles.sectionTitle, rtlStyles.textAlign('right')]}>{t('priorities.title')}</Text>
           </View>
 
-          <SegmentedButtons
-            value={formData.priority}
-            onValueChange={(value) => setFormData({ ...formData, priority: value as any })}
-            buttons={[
-              { 
-                value: 'low', 
-                label: t('priorities.low'),
-                style: formData.priority === 'low' ? { backgroundColor: theme.colors.primaryContainer } : {}
-              },
-              { 
-                value: 'medium', 
-                label: t('priorities.medium'),
-                style: formData.priority === 'medium' ? { backgroundColor: theme.colors.primaryContainer } : {}
-              },
-              { 
-                value: 'high', 
-                label: t('priorities.high'),
-                style: formData.priority === 'high' ? { backgroundColor: theme.colors.errorContainer } : {}
-              },
-              { 
-                value: 'urgent', 
-                label: t('priorities.urgent'),
-                style: formData.priority === 'urgent' ? { backgroundColor: theme.colors.errorContainer } : {}
-              },
-            ]}
-            style={styles.segmentedButtons}
-          />
+          <View style={styles.chipContainer}>
+            {[
+              { value: 'low', label: t('priorities.low'), color: theme.colors.primary },
+              { value: 'medium', label: t('priorities.medium'), color: theme.colors.primary },
+              { value: 'high', label: t('priorities.high'), color: theme.colors.error },
+              { value: 'urgent', label: t('priorities.urgent'), color: theme.colors.error },
+            ].map((option) => (
+              <TouchableOpacity
+                key={option.value}
+                style={[
+                  styles.chip,
+                  formData.priority === option.value && styles.chipActive,
+                  formData.priority === option.value && { backgroundColor: option.color }
+                ]}
+                onPress={() => setFormData({ ...formData, priority: option.value as any })}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.chipText,
+                    formData.priority === option.value && styles.chipTextActive,
+                  ]}
+                >
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
 
           <View style={styles.priorityInfo}>
-            <Text style={[styles.priorityDescription, { color: getPriorityColor(formData.priority) }]}>
+            <Text style={[styles.priorityDescription, { color: getPriorityColor(formData.priority) }, rtlStyles.textAlign('right')]}>
               {getPriorityDescription(formData.priority)}
             </Text>
           </View>
@@ -346,7 +574,7 @@ export default function AddMaintenanceRequestScreen() {
         <ModernCard style={styles.section}>
           <View style={styles.sectionHeader}>
             <Building size={20} color={theme.colors.secondary} />
-            <Text style={styles.sectionTitle}>{t('selectProperty')}</Text>
+            <Text style={[styles.sectionTitle, rtlStyles.textAlign('right')]}>{t('selectProperty')}</Text>
           </View>
 
           <TouchableOpacity
@@ -489,192 +717,3 @@ export default function AddMaintenanceRequestScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  content: {
-    flex: 1,
-    padding: spacing.md,
-  },
-  section: {
-    marginBottom: spacing.md,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginLeft: spacing.sm,
-    color: theme.colors.onSurface,
-  },
-  sectionDescription: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    marginBottom: spacing.md,
-    lineHeight: 20,
-  },
-  input: {
-    marginBottom: spacing.sm,
-  },
-  errorText: {
-    color: theme.colors.error,
-    fontSize: 12,
-    marginTop: 4,
-    marginLeft: 12,
-  },
-  characterCount: {
-    fontSize: 12,
-    color: theme.colors.onSurfaceVariant,
-    textAlign: 'right',
-    marginTop: 4,
-  },
-  segmentedButtons: {
-    marginBottom: spacing.md,
-  },
-  priorityInfo: {
-    backgroundColor: theme.colors.surfaceVariant,
-    padding: spacing.sm,
-    borderRadius: 8,
-  },
-  priorityDescription: {
-    fontSize: 14,
-    fontStyle: 'italic',
-  },
-  propertySelector: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: spacing.md,
-    minHeight: 80,
-    justifyContent: 'center',
-  },
-  selectedPropertyContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  selectedPropertyInfo: {
-    flex: 1,
-  },
-  selectedPropertyTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginBottom: 4,
-  },
-  selectedPropertyAddress: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    marginBottom: 8,
-  },
-  propertyCodeChip: {
-    alignSelf: 'flex-start',
-  },
-  emptyPropertySelector: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.md,
-  },
-  placeholderText: {
-    fontSize: 16,
-    color: theme.colors.onSurfaceVariant,
-    marginTop: spacing.sm,
-  },
-  submitContainer: {
-    marginTop: spacing.lg,
-    marginBottom: spacing.xl,
-  },
-  submitButton: {
-    borderRadius: 8,
-  },
-  submitButtonContent: {
-    paddingVertical: spacing.sm,
-  },
-  modalContainer: {
-    backgroundColor: theme.colors.surface,
-    margin: spacing.lg,
-    borderRadius: 12,
-    maxHeight: '80%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.outline,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-  },
-  searchBar: {
-    margin: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  modalContent: {
-    flex: 1,
-    padding: spacing.md,
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.xl,
-  },
-  loadingText: {
-    marginTop: spacing.md,
-    fontSize: 16,
-    color: theme.colors.onSurfaceVariant,
-  },
-  errorContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.xl,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.xl,
-  },
-  emptyText: {
-    marginTop: spacing.md,
-    fontSize: 16,
-    color: theme.colors.onSurfaceVariant,
-    textAlign: 'center',
-  },
-  propertyItem: {
-    backgroundColor: theme.colors.surfaceVariant,
-    borderRadius: 8,
-    marginBottom: spacing.sm,
-    overflow: 'hidden',
-  },
-  propertyItemContent: {
-    padding: spacing.md,
-  },
-  propertyItemTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginBottom: 4,
-  },
-  propertyItemAddress: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    marginBottom: spacing.sm,
-  },
-  propertyItemDetails: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  statusChip: {
-    alignSelf: 'flex-start',
-  },
-  codeChip: {
-    alignSelf: 'flex-start',
-  },
-});

@@ -506,7 +506,7 @@ export default function AddContractScreen() {
           </Button>
           <Button 
             mode="outlined" 
-            onPress={() => router.back()}
+            onPress={() => navigateBack()}
             disabled={loading}
             style={styles.cancelButton}
           >

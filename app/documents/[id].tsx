@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert, Linking } from 'react-native';
 import { Text, Button, ActivityIndicator, Chip } from 'react-native-paper';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { theme, spacing } from '@/lib/theme';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { documentsApi } from '@/lib/api';
 import { 
   FileText, 
@@ -37,6 +38,7 @@ interface DocumentDetails {
 }
 
 export default function DocumentViewerScreen() {
+  const { theme } = useAppTheme();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [loading, setLoading] = useState(true);
@@ -169,7 +171,151 @@ export default function DocumentViewerScreen() {
   };
 
   if (loading) {
-    return (
+      const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  content: {
+    flex: 1,
+    padding: spacing.m,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: spacing.m,
+    fontSize: 16,
+    color: theme.colors.onSurfaceVariant,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginTop: spacing.m,
+    marginBottom: spacing.s,
+  },
+  errorSubtitle: {
+    fontSize: 16,
+    color: theme.colors.onSurfaceVariant,
+    textAlign: 'center',
+    marginBottom: spacing.xl,
+  },
+  backButton: {
+    marginTop: spacing.m,
+  },
+  headerCard: {
+    marginBottom: spacing.m,
+  },
+  documentHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.m,
+  },
+  typeIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.m,
+  },
+  headerInfo: {
+    flex: 1,
+  },
+  documentTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginBottom: 4,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  fileSize: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+  },
+  separator: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    marginHorizontal: 8,
+  },
+  uploadDate: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+  },
+  typeChip: {
+    alignSelf: 'flex-start',
+  },
+  typeText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  detailsCard: {
+    marginBottom: spacing.m,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginBottom: spacing.m,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: spacing.m,
+  },
+  detailIcon: {
+    width: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.m,
+  },
+  detailContent: {
+    flex: 1,
+  },
+  detailLabel: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
+    textTransform: 'uppercase',
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  detailValue: {
+    fontSize: 14,
+    color: theme.colors.onSurface,
+  },
+  tagsSection: {
+    marginTop: spacing.s,
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: spacing.s,
+  },
+  tag: {
+    marginRight: spacing.s,
+    marginBottom: spacing.s,
+  },
+  actionsCard: {
+    marginBottom: spacing.xl,
+  },
+  actionButton: {
+    marginBottom: spacing.m,
+  },
+});
+
+  return (
       <View style={styles.container}>
         <ModernHeader
           title="Document Viewer"
@@ -350,146 +496,4 @@ export default function DocumentViewerScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  content: {
-    flex: 1,
-    padding: spacing.m,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: spacing.m,
-    fontSize: 16,
-    color: theme.colors.onSurfaceVariant,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xl,
-  },
-  errorTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginTop: spacing.m,
-    marginBottom: spacing.s,
-  },
-  errorSubtitle: {
-    fontSize: 16,
-    color: theme.colors.onSurfaceVariant,
-    textAlign: 'center',
-    marginBottom: spacing.xl,
-  },
-  backButton: {
-    marginTop: spacing.m,
-  },
-  headerCard: {
-    marginBottom: spacing.m,
-  },
-  documentHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.m,
-  },
-  typeIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.m,
-  },
-  headerInfo: {
-    flex: 1,
-  },
-  documentTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginBottom: 4,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  fileSize: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-  },
-  separator: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    marginHorizontal: 8,
-  },
-  uploadDate: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-  },
-  typeChip: {
-    alignSelf: 'flex-start',
-  },
-  typeText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  detailsCard: {
-    marginBottom: spacing.m,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.m,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: spacing.m,
-  },
-  detailIcon: {
-    width: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.m,
-  },
-  detailContent: {
-    flex: 1,
-  },
-  detailLabel: {
-    fontSize: 12,
-    color: theme.colors.onSurfaceVariant,
-    textTransform: 'uppercase',
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  detailValue: {
-    fontSize: 14,
-    color: theme.colors.onSurface,
-  },
-  tagsSection: {
-    marginTop: spacing.s,
-  },
-  tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: spacing.s,
-  },
-  tag: {
-    marginRight: spacing.s,
-    marginBottom: spacing.s,
-  },
-  actionsCard: {
-    marginBottom: spacing.xl,
-  },
-  actionButton: {
-    marginBottom: spacing.m,
-  },
-}); 
+ 

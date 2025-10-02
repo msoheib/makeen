@@ -88,13 +88,11 @@ class RealTimeService {
       
       if (notificationService.isServiceInitialized()) {
         this.notificationServiceEnabled = true;
-        console.log('📱 Notification service integration enabled');
       } else {
         // Try to initialize notification service
         const result = await notificationService.initialize();
         if (result.success) {
           this.notificationServiceEnabled = true;
-          console.log('📱 Notification service initialized and integrated');
         } else {
           console.warn('📱 Failed to initialize notification service:', result.error);
         }
@@ -144,7 +142,6 @@ class RealTimeService {
         )
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
-            console.log(`✅ Subscribed to ${tableName} changes`);
             this.subscriptions.set(tableName, {
               table: tableName,
               channel,
@@ -171,7 +168,6 @@ class RealTimeService {
     if (subscription) {
       await subscription.channel.unsubscribe();
       this.subscriptions.delete(tableName);
-      console.log(`🔌 Unsubscribed from ${tableName}`);
     }
   }
 
@@ -240,7 +236,6 @@ class RealTimeService {
       userId: record.created_by || record.assigned_to
     };
 
-    console.log(`📢 Notification event generated:`, event);
     return event;
   }
 
@@ -283,7 +278,6 @@ class RealTimeService {
           if (notificationData) {
             const success = await notificationService.sendNotification(notificationData);
             if (success) {
-              console.log('📱 Push notification sent for real-time event:', event.type);
             } else {
               console.warn('📱 Failed to send push notification for event:', event.type);
             }
@@ -337,7 +331,6 @@ class RealTimeService {
    */
   private scheduleReconnect(): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.log('Max reconnection attempts reached');
       return;
     }
 
@@ -346,7 +339,6 @@ class RealTimeService {
     }
 
     const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000); // Exponential backoff, max 30s
-    console.log(`Scheduling reconnect in ${delay}ms (attempt ${this.reconnectAttempts + 1}/${this.maxReconnectAttempts})`);
 
     this.reconnectTimer = setTimeout(() => {
       this.reconnectAttempts++;
@@ -396,7 +388,6 @@ class RealTimeService {
     this.subscriptions.clear();
     this.notificationServiceEnabled = false;
     this.updateConnectionStatus('disconnected');
-    console.log('🧹 Real-time service cleaned up');
   }
 
   /**
@@ -419,3 +410,4 @@ export const realTimeService = new RealTimeService();
 
 // Export types for external use
 export type { EventHandler, NotificationEvent, RealTimeConnectionStatus }; 
+

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from 'react-native-paper';
-import { isRTL } from '@/lib/i18n';
+import { isRTL } from '@/lib/rtl';
 
 interface NotificationBadgeProps {
   count: number;

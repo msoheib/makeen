@@ -223,20 +223,19 @@ export default function MaintenanceRequestCard({ request, theme, onPress }: Main
           web: { cursor: 'pointer' },
           default: {}
         }),
-        { direction: 'rtl' as any, writingDirection: 'rtl' as any }
+        { writingDirection: 'rtl' as any }
       ]} 
       onPress={handlePress}
       {...webTouchProps}
       dir="rtl"
     >
-      <Card.Content style={[styles.content, { direction: 'rtl' as any, writingDirection: 'rtl' as any }]}>
-        <View style={[styles.headerRow, rtlStyles.row(), { flexDirection: 'row-reverse' as any, direction: 'rtl' as any }]}>
+      <Card.Content style={[styles.content, { writingDirection: 'rtl' as any }]}>
+        <View style={[styles.headerRow, rtlStyles.row(), { flexDirection: 'row-reverse' as any }]}>
           <Text 
             style={[
               styles.title, 
               { 
                 textAlign: 'right' as any, 
-                direction: 'rtl' as any, 
                 writingDirection: 'rtl' as any 
               }
             ]} 
@@ -282,7 +281,6 @@ export default function MaintenanceRequestCard({ request, theme, onPress }: Main
                 styles.metaText, 
                 { 
                   textAlign: 'right' as any, 
-                  direction: 'rtl' as any, 
                   writingDirection: 'rtl' as any 
                 }
               ]}
@@ -302,7 +300,6 @@ export default function MaintenanceRequestCard({ request, theme, onPress }: Main
                 { 
                   color: priorityColors[request.priority],
                   textAlign: 'right' as any, 
-                  direction: 'rtl' as any, 
                   writingDirection: 'rtl' as any 
                 }
               ]}
@@ -331,7 +328,6 @@ export default function MaintenanceRequestCard({ request, theme, onPress }: Main
                     styles.moreImagesText, 
                     { 
                       textAlign: 'right' as any, 
-                      direction: 'rtl' as any, 
                       writingDirection: 'rtl' as any 
                     }
                   ]}

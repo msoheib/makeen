@@ -1,15 +1,16 @@
 import React from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { lightTheme, darkTheme, spacing, shadows } from '@/lib/theme';
-import { useAppStore } from '@/lib/store';
+import { spacing, shadows, type AppTheme } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { formatCurrency } from '@/lib/formatters';
+import { useTranslation } from 'react-i18next';
 
 interface RentCardProps {
   totalRent: number;
   collectedRent: number;
   pendingRent: number;
   loading?: boolean;
-  theme?: any;
+  theme?: AppTheme;
 }
 
 export default function RentCard({ 
@@ -19,8 +20,9 @@ export default function RentCard({
   loading = false,
   theme: propTheme
 }: RentCardProps) {
-  const { isDarkMode } = useAppStore();
-  const theme = propTheme || (isDarkMode ? darkTheme : lightTheme);
+  const { theme: appTheme } = useAppTheme();
+  const theme = propTheme || appTheme;
+  const { t } = useTranslation(['dashboard','common']);
 
   if (loading) {
     return (
@@ -50,7 +52,7 @@ export default function RentCard({
               }
             ]}
           >
-            جاري التحميل...
+            {t('common:loading', { defaultValue: 'Loading...' })}
           </Text>
         </View>
       </View>
@@ -83,7 +85,7 @@ export default function RentCard({
           }
         ]}
       >
-        نظرة عامة على الإيجارات
+        {t('dashboard:rent.overview')}
       </Text>
       
       <View style={[styles.row, { marginBottom: spacing.s }]}>
@@ -100,7 +102,7 @@ export default function RentCard({
               }
             ]}
           >
-            إجمالي الإيجار
+            {t('dashboard:rent.total')}
           </Text>
         </View>
         <Text 
@@ -132,7 +134,7 @@ export default function RentCard({
               }
             ]}
           >
-            المحصل
+            {t('dashboard:rent.collected')}
           </Text>
         </View>
         <Text 
@@ -164,7 +166,7 @@ export default function RentCard({
               }
             ]}
           >
-            المعلق
+            {t('dashboard:rent.pending')}
           </Text>
         </View>
         <Text 

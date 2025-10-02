@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Text, Button, TextInput, Switch, HelperText, Divider, SegmentedButtons, ActivityIndicator } from 'react-native-paper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { theme, spacing } from '@/lib/theme';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { profilesApi } from '@/lib/api';
 import { useApi } from '@/hooks/useApi';
 import { User, Mail, Phone, MapPin, FileText } from 'lucide-react-native';
@@ -25,6 +26,7 @@ interface TenantFormData {
 }
 
 export default function EditTenantScreen() {
+  const { theme } = useAppTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { t } = useTranslation('tenants');
@@ -100,7 +102,84 @@ export default function EditTenantScreen() {
   };
 
   if (tenantLoading) {
-    return (
+      const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  content: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  loadingText: {
+    marginTop: spacing.m,
+    color: theme.colors.onSurfaceVariant,
+  },
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: theme.colors.error,
+    marginBottom: spacing.m,
+  },
+  sectionCard: {
+    margin: spacing.m,
+    padding: spacing.l,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginBottom: spacing.l,
+  },
+  formInput: {
+    marginBottom: spacing.m,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: spacing.m,
+  },
+  halfWidth: {
+    flex: 1,
+  },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.m,
+  },
+  switchLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: theme.colors.onSurface,
+  },
+  fieldLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: theme.colors.onSurface,
+    marginBottom: spacing.m,
+    marginTop: spacing.m,
+  },
+  actionsContainer: {
+    flexDirection: 'row',
+    gap: spacing.m,
+    padding: spacing.l,
+    paddingBottom: spacing.xl,
+  },
+  cancelButton: {
+    flex: 1,
+    borderColor: theme.colors.outline,
+  },
+  submitButton: {
+    flex: 1,
+  },
+});
+
+  return (
       <View style={styles.container}>
         <ModernHeader
           title={t('edit.title')}
@@ -267,79 +346,4 @@ export default function EditTenantScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  content: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.xl,
-  },
-  loadingText: {
-    marginTop: spacing.m,
-    color: theme.colors.onSurfaceVariant,
-  },
-  errorTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.error,
-    marginBottom: spacing.m,
-  },
-  sectionCard: {
-    margin: spacing.m,
-    padding: spacing.l,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.l,
-  },
-  formInput: {
-    marginBottom: spacing.m,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: spacing.m,
-  },
-  halfWidth: {
-    flex: 1,
-  },
-  switchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.m,
-  },
-  switchLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: theme.colors.onSurface,
-  },
-  fieldLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.m,
-    marginTop: spacing.m,
-  },
-  actionsContainer: {
-    flexDirection: 'row',
-    gap: spacing.m,
-    padding: spacing.l,
-    paddingBottom: spacing.xl,
-  },
-  cancelButton: {
-    flex: 1,
-    borderColor: theme.colors.outline,
-  },
-  submitButton: {
-    flex: 1,
-  },
-}); 
+ 

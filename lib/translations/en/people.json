@@ -1,4 +1,14 @@
 {
+  "success": {
+    "title": "Account Created",
+    "message": "✅ User account created successfully",
+    "nameLabel": "Name:",
+    "emailLabel": "Email:",
+    "backToForm": "Back to Form",
+    "viewDetails": "View Details",
+    "addAnotherUser": "Add Another User",
+    "backToList": "Back to List"
+  },
   "title": "People",
   "subtitle": "Manage all people in your system",
   "owners": "Owners",

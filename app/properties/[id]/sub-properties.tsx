@@ -2,10 +2,9 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { View, StyleSheet, FlatList, SafeAreaView, ActivityIndicator, RefreshControl, TouchableOpacity, Alert } from 'react-native';
 import { Text, Avatar, FAB, Card, Button, Chip, IconButton } from 'react-native-paper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { lightTheme, darkTheme, spacing } from '@/lib/theme';
-import { useAppStore } from '@/lib/store';
-import { getFlexDirection } from '@/lib/rtl';
-import { isRTL } from '@/lib/i18n';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
+import { getFlexDirection, isRTL } from '@/lib/rtl';
 import { Building, Plus, MapPin, Users, FileText, Phone, Clock, DollarSign, Edit, Trash2 } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import { useApi } from '@/hooks/useApi';
@@ -16,8 +15,7 @@ import AddSubPropertyForm from '@/components/AddSubPropertyForm';
 export default function SubPropertiesScreen() {
   const { id: propertyId } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { isDarkMode } = useAppStore();
-  const theme = isDarkMode ? darkTheme : lightTheme;
+  const { theme } = useAppTheme();
   
   // State
   const [showAddForm, setShowAddForm] = useState(false);

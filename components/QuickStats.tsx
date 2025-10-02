@@ -2,8 +2,8 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from 'react-native-paper';
 import { Users, Phone, Clock, Shield } from 'lucide-react-native';
-import { lightTheme, darkTheme, spacing } from '@/lib/theme';
-import { useAppStore } from '@/lib/store';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { formatDisplayNumber } from '@/lib/formatters';
 
 interface QuickStatsProps {
@@ -23,8 +23,7 @@ export default function QuickStats({
   showOwners = false,
   loading = false 
 }: QuickStatsProps) {
-  const { isDarkMode } = useAppStore();
-  const theme = isDarkMode ? darkTheme : lightTheme;
+  const { theme } = useAppTheme();
 
   const stats = [
     {

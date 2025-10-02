@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Text, Button, Card, Chip, SegmentedButtons } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { theme, spacing } from '@/lib/theme';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { useAppStore } from '@/lib/store';
 import { ArrowLeft, FileText, Plus, Calendar } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
@@ -24,6 +25,7 @@ interface LineItem {
 }
 
 export default function CreateInvoiceScreen() {
+  const { theme } = useAppTheme();
   const router = useRouter();
   const { currentUser } = useAppStore();
   
@@ -178,6 +180,93 @@ export default function CreateInvoiceScreen() {
 
   const subtotal = lineItems.reduce((sum, item) => sum + (item.line_total || 0), 0);
   const calculations = invoicesApi.calculateInvoiceTotals(lineItems, vatRate);
+
+    const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  content: {
+    flex: 1,
+    padding: spacing.md,
+  },
+  headerCard: {
+    marginBottom: spacing.md,
+  },
+  invoiceHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  invoiceTitle: {
+    color: theme.colors.primary,
+    fontWeight: '700',
+  },
+  invoiceNumber: {
+    color: theme.colors.onSurfaceVariant,
+    fontWeight: '600',
+    marginTop: spacing.xs,
+  },
+  sectionTitle: {
+    color: theme.colors.primary,
+    fontWeight: '600',
+    marginBottom: spacing.md,
+  },
+  controlContainer: {
+    marginBottom: spacing.md,
+  },
+  label: {
+    marginBottom: spacing.sm,
+    color: theme.colors.onSurfaceVariant,
+    fontWeight: '500',
+  },
+  segmentedButtons: {
+    marginTop: spacing.xs,
+  },
+  placeholder: {
+    color: theme.colors.onSurfaceVariant,
+    fontStyle: 'italic',
+    padding: spacing.md,
+    backgroundColor: theme.colors.surfaceVariant,
+    borderRadius: 8,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  halfWidth: {
+    flex: 1,
+  },
+  dateText: {
+    color: theme.colors.onSurface,
+    fontWeight: '500',
+    padding: spacing.sm,
+    backgroundColor: theme.colors.surfaceVariant,
+    borderRadius: 8,
+  },
+  lineItemsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  submitContainer: {
+    marginTop: spacing.lg,
+    marginBottom: spacing.xl,
+  },
+  submitButton: {
+    marginBottom: spacing.sm,
+  },
+  submitButtonContent: {
+    paddingVertical: spacing.sm,
+  },
+  totalPreview: {
+    textAlign: 'center',
+    color: theme.colors.primary,
+    fontWeight: '600',
+  },
+});
 
   return (
     <View style={styles.container}>
@@ -366,89 +455,4 @@ export default function CreateInvoiceScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  content: {
-    flex: 1,
-    padding: spacing.md,
-  },
-  headerCard: {
-    marginBottom: spacing.md,
-  },
-  invoiceHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  invoiceTitle: {
-    color: theme.colors.primary,
-    fontWeight: '700',
-  },
-  invoiceNumber: {
-    color: theme.colors.onSurfaceVariant,
-    fontWeight: '600',
-    marginTop: spacing.xs,
-  },
-  sectionTitle: {
-    color: theme.colors.primary,
-    fontWeight: '600',
-    marginBottom: spacing.md,
-  },
-  controlContainer: {
-    marginBottom: spacing.md,
-  },
-  label: {
-    marginBottom: spacing.sm,
-    color: theme.colors.onSurfaceVariant,
-    fontWeight: '500',
-  },
-  segmentedButtons: {
-    marginTop: spacing.xs,
-  },
-  placeholder: {
-    color: theme.colors.onSurfaceVariant,
-    fontStyle: 'italic',
-    padding: spacing.md,
-    backgroundColor: theme.colors.surfaceVariant,
-    borderRadius: 8,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginBottom: spacing.md,
-  },
-  halfWidth: {
-    flex: 1,
-  },
-  dateText: {
-    color: theme.colors.onSurface,
-    fontWeight: '500',
-    padding: spacing.sm,
-    backgroundColor: theme.colors.surfaceVariant,
-    borderRadius: 8,
-  },
-  lineItemsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  submitContainer: {
-    marginTop: spacing.lg,
-    marginBottom: spacing.xl,
-  },
-  submitButton: {
-    marginBottom: spacing.sm,
-  },
-  submitButtonContent: {
-    paddingVertical: spacing.sm,
-  },
-  totalPreview: {
-    textAlign: 'center',
-    color: theme.colors.primary,
-    fontWeight: '600',
-  },
-}); 
+ 

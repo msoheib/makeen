@@ -13,7 +13,7 @@ export const useRTL = () => {
     return {
       // Core RTL state
       isRTL: isRTLMode,
-      direction: getTextDirection(),
+      writingDirection: getTextDirection(),
       
       // Layout utilities
       flexDirection: {
@@ -283,7 +283,7 @@ export const useRTL = () => {
         
         drawer: {
           flex: 1,
-          direction: getTextDirection(),
+          writingDirection: getTextDirection(),
         },
         
         // Search styles

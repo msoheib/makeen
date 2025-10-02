@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Text, TextInput, Button, SegmentedButtons, HelperText, Chip } from 'react-native-paper';
-import { lightTheme, darkTheme, spacing } from '@/lib/theme';
-import { useAppStore } from '@/lib/store';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { subPropertiesApi } from '@/lib/api';
 import { useRouter } from 'expo-router';
 import { Plus, X, Upload, Phone } from 'lucide-react-native';
@@ -21,8 +21,7 @@ export default function AddSubPropertyForm({
   onSuccess, 
   onCancel 
 }: AddSubPropertyFormProps) {
-  const { isDarkMode } = useAppStore();
-  const theme = isDarkMode ? darkTheme : lightTheme;
+  const { theme } = useAppTheme();
   const router = useRouter();
 
   // Form state

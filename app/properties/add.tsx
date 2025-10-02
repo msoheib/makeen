@@ -2,8 +2,11 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert, I18nManager, TouchableOpacity } from 'react-native';
 import { Text, TextInput, Button, SegmentedButtons, IconButton } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
+import { navigateBack, navigateBackToSection } from '@/lib/navigation';
+import { rtlStyles, isRTL } from '@/lib/rtl';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { theme, spacing } from '@/lib/theme';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/lib/store';
 import { PropertyType, PropertyStatus } from '@/lib/types';
@@ -15,6 +18,7 @@ import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 
 export default function AddPropertyScreen() {
+  const { theme } = useAppTheme();
   const params = useLocalSearchParams<{ groupId?: string }>();
   const { t } = useTranslation(['properties', 'common']);
   const router = useRouter();
@@ -224,14 +228,14 @@ export default function AddPropertyScreen() {
         [
           {
             text: 'موافق',
-            onPress: () => router.replace('/(tabs)/properties'),
+            onPress: () => navigateBackToSection(),
           },
         ]
       );
       
       // Automatically navigate back after a short delay
       setTimeout(() => {
-        router.replace('/(tabs)/properties');
+        navigateBackToSection();
       }, 1500);
     } catch (error: any) {
       console.error('Error adding property:', error);
@@ -259,312 +263,7 @@ export default function AddPropertyScreen() {
     }
   };
 
-  return (
-    <View style={styles.container}>
-      <ModernHeader
-        title="إضافة عقار"
-        showBackButton={true}
-        showNotifications={false}
-        onBackPress={() => router.push('/(tabs)/properties')}
-      />
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Basic Information */}
-        <ModernCard style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Building2 size={20} color={theme.colors.primary} />
-            <Text style={styles.sectionTitle}>المعلومات الأساسية</Text>
-          </View>
-
-          <TextInput
-            label="عنوان العقار *"
-            value={formData.title}
-            onChangeText={(text) => setFormData({ ...formData, title: text })}
-            mode="outlined"
-            style={styles.input}
-            error={!!errors.title}
-            textAlign="right"
-          />
-          {errors.title && <Text style={styles.errorText}>{errors.title}</Text>}
-
-          <TextInput
-            label="الوصف"
-            value={formData.description}
-            onChangeText={(text) => setFormData({ ...formData, description: text })}
-            mode="outlined"
-            multiline
-            numberOfLines={3}
-            style={styles.input}
-            textAlign="right"
-          />
-
-          <Text style={styles.fieldLabel}>نوع العقار *</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.propertyTypeScroll}>
-            <SegmentedButtons
-              value={formData.property_type}
-              onValueChange={(value) => setFormData({ ...formData, property_type: value as PropertyType })}
-              buttons={[
-                { value: 'apartment', label: 'شقة' },
-                { value: 'villa', label: 'فيلا' },
-                { value: 'office', label: 'مكتب' },
-                { value: 'retail', label: 'متجر' },
-                { value: 'warehouse', label: 'مستودع' },
-              ]}
-              style={styles.segmentedButtons}
-            />
-          </ScrollView>
-
-          <Text style={styles.fieldLabel}>الحالة *</Text>
-          <SegmentedButtons
-            value={formData.status}
-            onValueChange={(value) => setFormData({ ...formData, status: value as PropertyStatus })}
-            buttons={[
-              { value: 'available', label: 'متاح' },
-              { value: 'rented', label: 'مؤجر' },
-              { value: 'maintenance', label: 'صيانة' },
-              { value: 'reserved', label: 'محجوز' },
-            ]}
-            style={styles.segmentedButtons}
-          />
-
-          <Text style={styles.fieldLabel}>نوع القائمة *</Text>
-          <SegmentedButtons
-            value={formData.listing_type}
-            onValueChange={(value) => setFormData({ ...formData, listing_type: value as 'rent' | 'sale' | 'both' })}
-            buttons={[
-              { value: 'rent', label: 'للإيجار' },
-              { value: 'sale', label: 'للبيع' },
-              { value: 'both', label: 'للإيجار والبيع' },
-            ]}
-            style={styles.segmentedButtons}
-          />
-
-          {/* Owner Selection for Managers/Admins */}
-          {(userContext?.role === 'manager' || userContext?.role === 'admin') && (
-            <>
-              <Text style={styles.fieldLabel}>مالك العقار *</Text>
-              <View style={styles.ownerSelectionContainer}>
-                {ownersLoading ? (
-                  <Text style={styles.loadingText}>جاري تحميل قائمة الملاك...</Text>
-                ) : ownersError ? (
-                  <Text style={styles.errorText}>خطأ في تحميل قائمة الملاك: {ownersError}</Text>
-                ) : !ownerProfiles || ownerProfiles.length === 0 ? (
-                  <Text style={styles.loadingText}>لا يوجد ملاك متاحون</Text>
-                ) : (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.ownerScroll}>
-                    {ownerProfiles.map((owner: any) => (
-                        <TouchableOpacity
-                          key={owner.id}
-                          style={[
-                            styles.ownerOption,
-                            selectedOwnerId === owner.id && styles.selectedOwnerOption
-                          ]}
-                          onPress={() => setSelectedOwnerId(owner.id)}
-                        >
-                          <Text style={[
-                            styles.ownerText,
-                            selectedOwnerId === owner.id && styles.selectedOwnerText
-                          ]}>
-                            {owner.first_name} {owner.last_name}
-                          </Text>
-                        </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                )}
-              </View>
-              {!selectedOwnerId && (userContext?.role === 'manager' || userContext?.role === 'admin') && (
-                <Text style={styles.errorText}>يجب اختيار مالك العقار</Text>
-              )}
-            </>
-          )}
-        </ModernCard>
-
-        {/* Optional: Assign to Building */}
-        <ModernCard style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Building2 size={20} color={theme.colors.primary} />
-            <Text style={styles.sectionTitle}>إسناد إلى مبنى (اختياري)</Text>
-          </View>
-
-          {groupsLoading ? (
-            <Text style={styles.loadingText}>جاري تحميل قائمة المباني...</Text>
-          ) : groupsError ? (
-            <Text style={styles.errorText}>خطأ في تحميل المباني: {groupsError}</Text>
-          ) : groups.length === 0 ? (
-            <Text style={styles.loadingText}>لا توجد مبانٍ. يمكنك إضافة وحدات الآن ثم ربطها لاحقًا.</Text>
-          ) : (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.ownerScroll}>
-              {groups.map((g: any) => (
-                <TouchableOpacity
-                  key={g.id}
-                  style={[styles.ownerOption, selectedGroupId === g.id && styles.selectedOwnerOption]}
-                  onPress={() => setSelectedGroupId(selectedGroupId === g.id ? '' : g.id)}
-                >
-                  <Text style={[styles.ownerText, selectedGroupId === g.id && styles.selectedOwnerText]}>
-                    {g.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          )}
-        </ModernCard>
-
-        {/* Location */}
-        <ModernCard style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <MapPin size={20} color={theme.colors.secondary} />
-            <Text style={styles.sectionTitle}>الموقع</Text>
-          </View>
-
-          <TextInput
-            label="العنوان *"
-            value={formData.address}
-            onChangeText={(text) => setFormData({ ...formData, address: text })}
-            mode="outlined"
-            style={styles.input}
-            error={!!errors.address}
-            textAlign="right"
-          />
-          {errors.address && <Text style={styles.errorText}>{errors.address}</Text>}
-
-          <View style={styles.row}>
-            <TextInput
-              label="المدينة *"
-              value={formData.city}
-              onChangeText={(text) => setFormData({ ...formData, city: text })}
-              mode="outlined"
-              style={[styles.input, styles.halfInput]}
-              error={!!errors.city}
-              textAlign="right"
-            />
-            <TextInput
-              label="الحي *"
-              value={formData.country}
-              onChangeText={(text) => setFormData({ ...formData, country: text })}
-              mode="outlined"
-              style={[styles.input, styles.halfInput]}
-              error={!!errors.country}
-              textAlign="right"
-            />
-          </View>
-          {(errors.city || errors.country) && (
-            <Text style={styles.errorText}>{errors.city || errors.country}</Text>
-          )}
-
-          <TextInput
-            label="الشارع *"
-            value={formData.neighborhood}
-            onChangeText={(text) => setFormData({ ...formData, neighborhood: text })}
-            mode="outlined"
-            style={styles.input}
-            error={!!errors.neighborhood}
-            textAlign="right"
-          />
-          {errors.neighborhood && <Text style={styles.errorText}>{errors.neighborhood}</Text>}
-        </ModernCard>
-
-        {/* Property Details */}
-        <ModernCard style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Home size={20} color={theme.colors.tertiary} />
-            <Text style={styles.sectionTitle}>تفاصيل العقار</Text>
-          </View>
-
-          <TextInput
-            label="المساحة (متر مربع) *"
-            value={formData.area_sqm}
-            onChangeText={(text) => setFormData({ ...formData, area_sqm: text })}
-            mode="outlined"
-            keyboardType="numeric"
-            style={styles.input}
-            error={!!errors.area_sqm}
-            textAlign="right"
-          />
-          {errors.area_sqm && <Text style={styles.errorText}>{errors.area_sqm}</Text>}
-
-          <View style={styles.row}>
-            <TextInput
-              label="غرف النوم"
-              value={formData.bedrooms}
-              onChangeText={(text) => setFormData({ ...formData, bedrooms: text })}
-              mode="outlined"
-              keyboardType="numeric"
-              style={[styles.input, styles.halfInput]}
-              error={!!errors.bedrooms}
-              textAlign="right"
-            />
-            <TextInput
-              label="الحمامات"
-              value={formData.bathrooms}
-              onChangeText={(text) => setFormData({ ...formData, bathrooms: text })}
-              mode="outlined"
-              keyboardType="numeric"
-              style={[styles.input, styles.halfInput]}
-              error={!!errors.bathrooms}
-              textAlign="right"
-            />
-          </View>
-          {(errors.bedrooms || errors.bathrooms) && (
-            <Text style={styles.errorText}>{errors.bedrooms || errors.bathrooms}</Text>
-          )}
-        </ModernCard>
-
-        {/* Pricing */}
-        <ModernCard style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <DollarSign size={20} color={theme.colors.success} />
-            <Text style={styles.sectionTitle}>التسعير</Text>
-          </View>
-
-          <TextInput
-            label={formData.listing_type === 'rent' ? 'الإيجار السنوي (ريال سعودي) *' : 'السعر (ريال سعودي) *'}
-            value={formData.price}
-            onChangeText={(text) => setFormData({ ...formData, price: text })}
-            mode="outlined"
-            keyboardType="numeric"
-            style={styles.input}
-            error={!!errors.price}
-            textAlign="right"
-          />
-          {errors.price && <Text style={styles.errorText}>{errors.price}</Text>}
-
-          {/* Annual Rent field for rent/both listing types */}
-          {(formData.listing_type === 'rent' || formData.listing_type === 'both') && (
-            <>
-              <TextInput
-                label="الإيجار السنوي (ريال سعودي)"
-                value={formData.annual_rent}
-                onChangeText={(text) => setFormData({ ...formData, annual_rent: text })}
-                mode="outlined"
-                keyboardType="numeric"
-                style={styles.input}
-                textAlign="right"
-                placeholder="الإيجار المطلوب سنوياً"
-              />
-            </>
-          )}
-
-        </ModernCard>
-
-        {/* Submit Button */}
-        <View style={styles.submitContainer}>
-          <Button
-            mode="contained"
-            onPress={handleSubmit}
-            loading={loading}
-            disabled={loading}
-            style={styles.submitButton}
-            contentStyle={styles.submitButtonContent}
-          >
-            إضافة العقار
-          </Button>
-        </View>
-      </ScrollView>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
+    const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
@@ -578,7 +277,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.m,
   },
   sectionHeader: {
-    flexDirection: 'row-reverse',
+    flexDirection: rtlStyles.row().flexDirection,
     alignItems: 'center',
     marginBottom: spacing.m,
   },
@@ -586,7 +285,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: theme.colors.onSurface,
-    marginRight: spacing.s,
+    ...rtlStyles.marginStart(spacing.s),
     textAlign: 'right',
   },
   input: {
@@ -594,7 +293,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
   },
   row: {
-    flexDirection: 'row-reverse',
+    flexDirection: rtlStyles.row().flexDirection,
     justifyContent: 'space-between',
   },
   halfInput: {
@@ -640,7 +339,7 @@ const styles = StyleSheet.create({
   ownerOption: {
     paddingHorizontal: spacing.m,
     paddingVertical: spacing.s,
-    marginRight: spacing.s,
+    ...rtlStyles.marginStart(spacing.s),
     borderRadius: 8,
     backgroundColor: theme.colors.surfaceVariant,
     borderWidth: 1,
@@ -665,4 +364,399 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     padding: spacing.m,
   },
+  chipContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: spacing.m,
+  },
+  chip: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: theme.colors.outlineVariant,
+    backgroundColor: theme.colors.surface,
+    borderRadius: 20,
+    flex: 1,
+    minWidth: '22%',
+    alignItems: 'center',
+  },
+  chipActive: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  chipText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: theme.colors.onSurface,
+    textAlign: 'center',
+  },
+  chipTextActive: {
+    color: theme.colors.onPrimary,
+  },
 });
+
+  return (
+    <View style={styles.container}>
+      <ModernHeader
+        title="إضافة عقار"
+        showBackButton={true}
+        showNotifications={false}
+        onBackPress={() => navigateBack()}
+      />
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Basic Information */}
+        <ModernCard style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Building2 size={20} color={theme.colors.primary} />
+            <Text style={[styles.sectionTitle, rtlStyles.textAlign('right')]}>المعلومات الأساسية</Text>
+          </View>
+
+          <TextInput
+            label="عنوان العقار *"
+            value={formData.title}
+            onChangeText={(text) => setFormData({ ...formData, title: text })}
+            mode="outlined"
+            style={[styles.input, rtlStyles.textAlign('right')]}
+            error={!!errors.title}
+            textAlign="right"
+            writingDirection={isRTL() ? 'rtl' : 'ltr'}
+          />
+          {errors.title && <Text style={[styles.errorText, rtlStyles.textAlign('right')]}>{errors.title}</Text>}
+
+          <TextInput
+            label="الوصف"
+            value={formData.description}
+            onChangeText={(text) => setFormData({ ...formData, description: text })}
+            mode="outlined"
+            multiline
+            numberOfLines={3}
+            style={[styles.input, rtlStyles.textAlign('right')]}
+            textAlign="right"
+            writingDirection={isRTL() ? 'rtl' : 'ltr'}
+          />
+
+          <Text style={[styles.fieldLabel, rtlStyles.textAlign('right')]}>نوع العقار *</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.propertyTypeScroll}>
+            <View style={styles.chipContainer}>
+              {[
+                { value: 'apartment', label: 'شقة' },
+                { value: 'villa', label: 'فيلا' },
+                { value: 'office', label: 'مكتب' },
+                { value: 'retail', label: 'متجر' },
+                { value: 'warehouse', label: 'مستودع' },
+              ].map((option) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[
+                    styles.chip,
+                    formData.property_type === option.value && styles.chipActive,
+                  ]}
+                  onPress={() => setFormData({ ...formData, property_type: option.value as PropertyType })}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    style={[
+                      styles.chipText,
+                      formData.property_type === option.value && styles.chipTextActive,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </ScrollView>
+
+          <Text style={[styles.fieldLabel, rtlStyles.textAlign('right')]}>الحالة *</Text>
+          <View style={styles.chipContainer}>
+            {[
+              { value: 'available', label: 'متاح' },
+              { value: 'rented', label: 'مؤجر' },
+              { value: 'maintenance', label: 'صيانة' },
+              { value: 'reserved', label: 'محجوز' },
+            ].map((option) => (
+              <TouchableOpacity
+                key={option.value}
+                style={[
+                  styles.chip,
+                  formData.status === option.value && styles.chipActive,
+                ]}
+                onPress={() => setFormData({ ...formData, status: option.value as PropertyStatus })}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.chipText,
+                    formData.status === option.value && styles.chipTextActive,
+                  ]}
+                >
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Text style={[styles.fieldLabel, rtlStyles.textAlign('right')]}>نوع القائمة *</Text>
+          <View style={styles.chipContainer}>
+            {[
+              { value: 'rent', label: 'للإيجار' },
+              { value: 'sale', label: 'للبيع' },
+              { value: 'both', label: 'للإيجار والبيع' },
+            ].map((option) => (
+              <TouchableOpacity
+                key={option.value}
+                style={[
+                  styles.chip,
+                  formData.listing_type === option.value && styles.chipActive,
+                ]}
+                onPress={() => setFormData({ ...formData, listing_type: option.value as 'rent' | 'sale' | 'both' })}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.chipText,
+                    formData.listing_type === option.value && styles.chipTextActive,
+                  ]}
+                >
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Owner Selection for Managers/Admins */}
+          {(userContext?.role === 'manager' || userContext?.role === 'admin') && (
+            <>
+              <Text style={[styles.fieldLabel, rtlStyles.textAlign('right')]}>مالك العقار *</Text>
+              <View style={styles.ownerSelectionContainer}>
+                {ownersLoading ? (
+                  <Text style={[styles.loadingText, rtlStyles.textAlign('right')]}>جاري تحميل قائمة الملاك...</Text>
+                ) : ownersError ? (
+                  <Text style={[styles.errorText, rtlStyles.textAlign('right')]}>خطأ في تحميل قائمة الملاك: {ownersError}</Text>
+                ) : !ownerProfiles || ownerProfiles.length === 0 ? (
+                  <Text style={[styles.loadingText, rtlStyles.textAlign('right')]}>لا يوجد ملاك متاحون</Text>
+                ) : (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.ownerScroll}>
+                    {ownerProfiles.map((owner: any) => (
+                        <TouchableOpacity
+                          key={owner.id}
+                          style={[
+                            styles.ownerOption,
+                            selectedOwnerId === owner.id && styles.selectedOwnerOption
+                          ]}
+                          onPress={() => setSelectedOwnerId(owner.id)}
+                        >
+                          <Text style={[
+                            styles.ownerText,
+                            selectedOwnerId === owner.id && styles.selectedOwnerText
+                          ]}>
+                            {owner.first_name} {owner.last_name}
+                          </Text>
+                        </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                )}
+              </View>
+              {!selectedOwnerId && (userContext?.role === 'manager' || userContext?.role === 'admin') && (
+                <Text style={[styles.errorText, rtlStyles.textAlign('right')]}>يجب اختيار مالك العقار</Text>
+              )}
+            </>
+          )}
+        </ModernCard>
+
+        {/* Optional: Assign to Building */}
+        <ModernCard style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Building2 size={20} color={theme.colors.primary} />
+            <Text style={[styles.sectionTitle, rtlStyles.textAlign('right')]}>إسناد إلى مبنى (اختياري)</Text>
+          </View>
+
+          {groupsLoading ? (
+            <Text style={[styles.loadingText, rtlStyles.textAlign('right')]}>جاري تحميل قائمة المباني...</Text>
+          ) : groupsError ? (
+            <Text style={[styles.errorText, rtlStyles.textAlign('right')]}>خطأ في تحميل المباني: {groupsError}</Text>
+          ) : groups.length === 0 ? (
+            <Text style={[styles.loadingText, rtlStyles.textAlign('right')]}>لا توجد مبانٍ. يمكنك إضافة وحدات الآن ثم ربطها لاحقًا.</Text>
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.ownerScroll}>
+              {groups.map((g: any) => (
+                <TouchableOpacity
+                  key={g.id}
+                  style={[styles.ownerOption, selectedGroupId === g.id && styles.selectedOwnerOption]}
+                  onPress={() => setSelectedGroupId(selectedGroupId === g.id ? '' : g.id)}
+                >
+                  <Text style={[styles.ownerText, selectedGroupId === g.id && styles.selectedOwnerText]}>
+                    {g.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
+        </ModernCard>
+
+        {/* Location */}
+        <ModernCard style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <MapPin size={20} color={theme.colors.secondary} />
+            <Text style={[styles.sectionTitle, rtlStyles.textAlign('right')]}>الموقع</Text>
+          </View>
+
+          <TextInput
+            label="العنوان *"
+            value={formData.address}
+            onChangeText={(text) => setFormData({ ...formData, address: text })}
+            mode="outlined"
+            style={[styles.input, rtlStyles.textAlign('right')]}
+            error={!!errors.address}
+            textAlign="right"
+            writingDirection={isRTL() ? 'rtl' : 'ltr'}
+          />
+          {errors.address && <Text style={[styles.errorText, rtlStyles.textAlign('right')]}>{errors.address}</Text>}
+
+          <View style={styles.row}>
+            <TextInput
+              label="المدينة *"
+              value={formData.city}
+              onChangeText={(text) => setFormData({ ...formData, city: text })}
+              mode="outlined"
+              style={[styles.input, styles.halfInput, rtlStyles.textAlign('right')]}
+              error={!!errors.city}
+              textAlign="right"
+              writingDirection={isRTL() ? 'rtl' : 'ltr'}
+            />
+            <TextInput
+              label="الحي *"
+              value={formData.country}
+              onChangeText={(text) => setFormData({ ...formData, country: text })}
+              mode="outlined"
+              style={[styles.input, styles.halfInput, rtlStyles.textAlign('right')]}
+              error={!!errors.country}
+              textAlign="right"
+              writingDirection={isRTL() ? 'rtl' : 'ltr'}
+            />
+          </View>
+          {(errors.city || errors.country) && (
+            <Text style={[styles.errorText, rtlStyles.textAlign('right')]}>{errors.city || errors.country}</Text>
+          )}
+
+          <TextInput
+            label="الشارع *"
+            value={formData.neighborhood}
+            onChangeText={(text) => setFormData({ ...formData, neighborhood: text })}
+            mode="outlined"
+            style={[styles.input, rtlStyles.textAlign('right')]}
+            error={!!errors.neighborhood}
+            textAlign="right"
+            writingDirection={isRTL() ? 'rtl' : 'ltr'}
+          />
+          {errors.neighborhood && <Text style={[styles.errorText, rtlStyles.textAlign('right')]}>{errors.neighborhood}</Text>}
+        </ModernCard>
+
+        {/* Property Details */}
+        <ModernCard style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Home size={20} color={theme.colors.tertiary} />
+            <Text style={[styles.sectionTitle, rtlStyles.textAlign('right')]}>تفاصيل العقار</Text>
+          </View>
+
+          <TextInput
+            label="المساحة (متر مربع) *"
+            value={formData.area_sqm}
+            onChangeText={(text) => setFormData({ ...formData, area_sqm: text })}
+            mode="outlined"
+            keyboardType="numeric"
+            style={[styles.input, rtlStyles.textAlign('right')]}
+            error={!!errors.area_sqm}
+            textAlign="right"
+            writingDirection={isRTL() ? 'rtl' : 'ltr'}
+          />
+          {errors.area_sqm && <Text style={[styles.errorText, rtlStyles.textAlign('right')]}>{errors.area_sqm}</Text>}
+
+          <View style={styles.row}>
+            <TextInput
+              label="غرف النوم"
+              value={formData.bedrooms}
+              onChangeText={(text) => setFormData({ ...formData, bedrooms: text })}
+              mode="outlined"
+              keyboardType="numeric"
+              style={[styles.input, styles.halfInput, rtlStyles.textAlign('right')]}
+              error={!!errors.bedrooms}
+              textAlign="right"
+              writingDirection={isRTL() ? 'rtl' : 'ltr'}
+            />
+            <TextInput
+              label="الحمامات"
+              value={formData.bathrooms}
+              onChangeText={(text) => setFormData({ ...formData, bathrooms: text })}
+              mode="outlined"
+              keyboardType="numeric"
+              style={[styles.input, styles.halfInput, rtlStyles.textAlign('right')]}
+              error={!!errors.bathrooms}
+              textAlign="right"
+              writingDirection={isRTL() ? 'rtl' : 'ltr'}
+            />
+          </View>
+          {(errors.bedrooms || errors.bathrooms) && (
+            <Text style={[styles.errorText, rtlStyles.textAlign('right')]}>{errors.bedrooms || errors.bathrooms}</Text>
+          )}
+        </ModernCard>
+
+        {/* Pricing */}
+        <ModernCard style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <DollarSign size={20} color={theme.colors.success} />
+            <Text style={styles.sectionTitle}>التسعير</Text>
+          </View>
+
+          <TextInput
+            label={formData.listing_type === 'rent' ? 'الإيجار السنوي (ريال سعودي) *' : 'السعر (ريال سعودي) *'}
+            value={formData.price}
+            onChangeText={(text) => setFormData({ ...formData, price: text })}
+            mode="outlined"
+            keyboardType="numeric"
+            style={[styles.input, rtlStyles.textAlign('right')]}
+            error={!!errors.price}
+            textAlign="right"
+            writingDirection={isRTL() ? 'rtl' : 'ltr'}
+          />
+          {errors.price && <Text style={[styles.errorText, rtlStyles.textAlign('right')]}>{errors.price}</Text>}
+
+          {/* Annual Rent field for rent/both listing types */}
+          {(formData.listing_type === 'rent' || formData.listing_type === 'both') && (
+            <>
+              <TextInput
+                label="الإيجار السنوي (ريال سعودي)"
+                value={formData.annual_rent}
+                onChangeText={(text) => setFormData({ ...formData, annual_rent: text })}
+                mode="outlined"
+                keyboardType="numeric"
+                style={[styles.input, rtlStyles.textAlign('right')]}
+                textAlign="right"
+                writingDirection={isRTL() ? 'rtl' : 'ltr'}
+                placeholder="الإيجار المطلوب سنوياً"
+              />
+            </>
+          )}
+
+        </ModernCard>
+
+        {/* Submit Button */}
+        <View style={styles.submitContainer}>
+          <Button
+            mode="contained"
+            onPress={handleSubmit}
+            loading={loading}
+            disabled={loading}
+            style={styles.submitButton}
+            contentStyle={styles.submitButtonContent}
+          >
+            إضافة العقار
+          </Button>
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+

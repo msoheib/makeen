@@ -2,7 +2,8 @@ import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, List, IconButton } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { theme, spacing } from '@/lib/theme';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { useTranslation } from '@/lib/useTranslation';
 import { 
   ArrowLeft, 
@@ -20,6 +21,7 @@ import ModernHeader from '@/components/ModernHeader';
 import ModernCard from '@/components/ModernCard';
 
 export default function HelpScreen() {
+  const { theme } = useAppTheme();
   const router = useRouter();
   const { t } = useTranslation('settings');
 
@@ -93,119 +95,7 @@ export default function HelpScreen() {
     },
   ];
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <IconButton
-          icon={() => <ArrowLeft size={24} color={theme.colors.onSurface} />}
-          onPress={() => router.back()}
-          style={styles.backButton}
-        />
-        <Text style={styles.headerTitle}>{t('help.title')}</Text>
-        <View style={styles.headerSpacer} />
-      </View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Quick Actions */}
-        <ModernCard style={styles.quickActionsCard}>
-          <Text style={styles.sectionTitle}>{t('help.quickActions')}</Text>
-          <View style={styles.quickActions}>
-            <View style={styles.quickAction}>
-              <View style={[styles.quickActionIcon, { backgroundColor: `${theme.colors.primary}15` }]}>
-                <Download size={24} color={theme.colors.primary} />
-              </View>
-              <Text style={styles.quickActionText}>{t('help.downloadManual')}</Text>
-            </View>
-            <View style={styles.quickAction}>
-              <View style={[styles.quickActionIcon, { backgroundColor: `${theme.colors.secondary}15` }]}>
-                <Video size={24} color={theme.colors.secondary} />
-              </View>
-              <Text style={styles.quickActionText}>{t('help.videoTutorials')}</Text>
-            </View>
-            <View style={styles.quickAction}>
-              <View style={[styles.quickActionIcon, { backgroundColor: `${theme.colors.tertiary}15` }]}>
-                <MessageSquare size={24} color={theme.colors.tertiary} />
-              </View>
-              <Text style={styles.quickActionText}>{t('help.contactSupport')}</Text>
-            </View>
-          </View>
-        </ModernCard>
-
-        {/* Help Sections */}
-        {helpSections.map((section, index) => (
-          <ModernCard key={index} style={styles.section}>
-            <Text style={styles.sectionTitle}>{section.title}</Text>
-            {section.items.map((item, itemIndex) => (
-              <List.Item
-                key={itemIndex}
-                title={item.title}
-                left={() => (
-                  <View style={[styles.itemIcon, { backgroundColor: `${theme.colors.primary}15` }]}>
-                    <item.icon size={20} color={theme.colors.primary} />
-                  </View>
-                )}
-                right={() => <List.Icon icon="chevron-right" />}
-                onPress={item.action}
-                style={styles.listItem}
-              />
-            ))}
-          </ModernCard>
-        ))}
-
-        {/* Contact Support */}
-        <ModernCard style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('help.supportOptions')}</Text>
-          <Text style={styles.sectionDescription}>
-            {t('help.supportDescription')}
-          </Text>
-          
-          {contactOptions.map((option, index) => (
-            <List.Item
-              key={index}
-              title={option.title}
-              description={option.description}
-              left={() => (
-                <View style={[styles.contactIcon, { backgroundColor: `${theme.colors.success}15` }]}>
-                  <option.icon size={20} color={theme.colors.success} />
-                </View>
-              )}
-              right={() => (
-                <View style={styles.availabilityBadge}>
-                  <Text style={styles.availabilityText}>
-                    {option.available ? t('help.available') : t('help.offline')}
-                  </Text>
-                </View>
-              )}
-              onPress={option.action}
-              style={styles.listItem}
-            />
-          ))}
-        </ModernCard>
-
-        {/* App Information */}
-        <ModernCard style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('help.appInformation')}</Text>
-          <View style={styles.appInfo}>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>{t('help.version')}</Text>
-              <Text style={styles.infoValue}>1.0.0</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>{t('help.lastUpdated')}</Text>
-              <Text style={styles.infoValue}>January 2024</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>{t('help.platform')}</Text>
-              <Text style={styles.infoValue}>{t('help.webApplication')}</Text>
-            </View>
-          </View>
-        </ModernCard>
-      </ScrollView>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
+    const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
@@ -323,3 +213,116 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <IconButton
+          icon={() => <ArrowLeft size={24} color={theme.colors.onSurface} />}
+          onPress={() => router.back()}
+          style={styles.backButton}
+        />
+        <Text style={styles.headerTitle}>{t('help.title')}</Text>
+        <View style={styles.headerSpacer} />
+      </View>
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Quick Actions */}
+        <ModernCard style={styles.quickActionsCard}>
+          <Text style={styles.sectionTitle}>{t('help.quickActions')}</Text>
+          <View style={styles.quickActions}>
+            <View style={styles.quickAction}>
+              <View style={[styles.quickActionIcon, { backgroundColor: `${theme.colors.primary}15` }]}>
+                <Download size={24} color={theme.colors.primary} />
+              </View>
+              <Text style={styles.quickActionText}>{t('help.downloadManual')}</Text>
+            </View>
+            <View style={styles.quickAction}>
+              <View style={[styles.quickActionIcon, { backgroundColor: `${theme.colors.secondary}15` }]}>
+                <Video size={24} color={theme.colors.secondary} />
+              </View>
+              <Text style={styles.quickActionText}>{t('help.videoTutorials')}</Text>
+            </View>
+            <View style={styles.quickAction}>
+              <View style={[styles.quickActionIcon, { backgroundColor: `${theme.colors.tertiary}15` }]}>
+                <MessageSquare size={24} color={theme.colors.tertiary} />
+              </View>
+              <Text style={styles.quickActionText}>{t('help.contactSupport')}</Text>
+            </View>
+          </View>
+        </ModernCard>
+
+        {/* Help Sections */}
+        {helpSections.map((section, index) => (
+          <ModernCard key={index} style={styles.section}>
+            <Text style={styles.sectionTitle}>{section.title}</Text>
+            {section.items.map((item, itemIndex) => (
+              <List.Item
+                key={itemIndex}
+                title={item.title}
+                left={() => (
+                  <View style={[styles.itemIcon, { backgroundColor: `${theme.colors.primary}15` }]}>
+                    <item.icon size={20} color={theme.colors.primary} />
+                  </View>
+                )}
+                right={() => <List.Icon icon="chevron-right" />}
+                onPress={item.action}
+                style={styles.listItem}
+              />
+            ))}
+          </ModernCard>
+        ))}
+
+        {/* Contact Support */}
+        <ModernCard style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('help.supportOptions')}</Text>
+          <Text style={styles.sectionDescription}>
+            {t('help.supportDescription')}
+          </Text>
+          
+          {contactOptions.map((option, index) => (
+            <List.Item
+              key={index}
+              title={option.title}
+              description={option.description}
+              left={() => (
+                <View style={[styles.contactIcon, { backgroundColor: `${theme.colors.success}15` }]}>
+                  <option.icon size={20} color={theme.colors.success} />
+                </View>
+              )}
+              right={() => (
+                <View style={styles.availabilityBadge}>
+                  <Text style={styles.availabilityText}>
+                    {option.available ? t('help.available') : t('help.offline')}
+                  </Text>
+                </View>
+              )}
+              onPress={option.action}
+              style={styles.listItem}
+            />
+          ))}
+        </ModernCard>
+
+        {/* App Information */}
+        <ModernCard style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('help.appInformation')}</Text>
+          <View style={styles.appInfo}>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>{t('help.version')}</Text>
+              <Text style={styles.infoValue}>1.0.0</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>{t('help.lastUpdated')}</Text>
+              <Text style={styles.infoValue}>January 2024</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>{t('help.platform')}</Text>
+              <Text style={styles.infoValue}>{t('help.webApplication')}</Text>
+            </View>
+          </View>
+        </ModernCard>
+      </ScrollView>
+    </View>
+  );
+}
+

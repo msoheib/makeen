@@ -3,10 +3,9 @@ import { View, StyleSheet, FlatList, SafeAreaView, ActivityIndicator, RefreshCon
 import { Text, Avatar, FAB } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
-import { lightTheme, darkTheme, spacing } from '@/lib/theme';
-import { useAppStore } from '@/lib/store';
-import { getFlexDirection } from '@/lib/rtl';
-import { isRTL } from '@/lib/i18n';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
+import { getFlexDirection, isRTL } from '@/lib/rtl';
 import { Users, Phone, Mail, Plus, Lock, Shield } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import { useScreenAccess } from '@/lib/permissions';
@@ -18,8 +17,8 @@ import QuickStats from '@/components/QuickStats';
 export default function TenantsScreen() {
   // ALL HOOKS MUST BE CALLED AT THE TOP LEVEL - NO CONDITIONAL LOGIC BEFORE THIS POINT
   const router = useRouter();
-  const { isDarkMode } = useAppStore();
-  const { t } = useTranslation('common');
+  const { theme } = useAppTheme();
+  const { t } = useTranslation(['tenants','common']);
   
   // State hooks
   const [searchQuery, setSearchQuery] = useState('');
@@ -47,7 +46,6 @@ export default function TenantsScreen() {
   }, [userContext?.role]);
 
   // Computed values (not hooks, but derived state)
-  const theme = isDarkMode ? darkTheme : lightTheme;
   const tenantsData = tenants || [];
   const isLoading = tenantsLoading;
   const hasError = !!tenantsError;
@@ -96,7 +94,7 @@ export default function TenantsScreen() {
           />
           <View style={styles.tenantInfoContainer}>
             <Text style={[styles.tenantName, { color: theme.colors.onSurface }]}>
-              {`${tenant.first_name || ''} ${tenant.last_name || ''}`.trim() || 'مستأجر غير محدد'}
+              {`${tenant.first_name || ''} ${tenant.last_name || ''}`.trim() || 'Unspecified Tenant'}
             </Text>
             <View style={[styles.tenantStatus, { flexDirection: getFlexDirection('row') }]}>
               <Shield 
@@ -111,7 +109,11 @@ export default function TenantsScreen() {
                   marginRight: isRTL() ? 4 : 0
                 }
               ]}>
-                {tenant.status === 'active' ? 'نشط' : tenant.status === 'pending' ? 'في الانتظار' : 'غير محدد'}
+                {tenant.status === 'active' 
+                  ? t('tenants:activeStatus') 
+                  : tenant.status === 'pending' 
+                    ? t('tenants:pendingStatus') 
+                    : t('tenants:unknownStatus')}
               </Text>
             </View>
           </View>
@@ -156,11 +158,11 @@ export default function TenantsScreen() {
       {/* Property info - will be enhanced when contract integration is added */}
       <View style={styles.propertyInfo}>
         <Text style={[styles.propertyLabel, { color: theme.colors.onSurfaceVariant }]}>
-          معلومات العقد:
+          {t('tenants:contractInfo')}
         </Text>
         <Text style={[styles.propertyText, { color: theme.colors.onSurface }]}>
           {/* TODO: Add contract/property relationship data from API */}
-          معلومات العقد ستكون متوفرة قريباً
+          {t('tenants:contractAvailableSoon')}
         </Text>
       </View>
     </TouchableOpacity>
@@ -171,14 +173,6 @@ export default function TenantsScreen() {
     <View>
       {/* Quick Stats Section */}
       <View style={styles.statsSection}>
-        <View style={[styles.sectionHeader, { flexDirection: getFlexDirection('row') }]}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
-            {userContext?.role === 'admin' || userContext?.role === 'manager' 
-              ? 'إحصائيات المستأجرين والملاك' 
-              : 'إحصائيات المستأجرين'
-            }
-          </Text>
-        </View>
         <QuickStats
           total={tenantStats.total}
           active={tenantStats.active}
@@ -197,7 +191,7 @@ export default function TenantsScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <ModernHeader 
-          title="المستأجرين" 
+          title={t('tenants:title', { defaultValue: 'Tenants' })} 
           showNotifications={true}
             variant="dark"
         />
@@ -216,7 +210,7 @@ export default function TenantsScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <ModernHeader 
-          title="المستأجرين" 
+          title={t('tenants:title', { defaultValue: 'Tenants' })} 
           showNotifications={true}
             variant="dark"
         />
@@ -248,7 +242,7 @@ export default function TenantsScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ModernHeader 
-        title="المستأجرين" 
+        title={t('tenants:title', { defaultValue: 'Tenants' })} 
         showNotifications={true}
         showSearch={true}
         onNotificationPress={() => router.push('/notifications')}
@@ -259,7 +253,7 @@ export default function TenantsScreen() {
       {/* Search UI outside FlatList to keep focus stable */}
       <View style={[styles.searchSection, { paddingHorizontal: spacing.m }]}> 
         <MobileSearchBar
-          placeholder="البحث عن مستأجر..."
+          placeholder={t('tenants:searchPlaceholder', { defaultValue: 'Search for tenant...' })}
           onChangeText={setSearchQuery}
           value={searchQuery}
           style={[styles.searchBar, { 
@@ -274,14 +268,14 @@ export default function TenantsScreen() {
           textAlign="right"
         />
         <Text style={[styles.resultCount, { color: theme.colors.onSurfaceVariant }]}>
-          {isLoading ? 'جاري التحميل...' : `${filteredTenants.length} نتيجة`}
+          {isLoading ? t('common:loading') : t('tenants:results', { count: filteredTenants.length, defaultValue: '{{count}} results' })}
         </Text>
       </View>
 
       {hasError ? (
         <View style={styles.errorContainer}>
           <Text style={[styles.errorText, { color: theme.colors.error }]}>
-            خطأ في تحميل البيانات. يرجى المحاولة مرة أخرى.
+            Error loading data. Please try again.
           </Text>
           <Text style={[styles.errorDetails, { color: theme.colors.onSurfaceVariant }]}>
             {tenantsError}
@@ -313,14 +307,14 @@ export default function TenantsScreen() {
                 <Users size={64} color={theme.colors.onSurfaceVariant} />
                 <Text style={[styles.emptyStateText, { color: theme.colors.onSurfaceVariant }]}>
                   {searchQuery 
-                    ? `لم يتم العثور على مستأجرين يطابقون "${searchQuery}"`
-                    : 'لا توجد بيانات مستأجرين متاحة.'
+                    ? t('tenants:noTenantsFound')
+                    : t('tenants:noTenantsData', { defaultValue: 'No tenant data available.' })
                   }
                 </Text>
                 <Text style={[styles.emptyStateSubtext, { color: theme.colors.onSurfaceVariant }]}>
                   {searchQuery 
-                    ? 'جرب البحث بكلمات أخرى أو اتصل بالإدارة للمساعدة.'
-                    : 'يرجى إضافة مستأجرين أو التحقق من صلاحيات الوصول.'
+                    ? t('tenants:adjustSearch')
+                    : t('tenants:addOrCheckAccess', { defaultValue: 'Please add tenants or check access permissions.' })
                   }
                 </Text>
               </View>

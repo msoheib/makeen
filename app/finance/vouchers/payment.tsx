@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Text, TextInput, Button, SegmentedButtons, IconButton, Chip } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { theme, spacing } from '@/lib/theme';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { useAppStore } from '@/lib/store';
 import { ArrowLeft, CreditCard, DollarSign, FileText, Calendar, Building, Users, Receipt } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
@@ -14,6 +15,7 @@ import VendorPicker from '@/components/VendorPicker';
 import api from '@/lib/api';
 
 export default function PaymentVoucherScreen() {
+  const { theme } = useAppTheme();
   const router = useRouter();
   const { currency } = useAppStore();
 
@@ -137,6 +139,94 @@ export default function PaymentVoucherScreen() {
     const numericAmount = parseFloat(amount) || 0;
     return `${currency} ${numericAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
+
+    const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  content: {
+    flex: 1,
+    padding: spacing.md,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  halfWidth: {
+    flex: 1,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+    marginBottom: spacing.xs,
+  },
+  input: {
+    marginBottom: spacing.md,
+    backgroundColor: theme.colors.surface,
+  },
+  errorText: {
+    fontSize: 12,
+    color: theme.colors.error,
+    marginTop: -spacing.sm,
+    marginBottom: spacing.md,
+  },
+  amountPreview: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.primary,
+    textAlign: 'center',
+    marginTop: spacing.sm,
+    padding: spacing.sm,
+    backgroundColor: theme.colors.primaryContainer,
+    borderRadius: 8,
+  },
+  sectionNote: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    fontStyle: 'italic',
+    marginBottom: spacing.md,
+    padding: spacing.sm,
+    backgroundColor: theme.colors.surfaceVariant,
+    borderRadius: 8,
+  },
+  accountingSummary: {
+    marginTop: spacing.md,
+    padding: spacing.md,
+    backgroundColor: theme.colors.secondaryContainer,
+    borderRadius: 8,
+  },
+  accountingTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: theme.colors.onSecondaryContainer,
+    marginBottom: spacing.xs,
+  },
+  accountingEntry: {
+    fontSize: 14,
+    color: theme.colors.onSecondaryContainer,
+    fontFamily: 'monospace',
+  },
+  segmentedButtons: {
+    marginBottom: spacing.md,
+  },
+  statusNote: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
+    fontStyle: 'italic',
+    marginTop: spacing.sm,
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginTop: spacing.lg,
+    marginBottom: spacing.xl,
+  },
+  button: {
+    flex: 1,
+  },
+});
 
   return (
     <View style={styles.container}>
@@ -356,90 +446,4 @@ export default function PaymentVoucherScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  content: {
-    flex: 1,
-    padding: spacing.md,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  halfWidth: {
-    flex: 1,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.xs,
-  },
-  input: {
-    marginBottom: spacing.md,
-    backgroundColor: theme.colors.surface,
-  },
-  errorText: {
-    fontSize: 12,
-    color: theme.colors.error,
-    marginTop: -spacing.sm,
-    marginBottom: spacing.md,
-  },
-  amountPreview: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.primary,
-    textAlign: 'center',
-    marginTop: spacing.sm,
-    padding: spacing.sm,
-    backgroundColor: theme.colors.primaryContainer,
-    borderRadius: 8,
-  },
-  sectionNote: {
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    fontStyle: 'italic',
-    marginBottom: spacing.md,
-    padding: spacing.sm,
-    backgroundColor: theme.colors.surfaceVariant,
-    borderRadius: 8,
-  },
-  accountingSummary: {
-    marginTop: spacing.md,
-    padding: spacing.md,
-    backgroundColor: theme.colors.secondaryContainer,
-    borderRadius: 8,
-  },
-  accountingTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.onSecondaryContainer,
-    marginBottom: spacing.xs,
-  },
-  accountingEntry: {
-    fontSize: 14,
-    color: theme.colors.onSecondaryContainer,
-    fontFamily: 'monospace',
-  },
-  segmentedButtons: {
-    marginBottom: spacing.md,
-  },
-  statusNote: {
-    fontSize: 12,
-    color: theme.colors.onSurfaceVariant,
-    fontStyle: 'italic',
-    marginTop: spacing.sm,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    marginTop: spacing.lg,
-    marginBottom: spacing.xl,
-  },
-  button: {
-    flex: 1,
-  },
-}); 
+ 

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Image, Alert } from 'react-native';
 import { Text, Button, IconButton, Chip, List } from 'react-native-paper';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { theme, spacing } from '@/lib/theme';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
 import { vouchersApi } from '@/lib/api';
 import { User, Property, Contract } from '@/lib/types';
@@ -12,6 +13,7 @@ import ModernCard from '@/components/ModernCard';
 import StatCard from '@/components/StatCard';
 
 export default function PersonDetailsScreen() {
+  const { theme } = useAppTheme();
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const [loading, setLoading] = useState(true);
@@ -23,6 +25,142 @@ export default function PersonDetailsScreen() {
     activeContracts: 0,
     totalPayments: 0,
     avgRent: 0,
+  });
+
+  // Create styles once per theme so they are available in all render paths
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: spacing.m,
+      paddingTop: spacing.xl,
+      paddingBottom: spacing.s,
+    },
+    backButton: {
+      margin: 0,
+    },
+    headerActions: {
+      flexDirection: 'row',
+    },
+    content: {
+      flex: 1,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    infoCard: {
+      marginHorizontal: spacing.m,
+      marginBottom: spacing.m,
+    },
+    personHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: spacing.m,
+    },
+    avatar: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      marginRight: spacing.m,
+    },
+    personInfo: {
+      flex: 1,
+    },
+    personName: {
+      fontSize: 24,
+      fontWeight: '700',
+      color: theme.colors.onSurface,
+      marginBottom: spacing.s,
+    },
+    roleChip: {
+      alignSelf: 'flex-start',
+    },
+    contactInfo: {
+      gap: spacing.s,
+    },
+    contactRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    contactText: {
+      fontSize: 14,
+      color: theme.colors.onSurface,
+      marginLeft: 8,
+    },
+    statsSection: {
+      marginBottom: spacing.m,
+    },
+    statsContainer: {
+      paddingHorizontal: spacing.m,
+    },
+    listCard: {
+      marginHorizontal: spacing.m,
+      marginBottom: spacing.m,
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: theme.colors.onSurface,
+      marginBottom: spacing.m,
+    },
+    listItem: {
+      paddingVertical: spacing.s,
+    },
+    propertyIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    propertyPrice: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: theme.colors.primary,
+    },
+    contractIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    contractInfo: {
+      alignItems: 'flex-end',
+    },
+    contractRent: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: theme.colors.primary,
+      marginBottom: 4,
+    },
+    statusChip: {
+      height: 24,
+    },
+    statusText: {
+      fontSize: 10,
+      fontWeight: '600',
+    },
+    viewAllButton: {
+      marginTop: spacing.s,
+    },
+    actionsCard: {
+      marginHorizontal: spacing.m,
+      marginBottom: spacing.xxxl,
+    },
+    actionButtons: {
+      gap: spacing.m,
+    },
+    actionButton: {
+      paddingVertical: 4,
+    },
   });
 
   useEffect(() => {
@@ -397,137 +535,3 @@ export default function PersonDetailsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.m,
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.s,
-  },
-  backButton: {
-    margin: 0,
-  },
-  headerActions: {
-    flexDirection: 'row',
-  },
-  content: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  infoCard: {
-    marginHorizontal: spacing.m,
-    marginBottom: spacing.m,
-  },
-  personHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.m,
-  },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    marginRight: spacing.m,
-  },
-  personInfo: {
-    flex: 1,
-  },
-  personName: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.s,
-  },
-  roleChip: {
-    alignSelf: 'flex-start',
-  },
-  contactInfo: {
-    gap: spacing.s,
-  },
-  contactRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  contactText: {
-    fontSize: 14,
-    color: theme.colors.onSurface,
-    marginLeft: 8,
-  },
-  statsSection: {
-    marginBottom: spacing.m,
-  },
-  statsContainer: {
-    paddingHorizontal: spacing.m,
-  },
-  listCard: {
-    marginHorizontal: spacing.m,
-    marginBottom: spacing.m,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.colors.onSurface,
-    marginBottom: spacing.m,
-  },
-  listItem: {
-    paddingVertical: spacing.s,
-  },
-  propertyIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  propertyPrice: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.primary,
-  },
-  contractIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  contractInfo: {
-    alignItems: 'flex-end',
-  },
-  contractRent: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.primary,
-    marginBottom: 4,
-  },
-  statusChip: {
-    height: 24,
-  },
-  statusText: {
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  viewAllButton: {
-    marginTop: spacing.s,
-  },
-  actionsCard: {
-    marginHorizontal: spacing.m,
-    marginBottom: spacing.xxxl,
-  },
-  actionButtons: {
-    gap: spacing.m,
-  },
-  actionButton: {
-    paddingVertical: 4,
-  },
-});

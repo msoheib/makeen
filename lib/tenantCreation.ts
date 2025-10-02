@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
-import { supabaseUrl, supabaseAnonKey } from './supabase';
+import { supabase as mainClient, supabaseUrl } from './supabase';
+import { logger, logTenantCreation, withPerformanceLogging } from './structuredLogger';
 
 /**
  * Ephemeral Supabase client for tenant creation
@@ -31,34 +32,59 @@ export const createTenantAccount = async (
     role: string;
   }
 ) => {
+  const startTime = Date.now();
+
   try {
-    console.log('[TenantCreation] Creating tenant account:', { email, role: metadata.role });
-    
-    // Use ephemeral client to avoid session conflicts
-    const ephemeralClient = createEphemeralClient();
-    
-    const { data, error } = await ephemeralClient.auth.signUp({
+    logger.info('tenant', 'account_creation_start', `Starting tenant account creation for ${email}`, {
       email,
-      password,
-      options: {
-        data: metadata,
-      },
+      role: metadata.role,
+      hasPhone: !!metadata.phone,
     });
 
-    if (error) {
-      console.error('[TenantCreation] Auth signup error:', error);
-      return { success: false, error: error.message, userId: null };
+    // Route through Edge Function (service role) for guaranteed creation
+    const edgeUrl = `${supabaseUrl}/functions/v1/create-tenant`;
+    let json: any = null;
+    let fnErrorMsg: string | undefined;
+    try {
+      const { data: fnData, error: fnError } = await mainClient.functions.invoke('create-tenant', {
+        body: { email, password, ...metadata },
+      });
+      json = fnData as any;
+      fnErrorMsg = fnError?.message;
+      console.log('🔍 Edge Function response:', { fnData, fnError, json });
+    } catch (e: any) {
+      fnErrorMsg = e?.message || 'Edge function call failed';
+      console.log('🔍 Edge Function error:', e);
+    }
+    if (fnErrorMsg || !json?.userId) {
+      const msg = json?.error || fnErrorMsg || 'Failed creating user via edge function';
+      logger.error('tenant', 'account_creation_failed', msg, { email });
+      return { success: false, error: msg, userId: null };
     }
 
-    if (!data.user) {
-      console.error('[TenantCreation] No user returned from signup');
-      return { success: false, error: 'No user returned from signup', userId: null };
-    }
+    const userId = json.userId as string;
 
-    console.log('[TenantCreation] Tenant account created successfully:', data.user.id);
-    return { success: true, error: null, userId: data.user.id };
+    const duration = Date.now() - startTime;
+    logTenantCreation.success(userId, email, duration, {
+      userId,
+      emailConfirmed: true,
+    });
+
+    logger.info('tenant', 'account_created', `Tenant account created successfully for ${email}`, {
+      userId,
+      email,
+      role: metadata.role,
+      duration,
+    });
+
+    return { success: true, error: null, userId };
   } catch (error: any) {
-    console.error('[TenantCreation] Unexpected error:', error);
+    const duration = Date.now() - startTime;
+    logTenantCreation.error(undefined, email, error.message, {
+      error: error.message,
+      stack: error.stack,
+      duration,
+    });
     return { success: false, error: error.message || 'Unexpected error', userId: null };
   }
 };
@@ -85,11 +111,19 @@ export const createTenantProfile = async (
     is_foreign?: boolean;
   }
 ) => {
+  const startTime = Date.now();
+
   try {
-    console.log('[TenantCreation] Creating tenant profile:', { userId, email: profileData.email });
-    
-    // Use main client for database operations (no auth conflicts)
-    const { data, error } = await supabase
+    logger.info('profile', 'creation_start', `Starting profile creation for user ${userId}`, {
+      userId,
+      email: profileData.email,
+      role: profileData.role,
+      hasAddress: !!profileData.address,
+    });
+
+    // Use main authenticated client so RLS policies for managers/admins apply
+    // This prevents failures when an unauthenticated (anon) client attempts to insert
+    const { data, error } = await mainClient
       .from('profiles')
       .insert([{
         id: userId,
@@ -101,14 +135,36 @@ export const createTenantProfile = async (
       .single();
 
     if (error) {
-      console.error('[TenantCreation] Profile creation error:', error);
+      const duration = Date.now() - startTime;
+      logProfileOperation(userId, 'create', false, {
+        error: error.message,
+        code: error.code,
+        duration,
+      });
       return { success: false, error: error.message, profile: null };
     }
 
-    console.log('[TenantCreation] Tenant profile created successfully:', data.id);
+    const duration = Date.now() - startTime;
+    logProfileOperation(userId, 'create', true, {
+      profileId: data.id,
+      duration,
+    });
+
+    logger.info('profile', 'created', `Profile created successfully for user ${userId}`, {
+      userId,
+      profileId: data.id,
+      role: data.role,
+      duration,
+    });
+
     return { success: true, error: null, profile: data };
   } catch (error: any) {
-    console.error('[TenantCreation] Profile creation unexpected error:', error);
+    const duration = Date.now() - startTime;
+    logProfileOperation(userId, 'create', false, {
+      error: error.message,
+      stack: error.stack,
+      duration,
+    });
     return { success: false, error: error.message || 'Unexpected error', profile: null };
   }
 };
@@ -132,9 +188,16 @@ export const createTenantComplete = async (tenantData: {
   id_number?: string;
   is_foreign?: boolean;
 }) => {
+  const startTime = Date.now();
+
   try {
-    console.log('[TenantCreation] Starting complete tenant creation process');
-    
+    logger.info('tenant', 'complete_creation_start', `Starting complete tenant creation for ${tenantData.email}`, {
+      email: tenantData.email,
+      role: tenantData.role,
+      hasPhone: !!tenantData.phone,
+      hasAddress: !!tenantData.address,
+    });
+
     // Step 1: Create auth account
     const authResult = await createTenantAccount(
       tenantData.email,
@@ -148,6 +211,12 @@ export const createTenantComplete = async (tenantData: {
     );
 
     if (!authResult.success) {
+      const duration = Date.now() - startTime;
+      logger.error('tenant', 'complete_creation_failed', `Auth account creation failed for ${tenantData.email}`, {
+        email: tenantData.email,
+        error: authResult.error,
+        duration,
+      });
       return { success: false, error: authResult.error, userId: null, profile: null };
     }
 
@@ -169,30 +238,53 @@ export const createTenantComplete = async (tenantData: {
     if (!profileResult.success) {
       // Note: Auth account was created but profile failed
       // In production, you might want to clean up the auth account
-      console.warn('[TenantCreation] Profile creation failed, auth account exists:', authResult.userId);
-      return { 
-        success: false, 
-        error: `Account created but profile failed: ${profileResult.error}`, 
-        userId: authResult.userId, 
-        profile: null 
+      const duration = Date.now() - startTime;
+      logger.warn('tenant', 'profile_creation_failed', `Profile creation failed for ${tenantData.email}, auth account exists`, {
+        email: tenantData.email,
+        userId: authResult.userId,
+        profileError: profileResult.error,
+        duration,
+      });
+      return {
+        success: false,
+        error: `Account created but profile failed: ${profileResult.error}`,
+        userId: authResult.userId,
+        profile: null
       };
     }
 
-    console.log('[TenantCreation] Complete tenant creation successful');
-    return { 
-      success: true, 
-      error: null, 
-      userId: authResult.userId, 
-      profile: profileResult.profile 
+    const duration = Date.now() - startTime;
+    logger.info('tenant', 'complete_creation_success', `Complete tenant creation successful for ${tenantData.email}`, {
+      email: tenantData.email,
+      userId: authResult.userId,
+      profileId: profileResult.profile?.id,
+      duration,
+    });
+
+    return {
+      success: true,
+      error: null,
+      userId: authResult.userId,
+      profile: profileResult.profile
     };
   } catch (error: any) {
-    console.error('[TenantCreation] Complete creation unexpected error:', error);
-    return { 
-      success: false, 
-      error: error.message || 'Unexpected error', 
-      userId: null, 
-      profile: null 
+    const duration = Date.now() - startTime;
+    logger.error('tenant', 'complete_creation_error', `Unexpected error in complete tenant creation for ${tenantData.email}`, {
+      email: tenantData.email,
+      error: error.message,
+      stack: error.stack,
+      duration,
+    });
+    return {
+      success: false,
+      error: error.message || 'Unexpected error',
+      userId: null,
+      profile: null
     };
   }
 };
+
+
+
+
 

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList } from 'react-native';
 import { Text, Searchbar, SegmentedButtons } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { theme, spacing } from '@/lib/theme';
+import { spacing } from '@/lib/theme';
+import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { supabase } from '@/lib/supabase';
 import { Voucher, Invoice } from '@/lib/types';
 import { DollarSign, Plus, TrendingUp, TrendingDown, Receipt, FileText } from 'lucide-react-native';
@@ -14,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { toArabicNumerals } from '@/lib/formatters';
 
 export default function FinanceScreen() {
+  const { theme } = useAppTheme();
   const router = useRouter();
   const { t } = useTranslation('finance');
   const [loading, setLoading] = useState(true);
@@ -131,7 +133,7 @@ export default function FinanceScreen() {
       <View style={styles.invoiceHeader}>
         <Text style={styles.invoiceNumber}>{item.invoice_number}</Text>
         <Text style={styles.invoiceAmount}>
-          {toArabicNumerals(new Intl.NumberFormat('ar-SA', { maximumFractionDigits: 0 }).format(item.total_amount))} ر.س
+          {new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(item.total_amount)} SAR
         </Text>
       </View>
       <Text style={styles.invoiceDescription}>{item.description}</Text>
@@ -148,119 +150,7 @@ export default function FinanceScreen() {
     </ModernCard>
   );
 
-  return (
-    <View style={styles.container}>
-      <ModernHeader
-        title={t('title')}
-        subtitle={t('subtitle')}
-        onNotificationPress={() => router.push('/notifications')}
-        onSearchPress={() => router.push('/search')}
-      />
-
-      {/* Stats Overview */}
-      <View style={styles.statsSection}>
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          data={[
-            {
-              title: 'Total Income',
-              value: `${toArabicNumerals(new Intl.NumberFormat('ar-SA', { maximumFractionDigits: 0 }).format(stats.totalIncome))} ر.س`,
-              color: theme.colors.success,
-              icon: <TrendingUp size={20} color={theme.colors.success} />,
-              trend: { value: '+12.5%', isPositive: true },
-            },
-            {
-              title: 'Total Expenses',
-              value: `${toArabicNumerals(new Intl.NumberFormat('ar-SA', { maximumFractionDigits: 0 }).format(stats.totalExpenses))} ر.س`,
-              color: theme.colors.error,
-              icon: <TrendingDown size={20} color={theme.colors.error} />,
-            },
-            {
-              title: 'Pending',
-              value: `${toArabicNumerals(new Intl.NumberFormat('ar-SA', { maximumFractionDigits: 0 }).format(stats.pendingPayments))} ر.س`,
-              color: theme.colors.warning,
-              icon: <Receipt size={20} color={theme.colors.warning} />,
-            },
-            {
-              title: 'Net Income',
-              value: `${toArabicNumerals(new Intl.NumberFormat('ar-SA', { maximumFractionDigits: 0 }).format(stats.thisMonth))} ر.س`,
-              color: theme.colors.primary,
-              icon: <DollarSign size={20} color={theme.colors.primary} />,
-              trend: { value: '+8.2%', isPositive: true },
-            },
-          ]}
-          renderItem={({ item }) => (
-            <StatCard
-              title={item.title}
-              value={item.value}
-              color={item.color}
-              icon={item.icon}
-              trend={item.trend}
-            />
-          )}
-          keyExtractor={(item) => item.title}
-          contentContainerStyle={styles.statsContainer}
-        />
-      </View>
-
-      {/* Tab Selection */}
-      <View style={styles.filtersSection}>
-        <SegmentedButtons
-          value={activeTab}
-          onValueChange={setActiveTab}
-          buttons={[
-            { value: 'vouchers', label: 'Vouchers' },
-            { value: 'invoices', label: 'Invoices' },
-          ]}
-          style={styles.segmentedButtons}
-        />
-
-        <Searchbar
-          placeholder={`Search ${activeTab}...`}
-          onChangeText={setSearchQuery}
-          value={searchQuery}
-          style={styles.searchbar}
-          iconColor={theme.colors.onSurfaceVariant}
-        />
-      </View>
-
-      {/* Data List */}
-      <FlatList
-        data={filteredData}
-        renderItem={activeTab === 'vouchers' ? renderVoucher : renderInvoice}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <ModernCard style={styles.emptyState}>
-            <FileText size={48} color={theme.colors.onSurfaceVariant} />
-            <Text style={styles.emptyStateTitle}>No {activeTab} found</Text>
-            <Text style={styles.emptyStateSubtitle}>
-              {searchQuery 
-                ? 'Try adjusting your search' 
-                : `Create your first ${activeTab.slice(0, -1)} to get started`}
-            </Text>
-          </ModernCard>
-        }
-      />
-
-      {/* Add Button */}
-      <View style={styles.fabContainer}>
-        <ModernCard style={styles.fab}>
-          <Text
-            style={styles.fabText}
-            onPress={() => router.push(`/finance/${activeTab}/add`)}
-          >
-            <Plus size={24} color="white" />
-          </Text>
-        </ModernCard>
-      </View>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
+    const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
@@ -366,3 +256,116 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
+  return (
+    <View style={styles.container}>
+      <ModernHeader
+        title={t('title')}
+        subtitle={t('subtitle')}
+        onNotificationPress={() => router.push('/notifications')}
+        onSearchPress={() => router.push('/search')}
+      />
+
+      {/* Stats Overview */}
+      <View style={styles.statsSection}>
+        <FlatList
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          data={[
+            {
+              title: 'Total Income',
+              value: `${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(stats.totalIncome)} SAR`,
+              color: theme.colors.success,
+              icon: <TrendingUp size={20} color={theme.colors.success} />,
+              trend: { value: '+12.5%', isPositive: true },
+            },
+            {
+              title: 'Total Expenses',
+              value: `${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(stats.totalExpenses)} SAR`,
+              color: theme.colors.error,
+              icon: <TrendingDown size={20} color={theme.colors.error} />,
+            },
+            {
+              title: 'Pending',
+              value: `${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(stats.pendingPayments)} SAR`,
+              color: theme.colors.warning,
+              icon: <Receipt size={20} color={theme.colors.warning} />,
+            },
+            {
+              title: 'Net Income',
+              value: `${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(stats.thisMonth)} SAR`,
+              color: theme.colors.primary,
+              icon: <DollarSign size={20} color={theme.colors.primary} />,
+              trend: { value: '+8.2%', isPositive: true },
+            },
+          ]}
+          renderItem={({ item }) => (
+            <StatCard
+              title={item.title}
+              value={item.value}
+              color={item.color}
+              icon={item.icon}
+              trend={item.trend}
+            />
+          )}
+          keyExtractor={(item) => item.title}
+          contentContainerStyle={styles.statsContainer}
+        />
+      </View>
+
+      {/* Tab Selection */}
+      <View style={styles.filtersSection}>
+        <SegmentedButtons
+          value={activeTab}
+          onValueChange={setActiveTab}
+          buttons={[
+            { value: 'vouchers', label: 'Vouchers' },
+            { value: 'invoices', label: 'Invoices' },
+          ]}
+          style={styles.segmentedButtons}
+        />
+
+        <Searchbar
+          placeholder={`Search ${activeTab}...`}
+          onChangeText={setSearchQuery}
+          value={searchQuery}
+          style={styles.searchbar}
+          iconColor={theme.colors.onSurfaceVariant}
+        />
+      </View>
+
+      {/* Data List */}
+      <FlatList
+        data={filteredData}
+        renderItem={activeTab === 'vouchers' ? renderVoucher : renderInvoice}
+        keyExtractor={item => item.id}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <ModernCard style={styles.emptyState}>
+            <FileText size={48} color={theme.colors.onSurfaceVariant} />
+            <Text style={styles.emptyStateTitle}>No {activeTab} found</Text>
+            <Text style={styles.emptyStateSubtitle}>
+              {searchQuery 
+                ? 'Try adjusting your search' 
+                : `Create your first ${activeTab.slice(0, -1)} to get started`}
+            </Text>
+          </ModernCard>
+        }
+      />
+
+      {/* Add Button */}
+      <View style={styles.fabContainer}>
+        <ModernCard style={styles.fab}>
+          <Text
+            style={styles.fabText}
+            onPress={() => router.push(`/finance/${activeTab}/add`)}
+          >
+            <Plus size={24} color="white" />
+          </Text>
+        </ModernCard>
+      </View>
+    </View>
+  );
+}
+

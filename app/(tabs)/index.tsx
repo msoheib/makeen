@@ -6,24 +6,29 @@ import { lightTheme } from '@/lib/theme';
 import { useTheme as useAppTheme } from '@/hooks/useTheme';
 import { useAppStore } from '@/lib/store';
 import { rtlStyles, getTextAlign, getFlexDirection } from '@/lib/rtl';
-import { 
-  Building2, 
-  Users, 
-  TrendingUp, 
-  DollarSign, 
+import {
+  Building2,
+  Users,
+  TrendingUp,
+  DollarSign,
   Home,
   AlertCircle,
   Calendar,
   FileText,
   Shield,
-  Lock
+  Lock,
+  Wrench,
+  CreditCard,
+  Clock,
+  CheckCircle,
+  XCircle
 } from 'lucide-react-native';
 import ModernHeader from '@/components/ModernHeader';
 import RentCard from '@/components/RentCard';
 import CashflowCard from '@/components/CashflowCard';
 import StatCard from '@/components/StatCard';
 import { useApi } from '@/hooks/useApi';
-import { propertiesApi, profilesApi, contractsApi } from '@/lib/api';
+import { propertiesApi, profilesApi, contractsApi, tenantApi } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 import { useScreenAccess, SCREEN_PERMISSIONS } from '@/lib/permissions';
 import { formatCurrency, formatDisplayNumber } from '@/lib/formatters';
@@ -90,93 +95,122 @@ const staticData = {
 export default function DashboardScreen() {
   const { theme, isDark } = useAppTheme();
   const styles = React.useMemo(() => createStyles(theme), [theme]);
-  const { t } = useTranslation('common');
+  const { t } = useTranslation(['dashboard','common']);
 
   // Check if user has access to dashboard
   const { hasAccess: canAccessDashboard, loading: permissionLoading, userContext } = useScreenAccess('dashboard');
 
   // API calls for real-time data (with role-based filtering)
-  const { 
-    data: dashboardSummary, 
-    loading: summaryLoading, 
-    error: summaryError, 
-    refetch: refetchSummary 
-  } = useApi(() => propertiesApi.getDashboardSummary(), []);
+  const {
+    data: dashboardSummary,
+    loading: summaryLoading,
+    error: summaryError,
+    refetch: refetchSummary
+  } = useApi(() => {
+    // For tenants, show empty summary or tenant-specific financial data
+    if (userContext?.role === 'tenant') {
+      return Promise.resolve({
+        totalIncome: 0,
+        totalExpenses: 0,
+        netProfit: 0,
+        profitMargin: 0,
+        totalProperties: 0,
+        occupiedProperties: 0,
+        vacantProperties: 0,
+        maintenanceProperties: 0,
+        totalTenants: 0,
+        activeContracts: 0,
+        expiringContracts: 0,
+        pendingMaintenance: 0
+      });
+    }
+    return propertiesApi.getDashboardSummary();
+  }, [userContext?.role]);
 
-  const { 
-    data: properties, 
-    loading: propertiesLoading, 
+  const {
+    data: properties,
+    loading: propertiesLoading,
     error: propertiesError,
-    refetch: refetchProperties 
-  } = useApi(() => propertiesApi.getAll(), []);
+    refetch: refetchProperties
+  } = useApi(() => {
+    // Filter properties based on user role
+    if (userContext?.role === 'tenant') {
+      // For tenants, only show properties they have contracts for
+      return contractsApi.getTenantProperties(userContext.userId);
+    }
+    // For other roles, show all properties
+    return propertiesApi.getAll();
+  }, [userContext?.role, userContext?.userId]);
 
-  const { 
-    data: tenants, 
-    loading: tenantsLoading, 
+  const {
+    data: tenants,
+    loading: tenantsLoading,
     error: tenantsError,
-    refetch: refetchTenants 
-  } = useApi(() => profilesApi.getTenants(), []);
+    refetch: refetchTenants
+  } = useApi(() => {
+    // Hide tenants data from tenant users
+    if (userContext?.role === 'tenant') {
+      return Promise.resolve([]);
+    }
+    return profilesApi.getTenants();
+  }, [userContext?.role]);
 
-  // TEMPORARY: Use direct database data for debugging
-  const [directProperties, setDirectProperties] = useState<any[]>([]);
-  const [directTenants, setDirectTenants] = useState<any[]>([]);
+  // API calls for tenant-specific data
+  const {
+    data: maintenanceRequests,
+    loading: maintenanceLoading,
+    refetch: refetchMaintenance
+  } = useApi(() => {
+    if (userContext?.role === 'tenant' && userContext?.userId) {
+      return tenantApi.getMaintenanceRequests(userContext.userId);
+    }
+    return Promise.resolve([]);
+  }, [userContext?.role, userContext?.userId]);
+
+  const {
+    data: paymentHistory,
+    loading: paymentsLoading,
+    refetch: refetchPayments
+  } = useApi(() => {
+    if (userContext?.role === 'tenant' && userContext?.userId) {
+      return tenantApi.getPaymentHistory(userContext.userId);
+    }
+    return Promise.resolve([]);
+  }, [userContext?.role, userContext?.userId]);
+
+  const {
+    data: tenantContracts,
+    loading: contractsLoading,
+    refetch: refetchContracts
+  } = useApi(() => {
+    if (userContext?.role === 'tenant' && userContext?.userId) {
+      return tenantApi.getContracts(userContext.userId);
+    }
+    return Promise.resolve([]);
+  }, [userContext?.role, userContext?.userId]);
   
   useEffect(() => {
     // Direct database queries for debugging (dev only)
     supabase.from('properties').select('*').then(result => {
       if (result.data) {
         setDirectProperties(result.data);
-        if (__DEV__) {
-          // eslint-disable-next-line no-console
-          console.log('[Direct DB Debug] Properties loaded:', result.data.length);
-        }
       }
     });
     
     supabase.from('profiles').select('*').eq('role', 'tenant').then(result => {
       if (result.data) {
         setDirectTenants(result.data);
-        if (__DEV__) {
-          // eslint-disable-next-line no-console
-          console.log('[Direct DB Debug] Tenants loaded:', result.data.length);
-        }
       }
     });
   }, []);
 
-  // Debug API errors and data
-  if (__DEV__) {
-  console.log('[Dashboard Debug] API Data:', {
-    propertiesError: propertiesError?.message,
-    tenantsError: tenantsError?.message,
-    summaryError: summaryError?.message,
-    propertiesLoading,
-    tenantsLoading,
-    summaryLoading,
-    propertiesRaw: properties,
-    tenantsRaw: tenants,
-    summaryRaw: dashboardSummary,
-    propertiesDataLength: properties?.data?.length,
-    tenantsDataLength: tenants?.data?.length,
-    summaryDataLength: dashboardSummary?.data ? Object.keys(dashboardSummary.data).length : 0
-  });
-  }
+  // State for direct database queries
+  const [directProperties, setDirectProperties] = useState([]);
+  const [directTenants, setDirectTenants] = useState([]);
 
-  // Fetch tenant contracts for payment information
-  const { 
-    data: tenantContracts, 
-    loading: contractsLoading, 
-    refetch: refetchContracts 
-  } = useApi(() => {
-    // Only fetch contracts for tenant users
-    if (userContext?.role === 'tenant' && userContext?.userId) {
-      return contractsApi.getAll({ tenant_id: userContext.userId });
-    }
-    return Promise.resolve([]);
-  }, [userContext?.role, userContext?.userId]);
 
   // Loading state
-  const isLoading = permissionLoading || summaryLoading || propertiesLoading || tenantsLoading || contractsLoading;
+  const isLoading = permissionLoading || summaryLoading || propertiesLoading || tenantsLoading || contractsLoading || maintenanceLoading || paymentsLoading;
 
   // Handle refresh
   const [refreshing, setRefreshing] = React.useState(false);
@@ -187,58 +221,33 @@ export default function DashboardScreen() {
       refetchSummary(),
       refetchProperties(),
       refetchTenants(),
-      refetchContracts()
+      refetchContracts(),
+      refetchMaintenance(),
+      refetchPayments()
     ]);
     setRefreshing(false);
-  }, [refetchSummary, refetchProperties, refetchTenants, refetchContracts]);
+  }, [refetchSummary, refetchProperties, refetchTenants, refetchContracts, refetchMaintenance, refetchPayments]);
 
   // Show loading state while checking permissions
   if (permissionLoading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <ModernHeader title="لوحة التحكم" variant="dark" />
+        <ModernHeader title={t('dashboard:title')} variant="dark" />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={[styles.loadingText, { color: theme.colors.onSurfaceVariant }]}>
-            {t('loading')}
+            {t('common.loading')}
           </Text>
         </View>
       </SafeAreaView>
     );
   }
 
-  // DEBUG: Show user context for troubleshooting
-  if (__DEV__) {
-  console.log('[Dashboard Debug] User Context:', {
-    hasAccess: canAccessDashboard,
-    userContext: userContext,
-    isAuthenticated: userContext?.isAuthenticated,
-    role: userContext?.role,
-    userId: userContext?.userId,
-    permissionLoading: permissionLoading,
-    screenPermissionCheck: SCREEN_PERMISSIONS.find(p => p.screen === 'dashboard')
-  });
-  }
-
-
-
-  // More detailed debug for dashboard access
-  if (!canAccessDashboard && !permissionLoading) {
-    if (__DEV__) {
-    console.log('[Dashboard Debug] Access Denied Details:', {
-      screenExists: SCREEN_PERMISSIONS.some(p => p.screen === 'dashboard'),
-      userHasRole: userContext?.role,
-      allowedRoles: SCREEN_PERMISSIONS.find(p => p.screen === 'dashboard')?.roles,
-      isAuthenticated: userContext?.isAuthenticated
-    });
-    }
-  }
-
   // If user doesn't have dashboard access, show access denied
   if (!canAccessDashboard) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <ModernHeader title="لوحة التحكم" variant="dark" />
+        <ModernHeader title={t('dashboard:title')} variant="dark" />
         <View style={styles.accessDeniedContainer}>
           <Lock size={64} color="#ccc" />
           <Text style={[styles.accessDeniedText, { color: theme.colors.onSurfaceVariant }]}>
@@ -317,88 +326,33 @@ export default function DashboardScreen() {
     tenants: tenantsError || null,
   };
   
-  if (__DEV__) {
-  console.log('[Dashboard Debug] Properties Data:', {
-    propertiesCount: propertiesData.length,
-    tenantsCount: tenantsData.length,
-    propertiesData: propertiesData.slice(0, 2), // First 2 for debugging
-    summaryLoading: summaryLoading,
-    summaryData: dashboardSummary?.data,
-    summaryError: summaryError,
-    propertyStats: propertyStats,
-    tenantStats: tenantStats,
-    financialSummary: financialSummary
-  });
-  }
-
-  // Direct database query for debugging
-  if (__DEV__) {
-  console.log('[Dashboard Debug] Direct Database Check:');
-  }
-  
-  // Check properties directly
-  supabase.from('properties').select('*').then(result => {
-    if (__DEV__) {
-      // eslint-disable-next-line no-console
-      console.log('[Direct DB] Properties:', {
-        count: result.data?.length || 0,
-        data: result.data?.slice(0, 3), // First 3 properties
-        error: result.error?.message
-      });
-    }
-  });
-  
-  // Check tenants directly
-  supabase.from('profiles').select('*').eq('role', 'tenant').then(result => {
-    if (__DEV__) {
-      // eslint-disable-next-line no-console
-      console.log('[Direct DB] Tenants:', {
-        count: result.data?.length || 0,
-        data: result.data?.slice(0, 3), // First 3 tenants
-        error: result.error?.message
-      });
-    }
-  });
-  
-  // Check contracts directly
-  supabase.from('contracts').select('*').then(result => {
-    if (__DEV__) {
-      // eslint-disable-next-line no-console
-      console.log('[Direct DB] Contracts:', {
-        count: result.data?.length || 0,
-        data: result.data?.slice(0, 3), // First 3 contracts
-        error: result.error?.message
-      });
-    }
-  });
-
   // Enhanced recent activities with more realistic data
   const recentActivities = [
     {
       id: '1',
       type: 'payment',
-      title: 'دفعة إيجار شهرية مستلمة',
-      description: `${tenantStats.activeTenants} مستأجر نشط`,
+      title: t('dashboard:activity.monthlyRentReceived'),
+      description: t('dashboard:activity.desc.activeTenants', { count: tenantStats.activeTenants }),
       amount: Math.floor(financialSummary.monthlyRent / (tenantStats.activeTenants || 1)),
-      date: new Date().toISOString().split('T')[0],
+      date: new Date().toLocaleDateString(),
       status: 'completed'
     },
     {
       id: '2',
       type: 'contract',
-      title: 'عقود نشطة',
-      description: `${tenantStats.activeContracts} عقد نشط`,
+      title: t('dashboard:activity.activeContracts'),
+      description: t('dashboard:activity.desc.activeContracts', { count: tenantStats.activeContracts }),
       amount: financialSummary.monthlyRent,
-      date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+      date: new Date(Date.now() - 86400000).toLocaleDateString(),
       status: 'active'
     },
     {
       id: '3',
       type: 'maintenance',
-      title: 'طلبات الصيانة',
-      description: `${propertyStats.maintenance} عقار في الصيانة`,
+      title: t('dashboard:activity.maintenanceRequests'),
+      description: t('dashboard:activity.desc.propertiesUnderMaintenance', { count: propertyStats.maintenance }),
       amount: Math.floor(financialSummary.totalExpenses * 0.4), // 40% of expenses for maintenance
-      date: new Date(Date.now() - 172800000).toISOString().split('T')[0],
+      date: new Date(Date.now() - 172800000).toLocaleDateString(),
       status: 'pending'
     }
   ];
@@ -438,8 +392,8 @@ export default function DashboardScreen() {
     return {
       amount: monthlyRent,
       hasPayment: monthlyRent > 0,
-      dueDate: '30 يناير 2025', // This would come from actual payment due calculation
-      description: `إيجار شهر يناير 2025`
+      dueDate: 'January 30, 2025', // This would come from actual payment due calculation
+      description: `January 2025 Rent`
     };
   };
 
@@ -473,7 +427,7 @@ export default function DashboardScreen() {
       hasProperty: true,
       propertyName: property.title,
       propertyAddress: `${property.address}, ${property.city}`,
-      propertySpecs: `${property.bedrooms || 0} غرف • ${property.bathrooms || 0} حمام • ${property.area_sqm || 0} م²`
+      propertySpecs: `${property.bedrooms || 0} bedrooms • ${property.bathrooms || 0} bathrooms • ${property.area_sqm || 0} m²`
     };
   };
 
@@ -483,69 +437,53 @@ export default function DashboardScreen() {
   const renderTenantDashboard = () => (
     <View style={styles.tenantSection}>
       <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
-        المستأجر - المعلومات الشخصية
+        Tenant Dashboard
       </Text>
-      
-      {/* Payment Due Section */}
-      <View style={[styles.paymentDueCard, { backgroundColor: theme.colors.surface }]}>
-        <View style={styles.paymentHeader}>
-          <View style={[styles.paymentIcon, { backgroundColor: '#FF980020' }]}>
-            <DollarSign size={24} color="#FF9800" />
-          </View>
-          <View style={styles.paymentInfo}>
-            <Text style={[styles.paymentTitle, { color: theme.colors.onSurface }]}>
-              الدفعة المستحقة
-            </Text>
-            <Text style={[styles.paymentAmount, { color: '#FF9800' }]}>
-              {tenantPayment.amount.toLocaleString('ar-SA')} ريال
-            </Text>
-          </View>
-        </View>
-        {tenantPayment.hasPayment ? (
-          <>
-            <Text style={[styles.paymentDue, { color: theme.colors.onSurfaceVariant }]}>
-              تاريخ الاستحقاق: {tenantPayment.dueDate}
-            </Text>
-            <Text style={[styles.paymentDescription, { color: theme.colors.onSurfaceVariant }]}>
-              {tenantPayment.description}
-            </Text>
-          </>
-        ) : (
-          <Text style={[styles.paymentDescription, { color: theme.colors.onSurfaceVariant }]}>
-            لا توجد مدفوعات مستحقة حالياً
-          </Text>
-        )}
-      </View>
 
-      {/* Current Property Section */}
+      {/* Current Contracts Section */}
       <View style={[styles.currentPropertyCard, { backgroundColor: theme.colors.surface }]}>
         <Text style={[styles.subsectionTitle, { color: theme.colors.onSurface }]}>
-          العقار الحالي
+          <FileText size={20} color={theme.colors.primary} /> Current Contracts
         </Text>
         {contractsLoading ? (
           <View style={styles.propertyLoadingContainer}>
             <ActivityIndicator size="large" color={theme.colors.primary} />
             <Text style={[styles.propertyLoadingText, { color: theme.colors.onSurfaceVariant }]}>
-              جاري تحميل معلومات العقار...
+              Loading contracts...
             </Text>
           </View>
-        ) : tenantProperty.hasProperty ? (
-          <View style={styles.propertyDetails}>
-            <View style={[styles.propertyIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
-              <Building2 size={24} color={theme.colors.primary} />
+        ) : tenantContracts && tenantContracts.length > 0 ? (
+          tenantContracts.map((contract: any) => (
+            <View key={contract.id} style={[styles.contractCard, { backgroundColor: theme.colors.surface }]}>
+              <View style={styles.contractHeader}>
+                <View style={[styles.propertyIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
+                  <Building2 size={20} color={theme.colors.primary} />
+                </View>
+                <View style={styles.contractInfo}>
+                  <Text style={[styles.propertyName, { color: theme.colors.onSurface }]}>
+                    {contract.property?.title || 'Unspecified Property'}
+                  </Text>
+                  <Text style={[styles.propertyAddress, { color: theme.colors.onSurfaceVariant }]}>
+                    {contract.property?.address || 'Address not available'}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.contractDetails}>
+                <Text style={[styles.contractStatus, { color: contract.status === 'active' ? '#4CAF50' : '#FF9800' }]}>
+                  <CheckCircle size={16} /> {contract.status === 'active' ? 'Active' : 'Expired'}
+                </Text>
+                <Text style={[styles.contractDates, { color: theme.colors.onSurfaceVariant }]}>
+                  <Calendar size={14} /> From: {new Date(contract.start_date).toLocaleDateString('en-US')}
+                </Text>
+                <Text style={[styles.contractDates, { color: theme.colors.onSurfaceVariant }]}>
+                  <Calendar size={14} /> To: {new Date(contract.end_date).toLocaleDateString('en-US')}
+                </Text>
+                <Text style={[styles.contractRent, { color: theme.colors.primary }]}>
+                  <DollarSign size={14} /> Rent: {formatCurrency(contract.monthly_rent)}
+                </Text>
+              </View>
             </View>
-            <View style={styles.propertyInfo}>
-              <Text style={[styles.propertyName, { color: theme.colors.onSurface }]}>
-                {tenantProperty.propertyName}
-              </Text>
-              <Text style={[styles.propertyAddress, { color: theme.colors.onSurfaceVariant }]}>
-                {tenantProperty.propertyAddress}
-              </Text>
-              <Text style={[styles.propertySpecs, { color: theme.colors.onSurfaceVariant }]}>
-                {tenantProperty.propertySpecs}
-              </Text>
-            </View>
-          </View>
+          ))
         ) : (
           <View style={styles.noPropertyContainer}>
             <View style={[styles.propertyIcon, { backgroundColor: '#FF980020' }]}>
@@ -553,13 +491,109 @@ export default function DashboardScreen() {
             </View>
             <View style={styles.propertyInfo}>
               <Text style={[styles.noPropertyTitle, { color: theme.colors.onSurface }]}>
-                لا يوجد عقار حتى الآن
+                No Active Contracts
               </Text>
               <Text style={[styles.noPropertyMessage, { color: theme.colors.onSurfaceVariant }]}>
-                يرجى التواصل مع المدير للحصول على التعيين
+                No active rental contracts at the moment
               </Text>
             </View>
           </View>
+        )}
+      </View>
+
+      {/* Payment History Section */}
+      <View style={[styles.paymentHistoryCard, { backgroundColor: theme.colors.surface }]}>
+        <Text style={[styles.subsectionTitle, { color: theme.colors.onSurface }]}>
+          <CreditCard size={20} color={theme.colors.primary} /> Payment History
+        </Text>
+        {paymentsLoading ? (
+          <View style={styles.propertyLoadingContainer}>
+            <ActivityIndicator size="large" color={theme.colors.primary} />
+            <Text style={[styles.propertyLoadingText, { color: theme.colors.onSurfaceVariant }]}>
+              Loading payments...
+            </Text>
+          </View>
+        ) : paymentHistory && paymentHistory.length > 0 ? (
+          <View style={styles.paymentsList}>
+            {paymentHistory.slice(0, 5).map((payment: any) => (
+              <View key={payment.id} style={styles.paymentItem}>
+                <View style={styles.paymentItemHeader}>
+                  <Text style={[styles.paymentItemTitle, { color: theme.colors.onSurface }]}>
+                    {payment.voucher_type === 'receipt' ? 'Payment Received' : 'Payment Made'}
+                  </Text>
+                  <Text style={[styles.paymentItemAmount, {
+                    color: payment.voucher_type === 'receipt' ? '#4CAF50' : '#F44336'
+                  }]}>
+                    {payment.voucher_type === 'receipt' ? '+' : '-'}
+                    {formatCurrency(payment.amount)}
+                  </Text>
+                </View>
+                <View style={styles.paymentItemDetails}>
+                  <Text style={[styles.paymentItemDate, { color: theme.colors.onSurfaceVariant }]}>
+                    <Clock size={12} /> {new Date(payment.created_at).toLocaleDateString('en-US')}
+                  </Text>
+                  <Text style={[styles.paymentItemStatus, {
+                    color: payment.status === 'cleared' ? '#4CAF50' : '#FF9800'
+                  }]}>
+                    {payment.status === 'cleared' ? 'Confirmed' : 'Processing'}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <Text style={[styles.noDataText, { color: theme.colors.onSurfaceVariant }]}>
+            No payments recorded
+          </Text>
+        )}
+      </View>
+
+      {/* Maintenance Requests Section */}
+      <View style={[styles.maintenanceCard, { backgroundColor: theme.colors.surface }]}>
+        <Text style={[styles.subsectionTitle, { color: theme.colors.onSurface }]}>
+          <Wrench size={20} color={theme.colors.primary} /> Maintenance Requests
+        </Text>
+        {maintenanceLoading ? (
+          <View style={styles.propertyLoadingContainer}>
+            <ActivityIndicator size="large" color={theme.colors.primary} />
+            <Text style={[styles.propertyLoadingText, { color: theme.colors.onSurfaceVariant }]}>
+              Loading maintenance requests...
+            </Text>
+          </View>
+        ) : maintenanceRequests && maintenanceRequests.length > 0 ? (
+          <View style={styles.maintenanceList}>
+            {maintenanceRequests.slice(0, 5).map((request: any) => (
+              <View key={request.id} style={styles.maintenanceItem}>
+                <View style={styles.maintenanceItemHeader}>
+                  <Text style={[styles.maintenanceItemTitle, { color: theme.colors.onSurface }]}>
+                    {request.title}
+                  </Text>
+                  <View style={[styles.maintenanceStatus, {
+                    backgroundColor: request.status === 'completed' ? '#4CAF5020' :
+                                   request.status === 'in_progress' ? '#2196F320' : '#FF980020'
+                  }]}>
+                    <Text style={[styles.maintenanceStatusText, {
+                      color: request.status === 'completed' ? '#4CAF50' :
+                             request.status === 'in_progress' ? '#2196F3' : '#FF9800'
+                    }]}>
+                      {request.status === 'completed' ? 'Completed' :
+                       request.status === 'in_progress' ? 'In Progress' : 'Pending'}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={[styles.maintenanceItemDesc, { color: theme.colors.onSurfaceVariant }]}>
+                  {request.description}
+                </Text>
+                <Text style={[styles.maintenanceItemDate, { color: theme.colors.onSurfaceVariant }]}>
+                  <Clock size={12} /> {new Date(request.created_at).toLocaleDateString('en-US')}
+                </Text>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <Text style={[styles.noDataText, { color: theme.colors.onSurfaceVariant }]}>
+            No maintenance requests recorded
+          </Text>
         )}
       </View>
     </View>
@@ -568,7 +602,7 @@ export default function DashboardScreen() {
   const renderQuickStats = () => (
     <View style={styles.quickStatsSection}>
       <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
-        الإحصائيات السريعة
+        {t('dashboard:quickStats')}
       </Text>
       {isLoading ? (
         <HorizontalStatsShimmer />
@@ -579,8 +613,8 @@ export default function DashboardScreen() {
               <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.primary}20` }]}>
                 <Building2 size={24} color={theme.colors.primary} />
               </View>
-              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                إجمالي العقارات
+              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}> 
+                {t('dashboard:totalProperties')}
               </Text>
                               <Text style={[styles.horizontalStatValue, { color: theme.colors.primary }]}>
                   {formatDisplayNumber(propertyStats.totalProperties)}
@@ -591,8 +625,8 @@ export default function DashboardScreen() {
               <View style={[styles.horizontalStatIcon, { backgroundColor: '#4CAF5020' }]}>
                 <Home size={24} color="#4CAF50" />
               </View>
-              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                العقارات المشغولة
+              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}> 
+                {t('dashboard:occupiedProperties')}
               </Text>
                               <Text style={[styles.horizontalStatValue, { color: '#4CAF50' }]}>
                   {formatDisplayNumber(propertyStats.occupied)}
@@ -603,8 +637,8 @@ export default function DashboardScreen() {
               <View style={[styles.horizontalStatIcon, { backgroundColor: `${theme.colors.secondary}20` }]}>
                 <Users size={24} color={theme.colors.secondary} />
               </View>
-              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}>
-                إجمالي المستأجرين
+              <Text style={[styles.horizontalStatLabel, { color: theme.colors.onSurfaceVariant }]}> 
+                {t('dashboard:totalTenants')}
               </Text>
                               <Text style={[styles.horizontalStatValue, { color: theme.colors.secondary }]}>
                   {formatDisplayNumber(tenantStats.totalTenants)}
@@ -621,7 +655,7 @@ export default function DashboardScreen() {
   const renderFinancialCards = () => (
     <View style={styles.financialSection}>
       <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
-        الملخص المالي
+        {t('dashboard:financialSummary')}
       </Text>
       <View style={styles.financialCards}>
         {isLoading ? (
@@ -654,7 +688,7 @@ export default function DashboardScreen() {
   const renderPropertyOverview = () => (
     <View style={styles.propertySection}>
       <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
-        نظرة عامة على العقارات
+        {t('dashboard:propertyOverview')}
       </Text>
       {isLoading ? (
         <PropertyOverviewShimmer />
@@ -666,7 +700,7 @@ export default function DashboardScreen() {
                 <Building2 size={24} color={theme.colors.primary} />
               </View>
               <Text style={[styles.propertyLabel, { color: theme.colors.onSurfaceVariant }]}>
-                مشغولة
+                {t('dashboard:occupied')}
               </Text>
                               <Text style={[styles.propertyValue, { color: theme.colors.onSurface }]}>
                   {formatDisplayNumber(propertyStats.occupied)}
@@ -678,7 +712,7 @@ export default function DashboardScreen() {
                 <Home size={24} color="#4CAF50" />
               </View>
               <Text style={[styles.propertyLabel, { color: theme.colors.onSurfaceVariant }]}>
-                شاغرة
+                {t('dashboard:available')}
               </Text>
                               <Text style={[styles.propertyValue, { color: theme.colors.onSurface }]}>
                   {formatDisplayNumber(propertyStats.available)}
@@ -690,7 +724,7 @@ export default function DashboardScreen() {
                 <AlertCircle size={24} color="#FF9800" />
               </View>
               <Text style={[styles.propertyLabel, { color: theme.colors.onSurfaceVariant }]}>
-                صيانة
+                {t('dashboard:maintenance')}
               </Text>
                               <Text style={[styles.propertyValue, { color: theme.colors.onSurface }]}>
                   {formatDisplayNumber(propertyStats.maintenance)}
@@ -699,8 +733,8 @@ export default function DashboardScreen() {
           </View>
           
           <View style={styles.occupancyRate}>
-            <Text style={[styles.occupancyLabel, { color: theme.colors.onSurfaceVariant }]}>
-              معدل الإشغال
+            <Text style={[styles.occupancyLabel, { color: theme.colors.onSurfaceVariant }]}> 
+              {t('dashboard:occupancyRate')}
             </Text>
             <Text style={[styles.occupancyValue, { color: theme.colors.primary }]}>
               {formatDisplayNumber(propertyStats.occupancyRate)}%
@@ -717,17 +751,17 @@ export default function DashboardScreen() {
         <Building2 size={64} color={theme.colors.onSurfaceVariant} />
       </View>
       <Text style={[styles.emptyStateTitle, { color: theme.colors.onBackground }]}>
-        لا توجد بيانات لعرضها
+        No Data to Display
       </Text>
       <Text style={[styles.emptyStateMessage, { color: theme.colors.onSurfaceVariant }]}>
-        لم يتم العثور على عقارات أو مستأجرين في النظام.{'\n'}
-        ابدأ بإضافة عقار جديد أو مستأجر للبدء في استخدام النظام.
+        No properties or tenants found in the system.{'\n'}
+        Start by adding a new property or tenant to begin using the system.
       </Text>
       <View style={styles.emptyStateActions}>
         <Text style={[styles.emptyStateActionText, { color: theme.colors.primary }]}>
-          • أضف عقار جديد من صفحة العقارات{'\n'}
-          • أضف مستأجر جديد من صفحة المستأجرين{'\n'}
-          • تحقق من إعدادات المستخدم والصلاحيات
+          • Add new property from Properties page{'\n'}
+          • Add new tenant from Tenants page{'\n'}
+          • Check user settings and permissions
         </Text>
       </View>
     </View>
@@ -739,17 +773,17 @@ export default function DashboardScreen() {
         <AlertCircle size={64} color="#FF5722" />
       </View>
       <Text style={[styles.emptyStateTitle, { color: theme.colors.onBackground }]}>
-        خطأ في تحميل البيانات
+        Error Loading Data
       </Text>
       <Text style={[styles.emptyStateMessage, { color: theme.colors.onSurfaceVariant }]}>
-        حدث خطأ أثناء تحميل بيانات لوحة التحكم.{'\n'}
-        تحقق من اتصال الإنترنت وحاول مرة أخرى.
+        An error occurred while loading dashboard data.{'\n'}
+        Check your internet connection and try again.
       </Text>
       <View style={styles.emptyStateActions}>
         <Text style={[styles.emptyStateActionText, { color: theme.colors.primary }]}>
-          • اسحب للأسفل لتحديث البيانات{'\n'}
-          • تحقق من اتصال الإنترنت{'\n'}
-          • تواصل مع الدعم الفني إذا استمرت المشكلة
+          • Pull down to refresh data{'\n'}
+          • Check internet connection{'\n'}
+          • Contact technical support if problem persists
         </Text>
       </View>
     </View>
@@ -758,7 +792,7 @@ export default function DashboardScreen() {
   const renderRecentActivity = () => (
     <View style={styles.activitySection}>
       <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
-        النشاطات الأخيرة
+        {t('dashboard:recentActivity')}
       </Text>
       {isLoading ? (
         <RecentActivityShimmer count={3} />
@@ -808,8 +842,8 @@ export default function DashboardScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ModernHeader 
-        title="لوحة التحكم" 
-        subtitle="مرحباً بك في نظام إدارة العقارات"
+        title={t('dashboard:title')} 
+        subtitle={t('dashboard:welcomeMessage')}
         showNotifications={true}
         variant="dark"
       />
@@ -840,25 +874,25 @@ export default function DashboardScreen() {
                   <AlertCircle size={48} color="#FF5722" />
                 </View>
                 <Text style={[styles.emptyStateTitle, { color: theme.colors.onBackground }]}>
-                  خطأ في تحميل البيانات
+                  Error Loading Data
                 </Text>
                 <Text style={[styles.emptyStateMessage, { color: theme.colors.onSurfaceVariant }]}>
-                  حدث خطأ أثناء تحميل بيانات لوحة التحكم. سيتم عرض بيانات تقريبية مؤقتاً.
+                  An error occurred while loading dashboard data. Approximate data will be displayed temporarily.
                 </Text>
                 {/* Debug: show specific error messages */}
                 {!!errorDetails.summary && (
                   <Text style={[styles.emptyStateActionText, { color: theme.colors.onSurfaceVariant }]}>
-                    ملخص لوحة التحكم: {String(errorDetails.summary)}
+                    Dashboard Summary: {String(errorDetails.summary)}
                   </Text>
                 )}
                 {!!errorDetails.properties && (
                   <Text style={[styles.emptyStateActionText, { color: theme.colors.onSurfaceVariant }]}>
-                    العقارات: {String(errorDetails.properties)}
+                    Properties: {String(errorDetails.properties)}
                   </Text>
                 )}
                 {!!errorDetails.tenants && (
                   <Text style={[styles.emptyStateActionText, { color: theme.colors.onSurfaceVariant }]}>
-                    المستأجرون: {String(errorDetails.tenants)}
+                    Tenants: {String(errorDetails.tenants)}
                   </Text>
                 )}
               </View>
@@ -1429,5 +1463,158 @@ const createStyles = (theme: typeof lightTheme) => StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
     color: theme.colors.onSurfaceVariant,
+  },
+  // Tenant Dashboard Styles
+  contractCard: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  contractHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  contractInfo: {
+    flex: 1,
+  },
+  contractDetails: {
+    marginTop: 8,
+  },
+  contractStatus: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  contractDates: {
+    fontSize: 12,
+    marginBottom: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  contractRent: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  paymentHistoryCard: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  paymentsList: {
+    marginTop: 8,
+  },
+  paymentItem: {
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+    backgroundColor: theme.colors.surfaceVariant,
+  },
+  paymentItemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  paymentItemTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  paymentItemAmount: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  paymentItemDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  paymentItemDate: {
+    fontSize: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  paymentItemStatus: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  maintenanceCard: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: theme.colors.shadow,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  maintenanceList: {
+    marginTop: 8,
+  },
+  maintenanceItem: {
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+    backgroundColor: theme.colors.surfaceVariant,
+  },
+  maintenanceItemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  maintenanceItemTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    flex: 1,
+  },
+  maintenanceStatus: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  maintenanceStatusText: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  maintenanceItemDesc: {
+    fontSize: 12,
+    marginBottom: 4,
+    color: theme.colors.onSurfaceVariant,
+  },
+  maintenanceItemDate: {
+    fontSize: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    color: theme.colors.onSurfaceVariant,
+  },
+  noDataText: {
+    fontSize: 14,
+    textAlign: 'center',
+    paddingVertical: 16,
+    color: theme.colors.onSurfaceVariant,
+  },
+  subsectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
 });
