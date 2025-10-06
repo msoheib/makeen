@@ -326,13 +326,13 @@ function generateRevenueHTML(data: any): string {
         <div class="header">
           <h1>تقرير الإيرادات الشهرية</h1>
           <div class="subtitle">شركة إدارة العقارات MG</div>
-          <div class="subtitle">تاريخ التقرير: ${new Date().toLocaleDateString('ar-SA')}</div>
+          <div class="subtitle">تاريخ التقرير: ${new Date().toLocaleDateString('en-US')}</div>
         </div>
-        
+
         <div class="summary">
           <div class="summary-item">
             <h3>إجمالي الإيرادات</h3>
-            <div class="value">${summary.totalRevenue.toLocaleString('ar-SA')} ريال</div>
+            <div class="value">${summary.totalRevenue.toLocaleString('en-US', { maximumFractionDigits: 0 })} ريال</div>
           </div>
           <div class="summary-item">
             <h3>عدد الإيصالات</h3>
@@ -340,10 +340,10 @@ function generateRevenueHTML(data: any): string {
           </div>
           <div class="summary-item">
             <h3>متوسط المبلغ</h3>
-            <div class="value">${Math.round(summary.averageAmount).toLocaleString('ar-SA')} ريال</div>
+            <div class="value">${Math.round(summary.averageAmount).toLocaleString('en-US', { maximumFractionDigits: 0 })} ريال</div>
           </div>
         </div>
-        
+
         <table>
           <thead>
             <tr>
@@ -358,17 +358,17 @@ function generateRevenueHTML(data: any): string {
             ${vouchers.map((voucher: any) => `
               <tr>
                 <td>${voucher.voucher_number || '-'}</td>
-                <td class="amount">${Number(voucher.amount).toLocaleString('ar-SA')} ريال</td>
+                <td class="amount">${Number(voucher.amount).toLocaleString('en-US', { maximumFractionDigits: 0 })} ريال</td>
                 <td>${voucher.property?.title || '-'}</td>
                 <td>${voucher.tenant?.first_name || ''} ${voucher.tenant?.last_name || ''}</td>
-                <td>${new Date(voucher.created_at).toLocaleDateString('ar-SA')}</td>
+                <td>${new Date(voucher.created_at).toLocaleDateString('en-US')}</td>
               </tr>
             `).join('')}
           </tbody>
         </table>
-        
+
         <div class="footer">
-          تم إنشاء هذا التقرير تلقائياً في ${new Date().toLocaleString('ar-SA')}
+          تم إنشاء هذا التقرير تلقائياً في ${new Date().toLocaleString('en-US')}
         </div>
       </div>
     </body>
@@ -408,13 +408,13 @@ function generateExpenseHTML(data: any): string {
         <div class="header">
           <h1>تقرير المصروفات الشهرية</h1>
           <div class="subtitle">شركة إدارة العقارات MG</div>
-          <div class="subtitle">تاريخ التقرير: ${new Date().toLocaleDateString('ar-SA')}</div>
+          <div class="subtitle">تاريخ التقرير: ${new Date().toLocaleDateString('en-US')}</div>
         </div>
-        
+
         <div class="summary">
           <div class="summary-item">
             <h3>إجمالي المصروفات</h3>
-            <div class="value">${summary.totalExpenses.toLocaleString('ar-SA')} ريال</div>
+            <div class="value">${summary.totalExpenses.toLocaleString('en-US', { maximumFractionDigits: 0 })} ريال</div>
           </div>
           <div class="summary-item">
             <h3>عدد المدفوعات</h3>
@@ -422,10 +422,10 @@ function generateExpenseHTML(data: any): string {
           </div>
           <div class="summary-item">
             <h3>متوسط المبلغ</h3>
-            <div class="value">${Math.round(summary.averageAmount).toLocaleString('ar-SA')} ريال</div>
+            <div class="value">${Math.round(summary.averageAmount).toLocaleString('en-US', { maximumFractionDigits: 0 })} ريال</div>
           </div>
         </div>
-        
+
         <table>
           <thead>
             <tr>
@@ -440,17 +440,17 @@ function generateExpenseHTML(data: any): string {
             ${vouchers.map((voucher: any) => `
               <tr>
                 <td>${voucher.voucher_number || '-'}</td>
-                <td class="amount">${Number(voucher.amount).toLocaleString('ar-SA')} ريال</td>
+                <td class="amount">${Number(voucher.amount).toLocaleString('en-US', { maximumFractionDigits: 0 })} ريال</td>
                 <td>${voucher.account?.account_name || '-'}</td>
                 <td>${voucher.property?.title || '-'}</td>
-                <td>${new Date(voucher.created_at).toLocaleDateString('ar-SA')}</td>
+                <td>${new Date(voucher.created_at).toLocaleDateString('en-US')}</td>
               </tr>
             `).join('')}
           </tbody>
         </table>
-        
+
         <div class="footer">
-          تم إنشاء هذا التقرير تلقائياً في ${new Date().toLocaleString('ar-SA')}
+          تم إنشاء هذا التقرير تلقائياً في ${new Date().toLocaleString('en-US')}
         </div>
       </div>
     </body>
@@ -495,9 +495,9 @@ function generatePropertyHTML(data: any): string {
         <div class="header">
           <h1>تقرير العقارات</h1>
           <div class="subtitle">شركة إدارة العقارات MG</div>
-          <div class="subtitle">تاريخ التقرير: ${new Date().toLocaleDateString('ar-SA')}</div>
+          <div class="subtitle">تاريخ التقرير: ${new Date().toLocaleDateString('en-US')}</div>
         </div>
-        
+
         <div class="summary">
           <div class="summary-item">
             <h3>إجمالي العقارات</h3>
@@ -512,7 +512,7 @@ function generatePropertyHTML(data: any): string {
             <div class="value">${summary.occupancyRate}%</div>
           </div>
         </div>
-        
+
         <table>
           <thead>
             <tr>
@@ -529,7 +529,7 @@ function generatePropertyHTML(data: any): string {
                 <td>${property.title}</td>
                 <td>${property.property_type}</td>
                 <td><span class="status ${property.status}">${property.status}</span></td>
-                <td class="price">${Number(property.price).toLocaleString('ar-SA')} ريال</td>
+                <td class="price">${Number(property.price).toLocaleString('en-US', { maximumFractionDigits: 0 })} ريال</td>
                 <td>${property.owner?.first_name || ''} ${property.owner?.last_name || ''}</td>
               </tr>
             `).join('')}
@@ -537,7 +537,7 @@ function generatePropertyHTML(data: any): string {
         </table>
         
         <div class="footer">
-          تم إنشاء هذا التقرير تلقائياً في ${new Date().toLocaleString('ar-SA')}
+          تم إنشاء هذا التقرير تلقائياً في ${new Date().toLocaleString('en-US')}
         </div>
       </div>
     </body>

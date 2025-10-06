@@ -330,5 +330,17 @@
     "lastUpdated": "Last Updated:",
     "platform": "Platform:",
     "webApplication": "Web Application"
+  },
+  "debug": {
+    "title": "Layout Information (Android Debug)",
+    "rtlStatus": "RTL Status",
+    "isRTL": "isRTL",
+    "allowRTL": "allowRTL",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "platform": "Platform",
+    "platformVersion": "Platform Version",
+    "logoutDebug": "Logout (Debug - Web)",
+    "logoutDebugDesc": "Simplified logout for web"
   }
 }

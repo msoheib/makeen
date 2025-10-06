@@ -80,7 +80,7 @@ export default function TenantDetailsScreen() {
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    return toArabicNumerals(date.toLocaleDateString('ar-SA'));
+    return date.toLocaleDateString('en-US'); // Use English numerals and Gregorian calendar
   };
 
   const getStatusColor = (status: string) => {

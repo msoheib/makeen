@@ -101,5 +101,11 @@
   "totalRequestsStat": "Total Requests",
   "pendingStat": "Pending",
   "inProgressStat": "In Progress",
-  "completedStat": "Completed"
+  "completedStat": "Completed",
+  "updateSuccess": "Maintenance request status updated successfully",
+  "errors": {
+    "notFound": "Maintenance request not found",
+    "fetchFailed": "Failed to load maintenance request details",
+    "updateFailed": "Failed to update maintenance request status"
+  }
 } 

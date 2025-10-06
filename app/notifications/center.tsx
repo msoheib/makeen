@@ -1,46 +1,48 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
-import { 
-  Searchbar, 
-  SegmentedButtons, 
-  FAB, 
+import {
+  Searchbar,
+  SegmentedButtons,
+  FAB,
   Badge,
   IconButton,
   Menu,
   Text
 } from 'react-native-paper';
 import { theme, spacing , useTheme } from '@/lib/theme';
-
+import { useTranslation } from 'react-i18next';
 import { router } from 'expo-router';
 import ModernHeader from '@/components/ModernHeader';
 import NotificationList from '@/components/NotificationList';
 import { NotificationData } from '@/components/NotificationCard';
 import { notificationStorage } from '@/lib/notificationStorage';
 import { useNotifications } from '@/hooks/useNotifications';
-import { 
-  Bell, 
-  BellOff, 
-  CheckCheck, 
-  Trash2, 
+import {
+  Bell,
+  BellOff,
+  CheckCheck,
+  Trash2,
   Filter,
   Settings,
   MoreVertical,
   X
 } from 'lucide-react-native';
 
-const FILTER_OPTIONS = [
-  { value: 'all', label: 'All' },
-  { value: 'unread', label: 'Unread' },
-  { value: 'maintenance', label: 'Maintenance' },
-  { value: 'payment', label: 'Payment' },
-  { value: 'tenant', label: 'Tenant' },
-  { value: 'property', label: 'Property' },
-];
-
 export default function NotificationCenter() {
   const { theme: currentTheme } = useTheme();
   const { status } = useNotifications();
-  
+  const { t } = useTranslation(['common', 'navigation']);
+
+  // Filter options using translations
+  const FILTER_OPTIONS = [
+    { value: 'all', label: t('filters.all') },
+    { value: 'unread', label: t('filters.unread') },
+    { value: 'maintenance', label: t('filters.maintenance') },
+    { value: 'payment', label: t('filters.payment') },
+    { value: 'tenant', label: t('filters.tenant') },
+    { value: 'property', label: t('filters.property') },
+  ];
+
   // State
   const [notifications, setNotifications] = useState<NotificationData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,11 +66,11 @@ export default function NotificationCenter() {
       setNotifications(storedNotifications);
     } catch (error) {
       console.error('Error loading notifications:', error);
-      Alert.alert('Error', 'Failed to load notifications');
+      Alert.alert(t('error'), t('errors.loadFailed'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   // Refresh notifications
   const handleRefresh = useCallback(async () => {
@@ -96,7 +98,7 @@ export default function NotificationCenter() {
       setNotifications(prev => prev.filter(n => n.id !== id));
     } catch (error) {
       console.error('Error deleting notification:', error);
-      Alert.alert('Error', 'Failed to delete notification');
+      Alert.alert(t('error'), t('errors.deleteFailed'));
     }
   }, []);
 

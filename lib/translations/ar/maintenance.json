@@ -101,5 +101,11 @@
   "totalRequestsStat": "إجمالي الطلبات",
   "pendingStat": "قيد الانتظار",
   "inProgressStat": "قيد التنفيذ",
-  "completedStat": "مكتمل"
+  "completedStat": "مكتمل",
+  "updateSuccess": "تم تحديث حالة طلب الصيانة بنجاح",
+  "errors": {
+    "notFound": "لم يتم العثور على طلب الصيانة",
+    "fetchFailed": "فشل في تحميل تفاصيل طلب الصيانة",
+    "updateFailed": "فشل في تحديث حالة طلب الصيانة"
+  }
 }

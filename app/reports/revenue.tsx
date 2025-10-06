@@ -7,6 +7,7 @@ import { CustomLineChart, CustomBarChart } from '@/components/charts';
 import { reportsApi } from '@/lib/api';
 import { useApi } from '@/hooks/useApi';
 import ModernHeader from '@/components/ModernHeader';
+import { formatCurrency as formatCurrencyUtil, formatDate as formatDateUtil } from '@/lib/formatters';
 
 interface RevenueData {
   totalRevenue: number;
@@ -89,19 +90,11 @@ export default function RevenueReportScreen() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('ar-SA', {
-      style: 'currency',
-      currency: 'SAR',
-      minimumFractionDigits: 0,
-    }).format(amount);
+    return formatCurrencyUtil(amount, 'SAR');
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+    return formatDateUtil(new Date(dateString), 'PP'); // Gregorian calendar format
   };
 
   if (loading) {
@@ -265,6 +258,15 @@ export default function RevenueReportScreen() {
                     </Text>
                   </View>
                 ))}
+                {/* Total Row */}
+                <View style={[styles.voucherRow, styles.totalRow, { backgroundColor: `${theme.colors.primary}10`, marginTop: 12, paddingVertical: 12 }]}>
+                  <Text variant="titleMedium" style={{ color: theme.colors.onSurface, fontWeight: '600' }}>
+                    Total
+                  </Text>
+                  <Text variant="titleMedium" style={[styles.voucherAmount, { color: theme.colors.primary, fontWeight: '700' }]}>
+                    {formatCurrency(revenueData.vouchers.slice(0, 5).reduce((sum, v) => sum + v.amount, 0))}
+                  </Text>
+                </View>
               </View>
             ) : (
               <View style={styles.noDataContainer}>
@@ -384,6 +386,13 @@ const styles = StyleSheet.create({
   },
   voucherAmount: {
     fontWeight: '600',
+  },
+  totalRow: {
+    borderBottomWidth: 0,
+    borderTopWidth: 2,
+    borderTopColor: 'rgba(0, 0, 0, 0.2)',
+    borderRadius: 8,
+    paddingHorizontal: 8,
   },
   actionsContainer: {
     flexDirection: 'row',

@@ -200,8 +200,7 @@ export default function PropertyDetailsScreen() {
     return typeMap[type] || type.charAt(0).toUpperCase() + type.slice(1);
   };
 
-  if (loading || !property) {
-      const styles = StyleSheet.create({
+  const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
@@ -392,7 +391,8 @@ export default function PropertyDetailsScreen() {
   },
 });
 
-  return (
+  if (loading || !property) {
+    return (
       <View style={styles.container}>
         <ModernHeader
           title={tProps('details.title')}
@@ -413,7 +413,10 @@ export default function PropertyDetailsScreen() {
         title={tProps('details.title')}
         showBackButton={true}
         showNotifications={false}
-        onBackPress={() => router.back()}
+        onBackPress={() => {
+          // Fix for Issue #11: Navigate to properties list instead of using router.back()
+          router.push('/(tabs)/properties');
+        }}
         rightContent={
           <View style={styles.headerActions}>
             <IconButton
@@ -459,13 +462,13 @@ export default function PropertyDetailsScreen() {
           <View style={styles.locationRow}>
             <MapPin size={16} color={theme.colors.onSurfaceVariant} />
             <Text style={styles.locationText}>
-              {property.address}, {property.city}, {property.country}
+              {[property.address, property.city, property.country].filter(Boolean).join(', ') || tProps('details.noLocation')}
             </Text>
           </View>
 
           <View style={styles.priceRow}>
             <Text style={styles.price}>
-              ${property.price.toLocaleString()}
+              ${property.price ? property.price.toLocaleString() : '0'}
             </Text>
             <Chip
               mode="outlined"
@@ -490,11 +493,11 @@ export default function PropertyDetailsScreen() {
           >
             <StatCard
               title={tProps('details.area')}
-              value={`${property.area_sqm} ${tProps('details.sqm')}`}
+              value={`${property.area_sqm || 0} ${tProps('details.sqm')}`}
               color={theme.colors.primary}
               iconElement={<Square size={20} color={theme.colors.primary} />}
             />
-            {property.bedrooms !== undefined && (
+            {property.bedrooms !== undefined && property.bedrooms !== null && (
               <StatCard
                 title={tProps('details.bedrooms')}
                 value={property.bedrooms.toString()}
@@ -502,7 +505,7 @@ export default function PropertyDetailsScreen() {
                 iconElement={<Bed size={20} color={theme.colors.secondary} />}
               />
             )}
-            {property.bathrooms !== undefined && (
+            {property.bathrooms !== undefined && property.bathrooms !== null && (
               <StatCard
                 title={tProps('details.bathrooms')}
                 value={property.bathrooms.toString()}

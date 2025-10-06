@@ -76,11 +76,23 @@ const getPlatformStorageKey = (baseKey: string): string => {
 const safeStorage = {
   async getItem(key: string): Promise<string | null> {
     try {
-      if (Platform.OS === 'web' && typeof window === 'undefined') {
-        return null;
+      // Use native localStorage for web, AsyncStorage for native
+      if (Platform.OS === 'web') {
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+          console.log('[i18n] localStorage not available');
+          return null;
+        }
+        // For web, use localStorage directly without platform prefix
+        const value = localStorage.getItem(key);
+        console.log(`[i18n] Read from web localStorage [${key}]:`, value);
+        return value;
       }
+
+      // For native, use AsyncStorage with platform prefix
       const platformKey = getPlatformStorageKey(key);
-      return await AsyncStorage.getItem(platformKey);
+      const value = await AsyncStorage.getItem(platformKey);
+      console.log(`[i18n] Read from native storage [${platformKey}]:`, value);
+      return value;
     } catch (error) {
       console.warn('[i18n] Failed to read from storage:', error);
       return null;
@@ -88,11 +100,22 @@ const safeStorage = {
   },
   async setItem(key: string, value: string): Promise<void> {
     try {
-      if (Platform.OS === 'web' && typeof window === 'undefined') {
+      // Use native localStorage for web, AsyncStorage for native
+      if (Platform.OS === 'web') {
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+          console.warn('[i18n] localStorage not available for writing');
+          return;
+        }
+        // For web, use localStorage directly without platform prefix
+        localStorage.setItem(key, value);
+        console.log(`[i18n] Saved to web localStorage [${key}]:`, value);
         return;
       }
+
+      // For native, use AsyncStorage with platform prefix
       const platformKey = getPlatformStorageKey(key);
       await AsyncStorage.setItem(platformKey, value);
+      console.log(`[i18n] Saved to native storage [${platformKey}]:`, value);
     } catch (error) {
       console.warn('[i18n] Failed to write to storage:', error);
     }
@@ -103,8 +126,31 @@ const shouldUseRTL = (language: SupportedLanguage): boolean => language === 'ar'
 
 const setWebDirection = (language: SupportedLanguage) => {
   if (Platform.OS === 'web' && typeof document !== 'undefined') {
-    document.documentElement.dir = shouldUseRTL(language) ? 'rtl' : 'ltr';
+    const direction = shouldUseRTL(language) ? 'rtl' : 'ltr';
+
+    // Set direction on html and body elements
+    document.documentElement.dir = direction;
     document.documentElement.lang = language;
+    document.documentElement.setAttribute('lang', language);
+
+    if (document.body) {
+      document.body.dir = direction;
+    }
+
+    // Force CSS direction to prevent override
+    const style = document.getElementById('i18n-direction-style');
+    if (style) {
+      style.remove();
+    }
+
+    const newStyle = document.createElement('style');
+    newStyle.id = 'i18n-direction-style';
+    newStyle.textContent = `
+      html, body {
+        direction: ${direction} !important;
+      }
+    `;
+    document.head.appendChild(newStyle);
   }
 };
 
@@ -137,28 +183,37 @@ const ensureNativeDirection = async (
 };
 
 const detectInitialLanguage = async (): Promise<SupportedLanguage> => {
+  console.log('[i18n] Starting language detection...');
+
   // First check if we have a stored language preference
   const stored = await safeStorage.getItem(LANGUAGE_STORAGE_KEY);
+  console.log(`[i18n] Stored language preference:`, stored);
+
   if (stored === 'en' || stored === 'ar') {
+    console.log(`[i18n] Using stored language: ${stored}`);
     return stored;
   }
 
-  // Default to English for new users to prevent Arabic showing unexpectedly
-  // Only auto-detect Arabic if explicitly set in browser/system preferences
+  console.log('[i18n] No stored language found, detecting from system...');
+
+  // Check for Arabic preference in system
   if (Platform.OS === 'web' && typeof navigator !== 'undefined') {
     const browserLang = navigator.language || navigator.languages?.[0] || 'en';
+    console.log(`[i18n] Browser language:`, browserLang);
     // Only use Arabic if the browser language is explicitly Arabic
     if (browserLang.startsWith('ar-') || browserLang === 'ar') {
+      console.log(`[i18n] Detected Arabic from browser: ${browserLang}`);
       return 'ar';
     }
-    return 'en';
   }
 
   // Native fallback - only try on native platforms
   if (Platform.OS !== 'web') {
     try {
       const device = RNLocalize.findBestAvailableLanguage(supportedLanguages);
+      console.log(`[i18n] Device language:`, device);
       if (device?.languageTag?.startsWith('ar-') || device?.languageTag === 'ar') {
+        console.log(`[i18n] Detected Arabic from device: ${device.languageTag}`);
         return 'ar';
       }
     } catch (error) {
@@ -166,7 +221,9 @@ const detectInitialLanguage = async (): Promise<SupportedLanguage> => {
     }
   }
 
-  return 'en';
+  // Default to Arabic (as this is an Arabic-first app)
+  console.log('[i18n] Defaulting to Arabic');
+  return 'ar';
 };
 
 const initializeI18n = async (): Promise<boolean> => {
@@ -239,24 +296,36 @@ export const isRTL = (): boolean => shouldUseRTL(getCurrentLanguage());
 export const changeLanguage = async (language: SupportedLanguage): Promise<void> => {
   const normalized: SupportedLanguage = supportedLanguages.includes(language)
     ? language
-    : 'en';
+    : 'ar'; // Default to Arabic instead of English
+
+  console.log(`[i18n] Changing language to: ${normalized}`);
 
   const current = getCurrentLanguage();
   if (current === normalized) {
+    console.log(`[i18n] Language already set to ${normalized}, applying direction...`);
     setWebDirection(normalized);
     await safeStorage.setItem(LANGUAGE_STORAGE_KEY, normalized);
     return;
   }
 
-  // Store the language preference first
-  await safeStorage.setItem(LANGUAGE_STORAGE_KEY, normalized);
-  
-  // Then change the i18n language
-  await i18n.changeLanguage(normalized);
+  try {
+    // Store the language preference first (critical for web persistence)
+    await safeStorage.setItem(LANGUAGE_STORAGE_KEY, normalized);
+    console.log(`[i18n] Language preference saved: ${normalized}`);
 
-  const reloaded = await ensureNativeDirection(normalized);
-  if (!reloaded) {
-    setWebDirection(normalized);
+    // Then change the i18n language
+    await i18n.changeLanguage(normalized);
+    console.log(`[i18n] i18n language changed to: ${normalized}`);
+
+    // Apply direction changes
+    const reloaded = await ensureNativeDirection(normalized);
+    if (!reloaded) {
+      setWebDirection(normalized);
+      console.log(`[i18n] Web direction set to: ${shouldUseRTL(normalized) ? 'RTL' : 'LTR'}`);
+    }
+  } catch (error) {
+    console.error('[i18n] Error changing language:', error);
+    throw error;
   }
 };
 

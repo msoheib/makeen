@@ -53,8 +53,14 @@ export const navigateBackToSection = (currentPath?: string) => {
 
   // Fallback to appropriate section based on current path
   const path = currentPath || '';
-  
-  if (path.includes('/tenants') || path.includes('/people')) {
+
+  // Check for settings-related paths first (Fix for Issue #2)
+  if (path.includes('/profile') || path.includes('/language') ||
+      path.includes('/currency') || path.includes('/notifications') ||
+      path.includes('/support') || path.includes('/privacy') ||
+      path.includes('/terms')) {
+    router.push('/(tabs)/settings');
+  } else if (path.includes('/tenants') || path.includes('/people')) {
     router.push('/(tabs)/tenants');
   } else if (path.includes('/properties') || path.includes('/buildings')) {
     router.push('/(tabs)/properties');

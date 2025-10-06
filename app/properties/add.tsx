@@ -710,33 +710,47 @@ export default function AddPropertyScreen() {
             <Text style={styles.sectionTitle}>التسعير</Text>
           </View>
 
-          <TextInput
-            label={formData.listing_type === 'rent' ? 'الإيجار السنوي (ريال سعودي) *' : 'السعر (ريال سعودي) *'}
-            value={formData.price}
-            onChangeText={(text) => setFormData({ ...formData, price: text })}
-            mode="outlined"
-            keyboardType="numeric"
-            style={[styles.input, rtlStyles.textAlign('right')]}
-            error={!!errors.price}
-            textAlign="right"
-            writingDirection={isRTL() ? 'rtl' : 'ltr'}
-          />
-          {errors.price && <Text style={[styles.errorText, rtlStyles.textAlign('right')]}>{errors.price}</Text>}
-
-          {/* Annual Rent field for rent/both listing types */}
-          {(formData.listing_type === 'rent' || formData.listing_type === 'both') && (
+          {/* Sale Price field - only show for sale or both */}
+          {(formData.listing_type === 'sale' || formData.listing_type === 'both') && (
             <>
               <TextInput
-                label="الإيجار السنوي (ريال سعودي)"
-                value={formData.annual_rent}
-                onChangeText={(text) => setFormData({ ...formData, annual_rent: text })}
+                label="سعر البيع (ريال سعودي) *"
+                value={formData.price}
+                onChangeText={(text) => setFormData({ ...formData, price: text })}
                 mode="outlined"
                 keyboardType="numeric"
                 style={[styles.input, rtlStyles.textAlign('right')]}
+                error={!!errors.price}
+                textAlign="right"
+                writingDirection={isRTL() ? 'rtl' : 'ltr'}
+                placeholder="السعر المطلوب للبيع"
+              />
+              {errors.price && <Text style={[styles.errorText, rtlStyles.textAlign('right')]}>{errors.price}</Text>}
+            </>
+          )}
+
+          {/* Annual Rent field - only show for rent or both */}
+          {(formData.listing_type === 'rent' || formData.listing_type === 'both') && (
+            <>
+              <TextInput
+                label="الإيجار السنوي (ريال سعودي) *"
+                value={formData.listing_type === 'rent' ? formData.price : formData.annual_rent}
+                onChangeText={(text) => {
+                  if (formData.listing_type === 'rent') {
+                    setFormData({ ...formData, price: text });
+                  } else {
+                    setFormData({ ...formData, annual_rent: text });
+                  }
+                }}
+                mode="outlined"
+                keyboardType="numeric"
+                style={[styles.input, rtlStyles.textAlign('right')]}
+                error={!!errors.price && formData.listing_type === 'rent'}
                 textAlign="right"
                 writingDirection={isRTL() ? 'rtl' : 'ltr'}
                 placeholder="الإيجار المطلوب سنوياً"
               />
+              {errors.price && formData.listing_type === 'rent' && <Text style={[styles.errorText, rtlStyles.textAlign('right')]}>{errors.price}</Text>}
             </>
           )}
 

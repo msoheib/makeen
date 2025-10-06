@@ -177,13 +177,17 @@ export default function SettingsScreen() {
           )}
           right={() => (
             item.showSwitch ? (
-              <Switch
-                value={item.switchValue}
-                onValueChange={item.onPress}
-                color={theme.colors.primary}
-              />
+              <View style={styles.switchContainer}>
+                <Switch
+                  value={item.switchValue}
+                  onValueChange={item.onPress}
+                  color={theme.colors.primary}
+                />
+              </View>
             ) : (
-              <ChevronLeft size={20} color={theme.colors.onSurfaceVariant} />
+              <View style={styles.chevronContainer}>
+                <ChevronLeft size={20} color={theme.colors.onSurfaceVariant} />
+              </View>
             )
           )}
           onPress={!item.showSwitch ? item.onPress : undefined}
@@ -243,12 +247,12 @@ export default function SettingsScreen() {
         {Platform.OS === 'android' && (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
-              Layout Information (Android Debug)
+              {t('debug.title', { ns: 'settings' })}
             </Text>
             <View style={[styles.sectionCard, { backgroundColor: theme.colors.surface }]}>
               <List.Item
-                title="RTL Status"
-                description={`isRTL: ${I18nManager.isRTL ? 'Enabled' : 'Disabled'} | allowRTL: ${I18nManager.allowRTL ? 'Enabled' : 'Disabled'}`}
+                title={t('debug.rtlStatus', { ns: 'settings' })}
+                description={`${t('debug.isRTL', { ns: 'settings' })}: ${I18nManager.isRTL ? t('debug.enabled', { ns: 'settings' }) : t('debug.disabled', { ns: 'settings' })} | ${t('debug.allowRTL', { ns: 'settings' })}: ${I18nManager.allowRTL ? t('debug.enabled', { ns: 'settings' }) : t('debug.disabled', { ns: 'settings' })}`}
                 titleStyle={[styles.itemTitle, { color: theme.colors.onSurface }]}
                 descriptionStyle={[styles.itemDescription, { color: theme.colors.onSurfaceVariant }]}
                 left={() => (
@@ -259,8 +263,8 @@ export default function SettingsScreen() {
               />
               <Divider style={styles.divider} />
               <List.Item
-                title="Platform"
-                description={`Platform: ${Platform.OS} | Version: ${Platform.Version}`}
+                title={t('debug.platform', { ns: 'settings' })}
+                description={`${t('debug.platform', { ns: 'settings' })}: ${Platform.OS} | ${t('debug.platformVersion', { ns: 'settings' })}: ${Platform.Version}`}
                 titleStyle={[styles.itemTitle, { color: theme.colors.onSurface }]}
                 descriptionStyle={[styles.itemDescription, { color: theme.colors.onSurfaceVariant }]}
                 left={() => (
@@ -292,8 +296,8 @@ export default function SettingsScreen() {
               <>
                 <Divider style={styles.divider} />
                 <List.Item
-                  title="Logout (Debug - Web)"
-                  description="Simplified logout for web"
+                  title={t('debug.logoutDebug', { ns: 'settings' })}
+                  description={t('debug.logoutDebugDesc', { ns: 'settings' })}
                   titleStyle={[styles.itemTitle, { color: '#ff9800' }]}
                   descriptionStyle={[styles.itemDescription, { color: theme.colors.onSurfaceVariant }]}
                   left={() => (
@@ -419,6 +423,19 @@ const styles = StyleSheet.create({
   },
   divider: {
     marginLeft: 80,
+  },
+  switchContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 56,
+    height: 48,
+    marginRight: 8,
+  },
+  chevronContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 32,
+    paddingRight: 8,
   },
   appInfoCard: {
     padding: 20,

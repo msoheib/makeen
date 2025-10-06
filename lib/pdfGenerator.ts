@@ -13,14 +13,14 @@ export interface ReportData {
 
 // Generate comprehensive Arabic report content
 const generateReportContent = (report: ReportData): string => {
-  const currentDate = new Date().toLocaleDateString('ar-SA', {
+  const currentDate = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
     weekday: 'long'
   });
 
-  const currentTime = new Date().toLocaleTimeString('ar-SA', {
+  const currentTime = new Date().toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit'
   });
@@ -37,15 +37,15 @@ const generateReportContent = (report: ReportData): string => {
     case 'revenue':
       content += `📊 ملخص الإيرادات:\n`;
       content += `${'─'.repeat(30)}\n`;
-      content += `• إجمالي الإيرادات: ${report.data.totalRevenue?.toLocaleString('ar-SA') || '0'} ريال سعودي\n`;
+      content += `• إجمالي الإيرادات: ${report.data.totalRevenue?.toLocaleString('en-US', { maximumFractionDigits: 0 }) || '0'} ريال سعودي\n`;
       content += `• النمو الشهري: +${report.data.monthlyGrowth || '0'}%\n`;
       content += `• عدد العقارات المدرة للدخل: ${report.data.properties || '0'} عقار\n`;
-      content += `• متوسط الإيراد الشهري: ${report.data.averageRent?.toLocaleString('ar-SA') || '0'} ريال\n\n`;
+      content += `• متوسط الإيراد الشهري: ${report.data.averageRent?.toLocaleString('en-US', { maximumFractionDigits: 0 }) || '0'} ريال\n\n`;
       
       content += `📈 تحليل الأداء:\n`;
       content += `${'─'.repeat(30)}\n`;
       content += `يُظهر التقرير نمواً إيجابياً في الإيرادات بنسبة ${report.data.monthlyGrowth || '0'}% مقارنة بالشهر السابق.\n\n`;
-      content += `متوسط الإيراد لكل عقار: ${Math.round((report.data.totalRevenue || 0) / (report.data.properties || 1)).toLocaleString('ar-SA')} ريال شهرياً\n\n`;
+      content += `متوسط الإيراد لكل عقار: ${Math.round((report.data.totalRevenue || 0) / (report.data.properties || 1)).toLocaleString('en-US', { maximumFractionDigits: 0 })} ريال شهرياً\n\n`;
       
       const revenueGrowth = report.data.monthlyGrowth || 0;
       if (revenueGrowth > 10) {
@@ -60,9 +60,9 @@ const generateReportContent = (report: ReportData): string => {
     case 'expenses':
       content += `💰 ملخص المصروفات:\n`;
       content += `${'─'.repeat(30)}\n`;
-      content += `• إجمالي المصروفات: ${report.data.totalExpenses?.toLocaleString('ar-SA') || '0'} ريال سعودي\n`;
-      content += `• مصروفات الصيانة: ${report.data.maintenanceExpenses?.toLocaleString('ar-SA') || '0'} ريال\n`;
-      content += `• المصروفات التشغيلية: ${report.data.operationalExpenses?.toLocaleString('ar-SA') || '0'} ريال\n`;
+      content += `• إجمالي المصروفات: ${report.data.totalExpenses?.toLocaleString('en-US', { maximumFractionDigits: 0 }) || '0'} ريال سعودي\n`;
+      content += `• مصروفات الصيانة: ${report.data.maintenanceExpenses?.toLocaleString('en-US', { maximumFractionDigits: 0 }) || '0'} ريال\n`;
+      content += `• المصروفات التشغيلية: ${report.data.operationalExpenses?.toLocaleString('en-US', { maximumFractionDigits: 0 }) || '0'} ريال\n`;
       content += `• التغيير الشهري: ${report.data.monthlyChange || '0'}%\n\n`;
       
       content += `📊 توزيع المصروفات:\n`;
@@ -130,7 +130,7 @@ const generateReportContent = (report: ReportData): string => {
       content += `• إجمالي طلبات الصيانة: ${report.data.totalRequests || '0'} طلب\n`;
       content += `• الطلبات المكتملة: ${report.data.completedRequests || '0'} طلب\n`;
       content += `• الطلبات المعلقة: ${report.data.pendingRequests || '0'} طلب\n`;
-      content += `• متوسط التكلفة: ${report.data.averageCost?.toLocaleString('ar-SA') || '0'} ريال\n\n`;
+      content += `• متوسط التكلفة: ${report.data.averageCost?.toLocaleString('en-US', { maximumFractionDigits: 0 }) || '0'} ريال\n\n`;
       
       content += `📈 تحليل الأداء:\n`;
       content += `${'─'.repeat(30)}\n`;
@@ -148,10 +148,10 @@ const generateReportContent = (report: ReportData): string => {
     case 'financial':
       content += `💼 الملخص المالي:\n`;
       content += `${'─'.repeat(30)}\n`;
-      content += `• صافي الدخل: ${report.data.netIncome?.toLocaleString('ar-SA') || '0'} ريال سعودي\n`;
+      content += `• صافي الدخل: ${report.data.netIncome?.toLocaleString('en-US', { maximumFractionDigits: 0 }) || '0'} ريال سعودي\n`;
       content += `• هامش الربح: ${report.data.profitMargin || '0'}%\n`;
       content += `• العائد على الاستثمار: ${report.data.roi || '0'}%\n`;
-      content += `• إجمالي الأصول: ${report.data.totalAssets?.toLocaleString('ar-SA') || '0'} ريال\n\n`;
+      content += `• إجمالي الأصول: ${report.data.totalAssets?.toLocaleString('en-US', { maximumFractionDigits: 0 }) || '0'} ريال\n\n`;
       
       content += `📊 تقييم الأداء المالي:\n`;
       content += `${'─'.repeat(30)}\n`;

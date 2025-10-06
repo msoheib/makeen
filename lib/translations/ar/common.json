@@ -191,5 +191,54 @@
     "signupInitiated": "تم بدء عملية إنشاء الحساب. تحقق من بريدك الإلكتروني لإكمال التسجيل.",
     "signupFailed": "فشلت عملية إنشاء الحساب. يرجى المحاولة مرة أخرى.",
     "signIn": "تسجيل الدخول"
+  },
+  "filters": {
+    "all": "الكل",
+    "unread": "غير مقروءة",
+    "maintenance": "الصيانة",
+    "payment": "المدفوعات",
+    "tenant": "المستأجرون",
+    "property": "العقارات",
+    "assigned": "مسندة",
+    "inProgress": "قيد التنفيذ",
+    "posted": "منشورة",
+    "monthly": "شهري",
+    "quarterly": "ربع سنوي",
+    "annually": "سنوي",
+    "semiAnnual": "نصف سنوي"
+  },
+  "roles": {
+    "admin": "مدير النظام",
+    "manager": "مدير",
+    "owner": "مالك",
+    "tenant": "مستأجر",
+    "buyer": "مشتري",
+    "staff": "موظف",
+    "accountant": "محاسب"
+  },
+  "contractTypes": {
+    "rental": "إيجار",
+    "sale": "بيع",
+    "management": "إدارة"
+  },
+  "billingFrequency": {
+    "monthly": "شهريًا",
+    "quarterly": "ربع سنوي",
+    "annually": "سنويًا"
+  },
+  "errors": {
+    "loadFailed": "فشل التحميل",
+    "saveFailed": "فشل الحفظ",
+    "deleteFailed": "فشل الحذف",
+    "updateFailed": "فشل التحديث",
+    "validationError": "خطأ في التحقق",
+    "unexpectedError": "حدث خطأ غير متوقع"
+  },
+  "actions": {
+    "duplicate": "تكرار",
+    "post": "نشر",
+    "assign": "إسناد",
+    "approve": "موافقة",
+    "reject": "رفض"
   }
 }

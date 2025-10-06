@@ -38,10 +38,18 @@ const cleanupOldStorageKeys = async () => {
 
 const safeAsyncStorage = {
   getItem: async (key: string): Promise<string | null> => {
-    if (Platform.OS === 'web' && typeof window === 'undefined') {
-      return null;
-    }
     try {
+      // Use native localStorage for web, AsyncStorage for native
+      if (Platform.OS === 'web') {
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+          return null;
+        }
+        // For web, use localStorage directly with platform prefix
+        const platformKey = getPlatformStorageKey(key);
+        return localStorage.getItem(platformKey);
+      }
+
+      // For native, use AsyncStorage with platform prefix
       const platformKey = getPlatformStorageKey(key);
       return await AsyncStorage.getItem(platformKey);
     } catch (error) {
@@ -50,10 +58,19 @@ const safeAsyncStorage = {
     }
   },
   setItem: async (key: string, value: string): Promise<void> => {
-    if (Platform.OS === 'web' && typeof window === 'undefined') {
-      return;
-    }
     try {
+      // Use native localStorage for web, AsyncStorage for native
+      if (Platform.OS === 'web') {
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+          return;
+        }
+        // For web, use localStorage directly with platform prefix
+        const platformKey = getPlatformStorageKey(key);
+        localStorage.setItem(platformKey, value);
+        return;
+      }
+
+      // For native, use AsyncStorage with platform prefix
       const platformKey = getPlatformStorageKey(key);
       await AsyncStorage.setItem(platformKey, value);
     } catch (error) {
@@ -61,10 +78,19 @@ const safeAsyncStorage = {
     }
   },
   removeItem: async (key: string): Promise<void> => {
-    if (Platform.OS === 'web' && typeof window === 'undefined') {
-      return;
-    }
     try {
+      // Use native localStorage for web, AsyncStorage for native
+      if (Platform.OS === 'web') {
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+          return;
+        }
+        // For web, use localStorage directly with platform prefix
+        const platformKey = getPlatformStorageKey(key);
+        localStorage.removeItem(platformKey);
+        return;
+      }
+
+      // For native, use AsyncStorage with platform prefix
       const platformKey = getPlatformStorageKey(key);
       await AsyncStorage.removeItem(platformKey);
     } catch (error) {
@@ -332,7 +358,7 @@ export const useAppStore = create<AppState>()(
       // Settings state
       settings: {
         theme: 'system',
-        language: 'en',
+        language: 'ar', // Default to Arabic for Arabic-first app
         currency: 'SAR',
         notifications: {
           maintenanceRequests: true,
@@ -360,43 +386,48 @@ export const useAppStore = create<AppState>()(
         if (Platform.OS === 'web' && typeof window === 'undefined') {
           return;
         }
-        
+
         try {
-          
+          console.log(`[Store] Changing language to: ${language}`);
+
           // Update i18n language and RTL (this will also persist it)
           await changeI18nLanguage(language);
-          
+
           // Update ALL language-related state fields to keep them in sync
           set((state) => ({
             settings: { ...state.settings, language },
-            locale: language, // Update legacy state too
-            language: language, // Update the separate language field
+            locale: language, // Keep for backwards compatibility
+            language: language, // Keep for backwards compatibility
           }));
-          
+
+          console.log(`[Store] Language changed successfully to: ${language}`);
         } catch (error) {
-          console.error('Store: Failed to change language:', error);
+          console.error('[Store] Failed to change language:', error);
           throw error; // Re-throw to handle in UI
         }
       },
-      
+
       getCurrentLanguage: () => {
         const state = get();
+        // Always use settings.language as the single source of truth
         return state.settings.language;
       },
-      
+
       isRTL: () => {
         const state = get();
+        // Always use settings.language as the single source of truth
         return state.settings.language === 'ar';
       },
-      
+
       // Legacy UI state (kept for backwards compatibility)
-      locale: 'ar',
+      locale: 'ar', // Default to Arabic
       theme: 'light',
       setLocale: (locale) => {
-        set({ locale });
-        // Also update new settings and trigger proper language change
+        console.log(`[Store] setLocale called with: ${locale}`);
+        const language = (locale === 'en' || locale === 'ar') ? locale : 'ar';
+        // Trigger proper language change through the main changeLanguage function
         const state = get();
-        state.changeLanguage(locale as 'en' | 'ar');
+        state.changeLanguage(language);
       },
       setTheme: (theme) => {
         set({ theme });
@@ -430,9 +461,15 @@ export const useAppStore = create<AppState>()(
       setMaintenanceNotifications: (enabled) => set({ maintenanceNotifications: enabled }),
       setFinancialNotifications: (enabled) => set({ financialNotifications: enabled }),
       
-      // Language settings
-      language: 'en' as SupportedLanguage,
-      setLanguage: (language) => set({ language }),
+      // Language settings (kept for backwards compatibility, use settings.language as primary)
+      language: 'ar' as SupportedLanguage, // Default to Arabic
+      setLanguage: (language) => {
+        console.log(`[Store] setLanguage called with: ${language}`);
+        set({ language });
+        // Also update settings.language to keep in sync
+        const state = get();
+        state.changeLanguage(language);
+      },
       
       // Currency settings 
       currency: 'SAR',
@@ -463,7 +500,20 @@ export const useAppStore = create<AppState>()(
       // Reset function
       reset: () =>
         set({
-          language: 'en',
+          language: 'ar', // Reset to Arabic as default
+          locale: 'ar',
+          settings: {
+            theme: 'system',
+            language: 'ar',
+            currency: 'SAR',
+            notifications: {
+              maintenanceRequests: true,
+              paymentReminders: true,
+              contractExpirations: true,
+              systemUpdates: false,
+            },
+            supportEmail: 'info@example.com',
+          },
           currency: 'SAR',
           notificationPreferences: defaultNotificationPreferences,
           userProfile: null,
@@ -507,22 +557,26 @@ export const useAppStore = create<AppState>()(
           const settingsLang = state?.settings?.language as 'en' | 'ar' | undefined;
           const legacyLang = state?.language as 'en' | 'ar' | undefined;
           const localeLang = state?.locale as 'en' | 'ar' | undefined;
-          
+
           // Use the most recent language setting (prioritize settings.language)
-          const lang = settingsLang || legacyLang || localeLang || 'en';
-          
-          
+          // Default to Arabic if no language is stored
+          const lang = settingsLang || legacyLang || localeLang || 'ar';
+
+          console.log(`[Store] Rehydrating language: ${lang} (settingsLang: ${settingsLang}, legacyLang: ${legacyLang}, localeLang: ${localeLang})`);
+
           if (lang) {
-            // Always sync the language, even if it's English
+            // Always sync the language
             await changeI18nLanguage(lang);
             // Keep all language fields in sync
-            useAppStore.setState({ 
+            useAppStore.setState({
               locale: lang,
               language: lang,
               settings: { ...state?.settings, language: lang }
             });
             // Also sync the i18n storage
             await syncStoreWithI18n();
+
+            console.log(`[Store] Language rehydration complete: ${lang}`);
           }
           
           // Apply persisted theme to legacy isDarkMode for components reading it

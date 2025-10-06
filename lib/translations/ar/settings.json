@@ -276,5 +276,17 @@
     "lastUpdated": "آخر تحديث:",
     "platform": "المنصة:",
     "webApplication": "تطبيق ويب"
+  },
+  "debug": {
+    "title": "معلومات التخطيط (Android Debug)",
+    "rtlStatus": "حالة RTL",
+    "isRTL": "isRTL",
+    "allowRTL": "allowRTL",
+    "enabled": "مفعّل",
+    "disabled": "معطّل",
+    "platform": "المنصة",
+    "platformVersion": "نسخة المنصة",
+    "logoutDebug": "تسجيل الخروج (Debug - Web)",
+    "logoutDebugDesc": "تسجيل خروج مبسط للويب"
   }
 }

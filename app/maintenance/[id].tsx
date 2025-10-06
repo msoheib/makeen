@@ -70,8 +70,8 @@ export default function MaintenanceRequestDetails() {
       }
     } catch (error) {
       console.error('Error fetching maintenance request:', error);
-      Alert.alert('خطأ', 'فشل في تحميل تفاصيل طلب الصيانة');
-      router.back();
+      Alert.alert(t('common:error'), t('errors.fetchFailed'));
+      router.push('/(tabs)/maintenance');
     } finally {
       setLoading(false);
     }
@@ -87,20 +87,20 @@ export default function MaintenanceRequestDetails() {
       setUpdating(true);
       const { error } = await supabase
         .from('maintenance_requests')
-        .update({ 
+        .update({
           status: newStatus,
           updated_at: new Date().toISOString()
         })
         .eq('id', request.id);
 
       if (error) throw error;
-      
+
       setRequest({ ...request, status: newStatus });
       setShowStatusModal(false);
-      Alert.alert('نجح', 'تم تحديث حالة طلب الصيانة بنجاح');
+      Alert.alert(t('common:success'), t('updateSuccess'));
     } catch (error) {
       console.error('Error updating status:', error);
-      Alert.alert('خطأ', 'فشل في تحديث حالة طلب الصيانة');
+      Alert.alert(t('common:error'), t('errors.updateFailed'));
     } finally {
       setUpdating(false);
     }
@@ -115,12 +115,11 @@ export default function MaintenanceRequestDetails() {
     return t(`priorities.${priority}`) || priority;
   };
 
-  if (loading) {
-      const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
   scrollView: {
     flex: 1,
     paddingHorizontal: spacing.m,
@@ -264,19 +263,20 @@ export default function MaintenanceRequestDetails() {
   modalButton: {
     flex: 1,
   },
-});
+  });
 
-  return (
+  if (loading) {
+    return (
       <View style={styles.container}>
         <ModernHeader
           title={t('requestDetails')}
           showBack
-          onBackPress={() => router.back()}
+          onBackPress={() => router.push('/(tabs)/maintenance')}
         />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={[styles.loadingText, { textAlign: getTextAlign() }]}>
-            جاري تحميل التفاصيل...
+            {t('common:loading')}
           </Text>
         </View>
       </View>
@@ -289,12 +289,12 @@ export default function MaintenanceRequestDetails() {
         <ModernHeader
           title={t('requestDetails')}
           showBack
-          onBackPress={() => router.back()}
+          onBackPress={() => router.push('/(tabs)/maintenance')}
         />
         <View style={styles.errorContainer}>
           <XCircle size={48} color={theme.colors.error} />
           <Text style={[styles.errorText, { textAlign: getTextAlign() }]}>
-            لم يتم العثور على طلب الصيانة
+            {t('errors.notFound')}
           </Text>
         </View>
       </View>

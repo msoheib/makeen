@@ -168,5 +168,54 @@
     "noPropertiesAssignedDesc": "You haven't been assigned to any properties yet. Contact your property manager for assistance.",
     "noMaintenanceAccess": "No Maintenance Access",
     "noMaintenanceAccessDesc": "You haven't been assigned to any properties for maintenance. Contact your property manager."
+  },
+  "filters": {
+    "all": "All",
+    "unread": "Unread",
+    "maintenance": "Maintenance",
+    "payment": "Payment",
+    "tenant": "Tenant",
+    "property": "Property",
+    "assigned": "Assigned",
+    "inProgress": "In Progress",
+    "posted": "Posted",
+    "monthly": "Monthly",
+    "quarterly": "Quarterly",
+    "annually": "Annually",
+    "semiAnnual": "Semi-Annual"
+  },
+  "roles": {
+    "admin": "Admin",
+    "manager": "Manager",
+    "owner": "Owner",
+    "tenant": "Tenant",
+    "buyer": "Buyer",
+    "staff": "Staff",
+    "accountant": "Accountant"
+  },
+  "contractTypes": {
+    "rental": "Rental",
+    "sale": "Sale",
+    "management": "Management"
+  },
+  "billingFrequency": {
+    "monthly": "Monthly",
+    "quarterly": "Quarterly",
+    "annually": "Annually"
+  },
+  "errors": {
+    "loadFailed": "Failed to load",
+    "saveFailed": "Failed to save",
+    "deleteFailed": "Failed to delete",
+    "updateFailed": "Failed to update",
+    "validationError": "Validation Error",
+    "unexpectedError": "An unexpected error occurred"
+  },
+  "actions": {
+    "duplicate": "Duplicate",
+    "post": "Post",
+    "assign": "Assign",
+    "approve": "Approve",
+    "reject": "Reject"
   }
 } 
