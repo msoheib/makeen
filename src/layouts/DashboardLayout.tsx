@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase.web';
 import ResponsiveAppBar from '../components/navigation/ResponsiveAppBar';
 import ResponsiveSidebar from '../components/navigation/ResponsiveSidebar';
 import DashboardHome from '../pages/dashboard/DashboardHome';
+import PropertiesList from '../pages/properties/PropertiesList';
 
 export default function DashboardLayout() {
   const theme = useTheme();
@@ -96,6 +97,7 @@ export default function DashboardLayout() {
       >
         <Routes>
           <Route path="/" element={<DashboardHome />} />
+          <Route path="/properties" element={<PropertiesList />} />
           {/* More routes will be added here */}
         </Routes>
       </Box>
