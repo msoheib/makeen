@@ -190,6 +190,7 @@ export default function PropertyDetailsScreen() {
   };
 
   const getPropertyTypeText = (type: string) => {
+    if (!type) return tProps('propertyType.unknown') || 'Unknown';
     const typeMap: Record<string, string> = {
       'villa': tProps('propertyType.villa'),
       'apartment': tProps('propertyType.apartment'),
