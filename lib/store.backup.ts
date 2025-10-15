@@ -1,29 +1,32 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import { User, Property, MaintenanceRequest, Invoice, Voucher } from './types';
 import i18n, { changeLanguage as changeI18nLanguage, syncStoreWithI18n } from './i18n';
 import type { SupportedLanguage } from './translations/types';
 
-// Web platform storage wrapper
+// Platform-specific storage wrapper to prevent conflicts between web and mobile
 const getPlatformStorageKey = (baseKey: string): string => {
-  return `${baseKey}-web`;
+  const platform = Platform.OS;
+  return `${baseKey}-${platform}`;
 };
 
 // Function to clean up old non-platform-specific storage keys
 const cleanupOldStorageKeys = async () => {
-  if (typeof window === 'undefined') {
+  if (Platform.OS === 'web' && typeof window === 'undefined') {
     return;
   }
-
+  
   try {
     const oldKeys = [
       'real-estate-app-storage',
       'app-language'
     ];
-
+    
     for (const key of oldKeys) {
       try {
-        localStorage.removeItem(key);
+        await AsyncStorage.removeItem(key);
       } catch (error) {
         // Ignore errors for keys that don't exist
       }
@@ -36,12 +39,19 @@ const cleanupOldStorageKeys = async () => {
 const safeAsyncStorage = {
   getItem: async (key: string): Promise<string | null> => {
     try {
-      if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-        return null;
+      // Use native localStorage for web, AsyncStorage for native
+      if (Platform.OS === 'web') {
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+          return null;
+        }
+        // For web, use localStorage directly with platform prefix
+        const platformKey = getPlatformStorageKey(key);
+        return localStorage.getItem(platformKey);
       }
-      // For web, use localStorage directly with platform prefix
+
+      // For native, use AsyncStorage with platform prefix
       const platformKey = getPlatformStorageKey(key);
-      return localStorage.getItem(platformKey);
+      return await AsyncStorage.getItem(platformKey);
     } catch (error) {
       console.warn('[Store] Failed to read from storage:', error);
       return null;
@@ -49,24 +59,40 @@ const safeAsyncStorage = {
   },
   setItem: async (key: string, value: string): Promise<void> => {
     try {
-      if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+      // Use native localStorage for web, AsyncStorage for native
+      if (Platform.OS === 'web') {
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+          return;
+        }
+        // For web, use localStorage directly with platform prefix
+        const platformKey = getPlatformStorageKey(key);
+        localStorage.setItem(platformKey, value);
         return;
       }
-      // For web, use localStorage directly with platform prefix
+
+      // For native, use AsyncStorage with platform prefix
       const platformKey = getPlatformStorageKey(key);
-      localStorage.setItem(platformKey, value);
+      await AsyncStorage.setItem(platformKey, value);
     } catch (error) {
       console.warn('[Store] Failed to write to storage:', error);
     }
   },
   removeItem: async (key: string): Promise<void> => {
     try {
-      if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+      // Use native localStorage for web, AsyncStorage for native
+      if (Platform.OS === 'web') {
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+          return;
+        }
+        // For web, use localStorage directly with platform prefix
+        const platformKey = getPlatformStorageKey(key);
+        localStorage.removeItem(platformKey);
         return;
       }
-      // For web, use localStorage directly with platform prefix
+
+      // For native, use AsyncStorage with platform prefix
       const platformKey = getPlatformStorageKey(key);
-      localStorage.removeItem(platformKey);
+      await AsyncStorage.removeItem(platformKey);
     } catch (error) {
       console.warn('[Store] Failed to remove from storage:', error);
     }
