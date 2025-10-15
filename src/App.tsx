@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 // Import i18n setup
 import '../lib/i18n';
@@ -9,7 +9,10 @@ import '../lib/i18n';
 // Store imports
 import { useAppStore } from '../lib/store';
 
-// Placeholder components (will be created later)
+// Theme
+import createAppTheme from './theme/theme';
+
+// Pages
 import LoginPage from './pages/auth/LoginPage';
 import SignupPage from './pages/auth/SignupPage';
 import DashboardLayout from './layouts/DashboardLayout';
@@ -17,24 +20,11 @@ import DashboardLayout from './layouts/DashboardLayout';
 function App() {
   const { isHydrated, isDarkMode, currentLanguage } = useAppStore();
 
-  // Create MUI theme based on dark mode preference
-  const theme = createTheme({
-    palette: {
-      mode: isDarkMode ? 'dark' : 'light',
-      primary: {
-        main: '#4C2661',
-        dark: '#3a1d4a',
-        light: '#6a3685',
-      },
-      secondary: {
-        main: '#2196F3',
-      },
-    },
-    direction: currentLanguage === 'ar' ? 'rtl' : 'ltr',
-    typography: {
-      fontFamily: currentLanguage === 'ar' ? 'Cairo, sans-serif' : 'Inter, sans-serif',
-    },
-  });
+  // Create responsive theme with memo for performance
+  const theme = useMemo(
+    () => createAppTheme(isDarkMode ? 'dark' : 'light', currentLanguage as 'en' | 'ar'),
+    [isDarkMode, currentLanguage]
+  );
 
   // Update document direction for RTL
   useEffect(() => {

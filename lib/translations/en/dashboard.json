@@ -2,7 +2,10 @@
   "title": "Dashboard",
   "welcomeMessage": "Welcome to the Real Estate Management System",
   "quickStats": "Quick Statistics",
-  "welcome": "Welcome",
+  "welcome": "Welcome back, {{name}}!",
+  "subtitle": "Here's what's happening with your properties today",
+  "gettingStarted": "Getting Started",
+  "description": "Welcome to the Makeen Property Management System web platform. This responsive interface provides all the tools you need to manage your properties, tenants, and finances effectively.",
   "overview": "Overview",
   "greetings": {
     "hello": "Hello {{name}},"
@@ -12,6 +15,7 @@
   "totalTenants": "Total Tenants",
   "totalRevenue": "Total Revenue",
   "monthlyIncome": "Monthly Income",
+  "monthlyRevenue": "Monthly Revenue",
   "expenses": "Expenses",
   "netIncome": "Net Income",
   "occupancyRate": "Occupancy Rate",

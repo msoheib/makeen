@@ -1,32 +1,19 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Routes, Route } from 'react-router-dom';
-import { Box, CircularProgress } from '@mui/material';
+import { Box, CircularProgress, useMediaQuery, useTheme } from '@mui/material';
 import { useAppStore } from '../../lib/store';
 import { supabase } from '../../lib/supabase.web';
-
-// Placeholder dashboard component
-function Dashboard() {
-  const { user } = useAppStore();
-
-  return (
-    <Box sx={{ p: 3 }}>
-      <h1>Welcome to Makeen Property Management System</h1>
-      <p>User: {user?.first_name} {user?.last_name}</p>
-      <p>Role: {user?.role}</p>
-      <p>Status: {user?.status}</p>
-
-      <Box sx={{ mt: 4 }}>
-        <h2>Web Version - Coming Soon!</h2>
-        <p>This is the ReactJS web branch of the property management system.</p>
-        <p>Core features are being migrated from React Native to pure React.</p>
-      </Box>
-    </Box>
-  );
-}
+import ResponsiveAppBar from '../components/navigation/ResponsiveAppBar';
+import ResponsiveSidebar from '../components/navigation/ResponsiveSidebar';
+import DashboardHome from '../pages/dashboard/DashboardHome';
 
 export default function DashboardLayout() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
   const { isAuthenticated, setUser, setAuthenticated, isHydrated } = useAppStore();
+
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     // Check authentication status
@@ -59,6 +46,10 @@ export default function DashboardLayout() {
     }
   }, [isHydrated, navigate, setUser, setAuthenticated]);
 
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
   // Wait for hydration and authentication
   if (!isHydrated || !isAuthenticated) {
     return (
@@ -68,6 +59,7 @@ export default function DashboardLayout() {
           justifyContent: 'center',
           alignItems: 'center',
           height: '100vh',
+          bgcolor: 'background.default',
         }}
       >
         <CircularProgress />
@@ -76,13 +68,34 @@ export default function DashboardLayout() {
   }
 
   return (
-    <Box sx={{ display: 'flex', height: '100vh' }}>
-      {/* Sidebar navigation will go here */}
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+      {/* App Bar */}
+      <ResponsiveAppBar
+        onMenuClick={handleDrawerToggle}
+        showMenuButton={isMobile}
+      />
+
+      {/* Sidebar */}
+      <ResponsiveSidebar
+        open={mobileOpen}
+        onClose={handleDrawerToggle}
+      />
 
       {/* Main content area */}
-      <Box component="main" sx={{ flexGrow: 1, p: 3, overflow: 'auto' }}>
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          width: { sm: `calc(100% - ${280}px)` },
+          minHeight: '100vh',
+          pt: { xs: '56px', sm: '64px' }, // Account for AppBar height
+          px: { xs: 2, sm: 3, md: 4 },
+          py: { xs: 2, sm: 3 },
+          ml: { md: '280px' }, // Account for permanent drawer on desktop
+        }}
+      >
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={<DashboardHome />} />
           {/* More routes will be added here */}
         </Routes>
       </Box>
