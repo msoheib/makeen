@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:web": "tsc && vite build",
     "preview": "vite preview",
     "setup:test": "node scripts/setup-test-env.js",
     "dev:native": "cross-env EXPO_NO_TELEMETRY=1 EXPO_DEBUG=1 expo start --web",
