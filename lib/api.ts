@@ -866,6 +866,63 @@ export const maintenanceApi = {
     return handleApiCall(() => query);
   },
 
+  // Get single maintenance request by ID with access control
+  async getById(id: string): Promise<ApiResponse<any>> {
+    // **SECURITY**: Get current user context for access validation
+    const userContext = await getCurrentUserContext();
+
+    if (!userContext) {
+      return {
+        data: null,
+        error: { message: 'Authentication required to access maintenance request' }
+      };
+    }
+
+    const { data, error } = await supabase
+      .from('maintenance_requests')
+      .select(`
+        *,
+        property:properties(title, address, property_code, property_type),
+        tenant:profiles!maintenance_requests_tenant_id_fkey(first_name, last_name, phone),
+        work_orders(*)
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      return { data: null, error };
+    }
+
+    if (!data) {
+      return {
+        data: null,
+        error: { message: 'Maintenance request not found' }
+      };
+    }
+
+    // **SECURITY**: Validate access based on user role
+    let hasAccess = false;
+
+    if (userContext.role === 'admin' || userContext.role === 'manager') {
+      hasAccess = true;
+    } else if (userContext.role === 'tenant') {
+      const rentedPropertyIds = userContext.rentedPropertyIds || [];
+      hasAccess = rentedPropertyIds.includes(data.property_id);
+    } else if (userContext.role === 'owner') {
+      const ownedPropertyIds = userContext.ownedPropertyIds || [];
+      hasAccess = ownedPropertyIds.includes(data.property_id);
+    }
+
+    if (!hasAccess) {
+      return {
+        data: null,
+        error: { message: 'Access denied: You do not have permission to view this maintenance request' }
+      };
+    }
+
+    return { data, error: null };
+  },
+
   // Create maintenance request with access control
   async createRequest(request: TablesInsert<'maintenance_requests'>): Promise<ApiResponse<Tables<'maintenance_requests'>>> {
     // **SECURITY**: Get current user context for access validation
