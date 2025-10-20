@@ -26,6 +26,7 @@
     "takePhoto": "Take Photo",
     "chooseFromGallery": "Choose from Gallery",
     "addPhoto": "Add Photo",
+    "upload": "Upload Photos",
     "removePhoto": "Remove Photo",
     "confirmRemove": "Are you sure you want to remove this photo?",
     "maxPhotos": "Maximum 5 photos allowed",
