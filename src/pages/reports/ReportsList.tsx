@@ -242,39 +242,87 @@ export default function ReportsList() {
   // Load filter data
   useEffect(() => {
     loadFilterData();
-  }, []);
+  }, [user]);
 
   const loadFilterData = async () => {
     setLoadingFilters(true);
     try {
-      // Load properties
-      const { data: propertiesData, error: propertiesError } = await supabase
+      const isOwner = user?.role === 'owner';
+      const currentUserId = user?.id;
+
+      // Load properties - filtered by owner if user is owner
+      let propertiesQuery = supabase
         .from('properties')
-        .select('id, title')
+        .select('id, title, owner_id')
         .order('title');
 
+      if (isOwner && currentUserId) {
+        propertiesQuery = propertiesQuery.eq('owner_id', currentUserId);
+      }
+
+      const { data: propertiesData, error: propertiesError } = await propertiesQuery;
       if (propertiesError) throw propertiesError;
       setProperties(propertiesData || []);
 
-      // Load tenants
-      const { data: tenantsData, error: tenantsError } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, email')
-        .eq('role', 'tenant')
-        .order('first_name');
+      // Load tenants - for owners, only load tenants who are renting their properties
+      let tenantsData: Tenant[] = [];
+      if (isOwner && currentUserId) {
+        // Get tenants from active contracts for owner's properties
+        const { data: contractsData, error: contractsError } = await supabase
+          .from('contracts')
+          .select(`
+            tenant_id,
+            tenant:profiles!contracts_tenant_id_fkey(id, first_name, last_name, email),
+            property:properties!contracts_property_id_fkey(owner_id)
+          `)
+          .eq('property.owner_id', currentUserId)
+          .eq('status', 'active');
 
-      if (tenantsError) throw tenantsError;
-      setTenants(tenantsData || []);
+        if (contractsError) throw contractsError;
 
-      // Load owners
-      const { data: ownersData, error: ownersError } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, email')
-        .eq('role', 'owner')
-        .order('first_name');
+        // Extract unique tenants
+        const uniqueTenants = new Map<string, Tenant>();
+        contractsData?.forEach((contract: any) => {
+          if (contract.tenant && contract.tenant.id) {
+            uniqueTenants.set(contract.tenant.id, {
+              id: contract.tenant.id,
+              first_name: contract.tenant.first_name,
+              last_name: contract.tenant.last_name,
+              email: contract.tenant.email,
+            });
+          }
+        });
+        tenantsData = Array.from(uniqueTenants.values()).sort((a, b) =>
+          a.first_name.localeCompare(b.first_name)
+        );
+      } else {
+        // Admin/Manager see all tenants
+        const { data, error: tenantsError } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, email')
+          .eq('role', 'tenant')
+          .order('first_name');
 
-      if (ownersError) throw ownersError;
-      setOwners(ownersData || []);
+        if (tenantsError) throw tenantsError;
+        tenantsData = data || [];
+      }
+      setTenants(tenantsData);
+
+      // Load owners - only for admin/manager, not for owners themselves
+      if (!isOwner) {
+        const { data: ownersData, error: ownersError } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, email')
+          .eq('role', 'owner')
+          .order('first_name');
+
+        if (ownersError) throw ownersError;
+        setOwners(ownersData || []);
+      } else {
+        // For owners, pre-select their own ID
+        setSelectedOwner(currentUserId || '');
+        setOwners([]);
+      }
     } catch (err) {
       console.error('Error loading filter data:', err);
     } finally {
@@ -307,6 +355,7 @@ export default function ReportsList() {
     await handleDownloadReport(selectedReportId, {
       propertyId: selectedProperty || undefined,
       tenantId: selectedTenant || undefined,
+      ownerId: selectedOwner || undefined,
       startDate,
       endDate,
     });
@@ -794,24 +843,26 @@ export default function ReportsList() {
               </Select>
             </FormControl>
 
-            {/* Owner Filter */}
-            <FormControl fullWidth>
-              <InputLabel>{t('common:owner')}</InputLabel>
-              <Select
-                value={selectedOwner}
-                onChange={(e) => setSelectedOwner(e.target.value)}
-                label={t('common:owner')}
-              >
-                <MenuItem value="">
-                  <em>{t('common:all')} {t('common:owners')}</em>
-                </MenuItem>
-                {owners.map((owner) => (
-                  <MenuItem key={owner.id} value={owner.id}>
-                    {owner.first_name} {owner.last_name} ({owner.email})
+            {/* Owner Filter - Only show for admin/manager, not for owners */}
+            {user?.role !== 'owner' && (
+              <FormControl fullWidth>
+                <InputLabel>{t('common:owner')}</InputLabel>
+                <Select
+                  value={selectedOwner}
+                  onChange={(e) => setSelectedOwner(e.target.value)}
+                  label={t('common:owner')}
+                >
+                  <MenuItem value="">
+                    <em>{t('common:all')} {t('common:owners')}</em>
                   </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+                  {owners.map((owner) => (
+                    <MenuItem key={owner.id} value={owner.id}>
+                      {owner.first_name} {owner.last_name} ({owner.email})
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 3, pt: 2 }}>
