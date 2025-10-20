@@ -277,7 +277,7 @@ export default function MaintenanceList() {
 
       {/* Results Count */}
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        {filteredRequests.length} {t('common:found')}
+        {t('found')}: {filteredRequests.length}
       </Typography>
 
       {/* Requests Grid */}
@@ -369,7 +369,7 @@ export default function MaintenanceList() {
 
                   {/* Property ID */}
                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                    Property ID: {request.property_id}
+                    {t('propertyId')}: {request.property_id}
                   </Typography>
 
                   {/* Badges */}

@@ -9,6 +9,8 @@
   "priority": "الأولوية",
   "status": "الحالة",
   "property": "العقار",
+  "propertyId": "معرف العقار",
+  "found": "تم العثور على",
   "tenant": "المستأجر",
   "assignedTo": "مكلّف بها",
   "estimatedCost": "التكلفة التقديرية",
@@ -55,6 +57,7 @@
     "pending": "قيد الانتظار",
     "approved": "معتمد",
     "inProgress": "قيد التنفيذ",
+    "in_progress": "قيد التنفيذ",
     "completed": "مكتمل",
     "cancelled": "ملغي"
   },
