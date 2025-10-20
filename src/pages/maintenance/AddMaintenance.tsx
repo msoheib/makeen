@@ -22,8 +22,10 @@ import {
   ImageList,
   ImageListItem,
   ImageListItemBar,
+  CircularProgress,
 } from '@mui/material';
 import { ArrowLeft, Building, AlertTriangle, Camera, X, Upload } from 'lucide-react';
+import { propertiesApi } from '../../../lib/api';
 
 interface Property {
   id: string;
@@ -48,6 +50,8 @@ export default function AddMaintenance() {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [showPropertyModal, setShowPropertyModal] = useState(false);
   const [properties, setProperties] = useState<Property[]>([]);
+  const [propertiesLoading, setPropertiesLoading] = useState(false);
+  const [propertiesError, setPropertiesError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -154,14 +158,32 @@ export default function AddMaintenance() {
     return descriptions[priority] || '';
   };
 
-  // Load properties - TODO: Replace with actual API call
+  // Load properties from database
   useEffect(() => {
-    // Mock properties data
-    setProperties([
-      { id: '1', title: 'Property 1', address: '123 Main St', property_code: 'PROP001' },
-      { id: '2', title: 'Property 2', address: '456 Oak Ave', property_code: 'PROP002' },
-    ]);
-  }, []);
+    const fetchProperties = async () => {
+      setPropertiesLoading(true);
+      setPropertiesError(null);
+
+      try {
+        const response = await propertiesApi.getAll();
+
+        if (response.error) {
+          setPropertiesError(response.error.message || t('common:error'));
+          setProperties([]);
+        } else {
+          setProperties(response.data || []);
+        }
+      } catch (error: any) {
+        console.error('Error fetching properties:', error);
+        setPropertiesError(error.message || t('common:error'));
+        setProperties([]);
+      } finally {
+        setPropertiesLoading(false);
+      }
+    };
+
+    fetchProperties();
+  }, [t]);
 
   return (
     <Box>
@@ -415,7 +437,23 @@ export default function AddMaintenance() {
           </Box>
         </DialogTitle>
         <DialogContent>
-          {properties.length === 0 ? (
+          {propertiesLoading ? (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <CircularProgress />
+              <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
+                {t('common:loading')}...
+              </Typography>
+            </Box>
+          ) : propertiesError ? (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {propertiesError}
+              </Alert>
+              <Button variant="outlined" onClick={() => window.location.reload()}>
+                {t('common:retry')}
+              </Button>
+            </Box>
+          ) : properties.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 4 }}>
               <Building size={48} color="#9e9e9e" />
               <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
