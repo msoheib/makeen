@@ -15,8 +15,12 @@ import {
   Select,
   FormControlLabel,
   Checkbox,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
 import { ArrowLeft } from 'lucide-react';
+import { createTenantComplete } from '../../../lib/tenantCreation';
+import { supabase } from '../../../lib/supabase';
 
 export default function AddTenant() {
   const { t } = useTranslation(['tenants', 'common']);
@@ -38,20 +42,116 @@ export default function AddTenant() {
     is_foreign: false,
   });
 
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   const handleChange = (field: string) => (event: any) => {
     setFormData({ ...formData, [field]: event.target.value });
+    // Clear error when user types
+    if (errors[field]) {
+      setErrors({ ...errors, [field]: '' });
+    }
   };
 
   const handleCheckboxChange = (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [field]: event.target.checked });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    // Required fields validation
+    if (!formData.first_name.trim()) {
+      newErrors.first_name = t('common:required');
+    }
+
+    if (!formData.last_name.trim()) {
+      newErrors.last_name = t('common:required');
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = t('common:required');
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = t('common:invalidEmail');
+    }
+
+    if (!formData.phone_number.trim()) {
+      newErrors.phone_number = t('common:required');
+    }
+
+    if (!formData.password) {
+      newErrors.password = t('common:required');
+    } else if (formData.password.length < 6) {
+      newErrors.password = t('common:passwordTooShort');
+    }
+
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = t('common:required');
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = t('common:passwordsDoNotMatch');
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement actual submission logic
-    console.log('Form data:', formData);
-    alert(t('common:success') + '! ' + t('tenantAdded'));
-    navigate('/dashboard/tenants');
+    setSubmitError(null);
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Check for duplicate email
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('email', formData.email.trim().toLowerCase())
+        .maybeSingle();
+
+      if (existingUser) {
+        setErrors({ email: t('common:emailAlreadyExists') });
+        setSubmitError(t('common:emailAlreadyExists'));
+        setLoading(false);
+        return;
+      }
+
+      // Create tenant account
+      const result = await createTenantComplete({
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password,
+        first_name: formData.first_name.trim(),
+        last_name: formData.last_name.trim(),
+        phone: formData.phone_number.trim() || undefined,
+        role: formData.role,
+        address: formData.address.trim() || undefined,
+        city: formData.city.trim() || undefined,
+        country: formData.country.trim() || undefined,
+        nationality: formData.nationality.trim() || undefined,
+        id_number: formData.id_number.trim() || undefined,
+        is_foreign: formData.is_foreign,
+      });
+
+      if (!result.success) {
+        setSubmitError(result.error || t('common:error'));
+        setLoading(false);
+        return;
+      }
+
+      // Success!
+      alert(t('common:success') + '! ' + t('tenantAdded'));
+      navigate('/dashboard/tenants');
+    } catch (error: any) {
+      console.error('Error creating tenant:', error);
+      setSubmitError(error.message || t('common:error'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -72,6 +172,12 @@ export default function AddTenant() {
       {/* Form */}
       <Card>
         <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+          {submitError && (
+            <Alert severity="error" sx={{ mb: 3 }} onClose={() => setSubmitError(null)}>
+              {submitError}
+            </Alert>
+          )}
+
           <form onSubmit={handleSubmit}>
             <Grid container spacing={3}>
               {/* First Name */}
@@ -82,6 +188,9 @@ export default function AddTenant() {
                   label={t('firstName')}
                   value={formData.first_name}
                   onChange={handleChange('first_name')}
+                  error={!!errors.first_name}
+                  helperText={errors.first_name}
+                  disabled={loading}
                 />
               </Grid>
 
@@ -93,6 +202,9 @@ export default function AddTenant() {
                   label={t('lastName')}
                   value={formData.last_name}
                   onChange={handleChange('last_name')}
+                  error={!!errors.last_name}
+                  helperText={errors.last_name}
+                  disabled={loading}
                 />
               </Grid>
 
@@ -105,6 +217,9 @@ export default function AddTenant() {
                   label={t('email')}
                   value={formData.email}
                   onChange={handleChange('email')}
+                  error={!!errors.email}
+                  helperText={errors.email}
+                  disabled={loading}
                 />
               </Grid>
 
@@ -117,6 +232,9 @@ export default function AddTenant() {
                   value={formData.phone_number}
                   onChange={handleChange('phone_number')}
                   placeholder="+966501234567"
+                  error={!!errors.phone_number}
+                  helperText={errors.phone_number}
+                  disabled={loading}
                 />
               </Grid>
 
@@ -129,6 +247,9 @@ export default function AddTenant() {
                   label={t('password')}
                   value={formData.password}
                   onChange={handleChange('password')}
+                  error={!!errors.password}
+                  helperText={errors.password}
+                  disabled={loading}
                 />
               </Grid>
 
@@ -141,6 +262,9 @@ export default function AddTenant() {
                   label={t('confirmPassword')}
                   value={formData.confirmPassword}
                   onChange={handleChange('confirmPassword')}
+                  error={!!errors.confirmPassword}
+                  helperText={errors.confirmPassword}
+                  disabled={loading}
                 />
               </Grid>
 
@@ -151,6 +275,7 @@ export default function AddTenant() {
                   label={t('address')}
                   value={formData.address}
                   onChange={handleChange('address')}
+                  disabled={loading}
                 />
               </Grid>
 
@@ -161,6 +286,7 @@ export default function AddTenant() {
                   label={t('city')}
                   value={formData.city}
                   onChange={handleChange('city')}
+                  disabled={loading}
                 />
               </Grid>
 
@@ -171,6 +297,7 @@ export default function AddTenant() {
                   label={t('country')}
                   value={formData.country}
                   onChange={handleChange('country')}
+                  disabled={loading}
                 />
               </Grid>
 
@@ -181,6 +308,7 @@ export default function AddTenant() {
                   label={t('nationality')}
                   value={formData.nationality}
                   onChange={handleChange('nationality')}
+                  disabled={loading}
                 />
               </Grid>
 
@@ -191,6 +319,7 @@ export default function AddTenant() {
                   label={t('idNumber')}
                   value={formData.id_number}
                   onChange={handleChange('id_number')}
+                  disabled={loading}
                 />
               </Grid>
 
@@ -201,6 +330,7 @@ export default function AddTenant() {
                     <Checkbox
                       checked={formData.is_foreign}
                       onChange={handleCheckboxChange('is_foreign')}
+                      disabled={loading}
                     />
                   }
                   label={t('isForeign')}
@@ -213,11 +343,17 @@ export default function AddTenant() {
                   <Button
                     variant="outlined"
                     onClick={() => navigate('/dashboard/tenants')}
+                    disabled={loading}
                   >
                     {t('common:cancel')}
                   </Button>
-                  <Button variant="contained" type="submit">
-                    {t('addTenant')}
+                  <Button
+                    variant="contained"
+                    type="submit"
+                    disabled={loading}
+                    startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
+                  >
+                    {loading ? t('common:creating') : t('addTenant')}
                   </Button>
                 </Box>
               </Grid>
