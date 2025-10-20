@@ -55,7 +55,7 @@ export default function TenantsList() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
-  const { t } = useTranslation(['tenants', 'common']);
+  const { t } = useTranslation(['tenants', 'common', 'people']);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -223,7 +223,7 @@ export default function TenantsList() {
 
       {/* Results Count */}
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        {filteredTenants.length} {t('common:found')}
+        {t('found')}: {filteredTenants.length}
       </Typography>
 
       {/* Tenants Grid */}
@@ -298,7 +298,7 @@ export default function TenantsList() {
                         {tenant.first_name} {tenant.last_name}
                       </Typography>
                       <Chip
-                        label={t(`${tenant.status}Status`)}
+                        label={t(`people:statuses.${tenant.status}`)}
                         color={statusColors[tenant.status]}
                         size="small"
                         sx={{ mt: 0.5 }}
