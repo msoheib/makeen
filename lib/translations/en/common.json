@@ -238,11 +238,11 @@
     "validationError": "Validation Error",
     "unexpectedError": "An unexpected error occurred"
   },
-  "actions": {
+  "actionTypes": {
     "duplicate": "Duplicate",
     "post": "Post",
     "assign": "Assign",
     "approve": "Approve",
     "reject": "Reject"
   }
-} 
+}

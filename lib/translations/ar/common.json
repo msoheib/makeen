@@ -259,7 +259,7 @@
     "validationError": "خطأ في التحقق",
     "unexpectedError": "حدث خطأ غير متوقع"
   },
-  "actions": {
+  "actionTypes": {
     "duplicate": "تكرار",
     "post": "نشر",
     "assign": "إسناد",
