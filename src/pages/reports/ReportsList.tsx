@@ -413,6 +413,13 @@ export default function ReportsList() {
         requestBody.ownerId = filters.ownerId;
       }
 
+      // CRITICAL: Auto-apply owner filter for owner users
+      // If user is an owner and no ownerId filter is explicitly provided, automatically filter by their ID
+      if (user?.role === 'owner' && user?.id && !requestBody.ownerId) {
+        requestBody.ownerId = user.id;
+        console.log('Auto-applied owner filter for owner user:', user.id);
+      }
+
       // Log request for debugging
       console.log('PDF Generation Request:', {
         url: edgeFunctionUrl,
