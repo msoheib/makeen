@@ -31,7 +31,11 @@
       "Bash(yarn install)",
       "Bash(cat:*)",
       "Bash(npx supabase functions deploy:*)",
-      "Bash(npx supabase link:*)"
+      "Bash(npx supabase link:*)",
+      "Bash(git remote add:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(git fetch:*)"
     ],
     "deny": []
   },

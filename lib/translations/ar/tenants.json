@@ -42,5 +42,22 @@
   "address": "العنوان",
   "role": "الدور",
   "status": "الحالة",
-  "notProvided": "غير مقدم"
+  "notProvided": "غير مقدم",
+  "addTenant": "إضافة مستأجر",
+  "firstName": "الاسم الأول",
+  "lastName": "الاسم الأخير",
+  "email": "البريد الإلكتروني",
+  "idNumber": "رقم الهوية",
+  "password": "كلمة المرور",
+  "confirmPassword": "تأكيد كلمة المرور",
+  "city": "المدينة",
+  "country": "الدولة",
+  "isForeign": "مستأجر أجنبي",
+  "selectProperty": "اختر العقار",
+  "tenantAdded": "تم إضافة المستأجر بنجاح",
+  "statusOptions": {
+    "active": "نشط",
+    "pending": "قيد الانتظار",
+    "inactive": "غير نشط"
+  }
 }

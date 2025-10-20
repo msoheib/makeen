@@ -12,7 +12,20 @@ const corsHeaders = {
 };
 
 interface PDFRequest {
-  reportType: 'revenue' | 'expense' | 'property' | 'tenant' | 'maintenance';
+  reportType:
+    | 'revenue'
+    | 'expense'
+    | 'property'
+    | 'tenant'
+    | 'maintenance'
+    | 'pnl'
+    | 'cashflow'
+    | 'occupancy'
+    | 'property_performance'
+    | 'payments_log'
+    | 'contracts_expiring'
+    | 'operations'
+    | 'suppliers';
   dateRange?: {
     startDate: string;
     endDate: string;
@@ -254,6 +267,102 @@ async function fetchMaintenanceData(supabase: any, dateRange?: any) {
     console.error('Error fetching maintenance data:', error);
     throw error;
   }
+}
+
+// NEW: Financial - Profit & Loss
+async function fetchPnLData(supabase: any, dateRange?: any) {
+  let base = supabase.from('vouchers').select('voucher_type, amount, created_at').eq('status', 'posted');
+  if (dateRange) base = base.gte('created_at', dateRange.startDate).lte('created_at', dateRange.endDate);
+  const { data, error } = await base;
+  if (error) throw error;
+  const revenue = (data || []).filter((v: any) => v.voucher_type === 'receipt').reduce((s: number, v: any) => s + Number(v.amount || 0), 0);
+  const expense = (data || []).filter((v: any) => v.voucher_type === 'payment').reduce((s: number, v: any) => s + Number(v.amount || 0), 0);
+  return { revenue, expense, netIncome: revenue - expense, rows: data || [] };
+}
+
+// NEW: Cashflow (totals by type)
+async function fetchCashflowData(supabase: any, dateRange?: any) {
+  let q = supabase.from('vouchers').select('voucher_type, amount, created_at, voucher_number').eq('status', 'posted');
+  if (dateRange) q = q.gte('created_at', dateRange.startDate).lte('created_at', dateRange.endDate);
+  const { data, error } = await q.order('created_at', { ascending: false });
+  if (error) throw error;
+  const inflow = (data || []).filter((x: any) => x.voucher_type === 'receipt').reduce((s: number, x: any) => s + Number(x.amount || 0), 0);
+  const outflow = (data || []).filter((x: any) => x.voucher_type === 'payment').reduce((s: number, x: any) => s + Number(x.amount || 0), 0);
+  return { inflow, outflow, net: inflow - outflow, entries: data?.slice(0, 100) || [] };
+}
+
+// NEW: Occupancy report
+async function fetchOccupancyData(supabase: any) {
+  const { data, error } = await supabase.from('properties').select('status, city');
+  if (error) throw error;
+  const total = data?.length || 0;
+  const occupied = (data || []).filter((p: any) => p.status === 'rented').length;
+  const maintenance = (data || []).filter((p: any) => p.status === 'maintenance').length;
+  const available = total - occupied - maintenance;
+  return { total, occupied, available, maintenance };
+}
+
+// NEW: Property performance
+async function fetchPropertyPerformanceData(supabase: any) {
+  const { data, error } = await supabase
+    .from('properties')
+    .select('title, city, price, annual_rent, status')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  const rows = (data || []).map((p: any) => {
+    const roi = p.annual_rent && p.price ? (Number(p.annual_rent) / Number(p.price)) * 100 : null;
+    return { ...p, roi };
+  });
+  return { rows };
+}
+
+// NEW: Payments log
+async function fetchPaymentsLogData(supabase: any, dateRange?: any) {
+  let q = supabase
+    .from('vouchers')
+    .select('voucher_number, voucher_type, amount, created_at, description')
+    .eq('status', 'posted');
+  if (dateRange) q = q.gte('created_at', dateRange.startDate).lte('created_at', dateRange.endDate);
+  const { data, error } = await q.order('created_at', { ascending: false }).limit(200);
+  if (error) throw error;
+  return { entries: data || [] };
+}
+
+// NEW: Contracts expiring soon
+async function fetchContractsExpiringData(supabase: any, dateRange?: any) {
+  const now = new Date();
+  const to = dateRange?.endDate ? new Date(dateRange.endDate) : new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
+  const fromISO = now.toISOString();
+  const toISO = to.toISOString();
+  const { data, error } = await supabase
+    .from('contracts')
+    .select('contract_number, end_date, start_date, status, rent_amount')
+    .eq('status', 'active')
+    .gte('end_date', fromISO)
+    .lte('end_date', toISO)
+    .order('end_date', { ascending: true });
+  if (error) throw error;
+  return { entries: data || [], from: fromISO, to: toISO };
+}
+
+// NEW: Operations summary
+async function fetchOperationsSummaryData(supabase: any) {
+  const [maint, letters, issues] = await Promise.all([
+    supabase.from('maintenance_requests').select('id').then((r: any) => r.data || []),
+    supabase.from('letters').select('id').then((r: any) => r.data || []),
+    supabase.from('issues').select('id').then((r: any) => r.data || []),
+  ]);
+  return { maintenanceCount: maint.length, lettersCount: letters.length, issuesCount: issues.length };
+}
+
+// NEW: Suppliers report
+async function fetchSuppliersData(supabase: any) {
+  const { data, error } = await supabase
+    .from('clients')
+    .select('company_name, contact_person, phone, email, status')
+    .in('client_type', ['supplier', 'vendor', 'contractor']);
+  if (error) throw error;
+  return { suppliers: data || [] };
 }
 
 // HTML template generation functions
@@ -597,6 +706,102 @@ function generatePropertyHTML(data: any): string {
   `;
 }
 
+// ---------- New HTML generators (lightweight) ----------
+function generatePnLHTML(data: any): string {
+  return `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>قائمة الأرباح والخسائر</title>
+  <style>body{font-family:Arial;padding:24px;background:#fafafa;color:#333} .card{background:#fff;padding:24px;border-radius:8px;border:1px solid #eee}
+  h1{color:#3f51b5} .row{display:flex;gap:16px} .kpi{flex:1;background:#f7f9fc;border:1px solid #e6eaf2;border-radius:8px;padding:16px;text-align:center}
+  .kpi .v{font-size:22px;font-weight:bold} table{width:100%;border-collapse:collapse;margin-top:16px} th,td{padding:10px;border-bottom:1px solid #eee;text-align:right}
+  </style></head><body><div class="card"><h1>قائمة الأرباح والخسائر</h1>
+  <div class="row"><div class="kpi"><div>الإيرادات</div><div class="v">﷼ ${formatNumber(data.revenue)}</div></div>
+  <div class="kpi"><div>المصروفات</div><div class="v">﷼ ${formatNumber(data.expense)}</div></div>
+  <div class="kpi"><div>صافي الدخل</div><div class="v">﷼ ${formatNumber(data.netIncome)}</div></div></div>
+  </div></body></html>`;
+}
+
+function generateCashflowHTML(data: any): string {
+  return `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>بيان التدفقات النقدية</title>
+  <style>body{font-family:Arial;padding:24px;background:#fafafa;color:#333} .card{background:#fff;padding:24px;border-radius:8px;border:1px solid #eee}
+  h1{color:#009688} .row{display:flex;gap:16px} .kpi{flex:1;background:#f3fbfb;border:1px solid #d6efef;border-radius:8px;padding:16px;text-align:center}
+  .kpi .v{font-size:22px;font-weight:bold} table{width:100%;border-collapse:collapse;margin-top:16px} th,td{padding:10px;border-bottom:1px solid #eee;text-align:right}
+  </style></head><body><div class="card"><h1>بيان التدفقات النقدية</h1>
+  <div class="row"><div class="kpi"><div>التدفقات الداخلة</div><div class="v">﷼ ${formatNumber(data.inflow)}</div></div>
+  <div class="kpi"><div>التدفقات الخارجة</div><div class="v">﷼ ${formatNumber(data.outflow)}</div></div>
+  <div class="kpi"><div>الصافي</div><div class="v">﷼ ${formatNumber(data.net)}</div></div></div>
+  </div></body></html>`;
+}
+
+function generateOccupancyHTML(data: any): string {
+  const rate = data.total > 0 ? Math.round((data.occupied / data.total) * 100) : 0;
+  return `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>تقرير الإشغال</title>
+  <style>body{font-family:Arial;padding:24px;background:#fafafa;color:#333} .card{background:#fff;padding:24px;border-radius:8px;border:1px solid #eee}
+  h1{color:#4CAF50} .grid{display:flex;gap:16px} .kpi{flex:1;background:#f5f9f5;border:1px solid #e1f0e1;border-radius:8px;padding:16px;text-align:center}
+  .kpi .v{font-size:22px;font-weight:bold}
+  </style></head><body><div class="card"><h1>تقرير الإشغال</h1>
+  <div class="grid"><div class="kpi"><div>الإجمالي</div><div class="v">${formatNumber(data.total)}</div></div>
+  <div class="kpi"><div>مشغول</div><div class="v">${formatNumber(data.occupied)}</div></div>
+  <div class="kpi"><div>متاح</div><div class="v">${formatNumber(data.available)}</div></div>
+  <div class="kpi"><div>صيانة</div><div class="v">${formatNumber(data.maintenance)}</div></div>
+  <div class="kpi"><div>نسبة الإشغال</div><div class="v">${rate}%</div></div></div>
+  </div></body></html>`;
+}
+
+function generatePropertyPerformanceHTML(data: any): string {
+  const rows = data.rows || [];
+  return `<!DOCTYPE html><html dir=\"rtl\" lang=\"ar\"><head><meta charset=\"UTF-8\"><title>أداء العقار</title>
+  <style>body{font-family:Arial;padding:24px;background:#fafafa;color:#333} .card{background:#fff;padding:24px;border-radius:8px;border:1px solid #eee}
+  h1{color:#673ab7} table{width:100%;border-collapse:collapse;margin-top:16px} th,td{padding:10px;border-bottom:1px solid #eee;text-align:right}
+  </style></head><body><div class=card><h1>أداء العقار</h1>
+  <table><thead><tr><th>العقار</th><th>المدينة</th><th>السعر</th><th>الإيجار السنوي</th><th>العائد (%)</th><th>الحالة</th></tr></thead>
+  <tbody>${rows.map((r: any) => `<tr><td>${r.title || '-'}</td><td>${r.city || '-'}</td><td>﷼ ${formatNumber(Number(r.price || 0))}</td><td>﷼ ${formatNumber(Number(r.annual_rent || 0))}</td><td>${r.roi ? r.roi.toFixed(2) : '-'}</td><td>${r.status}</td></tr>`).join('')}</tbody>
+  </table></div></body></html>`;
+}
+
+function generatePaymentsLogHTML(data: any): string {
+  const rows = data.entries || [];
+  return `<!DOCTYPE html><html dir=\"rtl\" lang=\"ar\"><head><meta charset=\"UTF-8\"><title>سجل المدفوعات</title>
+  <style>body{font-family:Arial;padding:24px;background:#fafafa;color:#333} .card{background:#fff;padding:24px;border-radius:8px;border:1px solid #eee}
+  h1{color:#795548} table{width:100%;border-collapse:collapse;margin-top:16px} th,td{padding:10px;border-bottom:1px solid #eee;text-align:right}
+  </style></head><body><div class=card><h1>سجل المدفوعات</h1>
+  <table><thead><tr><th>التاريخ</th><th>النوع</th><th>الرقم</th><th>المبلغ</th></tr></thead>
+  <tbody>${rows.map((r: any) => `<tr><td>${formatDate(r.created_at)}</td><td>${r.voucher_type}</td><td>${r.voucher_number || '-'}</td><td>﷼ ${formatNumber(Number(r.amount || 0))}</td></tr>`).join('')}</tbody>
+  </table></div></body></html>`;
+}
+
+function generateContractsExpiringHTML(data: any): string {
+  const rows = data.entries || [];
+  return `<!DOCTYPE html><html dir=\"rtl\" lang=\"ar\"><head><meta charset=\"UTF-8\"><title>تقرير انتهاء العقود</title>
+  <style>body{font-family:Arial;padding:24px;background:#fafafa;color:#333} .card{background:#fff;padding:24px;border-radius:8px;border:1px solid #eee}
+  h1{color:#e91e63} table{width:100%;border-collapse:collapse;margin-top:16px} th,td{padding:10px;border-bottom:1px solid #eee;text-align:right}
+  </style></head><body><div class=card><h1>تقرير انتهاء العقود</h1>
+  <table><thead><tr><th>رقم العقد</th><th>بداية</th><th>نهاية</th><th>الحالة</th><th>الإيجار</th></tr></thead>
+  <tbody>${rows.map((r: any) => `<tr><td>${r.contract_number || '-'}</td><td>${formatDate(r.start_date)}</td><td>${formatDate(r.end_date)}</td><td>${r.status}</td><td>﷼ ${formatNumber(Number(r.rent_amount || 0))}</td></tr>`).join('')}</tbody>
+  </table></div></body></html>`;
+}
+
+function generateOperationsSummaryHTML(data: any): string {
+  return `<!DOCTYPE html><html dir=\"rtl\" lang=\"ar\"><head><meta charset=\"UTF-8\"><title>ملخص العمليات</title>
+  <style>body{font-family:Arial;padding:24px;background:#fafafa;color:#333} .card{background:#fff;padding:24px;border-radius:8px;border:1px solid #eee}
+  h1{color:#607d8b} .grid{display:flex;gap:16px} .kpi{flex:1;background:#f5f7f9;border:1px solid #e2e7ed;border-radius:8px;padding:16px;text-align:center}
+  .kpi .v{font-size:22px;font-weight:bold}
+  </style></head><body><div class=card><h1>ملخص العمليات</h1>
+  <div class=grid><div class=kpi><div>طلبات الصيانة</div><div class=v>${formatNumber(data.maintenanceCount)}</div></div>
+  <div class=kpi><div>الخطابات</div><div class=v>${formatNumber(data.lettersCount)}</div></div>
+  <div class=kpi><div>القضايا</div><div class=v>${formatNumber(data.issuesCount)}</div></div></div>
+  </div></body></html>`;
+}
+
+function generateSuppliersHTML(data: any): string {
+  const rows = data.suppliers || [];
+  return `<!DOCTYPE html><html dir=\"rtl\" lang=\"ar\"><head><meta charset=\"UTF-8\"><title>تقرير الموردين</title>
+  <style>body{font-family:Arial;padding:24px;background:#fafafa;color:#333} .card{background:#fff;padding:24px;border-radius:8px;border:1px solid #eee}
+  h1{color:#9c27b0} table{width:100%;border-collapse:collapse;margin-top:16px} th,td{padding:10px;border-bottom:1px solid #eee;text-align:right}
+  </style></head><body><div class=card><h1>تقرير الموردين</h1>
+  <table><thead><tr><th>الشركة</th><th>المسؤول</th><th>الهاتف</th><th>البريد الإلكتروني</th><th>الحالة</th></tr></thead>
+  <tbody>${rows.map((r: any) => `<tr><td>${r.company_name || '-'}</td><td>${r.contact_person || '-'}</td><td>${r.phone || '-'}</td><td>${r.email || '-'}</td><td>${r.status || '-'}</td></tr>`).join('')}</tbody>
+  </table></div></body></html>`;
+}
+
 // Main request handler
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -613,7 +818,9 @@ serve(async (req) => {
     console.log('Received PDF request:', request);
 
     // Validate request
-    if (!request.reportType || !['revenue', 'expense', 'property', 'tenant', 'maintenance'].includes(request.reportType)) {
+    if (!request.reportType || ![
+      'revenue','expense','property','tenant','maintenance','pnl','cashflow','occupancy','property_performance','payments_log','contracts_expiring','operations','suppliers'
+    ].includes(request.reportType)) {
       throw new Error('Invalid report type');
     }
 
@@ -644,6 +851,38 @@ serve(async (req) => {
       case 'maintenance':
         data = await fetchMaintenanceData(supabase, request.dateRange);
         html = generatePropertyHTML(data); // You'd implement generateMaintenanceHTML
+        break;
+      case 'pnl':
+        data = await fetchPnLData(supabase, request.dateRange);
+        html = generatePnLHTML(data);
+        break;
+      case 'cashflow':
+        data = await fetchCashflowData(supabase, request.dateRange);
+        html = generateCashflowHTML(data);
+        break;
+      case 'occupancy':
+        data = await fetchOccupancyData(supabase);
+        html = generateOccupancyHTML(data);
+        break;
+      case 'property_performance':
+        data = await fetchPropertyPerformanceData(supabase);
+        html = generatePropertyPerformanceHTML(data);
+        break;
+      case 'payments_log':
+        data = await fetchPaymentsLogData(supabase, request.dateRange);
+        html = generatePaymentsLogHTML(data);
+        break;
+      case 'contracts_expiring':
+        data = await fetchContractsExpiringData(supabase, request.dateRange);
+        html = generateContractsExpiringHTML(data);
+        break;
+      case 'operations':
+        data = await fetchOperationsSummaryData(supabase);
+        html = generateOperationsSummaryHTML(data);
+        break;
+      case 'suppliers':
+        data = await fetchSuppliersData(supabase);
+        html = generateSuppliersHTML(data);
         break;
       default:
         throw new Error('Unsupported report type');

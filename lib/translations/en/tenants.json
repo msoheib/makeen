@@ -36,5 +36,28 @@
   "contract": "Contract",
   "accountDetails": "Account Details",
   "tenantID": "Tenant ID",
-  "notAvailable": "Not Available"
+  "notAvailable": "Not Available",
+  "emailAddress": "Email Address",
+  "phoneNumber": "Phone Number",
+  "address": "Address",
+  "role": "Role",
+  "status": "Status",
+  "notProvided": "Not Provided",
+  "addTenant": "Add Tenant",
+  "firstName": "First Name",
+  "lastName": "Last Name",
+  "email": "Email",
+  "idNumber": "ID Number",
+  "password": "Password",
+  "confirmPassword": "Confirm Password",
+  "city": "City",
+  "country": "Country",
+  "isForeign": "Foreign Tenant",
+  "selectProperty": "Select Property",
+  "tenantAdded": "Tenant added successfully",
+  "statusOptions": {
+    "active": "Active",
+    "pending": "Pending",
+    "inactive": "Inactive"
+  }
 }

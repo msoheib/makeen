@@ -13,6 +13,8 @@ import {
   FormControl,
   InputLabel,
   Select,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material';
 import { ArrowLeft } from 'lucide-react';
 
@@ -21,18 +23,27 @@ export default function AddTenant() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    first_name: '',
+    last_name: '',
     email: '',
-    phone: '',
-    status: 'active',
-    propertyId: '',
+    phone_number: '',
+    password: '',
+    confirmPassword: '',
+    role: 'tenant',
+    address: '',
+    city: '',
+    country: '',
     nationality: '',
-    idNumber: '',
+    id_number: '',
+    is_foreign: false,
   });
 
   const handleChange = (field: string) => (event: any) => {
     setFormData({ ...formData, [field]: event.target.value });
+  };
+
+  const handleCheckboxChange = (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [field]: event.target.checked });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -63,26 +74,29 @@ export default function AddTenant() {
         <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
           <form onSubmit={handleSubmit}>
             <Grid container spacing={3}>
+              {/* First Name */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   required
                   label={t('firstName')}
-                  value={formData.firstName}
-                  onChange={handleChange('firstName')}
+                  value={formData.first_name}
+                  onChange={handleChange('first_name')}
                 />
               </Grid>
 
+              {/* Last Name */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   required
                   label={t('lastName')}
-                  value={formData.lastName}
-                  onChange={handleChange('lastName')}
+                  value={formData.last_name}
+                  onChange={handleChange('last_name')}
                 />
               </Grid>
 
+              {/* Email */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
@@ -94,17 +108,73 @@ export default function AddTenant() {
                 />
               </Grid>
 
+              {/* Phone Number */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   required
                   label={t('phoneNumber')}
-                  value={formData.phone}
-                  onChange={handleChange('phone')}
+                  value={formData.phone_number}
+                  onChange={handleChange('phone_number')}
                   placeholder="+966501234567"
                 />
               </Grid>
 
+              {/* Password */}
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  required
+                  type="password"
+                  label={t('password')}
+                  value={formData.password}
+                  onChange={handleChange('password')}
+                />
+              </Grid>
+
+              {/* Confirm Password */}
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  required
+                  type="password"
+                  label={t('confirmPassword')}
+                  value={formData.confirmPassword}
+                  onChange={handleChange('confirmPassword')}
+                />
+              </Grid>
+
+              {/* Address */}
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label={t('address')}
+                  value={formData.address}
+                  onChange={handleChange('address')}
+                />
+              </Grid>
+
+              {/* City */}
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label={t('city')}
+                  value={formData.city}
+                  onChange={handleChange('city')}
+                />
+              </Grid>
+
+              {/* Country */}
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label={t('country')}
+                  value={formData.country}
+                  onChange={handleChange('country')}
+                />
+              </Grid>
+
+              {/* Nationality */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
@@ -114,40 +184,30 @@ export default function AddTenant() {
                 />
               </Grid>
 
+              {/* ID Number */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label={t('idNumber')}
-                  value={formData.idNumber}
-                  onChange={handleChange('idNumber')}
+                  value={formData.id_number}
+                  onChange={handleChange('id_number')}
                 />
               </Grid>
 
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth required>
-                  <InputLabel>{t('status')}</InputLabel>
-                  <Select
-                    value={formData.status}
-                    label={t('status')}
-                    onChange={handleChange('status')}
-                  >
-                    <MenuItem value="active">{t('statusOptions.active')}</MenuItem>
-                    <MenuItem value="pending">{t('statusOptions.pending')}</MenuItem>
-                    <MenuItem value="inactive">{t('statusOptions.inactive')}</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label={t('propertyName')}
-                  value={formData.propertyId}
-                  onChange={handleChange('propertyId')}
-                  placeholder={t('selectProperty')}
+              {/* Foreign Tenant Checkbox */}
+              <Grid item xs={12}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={formData.is_foreign}
+                      onChange={handleCheckboxChange('is_foreign')}
+                    />
+                  }
+                  label={t('isForeign')}
                 />
               </Grid>
 
+              {/* Action Buttons */}
               <Grid item xs={12}>
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
                   <Button
