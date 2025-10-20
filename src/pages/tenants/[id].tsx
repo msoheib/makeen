@@ -79,7 +79,7 @@ export default function TenantDetailPage() {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { t } = useTranslation(['tenants', 'common']);
+  const { t } = useTranslation(['tenants', 'common', 'people']);
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -302,7 +302,7 @@ export default function TenantDetailPage() {
               </Typography>
               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                 <Chip
-                  label={tenant?.status || 'Unknown'}
+                  label={t(`people:statuses.${tenant?.status}`) || tenant?.status}
                   color={getStatusColor(tenant?.status || '') as any}
                   size="small"
                 />
@@ -506,7 +506,7 @@ export default function TenantDetailPage() {
                           secondary={`${formatDate(contract.start_date)} - ${formatDate(contract.end_date)}`}
                         />
                         <Chip
-                          label={contract.status}
+                          label={t(`people:statuses.${contract.status}`) || contract.status}
                           color={contract.status === 'active' ? 'success' : 'default'}
                           size="small"
                         />
@@ -552,7 +552,7 @@ export default function TenantDetailPage() {
                     {t('status')}
                   </Typography>
                   <Chip
-                    label={tenant?.status || 'Unknown'}
+                    label={t(`people:statuses.${tenant?.status}`) || tenant?.status}
                     color={getStatusColor(tenant?.status || '') as any}
                     size="small"
                   />

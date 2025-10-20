@@ -36,5 +36,11 @@
   "contract": "عقد",
   "accountDetails": "تفاصيل الحساب",
   "tenantID": "معرف المستأجر",
-  "notAvailable": "غير متوفر"
+  "notAvailable": "غير متوفر",
+  "emailAddress": "البريد الإلكتروني",
+  "phoneNumber": "رقم الهاتف",
+  "address": "العنوان",
+  "role": "الدور",
+  "status": "الحالة",
+  "notProvided": "غير مقدم"
 }
