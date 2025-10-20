@@ -1,6 +1,7 @@
 import { Card, CardContent, Typography, Box, useTheme, Skeleton } from '@mui/material';
 import { TrendingUp, TrendingDown } from '@mui/icons-material';
 import { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface StatCardProps {
   title: string;
@@ -25,6 +26,7 @@ export default function StatCard({
   onClick,
 }: StatCardProps) {
   const theme = useTheme();
+  const { t } = useTranslation('common');
 
   const colorMap = {
     primary: theme.palette.primary.main,
@@ -59,7 +61,7 @@ export default function StatCard({
       onClick={onClick}
       sx={{
         height: '100%',
-        minHeight: { xs: '120px', sm: '140px' },
+        minHeight: { xs: '100px', sm: '140px' },
         cursor: onClick ? 'pointer' : 'default',
         transition: 'all 0.3s ease',
         '&:hover': onClick
@@ -70,24 +72,24 @@ export default function StatCard({
           : {},
       }}
     >
-      <CardContent>
+      <CardContent sx={{ p: { xs: 1.5, sm: 2 }, '&:last-child': { pb: { xs: 1.5, sm: 2 } } }}>
         {/* Header with title and icon */}
         <Box
           sx={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'flex-start',
-            mb: { xs: 1, sm: 2 },
+            mb: { xs: 0.5, sm: 2 },
           }}
         >
           <Typography
             variant="body2"
             color="text.secondary"
             sx={{
-              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              fontSize: { xs: '0.65rem', sm: '0.875rem' },
               fontWeight: 500,
-              textTransform: 'uppercase',
               letterSpacing: '0.5px',
+              lineHeight: { xs: 1.2, sm: 1.4 },
             }}
           >
             {title}
@@ -98,11 +100,14 @@ export default function StatCard({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: { xs: 36, sm: 40 },
-                height: { xs: 36, sm: 40 },
+                width: { xs: 32, sm: 40 },
+                height: { xs: 32, sm: 40 },
                 borderRadius: '50%',
                 bgcolor: `${selectedColor}15`,
                 color: selectedColor,
+                '& svg': {
+                  fontSize: { xs: '1.1rem', sm: '1.5rem' },
+                },
               }}
             >
               {icon}
@@ -118,7 +123,8 @@ export default function StatCard({
             fontWeight: 700,
             color: 'text.primary',
             mb: trend ? 1 : 0,
-            fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
+            fontSize: { xs: '1.75rem', sm: '2rem', md: '2.125rem' },
+            lineHeight: 1.2,
           }}
         >
           {value}
@@ -157,7 +163,7 @@ export default function StatCard({
                 ml: 0.5,
               }}
             >
-              vs last month
+              {t('vsLastMonth', 'vs last month')}
             </Typography>
           </Box>
         )}

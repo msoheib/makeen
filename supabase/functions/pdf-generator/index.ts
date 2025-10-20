@@ -21,11 +21,45 @@ interface PDFRequest {
   tenantId?: string;
 }
 
+// Helper function to format numbers with Western (Latin) numerals
+function formatNumber(num: number): string {
+  // Force Western numerals by converting to string and ensuring no locale conversion
+  const formatted = num.toLocaleString('en-US', {
+    useGrouping: true,
+    maximumFractionDigits: 0
+  });
+  // Replace any Arabic-Indic numerals with Western numerals as fallback
+  return formatted
+    .replace(/[\u0660-\u0669]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 0x0660 + 0x0030))
+    .replace(/[\u06F0-\u06F9]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 0x06F0 + 0x0030));
+}
+
+// Helper function to format dates in Gregorian calendar with Western numerals
+function formatDate(date: string | Date): string {
+  const d = new Date(date);
+  const day = d.getDate();
+  const month = d.getMonth() + 1;
+  const year = d.getFullYear();
+
+  // Format as DD/MM/YYYY with Western numerals
+  return `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${year}`;
+}
+
+// Helper function to format datetime with Western numerals
+function formatDateTime(date: Date): string {
+  const dateStr = formatDate(date);
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+  const seconds = date.getSeconds();
+
+  return `${dateStr} ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
 // Database connection setup
 function createSupabaseClient() {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-  
+
   return createClient(supabaseUrl, supabaseServiceKey);
 }
 
@@ -326,13 +360,13 @@ function generateRevenueHTML(data: any): string {
         <div class="header">
           <h1>تقرير الإيرادات الشهرية</h1>
           <div class="subtitle">شركة إدارة العقارات MG</div>
-          <div class="subtitle">تاريخ التقرير: ${new Date().toLocaleDateString('en-US')}</div>
+          <div class="subtitle">تاريخ التقرير: ${formatDate(new Date())}</div>
         </div>
 
         <div class="summary">
           <div class="summary-item">
             <h3>إجمالي الإيرادات</h3>
-            <div class="value">${summary.totalRevenue.toLocaleString('en-US', { maximumFractionDigits: 0 })} ريال</div>
+            <div class="value">${formatNumber(summary.totalRevenue)} ﷼</div>
           </div>
           <div class="summary-item">
             <h3>عدد الإيصالات</h3>
@@ -340,7 +374,7 @@ function generateRevenueHTML(data: any): string {
           </div>
           <div class="summary-item">
             <h3>متوسط المبلغ</h3>
-            <div class="value">${Math.round(summary.averageAmount).toLocaleString('en-US', { maximumFractionDigits: 0 })} ريال</div>
+            <div class="value">${formatNumber(Math.round(summary.averageAmount))} ﷼</div>
           </div>
         </div>
 
@@ -358,17 +392,26 @@ function generateRevenueHTML(data: any): string {
             ${vouchers.map((voucher: any) => `
               <tr>
                 <td>${voucher.voucher_number || '-'}</td>
-                <td class="amount">${Number(voucher.amount).toLocaleString('en-US', { maximumFractionDigits: 0 })} ريال</td>
+                <td class="amount">${formatNumber(Number(voucher.amount))} ﷼</td>
                 <td>${voucher.property?.title || '-'}</td>
                 <td>${voucher.tenant?.first_name || ''} ${voucher.tenant?.last_name || ''}</td>
-                <td>${new Date(voucher.created_at).toLocaleDateString('en-US')}</td>
+                <td>${formatDate(voucher.created_at)}</td>
               </tr>
             `).join('')}
           </tbody>
+          <tfoot>
+            <tr>
+              <td style="font-weight: bold; padding-top: 15px; border-top: 2px solid #2196F3;">الإجمالي</td>
+              <td class="amount" style="font-size: 18px; padding-top: 15px; border-top: 2px solid #2196F3;">${formatNumber(summary.totalRevenue)} ﷼</td>
+              <td style="padding-top: 15px; border-top: 2px solid #2196F3;"></td>
+              <td style="padding-top: 15px; border-top: 2px solid #2196F3;"></td>
+              <td style="padding-top: 15px; border-top: 2px solid #2196F3;"></td>
+            </tr>
+          </tfoot>
         </table>
 
         <div class="footer">
-          تم إنشاء هذا التقرير تلقائياً في ${new Date().toLocaleString('en-US')}
+          تم إنشاء هذا التقرير تلقائياً في ${formatDateTime(new Date())}
         </div>
       </div>
     </body>
@@ -408,13 +451,13 @@ function generateExpenseHTML(data: any): string {
         <div class="header">
           <h1>تقرير المصروفات الشهرية</h1>
           <div class="subtitle">شركة إدارة العقارات MG</div>
-          <div class="subtitle">تاريخ التقرير: ${new Date().toLocaleDateString('en-US')}</div>
+          <div class="subtitle">تاريخ التقرير: ${formatDate(new Date())}</div>
         </div>
 
         <div class="summary">
           <div class="summary-item">
             <h3>إجمالي المصروفات</h3>
-            <div class="value">${summary.totalExpenses.toLocaleString('en-US', { maximumFractionDigits: 0 })} ريال</div>
+            <div class="value">${formatNumber(summary.totalExpenses)} ﷼</div>
           </div>
           <div class="summary-item">
             <h3>عدد المدفوعات</h3>
@@ -422,7 +465,7 @@ function generateExpenseHTML(data: any): string {
           </div>
           <div class="summary-item">
             <h3>متوسط المبلغ</h3>
-            <div class="value">${Math.round(summary.averageAmount).toLocaleString('en-US', { maximumFractionDigits: 0 })} ريال</div>
+            <div class="value">${formatNumber(Math.round(summary.averageAmount))} ﷼</div>
           </div>
         </div>
 
@@ -440,17 +483,26 @@ function generateExpenseHTML(data: any): string {
             ${vouchers.map((voucher: any) => `
               <tr>
                 <td>${voucher.voucher_number || '-'}</td>
-                <td class="amount">${Number(voucher.amount).toLocaleString('en-US', { maximumFractionDigits: 0 })} ريال</td>
+                <td class="amount">${formatNumber(Number(voucher.amount))} ﷼</td>
                 <td>${voucher.account?.account_name || '-'}</td>
                 <td>${voucher.property?.title || '-'}</td>
-                <td>${new Date(voucher.created_at).toLocaleDateString('en-US')}</td>
+                <td>${formatDate(voucher.created_at)}</td>
               </tr>
             `).join('')}
           </tbody>
+          <tfoot>
+            <tr>
+              <td style="font-weight: bold; padding-top: 15px; border-top: 2px solid #FF9800;">الإجمالي</td>
+              <td class="amount" style="font-size: 18px; padding-top: 15px; border-top: 2px solid #FF9800;">${formatNumber(summary.totalExpenses)} ﷼</td>
+              <td style="padding-top: 15px; border-top: 2px solid #FF9800;"></td>
+              <td style="padding-top: 15px; border-top: 2px solid #FF9800;"></td>
+              <td style="padding-top: 15px; border-top: 2px solid #FF9800;"></td>
+            </tr>
+          </tfoot>
         </table>
 
         <div class="footer">
-          تم إنشاء هذا التقرير تلقائياً في ${new Date().toLocaleString('en-US')}
+          تم إنشاء هذا التقرير تلقائياً في ${formatDateTime(new Date())}
         </div>
       </div>
     </body>
@@ -495,7 +547,7 @@ function generatePropertyHTML(data: any): string {
         <div class="header">
           <h1>تقرير العقارات</h1>
           <div class="subtitle">شركة إدارة العقارات MG</div>
-          <div class="subtitle">تاريخ التقرير: ${new Date().toLocaleDateString('en-US')}</div>
+          <div class="subtitle">تاريخ التقرير: ${formatDate(new Date())}</div>
         </div>
 
         <div class="summary">
@@ -529,7 +581,7 @@ function generatePropertyHTML(data: any): string {
                 <td>${property.title}</td>
                 <td>${property.property_type}</td>
                 <td><span class="status ${property.status}">${property.status}</span></td>
-                <td class="price">${Number(property.price).toLocaleString('en-US', { maximumFractionDigits: 0 })} ريال</td>
+                <td class="price">${formatNumber(Number(property.price))} ﷼</td>
                 <td>${property.owner?.first_name || ''} ${property.owner?.last_name || ''}</td>
               </tr>
             `).join('')}
@@ -537,7 +589,7 @@ function generatePropertyHTML(data: any): string {
         </table>
         
         <div class="footer">
-          تم إنشاء هذا التقرير تلقائياً في ${new Date().toLocaleString('en-US')}
+          تم إنشاء هذا التقرير تلقائياً في ${formatDateTime(new Date())}
         </div>
       </div>
     </body>
@@ -660,11 +712,11 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('PDF generation error:', error);
-    
+
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message,
+        error: error.message || 'Unknown error occurred',
         timestamp: new Date().toISOString()
       }),
       {

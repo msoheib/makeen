@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Box, Typography, Grid, useTheme, useMediaQuery } from '@mui/material';
+import { Box, Typography, Grid, useTheme, useMediaQuery, Snackbar, Alert } from '@mui/material';
 import {
   Home as HomeIcon,
   People as PeopleIcon,
@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../../lib/store';
 import StatCard, { StatCardSkeleton } from '../../components/data/StatCard';
 import ResponsiveContainer from '../../components/layout/ResponsiveContainer';
+import { propertiesApi, profilesApi, maintenanceApi } from '../../../lib/api';
 
 interface DashboardStats {
   totalProperties: number;
@@ -23,35 +24,65 @@ interface DashboardStats {
 export default function DashboardHome() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const { t } = useTranslation();
+  const { t } = useTranslation('dashboard');
   const { user } = useAppStore();
+
+  console.log('[DashboardHome] Rendering, user:', user?.email);
 
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    // Simulate loading dashboard stats
-    // In production, this would fetch from Supabase
     const loadStats = async () => {
-      setLoading(true);
+      try {
+        setLoading(true);
 
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+        // Fetch core counts in parallel
+        const [summaryRes, tenantsRes, maintenanceRes] = await Promise.all([
+          propertiesApi.getDashboardSummary(),
+          profilesApi.getAll({ role: 'tenant' }),
+          maintenanceApi.getRequests({ status: 'pending' })
+        ]);
 
-      setStats({
-        totalProperties: 45,
-        occupiedProperties: 38,
-        totalTenants: 42,
-        pendingMaintenance: 7,
-        monthlyRevenue: 125000,
-        occupancyRate: 84,
-      });
+        if (summaryRes.error) throw new Error(summaryRes.error.message);
+        if (tenantsRes.error) throw new Error(tenantsRes.error.message);
+        if (maintenanceRes.error) throw new Error(maintenanceRes.error.message);
 
-      setLoading(false);
+        const summary = summaryRes.data || {
+          total_properties: 0,
+          available: 0,
+          occupied: 0,
+          maintenance: 0,
+          total_monthly_rent: 0,
+          active_contracts: 0,
+        };
+
+        const totalProperties = Number(summary.total_properties) || 0;
+        const occupied = Number(summary.occupied) || 0;
+        const monthlyRevenue = Number(summary.total_monthly_rent) || 0;
+        const pendingMaintenance = (maintenanceRes.data || []).length;
+        const totalTenants = (tenantsRes.data || []).length;
+        const occupancyRate = totalProperties > 0 ? Math.round((occupied / totalProperties) * 100) : 0;
+
+        setStats({
+          totalProperties,
+          occupiedProperties: occupied,
+          totalTenants,
+          pendingMaintenance,
+          monthlyRevenue,
+          occupancyRate,
+        });
+      } catch (err) {
+        console.error('[Dashboard] loadStats error:', err);
+        setErrorMessage(err instanceof Error ? err.message : t('common:somethingWentWrong'));
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadStats();
-  }, []);
+  }, [t]);
 
   return (
     <ResponsiveContainer>
@@ -66,7 +97,7 @@ export default function DashboardHome() {
             fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
           }}
         >
-          {t('dashboard.welcome', { name: user?.first_name })}
+          {t('welcome', { name: user?.first_name })}
         </Typography>
         <Typography
           variant="body1"
@@ -75,7 +106,7 @@ export default function DashboardHome() {
             fontSize: { xs: '0.875rem', sm: '1rem' },
           }}
         >
-          {t('dashboard.subtitle')}
+          {t('subtitle')}
         </Typography>
       </Box>
 
@@ -87,14 +118,10 @@ export default function DashboardHome() {
             <StatCardSkeleton />
           ) : (
             <StatCard
-              title={t('dashboard.totalProperties')}
+              title={t('totalProperties')}
               value={stats?.totalProperties || 0}
               icon={<HomeIcon />}
               color="primary"
-              trend={{
-                value: 5.2,
-                isPositive: true,
-              }}
             />
           )}
         </Grid>
@@ -105,14 +132,10 @@ export default function DashboardHome() {
             <StatCardSkeleton />
           ) : (
             <StatCard
-              title={t('dashboard.occupied')}
+              title={t('occupied')}
               value={stats?.occupiedProperties || 0}
               icon={<HomeIcon />}
               color="success"
-              trend={{
-                value: 2.1,
-                isPositive: true,
-              }}
             />
           )}
         </Grid>
@@ -123,7 +146,7 @@ export default function DashboardHome() {
             <StatCardSkeleton />
           ) : (
             <StatCard
-              title={t('dashboard.totalTenants')}
+              title={t('totalTenants')}
               value={stats?.totalTenants || 0}
               icon={<PeopleIcon />}
               color="info"
@@ -137,14 +160,10 @@ export default function DashboardHome() {
             <StatCardSkeleton />
           ) : (
             <StatCard
-              title={t('dashboard.pendingMaintenance')}
+              title={t('pendingMaintenance')}
               value={stats?.pendingMaintenance || 0}
               icon={<MaintenanceIcon />}
               color="warning"
-              trend={{
-                value: -15,
-                isPositive: true, // Negative number is good for maintenance requests
-              }}
             />
           )}
         </Grid>
@@ -157,14 +176,10 @@ export default function DashboardHome() {
             <StatCardSkeleton />
           ) : (
             <StatCard
-              title={t('dashboard.monthlyRevenue')}
-              value={`SAR ${stats?.monthlyRevenue.toLocaleString() || 0}`}
+              title={t('monthlyRevenue')}
+              value={`${stats?.monthlyRevenue.toLocaleString() || 0} ${t('common:currency')}`}
               icon={<MoneyIcon />}
               color="success"
-              trend={{
-                value: 12.5,
-                isPositive: true,
-              }}
             />
           )}
         </Grid>
@@ -174,62 +189,26 @@ export default function DashboardHome() {
             <StatCardSkeleton />
           ) : (
             <StatCard
-              title={t('dashboard.occupancyRate')}
+              title={t('occupancyRate')}
               value={`${stats?.occupancyRate || 0}%`}
               icon={<HomeIcon />}
               color="primary"
-              trend={{
-                value: 3.2,
-                isPositive: true,
-              }}
             />
           )}
         </Grid>
       </Grid>
 
-      {/* Welcome Message */}
-      <Box
-        sx={{
-          bgcolor: 'background.paper',
-          borderRadius: 2,
-          p: { xs: 2, sm: 3, md: 4 },
-          boxShadow: 1,
-        }}
+      {/* Error Snackbar */}
+      <Snackbar
+        open={!!errorMessage}
+        autoHideDuration={6000}
+        onClose={() => setErrorMessage(null)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Typography
-          variant="h5"
-          gutterBottom
-          sx={{
-            fontWeight: 600,
-            fontSize: { xs: '1.25rem', sm: '1.5rem' },
-          }}
-        >
-          {t('dashboard.gettingStarted')}
-        </Typography>
-        <Typography variant="body1" color="text.secondary" paragraph>
-          {t('dashboard.description')}
-        </Typography>
-
-        <Box
-          sx={{
-            mt: 3,
-            p: 2,
-            bgcolor: 'primary.main',
-            color: 'primary.contrastText',
-            borderRadius: 1,
-          }}
-        >
-          <Typography variant="body2" sx={{ fontWeight: 500 }}>
-            📱 <strong>Responsive Design:</strong> This interface adapts seamlessly across mobile, tablet, and desktop devices.
-          </Typography>
-          <Typography variant="body2" sx={{ mt: 1 }}>
-            🌍 <strong>Multi-language Support:</strong> Switch between English and Arabic using the language toggle in the top bar.
-          </Typography>
-          <Typography variant="body2" sx={{ mt: 1 }}>
-            🎨 <strong>Dark Mode:</strong> Toggle dark mode for comfortable viewing in any lighting condition.
-          </Typography>
-        </Box>
-      </Box>
+        <Alert onClose={() => setErrorMessage(null)} severity="error" sx={{ width: '100%' }}>
+          {errorMessage}
+        </Alert>
+      </Snackbar>
     </ResponsiveContainer>
   );
 }

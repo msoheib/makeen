@@ -119,20 +119,9 @@ export async function getCurrentUserContext(): Promise<UserContext | null> {
     };
 
     return userContext;
-  } catch (error) {
-    console.error('[Security] Error getting user context:', error);
-    
-    // If it's a timeout error, try to return a minimal context to prevent complete failure
-    if (error.message === 'Tenant contracts query timeout') {
-      return {
-        userId: user.id,
-        role: 'tenant' as UserRole,
-        profileType: 'tenant',
-        isAuthenticated: true,
-        rentedPropertyIds: [] // Empty array to prevent access to all properties
-      };
-    }
-    
+  } catch (err: any) {
+    console.error('[Security] Error getting user context:', err);
+    // Do not reference undefined variables here; return null to force re-auth or retry upstream
     return null;
   }
 }

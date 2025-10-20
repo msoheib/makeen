@@ -24,11 +24,12 @@ export default function VATCalculator({
   lineItemTotals = []
 }: VATCalculatorProps) {
   const formatSAR = (amount: number) => {
-    return new Intl.NumberFormat('en-SA', {
-      style: 'currency',
-      currency: 'SAR',
+    // Use unified SAR symbol (﷼) with English numeric formatting
+    const formatted = new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(amount);
+    return `﷼ ${formatted}`;
   };
 
   // Calculate totals based on VAT inclusion

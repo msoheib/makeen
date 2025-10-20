@@ -11,7 +11,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { supabase } from '../../../lib/supabase.web';
+import { supabase } from '../../../lib/supabase';
 import { useAppStore } from '../../../lib/store';
 
 export default function LoginPage() {
@@ -38,23 +38,50 @@ export default function LoginPage() {
       if (signInError) throw signInError;
 
       if (data.user) {
+        console.log('[LoginPage] User signed in:', data.user.email);
+
         // Fetch user profile from database
         const { data: profile, error: profileError } = await supabase
-          .from('users')
+          .from('profiles')
           .select('*')
           .eq('id', data.user.id)
           .single();
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error('[LoginPage] Error fetching profile:', profileError);
+          throw profileError;
+        }
 
-        // Check if user is approved
-        if (profile.status !== 'approved') {
+        if (!profile) {
+          console.error('[LoginPage] No profile found for user');
+          throw new Error('Profile not found');
+        }
+
+        console.log('[LoginPage] Profile fetched:', {
+          email: profile.email,
+          role: profile.role,
+          approval_status: profile.approval_status,
+          status: profile.status,
+        });
+
+        // Check approval and account status
+        const isApproved = profile.approval_status === 'approved';
+        const isActive = profile.status !== 'inactive' && profile.status !== 'suspended';
+
+        if (!isApproved || !isActive) {
+          console.warn('[LoginPage] Account validation failed:', {
+            isApproved,
+            isActive,
+            approval_status: profile.approval_status,
+            status: profile.status,
+          });
           setError(t('auth.errors.accountNotApproved'));
           await supabase.auth.signOut();
           setLoading(false);
           return;
         }
 
+        console.log('[LoginPage] Authentication successful, setting user and navigating');
         setUser(profile);
         setAuthenticated(true);
         navigate('/dashboard');

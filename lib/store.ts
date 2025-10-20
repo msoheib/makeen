@@ -356,8 +356,8 @@ export const useAppStore = create<AppState>()(
       
       // Language management
       changeLanguage: async (language: 'en' | 'ar') => {
-        // Skip language change during SSR
-        if (Platform.OS === 'web' && typeof window === 'undefined') {
+        // Skip language change during SSR (web-only check)
+        if (typeof window === 'undefined') {
           return;
         }
 
@@ -514,8 +514,8 @@ export const useAppStore = create<AppState>()(
         isAuthenticated: state.isAuthenticated,
       }),
       onRehydrateStorage: () => async (state) => {
-        // Skip rehydration during SSR
-        if (Platform.OS === 'web' && typeof window === 'undefined') {
+        // Skip rehydration during SSR (web-only check)
+        if (typeof window === 'undefined') {
           return;
         }
         

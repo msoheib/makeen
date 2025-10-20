@@ -64,7 +64,7 @@ export const CustomBarChart: React.FC<CustomBarChartProps> = ({
         flatColor={flatColor}
         fromZero={fromZero}
         style={styles.chart}
-        yAxisLabel="SAR "
+        yAxisLabel="﷼ "
         yAxisSuffix=""
       />
     </View>

@@ -35,8 +35,10 @@ export default function ResponsiveAppBar({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t } = useTranslation('common');
   const { user, isDarkMode, toggleDarkMode, currentLanguage } = useAppStore();
+
+  console.log('[ResponsiveAppBar] Rendering, user:', user?.email);
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [langMenuAnchor, setLangMenuAnchor] = useState<null | HTMLElement>(null);
@@ -63,14 +65,14 @@ export default function ResponsiveAppBar({
   };
 
   const handleLogout = async () => {
-    const { signOut } = await import('../../../lib/supabase.web');
+    const { signOut } = await import('../../../lib/supabase');
     await signOut();
     navigate('/auth/login');
   };
 
   return (
     <AppBar
-      position="sticky"
+      position="fixed"
       elevation={isMobile ? 1 : 2}
       sx={{
         zIndex: theme.zIndex.drawer + 1,
@@ -194,12 +196,12 @@ export default function ResponsiveAppBar({
             anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
           >
             <MenuItem onClick={() => navigate('/dashboard/profile')}>
-              {t('profile.title')}
+              {t('profile')}
             </MenuItem>
             <MenuItem onClick={() => navigate('/dashboard/settings')}>
-              {t('settings.title')}
+              {t('settings')}
             </MenuItem>
-            <MenuItem onClick={handleLogout}>{t('auth.logout')}</MenuItem>
+            <MenuItem onClick={handleLogout}>{t('logout')}</MenuItem>
           </Menu>
         </Box>
       </Toolbar>

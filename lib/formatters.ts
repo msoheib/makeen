@@ -49,6 +49,9 @@ export const formatDate = (date: Date | string, formatString: string = 'PPP'): s
   return formatted; // Don't convert to Arabic numerals for dates
 };
 
+// Unified Saudi Riyal symbol per SAMA repo (https://github.com/abdulrysrr/new-saudi-riyal-symbol)
+const SAR_SYMBOL = '﷼';
+
 export const formatCurrency = (amount: number | null | undefined, currency: string = 'SAR'): string => {
   const currentLanguage = getCurrentLanguage();
   const safeAmount = typeof amount === 'number' && isFinite(amount) ? amount : 0;
@@ -60,15 +63,10 @@ export const formatCurrency = (amount: number | null | undefined, currency: stri
     maximumFractionDigits: 0,
   }).format(safeAmount);
   
-  // Always use English currency symbol for consistency
-  let currencySymbol: string;
-  if (currency === 'SAR') {
-    currencySymbol = 'SAR';
-  } else {
-    currencySymbol = currency;
-  }
+  // Always use unified SAR symbol; fall back to code for other currencies
+  const currencySymbol = currency === 'SAR' ? SAR_SYMBOL : currency;
   
-  // Always use English format: symbol + space + amount (e.g., "SAR 1,000")
+  // Always use format: symbol + space + amount (e.g., "﷼ 1,000")
   return `${currencySymbol} ${formattedAmount}`;
 };
 

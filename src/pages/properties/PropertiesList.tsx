@@ -15,6 +15,8 @@ import {
   Chip,
   useTheme,
   useMediaQuery,
+  Alert,
+  Snackbar,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -22,6 +24,7 @@ import {
   GridView as GridViewIcon,
   TableRows as TableViewIcon,
   FilterList as FilterIcon,
+  Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -29,6 +32,8 @@ import ResponsiveContainer from '../../components/layout/ResponsiveContainer';
 import PropertyCard, { PropertyCardSkeleton } from '../../components/data/PropertyCard';
 import DataTable, { Column } from '../../components/data/DataTable';
 import { Property } from '../../../lib/types';
+import { propertiesApi } from '../../../lib/api';
+import { useApi } from '../../../hooks/useApi';
 
 type ViewMode = 'grid' | 'table';
 
@@ -36,86 +41,34 @@ export default function PropertiesList() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t } = useTranslation(['properties', 'common']);
 
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Fetch properties from Supabase
+  const { 
+    data: properties, 
+    loading, 
+    error, 
+    refetch 
+  } = useApi(() => propertiesApi.getAll({
+    status: statusFilter !== 'all' ? statusFilter : undefined,
+    property_type: typeFilter !== 'all' ? typeFilter : undefined,
+  }), [statusFilter, typeFilter]);
+
+  // Show error message if API call fails
   useEffect(() => {
-    // Simulate loading properties
-    // In production, this would be a Supabase query
-    const loadProperties = async () => {
-      setLoading(true);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Mock data
-      const mockProperties: Property[] = [
-        {
-          id: '1',
-          title: 'Luxury Apartment in Downtown',
-          description: 'Beautiful 3-bedroom apartment with city views',
-          property_type: 'apartment',
-          status: 'available',
-          address: '123 Main Street',
-          city: 'Riyadh',
-          country: 'Saudi Arabia',
-          price: 15000,
-          size: 150,
-          bedrooms: 3,
-          bathrooms: 2,
-          image_url: null,
-          created_at: new Date().toISOString(),
-          owner_id: 'owner1',
-        },
-        {
-          id: '2',
-          title: 'Modern Villa with Pool',
-          description: 'Spacious 5-bedroom villa with private pool',
-          property_type: 'villa',
-          status: 'rented',
-          address: '456 Palm Avenue',
-          city: 'Jeddah',
-          country: 'Saudi Arabia',
-          price: 35000,
-          size: 400,
-          bedrooms: 5,
-          bathrooms: 4,
-          image_url: null,
-          created_at: new Date().toISOString(),
-          owner_id: 'owner1',
-        },
-        {
-          id: '3',
-          title: 'Office Space - Business District',
-          description: 'Prime office location with modern facilities',
-          property_type: 'office',
-          status: 'available',
-          address: '789 Business Road',
-          city: 'Riyadh',
-          country: 'Saudi Arabia',
-          price: 25000,
-          size: 200,
-          bedrooms: 0,
-          bathrooms: 2,
-          image_url: null,
-          created_at: new Date().toISOString(),
-          owner_id: 'owner1',
-        },
-      ];
-
-      setProperties(mockProperties);
-      setLoading(false);
-    };
-
-    loadProperties();
-  }, []);
+    if (error) {
+      setErrorMessage(error);
+    }
+  }, [error]);
 
   // Filter properties
-  const filteredProperties = properties.filter((property) => {
+  const filteredProperties = (properties || []).filter((property) => {
     const matchesSearch =
       property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -131,23 +84,23 @@ export default function PropertiesList() {
   const tableColumns: Column<Property>[] = [
     {
       id: 'title',
-      label: t('properties.title'),
+      label: t('title'),
       minWidth: 200,
     },
     {
       id: 'property_type',
-      label: t('properties.type'),
+      label: t('type'),
       minWidth: 120,
-      format: (value) => t(`properties.types.${value}`),
+      format: (value) => t(`types.${value}`),
       hideOnMobile: true,
     },
     {
       id: 'status',
-      label: t('properties.status.label'),
+      label: t('status.label'),
       minWidth: 120,
       format: (value) => (
         <Chip
-          label={t(`properties.status.${value}`)}
+          label={t(`status.${value}`)}
           size="small"
           color={
             value === 'available'
@@ -163,16 +116,16 @@ export default function PropertiesList() {
     },
     {
       id: 'city',
-      label: t('properties.city'),
+      label: t('city'),
       minWidth: 100,
       hideOnMobile: true,
     },
     {
       id: 'price',
-      label: t('properties.price'),
+      label: t('price'),
       minWidth: 120,
       align: 'right',
-      format: (value) => `${value.toLocaleString()} SAR`,
+      format: (value) => `${value.toLocaleString()} ${t('common:currency')}`,
     },
   ];
 
@@ -187,6 +140,22 @@ export default function PropertiesList() {
 
   return (
     <ResponsiveContainer>
+      {/* Error Snackbar */}
+      <Snackbar
+        open={!!errorMessage}
+        autoHideDuration={6000}
+        onClose={() => setErrorMessage(null)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={() => setErrorMessage(null)} 
+          severity="error" 
+          sx={{ width: '100%' }}
+        >
+          {errorMessage}
+        </Alert>
+      </Snackbar>
+
       {/* Header */}
       <Box
         sx={{
@@ -206,7 +175,7 @@ export default function PropertiesList() {
             fontSize: { xs: '1.5rem', sm: '2rem' },
           }}
         >
-          {t('properties.title')}
+          {t('title')}
         </Typography>
 
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
@@ -227,12 +196,22 @@ export default function PropertiesList() {
           )}
 
           <Button
+            variant="outlined"
+            startIcon={<RefreshIcon />}
+            onClick={refetch}
+            disabled={loading}
+            sx={{ minWidth: { xs: 'auto', sm: 'auto' } }}
+          >
+            {t('common:refresh')}
+          </Button>
+
+          <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => navigate('/dashboard/properties/add')}
             sx={{ minWidth: { xs: '100%', sm: 'auto' } }}
           >
-            {t('properties.add')}
+            {t('add')}
           </Button>
         </Box>
       </Box>
@@ -244,7 +223,7 @@ export default function PropertiesList() {
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
-              placeholder={t('properties.search')}
+              placeholder={t('search')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               InputProps={{
@@ -260,17 +239,17 @@ export default function PropertiesList() {
           {/* Status Filter */}
           <Grid item xs={6} md={3}>
             <FormControl fullWidth>
-              <InputLabel>{t('properties.status.label')}</InputLabel>
+              <InputLabel>{t('status.label')}</InputLabel>
               <Select
                 value={statusFilter}
-                label={t('properties.status.label')}
+                label={t('status.label')}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
-                <MenuItem value="all">{t('common.all')}</MenuItem>
-                <MenuItem value="available">{t('properties.status.available')}</MenuItem>
-                <MenuItem value="rented">{t('properties.status.rented')}</MenuItem>
-                <MenuItem value="maintenance">{t('properties.status.maintenance')}</MenuItem>
-                <MenuItem value="reserved">{t('properties.status.reserved')}</MenuItem>
+                <MenuItem value="all">{t('common:all')}</MenuItem>
+                <MenuItem value="available">{t('status.available')}</MenuItem>
+                <MenuItem value="rented">{t('status.rented')}</MenuItem>
+                <MenuItem value="maintenance">{t('status.maintenance')}</MenuItem>
+                <MenuItem value="reserved">{t('status.reserved')}</MenuItem>
               </Select>
             </FormControl>
           </Grid>
@@ -278,18 +257,18 @@ export default function PropertiesList() {
           {/* Type Filter */}
           <Grid item xs={6} md={3}>
             <FormControl fullWidth>
-              <InputLabel>{t('properties.type')}</InputLabel>
+              <InputLabel>{t('type')}</InputLabel>
               <Select
                 value={typeFilter}
-                label={t('properties.type')}
+                label={t('type')}
                 onChange={(e) => setTypeFilter(e.target.value)}
               >
-                <MenuItem value="all">{t('common.all')}</MenuItem>
-                <MenuItem value="apartment">{t('properties.types.apartment')}</MenuItem>
-                <MenuItem value="villa">{t('properties.types.villa')}</MenuItem>
-                <MenuItem value="office">{t('properties.types.office')}</MenuItem>
-                <MenuItem value="retail">{t('properties.types.retail')}</MenuItem>
-                <MenuItem value="warehouse">{t('properties.types.warehouse')}</MenuItem>
+                <MenuItem value="all">{t('common:all')}</MenuItem>
+                <MenuItem value="apartment">{t('types.apartment')}</MenuItem>
+                <MenuItem value="villa">{t('types.villa')}</MenuItem>
+                <MenuItem value="office">{t('types.office')}</MenuItem>
+                <MenuItem value="retail">{t('types.retail')}</MenuItem>
+                <MenuItem value="warehouse">{t('types.warehouse')}</MenuItem>
               </Select>
             </FormControl>
           </Grid>
@@ -300,18 +279,18 @@ export default function PropertiesList() {
           <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
             <FilterIcon fontSize="small" color="action" />
             <Typography variant="body2" color="text.secondary">
-              {t('common.activeFilters')}:
+              {t('common:activeFilters')}:
             </Typography>
             {statusFilter !== 'all' && (
               <Chip
-                label={`${t('properties.status.label')}: ${t(`properties.status.${statusFilter}`)}`}
+                label={`${t('status.label')}: ${t(`status.${statusFilter}`)}`}
                 size="small"
                 onDelete={() => setStatusFilter('all')}
               />
             )}
             {typeFilter !== 'all' && (
               <Chip
-                label={`${t('properties.type')}: ${t(`properties.types.${typeFilter}`)}`}
+                label={`${t('type')}: ${t(`types.${typeFilter}`)}`}
                 size="small"
                 onDelete={() => setTypeFilter('all')}
               />
@@ -322,7 +301,7 @@ export default function PropertiesList() {
 
       {/* Results Count */}
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        {filteredProperties.length} {t('properties.found')}
+        {filteredProperties.length} {t('found')}
       </Typography>
 
       {/* Grid View */}
@@ -344,10 +323,10 @@ export default function PropertiesList() {
                     propertyType={property.property_type}
                     status={property.status}
                     price={property.price}
-                    imageUrl={property.image_url || undefined}
+                    imageUrl={property.images?.[0] || undefined}
                     bedrooms={property.bedrooms || undefined}
                     bathrooms={property.bathrooms || undefined}
-                    area={property.size || undefined}
+                    area={property.area_sqm || undefined}
                   />
                 </Grid>
               ))}
@@ -363,7 +342,7 @@ export default function PropertiesList() {
           onView={(property) => navigate(`/dashboard/properties/${property.id}`)}
           onEdit={(property) => navigate(`/dashboard/properties/${property.id}/edit`)}
           loading={loading}
-          emptyMessage={t('properties.noProperties')}
+          emptyMessage={t('noProperties')}
         />
       )}
     </ResponsiveContainer>

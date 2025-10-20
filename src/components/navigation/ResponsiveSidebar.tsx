@@ -21,11 +21,13 @@ import {
   Settings as SettingsIcon,
   ExpandLess,
   ExpandMore,
+  Apartment as BuildingsIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { useAppStore } from '../../../lib/store';
+import { isRTL } from '../../../lib/i18n';
 
 interface ResponsiveSidebarProps {
   open: boolean;
@@ -46,7 +48,7 @@ export default function ResponsiveSidebar({ open, onClose }: ResponsiveSidebarPr
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation();
+  const { t } = useTranslation(['navigation', 'common']);
   const { user } = useAppStore();
 
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
@@ -68,46 +70,53 @@ export default function ResponsiveSidebar({ open, onClose }: ResponsiveSidebarPr
   const navItems: NavItem[] = [
     {
       id: 'dashboard',
-      label: t('navigation.dashboard'),
+      label: t('dashboard'),
       icon: <DashboardIcon />,
       path: '/dashboard',
     },
     {
       id: 'properties',
-      label: t('navigation.properties'),
+      label: t('properties'),
       icon: <HomeIcon />,
       path: '/dashboard/properties',
       roles: ['admin', 'manager', 'owner'],
     },
     {
+      id: 'buildings',
+      label: t('buildings'),
+      icon: <BuildingsIcon />,
+      path: '/dashboard/buildings',
+      roles: ['admin', 'manager', 'owner'],
+    },
+    {
       id: 'tenants',
-      label: t('navigation.tenants'),
+      label: t('tenants'),
       icon: <PeopleIcon />,
       path: '/dashboard/tenants',
       roles: ['admin', 'manager'],
     },
     {
       id: 'maintenance',
-      label: t('navigation.maintenance'),
+      label: t('maintenance'),
       icon: <MaintenanceIcon />,
       path: '/dashboard/maintenance',
     },
     {
       id: 'finance',
-      label: t('navigation.finance'),
+      label: t('finance'),
       icon: <FinanceIcon />,
       path: '/dashboard/finance',
       roles: ['admin', 'manager', 'accountant', 'owner'],
       children: [
         {
           id: 'finance-vouchers',
-          label: t('navigation.vouchers'),
+          label: t('vouchers'),
           icon: <FinanceIcon />,
           path: '/dashboard/finance/vouchers',
         },
         {
           id: 'finance-invoices',
-          label: t('navigation.invoices'),
+          label: t('invoices'),
           icon: <FinanceIcon />,
           path: '/dashboard/finance/invoices',
         },
@@ -115,14 +124,14 @@ export default function ResponsiveSidebar({ open, onClose }: ResponsiveSidebarPr
     },
     {
       id: 'reports',
-      label: t('navigation.reports'),
+      label: t('reports'),
       icon: <ReportsIcon />,
       path: '/dashboard/reports',
       roles: ['admin', 'manager', 'accountant', 'owner'],
     },
     {
       id: 'settings',
-      label: t('navigation.settings'),
+      label: t('settings'),
       icon: <SettingsIcon />,
       path: '/dashboard/settings',
     },
@@ -238,16 +247,19 @@ export default function ResponsiveSidebar({ open, onClose }: ResponsiveSidebarPr
             {user?.first_name} {user?.last_name}
           </Box>
           <Box sx={{ fontSize: '0.625rem', color: 'text.disabled', mt: 0.5 }}>
-            {t(`roles.${user?.role}`)}
+            {t(`common:roles.${user?.role}`)}
           </Box>
         </Box>
       </Box>
     </Box>
   );
 
+  const rtl = isRTL();
+
   return (
     <Drawer
       variant={isMobile ? 'temporary' : 'permanent'}
+      anchor={rtl ? 'right' : 'left'}
       open={isMobile ? open : true}
       onClose={onClose}
       ModalProps={{
@@ -259,7 +271,9 @@ export default function ResponsiveSidebar({ open, onClose }: ResponsiveSidebarPr
         '& .MuiDrawer-paper': {
           width: 280,
           boxSizing: 'border-box',
-          borderRight: `1px solid ${theme.palette.divider}`,
+          borderRight: rtl ? 'none' : `1px solid ${theme.palette.divider}`,
+          borderLeft: rtl ? `1px solid ${theme.palette.divider}` : 'none',
+          pt: { xs: '56px', sm: '64px' }, // Add top padding to account for fixed AppBar
         },
       }}
     >

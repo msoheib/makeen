@@ -560,6 +560,26 @@ export const profilesApi = {
     );
   },
 
+  // Get current user profile
+  async getCurrentUser(): Promise<ApiResponse<Tables<'profiles'>>> {
+    const userContext = await getCurrentUserContext();
+    
+    if (!userContext) {
+      return {
+        data: null,
+        error: { message: 'Authentication required to access profile' }
+      };
+    }
+
+    return handleApiCall(() => 
+      supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userContext.user.id)
+        .single()
+    );
+  },
+
   // Update profile
   async update(id: string, updates: TablesUpdate<'profiles'>): Promise<ApiResponse<Tables<'profiles'>>> {
     return handleApiCall(() => 
@@ -670,6 +690,20 @@ export const contractsApi = {
     if (filters?.tenant_id) query = query.eq('tenant_id', filters.tenant_id);
 
     return handleApiCall(() => query);
+  },
+
+  // Get contracts by tenant ID
+  async getByTenant(tenantId: string): Promise<ApiResponse<any[]>> {
+    return handleApiCall(() => 
+      supabase
+        .from('contracts')
+        .select(`
+          *,
+          property:properties(id, title, address, city, property_code)
+        `)
+        .eq('tenant_id', tenantId)
+        .order('created_at', { ascending: false })
+    );
   },
 
   // Get contract by ID

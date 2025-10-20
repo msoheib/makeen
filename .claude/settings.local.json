@@ -21,7 +21,17 @@
       "Bash(git checkout:*)",
       "Bash(git add:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Initialize ReactJS web branch with Vite and core infrastructure\n\nPhase 1 of React Native to React web migration complete.\n\n## Core Infrastructure\n- Configure Vite 6.0 as build tool (replaces Metro bundler)\n- Setup React 18.3 with TypeScript 5.8 in bundler mode\n- Configure React Router 7.1 for client-side routing\n- Setup Material-UI 6.3 component library with custom theme\n- Configure Tailwind CSS 3.4 with PostCSS\n- Setup ESLint with React + TypeScript rules\n\n## Dependencies Migration\n### Replaced React Native packages:\n- expo-router → react-router-dom v7\n- react-native-paper → @mui/material v6\n- nativewind → standard tailwindcss\n- expo-secure-store + AsyncStorage → crypto-js + localStorage\n- react-native-chart-kit → chart.js + react-chartjs-2\n- expo-fonts → @fontsource packages\n- lucide-react-native → lucide-react\n\n### Preserved platform-agnostic:\n- @supabase/supabase-js (backend)\n- zustand (state management)\n- i18next + react-i18next (i18n)\n- date-fns (utilities)\n\n## Core Library Adaptation\n- Create lib/supabase.web.ts with encrypted localStorage\n  - Remove Platform API and expo-secure-store\n  - Implement SecureWebStorage with crypto-js encryption\n  - Preserve all auth logic and session management\n- Modify lib/store.ts for web compatibility\n  - Remove Platform and AsyncStorage imports\n  - Use localStorage directly with platform prefix\n  - Keep all business logic and TypeScript types intact\n\n## Application Structure\n- Create src/ directory for web React code\n- Build authentication pages (Login/Signup) with MUI\n- Create DashboardLayout with route protection\n- Setup App.tsx with routing and MUI theming\n- Configure RTL support for Arabic\n\n## Configuration Files\n- vite.config.ts: Build config with path aliases\n- tailwind.config.js: Custom primary colors and fonts\n- tsconfig.json: Web-optimized TypeScript config\n- .eslintrc.cjs: React + TypeScript linting rules\n- .env.example: Environment variable template\n\n## Documentation\n- README-WEB.md: Comprehensive web version documentation\n- WEB-MIGRATION-GUIDE.md: Detailed migration instructions\n- Document Phase 1 completion and next steps\n\n## Migration Status\n✅ Phase 1: Core Infrastructure (Complete)\n🚧 Phase 2-3: Component Migration (Next)\n📋 Phase 4-6: Feature Screens (Planned)\n📋 Phase 7-8: Testing & Deploy (Planned)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(npm install)",
+      "Bash(test:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm install:*)",
+      "Bash(npm cache clean:*)",
+      "Bash(where yarn)",
+      "Bash(yarn install)",
+      "Bash(cat:*)",
+      "Bash(npx supabase functions deploy:*)",
+      "Bash(npx supabase link:*)"
     ],
     "deny": []
   },

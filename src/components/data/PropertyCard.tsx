@@ -62,7 +62,7 @@ export default function PropertyCard({
 }: PropertyCardProps) {
   const theme = useTheme();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t } = useTranslation(['properties', 'common']);
 
   const handleView = () => {
     if (onView) {
@@ -139,7 +139,7 @@ export default function PropertyCard({
 
         {/* Status Badge */}
         <Chip
-          label={t(`properties.status.${status}`)}
+          label={t(`status.${status}`)}
           color={statusColors[status]}
           size="small"
           sx={{
@@ -153,7 +153,7 @@ export default function PropertyCard({
 
         {/* Property Type Badge */}
         <Chip
-          label={t(`properties.types.${propertyType}`)}
+          label={t(`types.${propertyType}`)}
           size="small"
           sx={{
             position: 'absolute',
@@ -214,12 +214,12 @@ export default function PropertyCard({
         >
           {bedrooms && (
             <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-              🛏️ {bedrooms} {t('properties.bedrooms')}
+              🛏️ {bedrooms} {t('bedrooms')}
             </Typography>
           )}
           {bathrooms && (
             <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-              🚿 {bathrooms} {t('properties.bathrooms')}
+              🚿 {bathrooms} {t('bathrooms')}
             </Typography>
           )}
           {area && (
@@ -231,7 +231,6 @@ export default function PropertyCard({
 
         {/* Price */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <MoneyIcon sx={{ fontSize: 18, color: 'primary.main' }} />
           <Typography
             variant="h6"
             color="primary.main"
@@ -240,14 +239,14 @@ export default function PropertyCard({
               fontSize: { xs: '1rem', sm: '1.125rem' },
             }}
           >
-            {price.toLocaleString()} {t('common.currency')}
+            {price.toLocaleString()} {t('common:currency')}
           </Typography>
           <Typography
             variant="caption"
             color="text.secondary"
             sx={{ fontSize: { xs: '0.625rem', sm: '0.75rem' } }}
           >
-            / {t('properties.perMonth')}
+            / {t('perMonth')}
           </Typography>
         </Box>
       </CardContent>

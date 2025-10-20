@@ -20,7 +20,8 @@ export default function BalanceDisplay({
   const isBalanced = difference < 0.01; // Allow for minor floating point differences
   
   const formatAmount = (amount: number) => {
-    return `${currency === 'SAR' ? 'ر.س' : currency} ${toArabicNumerals(new Intl.NumberFormat('ar-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount))}`;
+    const symbol = currency === 'SAR' ? '﷼' : currency;
+    return `${symbol} ${toArabicNumerals(new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount))}`;
   };
 
   const getBalanceStatus = () => {

@@ -14,10 +14,14 @@
   "add": "Add Property",
   "found": "properties found",
   "noProperties": "No properties found",
+  "addFirstProperty": "Start by adding a new property",
+  "name": "Property Name",
   "price": "Price",
   "perMonth": "month",
   "type": "Property Type",
   "city": "City",
+  "address": "Address",
+  "description": "Description",
   "apartmentBlock": "Apartment Block",
   "villaCompound": "Villa Compound",
   "building": "Building",
@@ -30,6 +34,7 @@
   "addTypeDesc": "You can add a single property or a building with multiple units",
   "addSingleProperty": "Add Single Property",
   "createBuilding": "Create New Building",
+  "propertyAdded": "Property added successfully",
   "status": {
     "label": "Status",
     "available": "Available",
@@ -52,5 +57,25 @@
   "typeOffice": "Office",
   "typeRetail": "Retail",
   "typeWarehouse": "Warehouse",
-  "typeProperty": "Property"
+  "typeProperty": "Property",
+  "location": "Location",
+  "neighborhood": "Neighborhood",
+  "pricing": "Pricing",
+  "annualRent": "Annual Rent",
+  "paymentMethod": "Payment Method",
+  "paymentMethods": {
+    "cash": "Cash",
+    "bank_transfer": "Bank Transfer",
+    "credit_card": "Credit Card",
+    "check": "Check"
+  },
+  "furnished": "Furnished",
+  "floor": "Floor",
+  "buildingInfo": "Building Information",
+  "propertyCode": "Property Code",
+  "sqm": "sqm",
+  "errors": {
+    "notFound": "Property not found",
+    "generalError": "An error occurred"
+  }
 }

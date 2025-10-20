@@ -12,7 +12,7 @@ import {
   MenuItem,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
-import { supabase } from '../../../lib/supabase.web';
+import { supabase } from '../../../lib/supabase';
 
 export default function SignupPage() {
   const { t } = useTranslation();
@@ -68,7 +68,7 @@ export default function SignupPage() {
 
       if (authData.user) {
         // Create user profile
-        const { error: profileError } = await supabase.from('users').insert({
+        const { error: profileError } = await supabase.from('profiles').insert({
           id: authData.user.id,
           email: formData.email,
           first_name: formData.firstName,

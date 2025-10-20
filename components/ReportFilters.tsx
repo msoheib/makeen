@@ -247,7 +247,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
 
             {/* Amount Range Filter */}
             <View style={styles.section}>
-              <Text variant="titleSmall" style={styles.sectionTitle}>{t('reports:amountRange', { defaultValue: 'Amount Range (SAR)' })}</Text>
+              <Text variant="titleSmall" style={styles.sectionTitle}>{t('reports:amountRange', { defaultValue: 'Amount Range (﷼)' })}</Text>
               <View style={styles.amountContainer}>
                 <View style={styles.amountInput}>
                   <Text variant="bodySmall">{t('reports:min', { defaultValue: 'Min' })}</Text>

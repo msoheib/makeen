@@ -222,7 +222,7 @@ export default function StatusUpdateModal({
           {itemType === 'work_order' && selectedStatus === 'completed' && (
             <View style={styles.costSection}>
               <Text style={[styles.sectionLabel, { color: theme.colors.onSurfaceVariant }]}>
-                Actual Cost (SAR)
+                Actual Cost (﷼)
               </Text>
               <TextInput
                 mode="outlined"

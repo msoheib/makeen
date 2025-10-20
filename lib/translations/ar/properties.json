@@ -9,7 +9,19 @@
   "filterUnits": "الوحدات",
   "filterBuildings": "المباني",
   "listTitle": "قائمة العقارات",
+  "search": "ابحث عن العقارات...",
   "searchPlaceholder": "ابحث عن العقارات...",
+  "add": "إضافة عقار",
+  "found": "عقار",
+  "noProperties": "لا توجد عقارات",
+  "addFirstProperty": "ابدأ بإضافة عقار جديد",
+  "name": "اسم العقار",
+  "price": "السعر",
+  "perMonth": "شهر",
+  "type": "نوع العقار",
+  "city": "المدينة",
+  "address": "العنوان",
+  "description": "الوصف",
   "apartmentBlock": "مجمع سكني",
   "villaCompound": "مجمع فلل",
   "building": "مبنى",
@@ -22,6 +34,21 @@
   "addTypeDesc": "يمكنك إضافة عقار منفصل أو مبنى يحتوي على عدة وحدات",
   "addSingleProperty": "إضافة عقار منفصل",
   "createBuilding": "إنشاء مبنى جديد",
+  "propertyAdded": "تمت إضافة العقار بنجاح",
+  "status": {
+    "label": "الحالة",
+    "available": "متاح",
+    "rented": "مؤجر",
+    "maintenance": "صيانة",
+    "reserved": "محجوز"
+  },
+  "types": {
+    "apartment": "شقة",
+    "villa": "فيلا",
+    "office": "مكتب",
+    "retail": "محل تجاري",
+    "warehouse": "مستودع"
+  },
   "statusAvailable": "متاح",
   "statusRented": "مؤجر",
   "statusMaintenance": "صيانة",
@@ -30,5 +57,25 @@
   "typeOffice": "مكتب",
   "typeRetail": "محل تجاري",
   "typeWarehouse": "مستودع",
-  "typeProperty": "عقار"
+  "typeProperty": "عقار",
+  "location": "الموقع",
+  "neighborhood": "الحي",
+  "pricing": "التسعير",
+  "annualRent": "الإيجار السنوي",
+  "paymentMethod": "طريقة الدفع",
+  "paymentMethods": {
+    "cash": "نقدي",
+    "bank_transfer": "تحويل بنكي",
+    "credit_card": "بطاقة ائتمان",
+    "check": "شيك"
+  },
+  "furnished": "مفروش",
+  "floor": "الطابق",
+  "buildingInfo": "معلومات المبنى",
+  "propertyCode": "رمز العقار",
+  "sqm": "م²",
+  "errors": {
+    "notFound": "العقار غير موجود",
+    "generalError": "حدث خطأ"
+  }
 }

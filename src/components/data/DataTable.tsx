@@ -70,7 +70,7 @@ export default function DataTable<T extends Record<string, any>>({
 }: DataTableProps<T>) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const { t } = useTranslation();
+  const { t } = useTranslation('common');
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -166,7 +166,7 @@ export default function DataTable<T extends Record<string, any>>({
         >
           {selected.length > 0 ? (
             <Typography sx={{ flex: '1 1 100%' }} variant="subtitle1">
-              {selected.length} {t('common.selected')}
+              {selected.length} {t('selected')}
             </Typography>
           ) : (
             <Typography sx={{ flex: '1 1 100%' }} variant="h6" component="div">
@@ -176,14 +176,14 @@ export default function DataTable<T extends Record<string, any>>({
 
           {selected.length > 0 ? (
             onSelectedDelete && (
-              <Tooltip title={t('common.delete')}>
+              <Tooltip title={t('delete')}>
                 <IconButton onClick={() => onSelectedDelete(selected)}>
                   <DeleteIcon sx={{ color: 'inherit' }} />
                 </IconButton>
               </Tooltip>
             )
           ) : (
-            <Tooltip title={t('common.filter')}>
+            <Tooltip title={t('filter')}>
               <IconButton>
                 <FilterIcon />
               </IconButton>
@@ -227,7 +227,7 @@ export default function DataTable<T extends Record<string, any>>({
               ))}
               {hasActions && (
                 <TableCell align="right" style={{ minWidth: isMobile ? 80 : 120 }}>
-                  {t('common.actions')}
+                  {t('actions')}
                 </TableCell>
               )}
             </TableRow>
@@ -241,7 +241,7 @@ export default function DataTable<T extends Record<string, any>>({
                   sx={{ py: 4 }}
                 >
                   <Typography color="text.secondary">
-                    {emptyMessage || t('common.noDataFound')}
+                    {emptyMessage || t('noDataFound')}
                   </Typography>
                 </TableCell>
               </TableRow>
@@ -329,7 +329,7 @@ export default function DataTable<T extends Record<string, any>>({
         page={page}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
-        labelRowsPerPage={t('common.rowsPerPage')}
+        labelRowsPerPage={t('rowsPerPage')}
       />
     </Paper>
   );
