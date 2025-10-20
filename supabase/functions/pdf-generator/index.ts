@@ -32,6 +32,7 @@ interface PDFRequest {
   };
   propertyId?: string;
   tenantId?: string;
+  ownerId?: string;
 }
 
 // Helper function to format numbers with Western (Latin) numerals
@@ -77,13 +78,13 @@ function createSupabaseClient() {
 }
 
 // Data fetching functions
-async function fetchRevenueData(supabase: any, dateRange?: any) {
+async function fetchRevenueData(supabase: any, dateRange?: any, filters?: { propertyId?: string; tenantId?: string; ownerId?: string }) {
   try {
     let query = supabase
       .from('vouchers')
       .select(`
         *,
-        property:properties(title, address, city),
+        property:properties(title, address, city, owner_id),
         tenant:profiles!tenant_id(first_name, last_name, email)
       `)
       .eq('voucher_type', 'receipt')
@@ -93,6 +94,18 @@ async function fetchRevenueData(supabase: any, dateRange?: any) {
       query = query
         .gte('created_at', dateRange.startDate)
         .lte('created_at', dateRange.endDate);
+    }
+
+    if (filters?.propertyId) {
+      query = query.eq('property_id', filters.propertyId);
+    }
+
+    if (filters?.tenantId) {
+      query = query.eq('tenant_id', filters.tenantId);
+    }
+
+    if (filters?.ownerId) {
+      query = query.eq('property.owner_id', filters.ownerId);
     }
 
     const { data, error } = await query.order('created_at', { ascending: false });
@@ -116,14 +129,14 @@ async function fetchRevenueData(supabase: any, dateRange?: any) {
   }
 }
 
-async function fetchExpenseData(supabase: any, dateRange?: any) {
+async function fetchExpenseData(supabase: any, dateRange?: any, filters?: { propertyId?: string; tenantId?: string; ownerId?: string }) {
   try {
     let query = supabase
       .from('vouchers')
       .select(`
         *,
         account:accounts(account_name, account_code),
-        property:properties(title, address, city)
+        property:properties(title, address, city, owner_id)
       `)
       .eq('voucher_type', 'payment')
       .eq('status', 'posted');
@@ -132,6 +145,14 @@ async function fetchExpenseData(supabase: any, dateRange?: any) {
       query = query
         .gte('created_at', dateRange.startDate)
         .lte('created_at', dateRange.endDate);
+    }
+
+    if (filters?.propertyId) {
+      query = query.eq('property_id', filters.propertyId);
+    }
+
+    if (filters?.ownerId) {
+      query = query.eq('property.owner_id', filters.ownerId);
     }
 
     const { data, error } = await query.order('created_at', { ascending: false });
@@ -155,16 +176,25 @@ async function fetchExpenseData(supabase: any, dateRange?: any) {
   }
 }
 
-async function fetchPropertyData(supabase: any) {
+async function fetchPropertyData(supabase: any, filters?: { propertyId?: string; ownerId?: string }) {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('properties')
       .select(`
         *,
         owner:profiles!owner_id(first_name, last_name, email),
         contracts(start_date, end_date, rent_amount, status)
-      `)
-      .order('created_at', { ascending: false });
+      `);
+
+    if (filters?.propertyId) {
+      query = query.eq('id', filters.propertyId);
+    }
+
+    if (filters?.ownerId) {
+      query = query.eq('owner_id', filters.ownerId);
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
     
     if (error) throw error;
     
@@ -186,31 +216,48 @@ async function fetchPropertyData(supabase: any) {
   }
 }
 
-async function fetchTenantData(supabase: any) {
+async function fetchTenantData(supabase: any, filters?: { tenantId?: string; propertyId?: string; ownerId?: string }) {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('profiles')
       .select(`
         *,
         contracts!tenant_id(
-          property:properties(title, address),
+          property:properties(title, address, owner_id),
           rent_amount,
           start_date,
           end_date,
           status
         )
       `)
-      .eq('role', 'tenant')
-      .order('created_at', { ascending: false });
-    
+      .eq('role', 'tenant');
+
+    if (filters?.tenantId) {
+      query = query.eq('id', filters.tenantId);
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
+
     if (error) throw error;
-    
-    const totalTenants = data?.length || 0;
-    const activeTenants = data?.filter((t: any) => t.status === 'active').length || 0;
-    const foreignTenants = data?.filter((t: any) => t.is_foreign === true).length || 0;
-    
+
+    // Filter by property or owner if specified
+    let filteredData = data || [];
+    if (filters?.propertyId || filters?.ownerId) {
+      filteredData = filteredData.filter((tenant: any) => {
+        return tenant.contracts?.some((contract: any) => {
+          const matchesProperty = !filters.propertyId || contract.property?.id === filters.propertyId;
+          const matchesOwner = !filters.ownerId || contract.property?.owner_id === filters.ownerId;
+          return matchesProperty && matchesOwner;
+        });
+      });
+    }
+
+    const totalTenants = filteredData.length;
+    const activeTenants = filteredData.filter((t: any) => t.status === 'active').length || 0;
+    const foreignTenants = filteredData.filter((t: any) => t.is_foreign === true).length || 0;
+
     return {
-      tenants: data || [],
+      tenants: filteredData,
       summary: {
         totalTenants,
         activeTenants,
@@ -224,13 +271,13 @@ async function fetchTenantData(supabase: any) {
   }
 }
 
-async function fetchMaintenanceData(supabase: any, dateRange?: any) {
+async function fetchMaintenanceData(supabase: any, dateRange?: any, filters?: { propertyId?: string; tenantId?: string; ownerId?: string }) {
   try {
     let query = supabase
       .from('maintenance_requests')
       .select(`
         *,
-        property:properties(title, address, city),
+        property:properties(title, address, city, owner_id),
         tenant:profiles!tenant_id(first_name, last_name),
         work_orders(estimated_cost, actual_cost, status)
       `);
@@ -239,6 +286,18 @@ async function fetchMaintenanceData(supabase: any, dateRange?: any) {
       query = query
         .gte('created_at', dateRange.startDate)
         .lte('created_at', dateRange.endDate);
+    }
+
+    if (filters?.propertyId) {
+      query = query.eq('property_id', filters.propertyId);
+    }
+
+    if (filters?.tenantId) {
+      query = query.eq('tenant_id', filters.tenantId);
+    }
+
+    if (filters?.ownerId) {
+      query = query.eq('property.owner_id', filters.ownerId);
     }
 
     const { data, error } = await query.order('created_at', { ascending: false });
@@ -270,9 +329,12 @@ async function fetchMaintenanceData(supabase: any, dateRange?: any) {
 }
 
 // NEW: Financial - Profit & Loss
-async function fetchPnLData(supabase: any, dateRange?: any) {
-  let base = supabase.from('vouchers').select('voucher_type, amount, created_at').eq('status', 'posted');
+async function fetchPnLData(supabase: any, dateRange?: any, filters?: { propertyId?: string; tenantId?: string; ownerId?: string }) {
+  let base = supabase.from('vouchers').select('voucher_type, amount, created_at, property_id, tenant_id, property:properties(owner_id)').eq('status', 'posted');
   if (dateRange) base = base.gte('created_at', dateRange.startDate).lte('created_at', dateRange.endDate);
+  if (filters?.propertyId) base = base.eq('property_id', filters.propertyId);
+  if (filters?.tenantId) base = base.eq('tenant_id', filters.tenantId);
+  if (filters?.ownerId) base = base.eq('property.owner_id', filters.ownerId);
   const { data, error } = await base;
   if (error) throw error;
   const revenue = (data || []).filter((v: any) => v.voucher_type === 'receipt').reduce((s: number, v: any) => s + Number(v.amount || 0), 0);
@@ -281,9 +343,12 @@ async function fetchPnLData(supabase: any, dateRange?: any) {
 }
 
 // NEW: Cashflow (totals by type)
-async function fetchCashflowData(supabase: any, dateRange?: any) {
-  let q = supabase.from('vouchers').select('voucher_type, amount, created_at, voucher_number').eq('status', 'posted');
+async function fetchCashflowData(supabase: any, dateRange?: any, filters?: { propertyId?: string; tenantId?: string; ownerId?: string }) {
+  let q = supabase.from('vouchers').select('voucher_type, amount, created_at, voucher_number, property_id, tenant_id, property:properties(owner_id)').eq('status', 'posted');
   if (dateRange) q = q.gte('created_at', dateRange.startDate).lte('created_at', dateRange.endDate);
+  if (filters?.propertyId) q = q.eq('property_id', filters.propertyId);
+  if (filters?.tenantId) q = q.eq('tenant_id', filters.tenantId);
+  if (filters?.ownerId) q = q.eq('property.owner_id', filters.ownerId);
   const { data, error } = await q.order('created_at', { ascending: false });
   if (error) throw error;
   const inflow = (data || []).filter((x: any) => x.voucher_type === 'receipt').reduce((s: number, x: any) => s + Number(x.amount || 0), 0);
@@ -292,8 +357,11 @@ async function fetchCashflowData(supabase: any, dateRange?: any) {
 }
 
 // NEW: Occupancy report
-async function fetchOccupancyData(supabase: any) {
-  const { data, error } = await supabase.from('properties').select('status, city');
+async function fetchOccupancyData(supabase: any, filters?: { propertyId?: string; ownerId?: string }) {
+  let query = supabase.from('properties').select('status, city, owner_id, id');
+  if (filters?.propertyId) query = query.eq('id', filters.propertyId);
+  if (filters?.ownerId) query = query.eq('owner_id', filters.ownerId);
+  const { data, error } = await query;
   if (error) throw error;
   const total = data?.length || 0;
   const occupied = (data || []).filter((p: any) => p.status === 'rented').length;
@@ -303,11 +371,13 @@ async function fetchOccupancyData(supabase: any) {
 }
 
 // NEW: Property performance
-async function fetchPropertyPerformanceData(supabase: any) {
-  const { data, error } = await supabase
+async function fetchPropertyPerformanceData(supabase: any, filters?: { propertyId?: string; ownerId?: string }) {
+  let query = supabase
     .from('properties')
-    .select('title, city, price, annual_rent, status')
-    .order('created_at', { ascending: false });
+    .select('title, city, price, annual_rent, status, owner_id, id');
+  if (filters?.propertyId) query = query.eq('id', filters.propertyId);
+  if (filters?.ownerId) query = query.eq('owner_id', filters.ownerId);
+  const { data, error } = await query.order('created_at', { ascending: false });
   if (error) throw error;
   const rows = (data || []).map((p: any) => {
     const roi = p.annual_rent && p.price ? (Number(p.annual_rent) / Number(p.price)) * 100 : null;
@@ -317,30 +387,36 @@ async function fetchPropertyPerformanceData(supabase: any) {
 }
 
 // NEW: Payments log
-async function fetchPaymentsLogData(supabase: any, dateRange?: any) {
+async function fetchPaymentsLogData(supabase: any, dateRange?: any, filters?: { propertyId?: string; tenantId?: string; ownerId?: string }) {
   let q = supabase
     .from('vouchers')
-    .select('voucher_number, voucher_type, amount, created_at, description')
+    .select('voucher_number, voucher_type, amount, created_at, description, property_id, tenant_id, property:properties(owner_id)')
     .eq('status', 'posted');
   if (dateRange) q = q.gte('created_at', dateRange.startDate).lte('created_at', dateRange.endDate);
+  if (filters?.propertyId) q = q.eq('property_id', filters.propertyId);
+  if (filters?.tenantId) q = q.eq('tenant_id', filters.tenantId);
+  if (filters?.ownerId) q = q.eq('property.owner_id', filters.ownerId);
   const { data, error } = await q.order('created_at', { ascending: false }).limit(200);
   if (error) throw error;
   return { entries: data || [] };
 }
 
 // NEW: Contracts expiring soon
-async function fetchContractsExpiringData(supabase: any, dateRange?: any) {
+async function fetchContractsExpiringData(supabase: any, dateRange?: any, filters?: { propertyId?: string; tenantId?: string; ownerId?: string }) {
   const now = new Date();
   const to = dateRange?.endDate ? new Date(dateRange.endDate) : new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
   const fromISO = now.toISOString();
   const toISO = to.toISOString();
-  const { data, error } = await supabase
+  let query = supabase
     .from('contracts')
-    .select('contract_number, end_date, start_date, status, rent_amount')
+    .select('contract_number, end_date, start_date, status, rent_amount, property_id, tenant_id, property:properties(owner_id)')
     .eq('status', 'active')
     .gte('end_date', fromISO)
-    .lte('end_date', toISO)
-    .order('end_date', { ascending: true });
+    .lte('end_date', toISO);
+  if (filters?.propertyId) query = query.eq('property_id', filters.propertyId);
+  if (filters?.tenantId) query = query.eq('tenant_id', filters.tenantId);
+  if (filters?.ownerId) query = query.eq('property.owner_id', filters.ownerId);
+  const { data, error } = await query.order('end_date', { ascending: true });
   if (error) throw error;
   return { entries: data || [], from: fromISO, to: toISO };
 }
@@ -830,50 +906,57 @@ serve(async (req) => {
     // Fetch data based on report type
     let data;
     let html;
-    
+
+    // Prepare filters object
+    const filters = {
+      propertyId: request.propertyId,
+      tenantId: request.tenantId,
+      ownerId: request.ownerId
+    };
+
     switch (request.reportType) {
       case 'revenue':
-        data = await fetchRevenueData(supabase, request.dateRange);
+        data = await fetchRevenueData(supabase, request.dateRange, filters);
         html = generateRevenueHTML(data);
         break;
       case 'expense':
-        data = await fetchExpenseData(supabase, request.dateRange);
+        data = await fetchExpenseData(supabase, request.dateRange, filters);
         html = generateExpenseHTML(data);
         break;
       case 'property':
-        data = await fetchPropertyData(supabase);
+        data = await fetchPropertyData(supabase, filters);
         html = generatePropertyHTML(data);
         break;
       case 'tenant':
-        data = await fetchTenantData(supabase);
+        data = await fetchTenantData(supabase, filters);
         html = generatePropertyHTML(data); // You'd implement generateTenantHTML
         break;
       case 'maintenance':
-        data = await fetchMaintenanceData(supabase, request.dateRange);
+        data = await fetchMaintenanceData(supabase, request.dateRange, filters);
         html = generatePropertyHTML(data); // You'd implement generateMaintenanceHTML
         break;
       case 'pnl':
-        data = await fetchPnLData(supabase, request.dateRange);
+        data = await fetchPnLData(supabase, request.dateRange, filters);
         html = generatePnLHTML(data);
         break;
       case 'cashflow':
-        data = await fetchCashflowData(supabase, request.dateRange);
+        data = await fetchCashflowData(supabase, request.dateRange, filters);
         html = generateCashflowHTML(data);
         break;
       case 'occupancy':
-        data = await fetchOccupancyData(supabase);
+        data = await fetchOccupancyData(supabase, filters);
         html = generateOccupancyHTML(data);
         break;
       case 'property_performance':
-        data = await fetchPropertyPerformanceData(supabase);
+        data = await fetchPropertyPerformanceData(supabase, filters);
         html = generatePropertyPerformanceHTML(data);
         break;
       case 'payments_log':
-        data = await fetchPaymentsLogData(supabase, request.dateRange);
+        data = await fetchPaymentsLogData(supabase, request.dateRange, filters);
         html = generatePaymentsLogHTML(data);
         break;
       case 'contracts_expiring':
-        data = await fetchContractsExpiringData(supabase, request.dateRange);
+        data = await fetchContractsExpiringData(supabase, request.dateRange, filters);
         html = generateContractsExpiringHTML(data);
         break;
       case 'operations':

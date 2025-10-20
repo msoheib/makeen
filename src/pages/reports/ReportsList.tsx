@@ -364,6 +364,7 @@ export default function ReportsList() {
   const handleDownloadReport = async (reportId: string, filters?: {
     propertyId?: string;
     tenantId?: string;
+    ownerId?: string;
     startDate?: string;
     endDate?: string;
   }) => {
@@ -407,6 +408,9 @@ export default function ReportsList() {
       }
       if (filters?.tenantId) {
         requestBody.tenantId = filters.tenantId;
+      }
+      if (filters?.ownerId) {
+        requestBody.ownerId = filters.ownerId;
       }
 
       // Log request for debugging
