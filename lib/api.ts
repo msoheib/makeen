@@ -580,9 +580,47 @@ export const profilesApi = {
     );
   },
 
-  // Update profile
+  // Update profile with role-based access control
   async update(id: string, updates: TablesUpdate<'profiles'>): Promise<ApiResponse<Tables<'profiles'>>> {
-    return handleApiCall(() => 
+    // **SECURITY**: Get current user context for access validation
+    const userContext = await getCurrentUserContext();
+
+    if (!userContext) {
+      return {
+        data: null,
+        error: { message: 'Authentication required to update profile' }
+      };
+    }
+
+    // **SECURITY**: Check if user has permission to update this profile
+    // Admin and Manager can update any profile
+    // Users can only update their own profile
+    const hasAccess = userContext.role === 'admin' ||
+                     userContext.role === 'manager' ||
+                     userContext.userId === id;
+
+    if (!hasAccess) {
+      return {
+        data: null,
+        error: { message: 'Access denied: You do not have permission to update this profile' }
+      };
+    }
+
+    // **SECURITY**: First verify the profile exists
+    const { data: existingProfile, error: fetchError } = await supabase
+      .from('profiles')
+      .select('id, role')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !existingProfile) {
+      return {
+        data: null,
+        error: { message: 'Profile not found' }
+      };
+    }
+
+    return handleApiCall(() =>
       supabase
         .from('profiles')
         .update({ ...updates, updated_at: new Date().toISOString() })

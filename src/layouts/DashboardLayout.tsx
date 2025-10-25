@@ -13,6 +13,7 @@ import EditProperty from '../pages/properties/EditProperty';
 import TenantsList from '../pages/tenants/TenantsList';
 import AddTenant from '../pages/tenants/AddTenant';
 import TenantDetail from '../pages/tenants/[id]';
+import EditTenant from '../pages/tenants/EditTenant';
 import MaintenanceList from '../pages/maintenance/MaintenanceList';
 import AddMaintenance from '../pages/maintenance/AddMaintenance';
 import MaintenanceDetail from '../pages/maintenance/MaintenanceDetail';
@@ -178,6 +179,7 @@ export default function DashboardLayout() {
           <Route path="tenants" element={<TenantsList />} />
           <Route path="tenants/add" element={<AddTenant />} />
           <Route path="tenants/:id" element={<TenantDetail />} />
+          <Route path="tenants/:id/edit" element={<EditTenant />} />
           <Route path="maintenance" element={<MaintenanceList />} />
           <Route path="maintenance/add" element={<AddMaintenance />} />
           <Route path="maintenance/:id" element={<MaintenanceDetail />} />
