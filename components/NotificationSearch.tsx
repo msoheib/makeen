@@ -191,7 +191,7 @@ export const NotificationSearch: React.FC<NotificationSearchProps> = ({
         {item.query}
       </Text>
       <Text style={[styles.historyMeta, { color: theme.colors.onSurfaceVariant }]}>
-        {item.resultCount} results • {new Date(item.timestamp).toLocaleDateString()}
+        {item.resultCount} results • {new Date(item.timestamp).toLocaleDateString('en-US')}
       </Text>
     </TouchableOpacity>
   );

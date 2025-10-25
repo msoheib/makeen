@@ -167,7 +167,7 @@ export default function PaymentsScreen() {
       
       <View style={styles.paymentFooter}>
         <Text style={styles.paymentDate}>
-          {new Date(item.created_at).toLocaleDateString()}
+          {new Date(item.created_at).toLocaleDateString('en-US')}
         </Text>
         {item.payment_method && (
           <Chip

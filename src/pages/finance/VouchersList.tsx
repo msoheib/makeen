@@ -302,7 +302,7 @@ export default function VouchersList() {
                       {t('date')}
                     </Typography>
                     <Typography variant="body2">
-                      {new Date(voucher.date).toLocaleDateString('ar-SA')}
+                      {new Date(voucher.date).toLocaleDateString('en-US')}
                     </Typography>
                   </Grid>
                   {voucher.property_name && (

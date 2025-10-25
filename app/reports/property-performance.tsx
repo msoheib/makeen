@@ -176,7 +176,7 @@ export default function PropertyPerformanceReportScreen() {
               onPress={() => setShowDatePicker(!showDatePicker)}
               style={styles.dateButton}
             >
-              {dateRange.label} ({dateRange.startDate.toLocaleDateString()} - {dateRange.endDate.toLocaleDateString()})
+              {dateRange.label} ({dateRange.startDate.toLocaleDateString('en-US')} - {dateRange.endDate.toLocaleDateString('en-US')})
             </Button>
             {showDatePicker && (
               <DateRangePicker

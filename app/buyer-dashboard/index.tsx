@@ -260,7 +260,7 @@ export default function BuyerDashboard() {
                         }).format(bid.bid_amount)}
                       </Text>
                       <Text style={styles.bidDate}>
-                        {new Date(bid.created_at).toLocaleDateString()}
+                        {new Date(bid.created_at).toLocaleDateString('en-US')}
                       </Text>
                     </View>
                     

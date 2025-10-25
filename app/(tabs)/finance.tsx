@@ -139,7 +139,7 @@ export default function FinanceScreen() {
       <Text style={styles.invoiceDescription}>{item.description}</Text>
       <View style={styles.invoiceFooter}>
         <Text style={styles.invoiceDate}>
-          Due: {new Date(item.due_date).toLocaleDateString()}
+          Due: {new Date(item.due_date).toLocaleDateString('en-US')}
         </Text>
         <View style={[styles.statusBadge, { backgroundColor: `${theme.colors.primary}20` }]}>
           <Text style={[styles.statusText, { color: theme.colors.primary }]}>

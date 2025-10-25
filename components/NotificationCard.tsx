@@ -109,7 +109,7 @@ const formatTimestamp = (timestamp: string): string => {
   } else if (diffInDays < 7) {
     return `${diffInDays}d ago`;
   } else {
-    return date.toLocaleDateString();
+    return date.toLocaleDateString('en-US');
   }
 };
 

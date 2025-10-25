@@ -313,7 +313,7 @@ export default function InvoicesList() {
                       {t('issueDate')}
                     </Typography>
                     <Typography variant="body2">
-                      {new Date(invoice.issue_date).toLocaleDateString('ar-SA')}
+                      {new Date(invoice.issue_date).toLocaleDateString('en-US')}
                     </Typography>
                   </Grid>
                   <Grid item xs={12} sm={6} md={3}>
@@ -321,7 +321,7 @@ export default function InvoicesList() {
                       {t('dueDate')}
                     </Typography>
                     <Typography variant="body2">
-                      {new Date(invoice.due_date).toLocaleDateString('ar-SA')}
+                      {new Date(invoice.due_date).toLocaleDateString('en-US')}
                     </Typography>
                   </Grid>
                 </Grid>

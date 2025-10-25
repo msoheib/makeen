@@ -124,7 +124,7 @@ export default function CashFlowReportScreen() {
                 {formatCurrency(runningCashPosition)}
               </Text>
               <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}>
-                As of {new Date().toLocaleDateString()}
+                As of {new Date().toLocaleDateString('en-US')}
               </Text>
             </Card.Content>
           </Card>

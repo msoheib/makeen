@@ -334,7 +334,7 @@ export default function DashboardScreen() {
       title: t('dashboard:activity.monthlyRentReceived'),
       description: t('dashboard:activity.desc.activeTenants', { count: tenantStats.activeTenants }),
       amount: Math.floor(financialSummary.monthlyRent / (tenantStats.activeTenants || 1)),
-      date: new Date().toLocaleDateString(),
+      date: new Date().toLocaleDateString('en-US'),
       status: 'completed'
     },
     {
@@ -343,7 +343,7 @@ export default function DashboardScreen() {
       title: t('dashboard:activity.activeContracts'),
       description: t('dashboard:activity.desc.activeContracts', { count: tenantStats.activeContracts }),
       amount: financialSummary.monthlyRent,
-      date: new Date(Date.now() - 86400000).toLocaleDateString(),
+      date: new Date(Date.now() - 86400000).toLocaleDateString('en-US'),
       status: 'active'
     },
     {
@@ -352,7 +352,7 @@ export default function DashboardScreen() {
       title: t('dashboard:activity.maintenanceRequests'),
       description: t('dashboard:activity.desc.propertiesUnderMaintenance', { count: propertyStats.maintenance }),
       amount: Math.floor(financialSummary.totalExpenses * 0.4), // 40% of expenses for maintenance
-      date: new Date(Date.now() - 172800000).toLocaleDateString(),
+      date: new Date(Date.now() - 172800000).toLocaleDateString('en-US'),
       status: 'pending'
     }
   ];

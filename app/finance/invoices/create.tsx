@@ -355,7 +355,7 @@ export default function CreateInvoiceScreen() {
                 Issue Date *
               </Text>
               <Text variant="bodyMedium" style={styles.dateText}>
-                {new Date(issueDate).toLocaleDateString()}
+                {new Date(issueDate).toLocaleDateString('en-US')}
               </Text>
             </View>
 
@@ -364,7 +364,7 @@ export default function CreateInvoiceScreen() {
                 Due Date
               </Text>
               <Text variant="bodyMedium" style={styles.dateText}>
-                {new Date(dueDate).toLocaleDateString()}
+                {new Date(dueDate).toLocaleDateString('en-US')}
               </Text>
             </View>
           </View>

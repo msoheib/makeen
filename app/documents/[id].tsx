@@ -383,7 +383,7 @@ export default function DocumentViewerScreen() {
                 <Text style={styles.fileSize}>{formatFileSize(document.file_size)}</Text>
                 <Text style={styles.separator}>•</Text>
                 <Text style={styles.uploadDate}>
-                  {new Date(document.created_at).toLocaleDateString()}
+                  {new Date(document.created_at).toLocaleDateString('en-US')}
                 </Text>
               </View>
             </View>

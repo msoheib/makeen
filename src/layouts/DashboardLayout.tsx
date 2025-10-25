@@ -9,6 +9,7 @@ import DashboardHome from '../pages/dashboard/DashboardHome';
 import PropertiesList from '../pages/properties/PropertiesList';
 import AddProperty from '../pages/properties/AddProperty';
 import PropertyDetail from '../pages/properties/PropertyDetail';
+import EditProperty from '../pages/properties/EditProperty';
 import TenantsList from '../pages/tenants/TenantsList';
 import AddTenant from '../pages/tenants/AddTenant';
 import TenantDetail from '../pages/tenants/[id]';
@@ -170,6 +171,7 @@ export default function DashboardLayout() {
           <Route path="properties" element={<PropertiesList />} />
           <Route path="properties/add" element={<AddProperty />} />
           <Route path="properties/:id" element={<PropertyDetail />} />
+          <Route path="properties/:id/edit" element={<EditProperty />} />
           <Route path="buildings" element={<BuildingsList />} />
           <Route path="buildings/add" element={<AddBuilding />} />
           <Route path="buildings/:id" element={<BuildingDetail />} />

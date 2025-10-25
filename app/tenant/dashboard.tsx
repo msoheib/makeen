@@ -285,7 +285,7 @@ export default function TenantDashboardScreen() {
           <View style={styles.bidDetailRow}>
             <Calendar size={16} color={theme.colors.onSurfaceVariant} />
             <Text style={[styles.bidDetailText, { color: theme.colors.onSurfaceVariant }]}>
-              تاريخ العرض: {new Date(bid.created_at).toLocaleDateString('ar-SA')}
+              تاريخ العرض: {new Date(bid.created_at).toLocaleDateString('en-US')}
             </Text>
           </View>
           {bid.rental_duration_months && (
@@ -368,7 +368,7 @@ export default function TenantDashboardScreen() {
 
         <View style={styles.maintenanceFooter}>
           <Text style={[styles.maintenanceDate, { color: theme.colors.onSurfaceVariant }]}>
-            {new Date(request.created_at).toLocaleDateString('ar-SA')}
+            {new Date(request.created_at).toLocaleDateString('en-US')}
           </Text>
           <Chip 
             mode="outlined" 

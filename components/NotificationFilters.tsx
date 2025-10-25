@@ -235,7 +235,7 @@ export const NotificationFilters: React.FC<NotificationFiltersProps> = ({
           <Calendar size={16} color={theme.colors.onSurfaceVariant} />
           <Text style={[styles.dateButtonText, { color: theme.colors.onSurface }]}>
             {localFilter.dateRange?.start 
-              ? localFilter.dateRange.start.toLocaleDateString()
+              ? localFilter.dateRange.start.toLocaleDateString('en-US')
               : 'Start Date'
             }
           </Text>
@@ -252,7 +252,7 @@ export const NotificationFilters: React.FC<NotificationFiltersProps> = ({
           <Calendar size={16} color={theme.colors.onSurfaceVariant} />
           <Text style={[styles.dateButtonText, { color: theme.colors.onSurface }]}>
             {localFilter.dateRange?.end 
-              ? localFilter.dateRange.end.toLocaleDateString()
+              ? localFilter.dateRange.end.toLocaleDateString('en-US')
               : 'End Date'
             }
           </Text>

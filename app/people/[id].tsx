@@ -347,7 +347,7 @@ export default function PersonDetailsScreen() {
             <View style={styles.contactRow}>
               <Calendar size={16} color={theme.colors.onSurfaceVariant} />
               <Text style={styles.contactText}>
-                Joined {new Date(person.created_at).toLocaleDateString()}
+                Joined {new Date(person.created_at).toLocaleDateString('en-US')}
               </Text>
             </View>
           </View>

@@ -387,7 +387,7 @@ export default function ReportsList() {
 
       // Get Supabase URL from environment
       const supabaseUrl = 'https://fbabpaorcvatejkrelrf.supabase.co';
-      const edgeFunctionUrl = `${supabaseUrl}/functions/v1/pdf-generator`;
+      const edgeFunctionUrl = `${supabaseUrl}/functions/v1/pdf-generator-v3`;
 
       // Prepare request body with filters
       const requestBody: any = {

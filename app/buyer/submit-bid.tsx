@@ -435,7 +435,7 @@ export default function SubmitBidScreen() {
               )}
               {moveInDate && (
                 <Text style={styles.modalDetailText}>
-                  • Move-in Date: {new Date(moveInDate).toLocaleDateString()}
+                  • Move-in Date: {new Date(moveInDate).toLocaleDateString('en-US')}
                 </Text>
               )}
               <Text style={styles.modalDetailText}>

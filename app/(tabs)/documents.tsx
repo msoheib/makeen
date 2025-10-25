@@ -167,7 +167,7 @@ export default function DocumentsScreen() {
                 <Text style={styles.documentSize}>{item.size}</Text>
                 <Text style={styles.separator}>•</Text>
                 <Text style={styles.uploadDate}>
-                  {new Date(item.uploadDate).toLocaleDateString()}
+                  {new Date(item.uploadDate).toLocaleDateString('en-US')}
                 </Text>
               </View>
             </View>

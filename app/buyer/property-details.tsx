@@ -362,7 +362,7 @@ export default function PropertyDetailsScreen() {
                 <View style={styles.bidInfoRow}>
                   <Text style={styles.bidInfoLabel}>Bidding Closes:</Text>
                   <Text style={styles.bidInfoValue}>
-                    {new Date(propertyData.listing_expires_at).toLocaleDateString()}
+                    {new Date(propertyData.listing_expires_at).toLocaleDateString('en-US')}
                   </Text>
                 </View>
               )}
@@ -398,7 +398,7 @@ export default function PropertyDetailsScreen() {
                 </View>
               </View>
               <Text style={styles.myBidDate}>
-                Submitted: {new Date(myBid.created_at).toLocaleDateString()}
+                Submitted: {new Date(myBid.created_at).toLocaleDateString('en-US')}
               </Text>
             </Card.Content>
           </Card>

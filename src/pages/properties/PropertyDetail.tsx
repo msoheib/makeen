@@ -22,10 +22,12 @@ import {
   Square,
   DollarSign,
   Calendar,
-  User
+  User,
+  Edit
 } from 'lucide-react';
 import { propertiesApi } from '../../../lib/api';
 import { Tables } from '../../../lib/database.types';
+import { useAppStore } from '../../../lib/store';
 
 type Property = Tables<'properties'>;
 
@@ -33,10 +35,18 @@ export default function PropertyDetail() {
   const { t } = useTranslation(['properties', 'common']);
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const user = useAppStore((state) => state.user);
 
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Check if user can edit this property
+  const canEdit = user && (
+    user.role === 'admin' ||
+    user.role === 'manager' ||
+    (user.role === 'owner' && property?.owner_id === user.id)
+  );
 
   useEffect(() => {
     if (id) {
@@ -92,16 +102,27 @@ export default function PropertyDetail() {
   return (
     <Box>
       {/* Header */}
-      <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
-        <Button
-          startIcon={<ArrowLeft size={20} />}
-          onClick={() => navigate('/dashboard/properties')}
-        >
-          {t('common:back')}
-        </Button>
-        <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-          {property.title}
-        </Typography>
+      <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Button
+            startIcon={<ArrowLeft size={20} />}
+            onClick={() => navigate('/dashboard/properties')}
+          >
+            {t('common:back')}
+          </Button>
+          <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
+            {property.title}
+          </Typography>
+        </Box>
+        {canEdit && (
+          <Button
+            variant="contained"
+            startIcon={<Edit size={20} />}
+            onClick={() => navigate(`/dashboard/properties/${id}/edit`)}
+          >
+            {t('common:edit')}
+          </Button>
+        )}
       </Box>
 
       {/* Property Details */}

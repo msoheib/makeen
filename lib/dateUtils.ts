@@ -43,12 +43,11 @@ export function formatDateLong(date: string | Date | null | undefined, locale: s
   const d = new Date(date);
   if (isNaN(d.getTime())) return '-';
 
-  // Force Gregorian calendar
-  return d.toLocaleDateString(locale === 'ar' ? 'ar-SA-u-ca-gregory' : 'en-US', {
+  // Always use Gregorian calendar with English locale to ensure consistency
+  return d.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
-    day: 'numeric',
-    calendar: 'gregory'
+    day: 'numeric'
   });
 }
 

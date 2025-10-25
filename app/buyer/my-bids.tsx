@@ -321,7 +321,7 @@ export default function MyBids() {
                         {' '}Submitted
                       </Text>
                       <Text style={styles.timingValue}>
-                        {new Date(bid.created_at).toLocaleDateString()}
+                        {new Date(bid.created_at).toLocaleDateString('en-US')}
                       </Text>
                     </View>
                   </View>

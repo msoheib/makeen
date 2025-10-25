@@ -132,7 +132,7 @@ export default function ExpenseReportScreen() {
               {formatCurrency(expenseData?.totalExpenses || 0)}
             </Text>
             <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-              {dateRange.startDate.getFullYear()} to {dateRange.endDate.toLocaleDateString()}
+              {dateRange.startDate.getFullYear()} to {dateRange.endDate.toLocaleDateString('en-US')}
             </Text>
           </Card.Content>
         </Card>
