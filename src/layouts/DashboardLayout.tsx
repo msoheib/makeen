@@ -17,6 +17,7 @@ import EditTenant from '../pages/tenants/EditTenant';
 import MaintenanceList from '../pages/maintenance/MaintenanceList';
 import AddMaintenance from '../pages/maintenance/AddMaintenance';
 import MaintenanceDetail from '../pages/maintenance/MaintenanceDetail';
+import EditMaintenance from '../pages/maintenance/EditMaintenance';
 import VouchersList from '../pages/finance/VouchersList';
 import InvoicesList from '../pages/finance/InvoicesList';
 import ReportsList from '../pages/reports/ReportsList';
@@ -183,6 +184,7 @@ export default function DashboardLayout() {
           <Route path="maintenance" element={<MaintenanceList />} />
           <Route path="maintenance/add" element={<AddMaintenance />} />
           <Route path="maintenance/:id" element={<MaintenanceDetail />} />
+          <Route path="maintenance/:id/edit" element={<EditMaintenance />} />
           <Route path="finance/vouchers" element={<VouchersList />} />
           <Route path="finance/invoices" element={<InvoicesList />} />
           <Route path="reports" element={<ReportsList />} />
