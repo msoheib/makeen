@@ -108,5 +108,10 @@
     "notFound": "Maintenance request not found",
     "fetchFailed": "Failed to load maintenance request details",
     "updateFailed": "Failed to update maintenance request status"
-  }
+  },
+  "editRequest": "Edit Maintenance Request",
+  "costInformation": "Cost Information",
+  "additionalNotes": "Additional Notes",
+  "notesPlaceholder": "Add any additional notes or comments...",
+  "title": "Title"
 } 

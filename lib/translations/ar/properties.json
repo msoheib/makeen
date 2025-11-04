@@ -77,5 +77,11 @@
   "errors": {
     "notFound": "العقار غير موجود",
     "generalError": "حدث خطأ"
-  }
+  },
+  "editProperty": "تعديل العقار",
+  "basicInfo": "المعلومات الأساسية",
+  "propertyDetails": "تفاصيل العقار",
+  "additionalInfo": "معلومات إضافية",
+  "propertyTitle": "عنوان العقار",
+  "country": "الدولة"
 }

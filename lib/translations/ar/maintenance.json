@@ -116,5 +116,10 @@
   "noDescription": "لا يوجد وصف",
   "details": "التفاصيل",
   "createdAt": "تاريخ الإنشاء",
-  "lastUpdated": "آخر تحديث"
+  "lastUpdated": "آخر تحديث",
+  "editRequest": "تعديل طلب الصيانة",
+  "costInformation": "معلومات التكلفة",
+  "additionalNotes": "ملاحظات إضافية",
+  "notesPlaceholder": "أضف أي ملاحظات أو تعليقات إضافية...",
+  "title": "العنوان"
 }

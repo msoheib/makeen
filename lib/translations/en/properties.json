@@ -77,5 +77,11 @@
   "errors": {
     "notFound": "Property not found",
     "generalError": "An error occurred"
-  }
+  },
+  "editProperty": "Edit Property",
+  "basicInfo": "Basic Information",
+  "propertyDetails": "Property Details",
+  "additionalInfo": "Additional Information",
+  "propertyTitle": "Property Title",
+  "country": "Country"
 }

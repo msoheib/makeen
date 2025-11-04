@@ -59,5 +59,8 @@
     "active": "Active",
     "pending": "Pending",
     "inactive": "Inactive"
-  }
+  },
+  "personalInfo": "Personal Information",
+  "addressInfo": "Address Information",
+  "additionalInfo": "Additional Information"
 }

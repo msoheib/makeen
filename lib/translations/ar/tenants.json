@@ -59,5 +59,8 @@
     "active": "نشط",
     "pending": "قيد الانتظار",
     "inactive": "غير نشط"
-  }
+  },
+  "personalInfo": "المعلومات الشخصية",
+  "addressInfo": "معلومات العنوان",
+  "additionalInfo": "معلومات إضافية"
 }
