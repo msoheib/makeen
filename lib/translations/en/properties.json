@@ -84,5 +84,6 @@
   "additionalInfo": "Additional Information",
   "propertyTitle": "Property Title",
   "propertyName": "Property Name",
+  "statusLabel": "Status",
   "country": "Country"
 }

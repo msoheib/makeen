@@ -245,10 +245,10 @@ export default function EditProperty() {
 
               <Grid item xs={12} md={6}>
                 <FormControl fullWidth required>
-                  <InputLabel>{t('status')}</InputLabel>
+                  <InputLabel>{t('statusLabel')}</InputLabel>
                   <Select
                     value={formData.status}
-                    label={t('status')}
+                    label={t('statusLabel')}
                     onChange={handleChange('status')}
                   >
                     <MenuItem value="available">{t('status.available')}</MenuItem>

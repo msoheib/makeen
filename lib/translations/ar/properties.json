@@ -84,5 +84,6 @@
   "additionalInfo": "معلومات إضافية",
   "propertyTitle": "عنوان العقار",
   "propertyName": "اسم العقار",
+  "statusLabel": "الحالة",
   "country": "الدولة"
 }
