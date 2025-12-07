@@ -38,7 +38,7 @@ const imageSize = (width - spacing.md * 4) / 3; // 3 images per row
 export default function PhotoCapture({
   images,
   onImagesChange,
-  maxImages = 5,
+  maxImages = 8,
   disabled = false,
   label,
   error

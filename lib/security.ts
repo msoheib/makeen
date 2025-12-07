@@ -87,13 +87,14 @@ export async function getCurrentUserContext(): Promise<UserContext | null> {
     // For tenants, get their rented property IDs with optimized query
     if (profile.role === 'tenant') {
       // Use a more efficient query with proper date handling and timeout
+      const now = new Date().toISOString();
       const contractsPromise = supabase
         .from('contracts')
         .select('property_id')
         .eq('tenant_id', user.id)
         .eq('status', 'active')
-        .lte('start_date', 'now()')  // Use SQL function instead of JS date
-        .gte('end_date', 'now()');   // Use SQL function instead of JS date
+        .lte('start_date', now)  // Contract has started
+        .gte('end_date', now);   // Contract hasn't ended
       
       // Add timeout for this specific query
       const { data: contracts, error: contractsError } = await Promise.race([

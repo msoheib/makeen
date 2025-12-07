@@ -29,7 +29,7 @@
     "upload": "Upload Photos",
     "removePhoto": "Remove Photo",
     "confirmRemove": "Are you sure you want to remove this photo?",
-    "maxPhotos": "Maximum 5 photos allowed",
+    "maxPhotos": "Maximum 8 photos allowed",
     "photoCount": "photos",
     "uploading": "Uploading photo...",
     "uploadFailed": "Failed to upload photo",

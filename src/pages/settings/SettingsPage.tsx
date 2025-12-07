@@ -12,7 +12,6 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Switch,
   Button,
   Divider,
   Dialog,
@@ -23,8 +22,6 @@ import {
 import {
   User,
   Bell,
-  Globe,
-  Palette,
   HelpCircle,
   Shield,
   FileText,
@@ -36,20 +33,10 @@ import { useAppStore } from '../../../lib/store';
 import { supabase } from '../../../lib/supabase';
 
 export default function SettingsPage() {
-  const { t, i18n } = useTranslation(['settings', 'common']);
+  const { t } = useTranslation(['settings', 'common']);
   const navigate = useNavigate();
-  const { language, setLanguage, isDarkMode, setTheme } = useAppStore();
+  const { language } = useAppStore();
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
-
-  const handleLanguageToggle = () => {
-    const newLanguage = language === 'ar' ? 'en' : 'ar';
-    setLanguage(newLanguage);
-    i18n.changeLanguage(newLanguage);
-  };
-
-  const handleThemeToggle = () => {
-    setTheme(isDarkMode ? 'light' : 'dark');
-  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -74,29 +61,6 @@ export default function SettingsPage() {
             : 'Notifications feature coming soon\n\nDeveloped by POI'
         );
       },
-    },
-  ];
-
-  const appSettings = [
-    {
-      icon: <Globe size={24} />,
-      title: t('language.title'),
-      description: t('language.description'),
-      action: handleLanguageToggle,
-      toggle: true,
-      toggleValue: language === 'ar',
-      toggleLabel: language === 'ar' ? 'العربية' : 'English',
-    },
-    {
-      icon: <Palette size={24} />,
-      title: t('theme.title'),
-      description: t('theme.description'),
-      action: handleThemeToggle,
-      toggle: true,
-      toggleValue: isDarkMode,
-      toggleLabel: isDarkMode
-        ? (language === 'ar' ? 'داكن' : 'Dark')
-        : (language === 'ar' ? 'فاتح' : 'Light'),
     },
   ];
 
@@ -188,48 +152,6 @@ export default function SettingsPage() {
                           secondaryTypographyProps={{ align: language === 'ar' ? 'right' : 'left' }}
                         />
                         <ChevronRight size={20} />
-                      </ListItemButton>
-                    </ListItem>
-                  </Box>
-                ))}
-              </List>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* App Settings */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
-                {t('appSettings')}
-              </Typography>
-              <List disablePadding>
-                {appSettings.map((setting, index) => (
-                  <Box key={setting.title}>
-                    {index > 0 && <Divider />}
-                    <ListItem disablePadding>
-                      <ListItemButton onClick={setting.toggle ? undefined : setting.action}>
-                        <ListItemIcon>{setting.icon}</ListItemIcon>
-                        <ListItemText
-                          primary={setting.title}
-                          secondary={setting.description}
-                          primaryTypographyProps={{ align: language === 'ar' ? 'right' : 'left' }}
-                          secondaryTypographyProps={{ align: language === 'ar' ? 'right' : 'left' }}
-                        />
-                        {setting.toggle ? (
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography variant="body2" color="text.secondary">
-                              {setting.toggleLabel}
-                            </Typography>
-                            <Switch
-                              checked={setting.toggleValue}
-                              onChange={setting.action}
-                            />
-                          </Box>
-                        ) : (
-                          <ChevronRight size={20} />
-                        )}
                       </ListItemButton>
                     </ListItem>
                   </Box>

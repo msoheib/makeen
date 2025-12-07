@@ -31,6 +31,7 @@ export default function AddProperty() {
   const [searchParams] = useSearchParams();
   const groupId = searchParams.get('groupId');
   const user = useAppStore((state) => state.user);
+  const language = useAppStore((state) => state.settings.language);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -92,6 +93,14 @@ export default function AddProperty() {
         throw new Error('User not authenticated');
       }
 
+      // Validate area_sqm (required, numeric, > 0)
+      const parsedArea = parseFloat(formData.area_sqm);
+      if (!formData.area_sqm || Number.isNaN(parsedArea) || parsedArea <= 0) {
+        setError('Please enter a valid area in square meters (> 0).');
+        setLoading(false);
+        return;
+      }
+
       // Prepare property data
       const propertyData = {
         title: formData.title,
@@ -103,7 +112,7 @@ export default function AddProperty() {
         city: formData.city || null,
         country: formData.country || null,
         neighborhood: formData.neighborhood || null,
-        area_sqm: formData.area_sqm ? parseFloat(formData.area_sqm) : null,
+        area_sqm: parsedArea,
         bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
         bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
         floor_number: formData.floor_number ? parseInt(formData.floor_number) : null,
@@ -143,7 +152,7 @@ export default function AddProperty() {
   };
 
   return (
-    <Box>
+    <Box dir={language === 'ar' ? 'rtl' : 'ltr'} sx={{ textAlign: language === 'ar' ? 'right' : 'left' }}>
       {/* Header */}
       <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
         <Button
@@ -167,6 +176,9 @@ export default function AddProperty() {
       {/* Form */}
       <Card>
         <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            {t('imagesNote')}
+          </Alert>
           <form onSubmit={handleSubmit}>
             <Grid container spacing={3}>
               <Grid item xs={12} sm={6}>
@@ -177,6 +189,10 @@ export default function AddProperty() {
                   value={formData.title}
                   onChange={handleChange('title')}
                   disabled={loading}
+                  inputProps={{
+                    dir: language === 'ar' ? 'rtl' : 'ltr',
+                    style: { textAlign: language === 'ar' ? 'right' : 'left' }
+                  }}
                 />
               </Grid>
 
@@ -222,9 +238,15 @@ export default function AddProperty() {
                   value={formData.price}
                   onChange={handleChange('price')}
                   disabled={loading}
+                  inputProps={{
+                    min: 0,
+                    dir: language === 'ar' ? 'rtl' : 'ltr',
+                    style: { textAlign: language === 'ar' ? 'right' : 'left' }
+                  }}
                   InputProps={{
                     endAdornment: t('common:currency'),
                   }}
+                  helperText={t('common:optional', { defaultValue: 'Optional' })}
                 />
               </Grid>
 
@@ -236,20 +258,30 @@ export default function AddProperty() {
                   value={formData.annual_rent}
                   onChange={handleChange('annual_rent')}
                   disabled={loading}
+                  inputProps={{
+                    min: 0,
+                    dir: language === 'ar' ? 'rtl' : 'ltr',
+                    style: { textAlign: language === 'ar' ? 'right' : 'left' }
+                  }}
                   InputProps={{
                     endAdornment: t('common:currency'),
                   }}
+                  helperText={t('common:optional', { defaultValue: 'Optional' })}
                 />
               </Grid>
 
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  required
                   label={t('city')}
                   value={formData.city}
                   onChange={handleChange('city')}
                   disabled={loading}
+                  inputProps={{
+                    dir: language === 'ar' ? 'rtl' : 'ltr',
+                    style: { textAlign: language === 'ar' ? 'right' : 'left' }
+                  }}
+                  helperText={t('common:optional', { defaultValue: 'Optional' })}
                 />
               </Grid>
 
@@ -260,17 +292,25 @@ export default function AddProperty() {
                   value={formData.neighborhood}
                   onChange={handleChange('neighborhood')}
                   disabled={loading}
+                  inputProps={{
+                    dir: language === 'ar' ? 'rtl' : 'ltr',
+                    style: { textAlign: language === 'ar' ? 'right' : 'left' }
+                  }}
                 />
               </Grid>
 
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  required
                   label={t('address')}
                   value={formData.address}
                   onChange={handleChange('address')}
                   disabled={loading}
+                  inputProps={{
+                    dir: language === 'ar' ? 'rtl' : 'ltr',
+                    style: { textAlign: language === 'ar' ? 'right' : 'left' }
+                  }}
+                  helperText={t('common:optional', { defaultValue: 'Optional' })}
                 />
               </Grid>
 
@@ -282,7 +322,13 @@ export default function AddProperty() {
                   value={formData.bedrooms}
                   onChange={handleChange('bedrooms')}
                   disabled={loading}
-                  inputProps={{ min: 0 }}
+                  inputProps={{
+                    min: 0,
+                    step: 1,
+                    dir: language === 'ar' ? 'rtl' : 'ltr',
+                    style: { textAlign: language === 'ar' ? 'right' : 'left' }
+                  }}
+                  helperText={t('common:optional', { defaultValue: 'Optional' })}
                 />
               </Grid>
 
@@ -294,19 +340,30 @@ export default function AddProperty() {
                   value={formData.bathrooms}
                   onChange={handleChange('bathrooms')}
                   disabled={loading}
-                  inputProps={{ min: 0 }}
+                  inputProps={{
+                    min: 0,
+                    step: 1,
+                    dir: language === 'ar' ? 'rtl' : 'ltr',
+                    style: { textAlign: language === 'ar' ? 'right' : 'left' }
+                  }}
+                  helperText={t('common:optional', { defaultValue: 'Optional' })}
                 />
               </Grid>
 
               <Grid item xs={12} sm={6} md={3}>
                 <TextField
                   fullWidth
+                  required
                   label={t('area')}
                   type="number"
                   value={formData.area_sqm}
                   onChange={handleChange('area_sqm')}
                   disabled={loading}
-                  inputProps={{ min: 0 }}
+                  inputProps={{
+                    min: 1,
+                    dir: language === 'ar' ? 'rtl' : 'ltr',
+                    style: { textAlign: language === 'ar' ? 'right' : 'left' }
+                  }}
                   InputProps={{
                     endAdornment: t('sqm'),
                   }}
@@ -321,7 +378,12 @@ export default function AddProperty() {
                   value={formData.floor_number}
                   onChange={handleChange('floor_number')}
                   disabled={loading}
-                  inputProps={{ min: 0 }}
+                  inputProps={{
+                    min: 0,
+                    dir: language === 'ar' ? 'rtl' : 'ltr',
+                    style: { textAlign: language === 'ar' ? 'right' : 'left' }
+                  }}
+                  helperText={t('common:optional', { defaultValue: 'Optional' })}
                 />
               </Grid>
 
@@ -334,6 +396,10 @@ export default function AddProperty() {
                   value={formData.description}
                   onChange={handleChange('description')}
                   disabled={loading}
+                  inputProps={{
+                    dir: language === 'ar' ? 'rtl' : 'ltr',
+                    style: { textAlign: language === 'ar' ? 'right' : 'left' }
+                  }}
                 />
               </Grid>
 
