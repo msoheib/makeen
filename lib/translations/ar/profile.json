@@ -31,5 +31,11 @@
   "role": "الدور",
   "status": "الحالة",
   "memberSince": "عضو منذ",
-  "notAvailable": "غير متوفر"
+  "notAvailable": "غير متوفر",
+  "nameRequired": "الاسم مطلوب",
+  "emailRequired": "البريد الإلكتروني مطلوب",
+  "failedToUpdate": "فشل تحديث الملف الشخصي",
+  "standard": "قياسي",
+  "active": "نشط",
+  "unknown": "غير معروف"
 }

@@ -14,9 +14,13 @@ import { useTranslation } from 'react-i18next';
 import { supabase } from '../../../lib/supabase';
 import { useAppStore } from '../../../lib/store';
 
+// RTL helper
+const isRTL = (lang: string) => lang === 'ar';
+
 export default function LoginPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const rtl = isRTL(i18n.language);
   const { setUser, setAuthenticated } = useAppStore();
 
   const [email, setEmail] = useState('');
@@ -94,16 +98,17 @@ export default function LoginPage() {
   };
 
   return (
-    <Container component="main" maxWidth="xs">
+    <Container component="main" maxWidth="xs" dir={rtl ? 'rtl' : 'ltr'}>
       <Box
         sx={{
           marginTop: 8,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+          textAlign: rtl ? 'right' : 'left',
         }}
       >
-        <Paper elevation={3} sx={{ padding: 4, width: '100%' }}>
+        <Paper elevation={3} sx={{ padding: 4, width: '100%', textAlign: rtl ? 'right' : 'left' }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
             <Typography component="h1" variant="h4" gutterBottom color="primary" fontWeight="bold">
               Makeen
@@ -161,7 +166,7 @@ export default function LoginPage() {
               )}
             </Button>
 
-            <Box sx={{ textAlign: 'center' }}>
+            <Box sx={{ textAlign: 'center', mt: 1 }}>
               <Link to="/auth/signup" style={{ textDecoration: 'none' }}>
                 <Typography variant="body2" color="primary">
                   {t('auth.noAccount')} {t('auth.signUp')}

@@ -14,9 +14,13 @@ import {
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../../lib/supabase';
 
+// RTL helper
+const isRTL = (lang: string) => lang === 'ar';
+
 export default function SignupPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const rtl = isRTL(i18n.language);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -94,8 +98,8 @@ export default function SignupPage() {
 
   if (success) {
     return (
-      <Container component="main" maxWidth="xs">
-        <Box sx={{ marginTop: 8 }}>
+      <Container component="main" maxWidth="xs" dir={rtl ? 'rtl' : 'ltr'}>
+        <Box sx={{ marginTop: 8, textAlign: rtl ? 'right' : 'left' }}>
           <Paper elevation={3} sx={{ padding: 4 }}>
             <Alert severity="success">
               {t('auth.success.accountCreated')}
@@ -109,9 +113,9 @@ export default function SignupPage() {
   }
 
   return (
-    <Container component="main" maxWidth="sm">
-      <Box sx={{ marginTop: 8 }}>
-        <Paper elevation={3} sx={{ padding: 4 }}>
+    <Container component="main" maxWidth="sm" dir={rtl ? 'rtl' : 'ltr'}>
+      <Box sx={{ marginTop: 8, textAlign: rtl ? 'right' : 'left' }}>
+        <Paper elevation={3} sx={{ padding: 4, textAlign: rtl ? 'right' : 'left' }}>
           <Typography component="h1" variant="h4" align="center" gutterBottom color="primary">
             {t('auth.createAccount')}
           </Typography>

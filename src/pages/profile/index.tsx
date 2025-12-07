@@ -109,12 +109,12 @@ export default function ProfilePage() {
 
   const handleSave = async () => {
     if (!editedProfile.first_name.trim() || !editedProfile.last_name.trim()) {
-      setErrorMessage('Name is required');
+      setErrorMessage(t('nameRequired'));
       return;
     }
 
     if (!editedProfile.email.trim()) {
-      setErrorMessage('Email is required');
+      setErrorMessage(t('emailRequired'));
       return;
     }
 
@@ -141,11 +141,11 @@ export default function ProfilePage() {
         setErrorMessage(null);
         refetch(); // Refresh the profile data
       } else {
-        setErrorMessage(success.error?.message || 'Failed to update profile');
+        setErrorMessage(success.error?.message || t('failedToUpdate'));
       }
     } catch (err: any) {
       console.error('Profile save error:', err);
-      setErrorMessage(err.message || 'Failed to update profile');
+      setErrorMessage(err.message || t('failedToUpdate'));
     } finally {
       setSaving(false);
     }
@@ -181,7 +181,7 @@ export default function ProfilePage() {
   const stats = {
     propertiesManaged: 0,
     activeTenants: 0,
-    accountType: 'Standard',
+    accountType: t('standard'),
   };
 
   return (
@@ -303,7 +303,7 @@ export default function ProfilePage() {
                   variant="outlined"
                 />
                 <Chip
-                  label={profile?.status || 'Active'}
+                  label={profile?.status || t('active')}
                   size="small"
                   color={profile?.status === 'active' ? 'success' : 'default'}
                 />
@@ -315,7 +315,7 @@ export default function ProfilePage() {
 
       {/* Stats Grid */}
       <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={4}>
+        <Grid item xs={12} sm={6}>
           <StatCard
             title={t('propertiesManaged')}
             value={stats.propertiesManaged}
@@ -324,21 +324,12 @@ export default function ProfilePage() {
             loading={loading}
           />
         </Grid>
-        <Grid item xs={12} sm={4}>
+        <Grid item xs={12} sm={6}>
           <StatCard
             title={t('activeTenants')}
             value={stats.activeTenants}
             icon={<PersonIcon />}
             color="success"
-            loading={loading}
-          />
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <StatCard
-            title={t('accountType')}
-            value={stats.accountType}
-            icon={<SecurityIcon />}
-            color="info"
             loading={loading}
           />
         </Grid>
@@ -556,7 +547,7 @@ export default function ProfilePage() {
                 {t('status')}
               </Typography>
               <Chip
-                label={profile?.status || 'Unknown'}
+                label={profile?.status || t('unknown')}
                 color={profile?.status === 'active' ? 'success' : 'default'}
                 size="small"
               />

@@ -31,5 +31,11 @@
   "role": "Role",
   "status": "Status",
   "memberSince": "Member Since",
-  "notAvailable": "Not available"
+  "notAvailable": "Not available",
+  "nameRequired": "Name is required",
+  "emailRequired": "Email is required",
+  "failedToUpdate": "Failed to update profile",
+  "standard": "Standard",
+  "active": "Active",
+  "unknown": "Unknown"
 }

@@ -38,13 +38,17 @@ import { supabase } from '../../../lib/supabase';
 export default function SettingsPage() {
   const { t, i18n } = useTranslation(['settings', 'common']);
   const navigate = useNavigate();
-  const { language, setLanguage } = useAppStore();
+  const { language, setLanguage, isDarkMode, setTheme } = useAppStore();
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
 
   const handleLanguageToggle = () => {
     const newLanguage = language === 'ar' ? 'en' : 'ar';
     setLanguage(newLanguage);
     i18n.changeLanguage(newLanguage);
+  };
+
+  const handleThemeToggle = () => {
+    setTheme(isDarkMode ? 'light' : 'dark');
   };
 
   const handleLogout = async () => {
@@ -87,13 +91,12 @@ export default function SettingsPage() {
       icon: <Palette size={24} />,
       title: t('theme.title'),
       description: t('theme.description'),
-      action: () => {
-        alert(
-          language === 'ar'
-            ? 'تخصيص السمة قريباً\n\nتم التطوير بواسطة POI'
-            : 'Theme customization coming soon\n\nDeveloped by POI'
-        );
-      },
+      action: handleThemeToggle,
+      toggle: true,
+      toggleValue: isDarkMode,
+      toggleLabel: isDarkMode
+        ? (language === 'ar' ? 'داكن' : 'Dark')
+        : (language === 'ar' ? 'فاتح' : 'Light'),
     },
   ];
 
@@ -104,7 +107,7 @@ export default function SettingsPage() {
       description: t('support.description'),
       action: () => {
         // Open WhatsApp with prefilled support message
-        const phoneNumber = '966500000000'; // Replace with actual WhatsApp number
+        const phoneNumber = '966556111029'; // Support WhatsApp number
         const message = encodeURIComponent(
           language === 'ar'
             ? 'مرحباً، أحتاج إلى مساعدة بخصوص نظام مكين لإدارة العقارات.'
