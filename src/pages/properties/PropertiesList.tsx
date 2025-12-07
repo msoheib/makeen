@@ -17,7 +17,9 @@ import {
   useMediaQuery,
   Alert,
   Snackbar,
+  Grow,
 } from '@mui/material';
+import { useAppStore } from '../../../lib/store';
 import {
   Add as AddIcon,
   Search as SearchIcon,
@@ -43,6 +45,7 @@ export default function PropertiesList() {
   const navigate = useNavigate();
   const { t } = useTranslation(['properties', 'common']);
 
+  const { language } = useAppStore();
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -50,11 +53,11 @@ export default function PropertiesList() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Fetch properties from Supabase
-  const { 
-    data: properties, 
-    loading, 
-    error, 
-    refetch 
+  const {
+    data: properties,
+    loading,
+    error,
+    refetch
   } = useApi(() => propertiesApi.getAll({
     status: statusFilter !== 'all' ? statusFilter : undefined,
     property_type: typeFilter !== 'all' ? typeFilter : undefined,
@@ -130,13 +133,15 @@ export default function PropertiesList() {
   ];
 
   const handleViewModeChange = (
-    event: React.MouseEvent<HTMLElement>,
+    _event: React.MouseEvent<HTMLElement>,
     newMode: ViewMode | null
   ) => {
     if (newMode !== null) {
       setViewMode(newMode);
     }
   };
+
+  const isRTL = language === 'ar';
 
   return (
     <ResponsiveContainer>
@@ -147,9 +152,9 @@ export default function PropertiesList() {
         onClose={() => setErrorMessage(null)}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Alert 
-          onClose={() => setErrorMessage(null)} 
-          severity="error" 
+        <Alert
+          onClose={() => setErrorMessage(null)}
+          severity="error"
           sx={{ width: '100%' }}
         >
           {errorMessage}
@@ -158,6 +163,7 @@ export default function PropertiesList() {
 
       {/* Header */}
       <Box
+        dir={isRTL ? 'rtl' : 'ltr'}
         sx={{
           display: 'flex',
           flexDirection: { xs: 'column', sm: 'row' },
@@ -165,6 +171,7 @@ export default function PropertiesList() {
           alignItems: { xs: 'stretch', sm: 'center' },
           gap: 2,
           mb: 3,
+          textAlign: isRTL ? 'right' : 'left',
         }}
       >
         <Typography
@@ -217,7 +224,7 @@ export default function PropertiesList() {
       </Box>
 
       {/* Search and Filters */}
-      <Box sx={{ mb: 3 }}>
+      <Box dir={isRTL ? 'rtl' : 'ltr'} sx={{ mb: 3 }}>
         <Grid container spacing={2}>
           {/* Search */}
           <Grid item xs={12} md={6}>
@@ -304,47 +311,60 @@ export default function PropertiesList() {
         {filteredProperties.length} {t('found')}
       </Typography>
 
-      {/* Grid View */}
-      {(viewMode === 'grid' || isMobile) && (
-        <Grid container spacing={{ xs: 2, sm: 3 }}>
-          {loading
-            ? Array.from({ length: 6 }).map((_, index) => (
-                <Grid item xs={12} sm={6} md={4} key={index}>
-                  <PropertyCardSkeleton />
-                </Grid>
-              ))
-            : filteredProperties.map((property) => (
-                <Grid item xs={12} sm={6} md={4} key={property.id}>
-                  <PropertyCard
-                    id={property.id}
-                    title={property.title}
-                    address={property.address}
-                    city={property.city}
-                    propertyType={property.property_type}
-                    status={property.status}
-                    price={property.price}
-                    imageUrl={property.images?.[0] || undefined}
-                    bedrooms={property.bedrooms || undefined}
-                    bathrooms={property.bathrooms || undefined}
-                    area={property.area_sqm || undefined}
-                  />
-                </Grid>
-              ))}
-        </Grid>
-      )}
+      {/* Content Container with min-height to prevent layout shift */}
+      <Box
+        dir={language === 'ar' ? 'rtl' : 'ltr'}
+        sx={{
+          minHeight: { xs: '400px', sm: '600px' },
+          textAlign: language === 'ar' ? 'right' : 'left',
+        }}
+      >
+        {/* Grid View */}
+        {(viewMode === 'grid' || isMobile) && (
+          <Grid container spacing={{ xs: 2, sm: 3 }}>
+            {loading
+              ? Array.from({ length: 6 }).map((_, index) => (
+                  <Grid item xs={12} sm={6} md={4} key={index}>
+                    <PropertyCardSkeleton />
+                  </Grid>
+                ))
+              : filteredProperties.map((property) => (
+                  <Grid item xs={12} sm={6} md={4} key={property.id}>
+                    <Grow in timeout={300}>
+                      <div>
+                        <PropertyCard
+                          id={property.id}
+                          title={property.title}
+                          address={property.address}
+                          city={property.city}
+                          propertyType={property.property_type}
+                          status={property.status}
+                          price={property.price}
+                          imageUrl={property.images?.[0] || undefined}
+                          bedrooms={property.bedrooms || undefined}
+                          bathrooms={property.bathrooms || undefined}
+                          area={property.area_sqm || undefined}
+                        />
+                      </div>
+                    </Grow>
+                  </Grid>
+                ))}
+          </Grid>
+        )}
 
-      {/* Table View */}
-      {viewMode === 'table' && !isMobile && (
-        <DataTable
-          columns={tableColumns}
-          rows={filteredProperties}
-          idField="id"
-          onView={(property) => navigate(`/dashboard/properties/${property.id}`)}
-          onEdit={(property) => navigate(`/dashboard/properties/${property.id}/edit`)}
-          loading={loading}
-          emptyMessage={t('noProperties')}
-        />
-      )}
+        {/* Table View */}
+        {viewMode === 'table' && !isMobile && (
+          <DataTable
+            columns={tableColumns}
+            rows={filteredProperties}
+            idField="id"
+            onView={(property) => navigate(`/dashboard/properties/${property.id}`)}
+            onEdit={(property) => navigate(`/dashboard/properties/${property.id}/edit`)}
+            loading={loading}
+            emptyMessage={t('noProperties')}
+          />
+        )}
+      </Box>
     </ResponsiveContainer>
   );
 }
